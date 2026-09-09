@@ -146,9 +146,14 @@ async function init(){
   $('#hDate').value=`${new Date().getFullYear()}. ${new Date().getMonth()+1}. ${new Date().getDate()}. / 정보통신과`;
   renderPaper(); go('home'); DalseongHwpx.load().catch(()=>{});
 }
-function renderTabs(){ $('#tabs').innerHTML=MODES.map(m=>`<button class="tab ${m.cls} ${S.mode===m.id?'on':''}" data-mode="${m.id}"><i>${m.icon}</i><span>${m.label}<br><small>${m.sub}</small></span></button>`).join(''); $$('.tab').forEach(b=>b.onclick=()=>setMode(b.dataset.mode)); }
-function renderNav(){ $('#nav').innerHTML=NAV[S.mode].map(n=>`<li data-view="${n.id}" class="${S.view===n.id?'on':''}${n.soon?' soon':''}"><i>${n.icon}</i><div><b>${n.label}</b><small>${n.sub}</small></div></li>`).join(''); $$('#nav li').forEach(li=>li.onclick=()=>{ if(!li.classList.contains('soon')) go(li.dataset.view); }); }
-function setMode(m){ S.mode=m; document.body.dataset.mode=m; renderTabs(); go(NAV[m][0].id);  }
+/* 좌측 통합 메뉴: 대분류(달성On·직원용·관리자)는 그룹 제목으로, 기능은 항목으로 한 줄에 표시 */
+function renderTabs(){}
+function renderNav(){
+  $('#nav').innerHTML=MODES.map(m=>`<li class="grp ${m.cls}"><span>${m.icon} ${m.label}</span><small>${m.sub}</small></li>`+
+    NAV[m.id].map(n=>`<li data-mode="${m.id}" data-view="${n.id}" class="${S.mode===m.id&&S.view===n.id?'on':''}${n.soon?' soon':''}"><i>${n.icon}</i><div><b>${n.label}</b><small>${n.sub}</small></div></li>`).join('')).join('');
+  $$('#nav li[data-view]').forEach(li=>li.onclick=()=>{ if(li.classList.contains('soon')) return; if(S.mode!==li.dataset.mode){ S.mode=li.dataset.mode; document.body.dataset.mode=S.mode; } go(li.dataset.view); });
+}
+function setMode(m){ S.mode=m; document.body.dataset.mode=m; go(NAV[m][0].id); }
 function go(v){ S.view=v; document.body.dataset.view=v; $('#main').scrollTop=0; $$('.view').forEach(s=>s.classList.toggle('on',s.dataset.view===v)); renderNav(); if(v==='data') renderData(); if(v==='home') renderHome(); if(v==='guide') $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); if(v==='news') renderNews(); if(v==='stats'){ renderUsage(); renderStats(); } if(v==='model') $('#adminModel').textContent=(S.key&&!S.offline)?S.model+' (Anthropic API, 브라우저 직접 호출 — 시연)':'오프라인 시연 모드(검색 결과 기반)'; if(v==='doc') renderPaper(); }
 
 /* ── 홈 대시보드 ── */
@@ -160,8 +165,8 @@ function renderHome(){
   $('#boardList').innerHTML=NEWS.slice(0,5).map(([d,t,s,body],i)=>`<li class="${i<2?'new':''}"><span class="t ${cls[t]||''}">${t}</span><b>${s}</b><span class="d">${d}</span><div class="body">${body||s}</div></li>`).join('');
   $$('#boardList li').forEach(li=>li.onclick=()=>li.classList.toggle('open'));
   const P=$('#player');
-  if(VIDEO_FILE){ P.innerHTML=`<video src="${VIDEO_FILE}" poster="assets/intro_poster.jpg" controls playsinline preload="metadata" controlsList="nodownload noplaybackrate" disablePictureInPicture></video>`; $('#videoNote').textContent='34초'; }
-  else if(VIDEO_ID){ P.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${VIDEO_ID}?rel=0" title="달성On 안내 영상" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`; $('#videoNote').textContent='34초 · 유튜브'; }
+  if(VIDEO_FILE){ P.innerHTML=`<video src="${VIDEO_FILE}" poster="assets/intro_poster.jpg" controls playsinline preload="metadata" controlsList="nodownload noplaybackrate" disablePictureInPicture></video>`; $('#videoNote').textContent='29초'; }
+  else if(VIDEO_ID){ P.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${VIDEO_ID}?rel=0" title="달성On 안내 영상" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`; $('#videoNote').textContent='29초 · 유튜브'; }
   // 기능 바로가기
   const F=[['staff:qa','💬','AI 질의응답','근거 조문과 함께'],['staff:doc','📄','한글 문서 생성','군 서식 hwpx ★'],['staff:data','📊','데이터 조회','읍·면별 집계'],['staff:lib','📚','자료함','3층 구조'],['home:guide','📖','이용 안내','3단계 시작하기'],['admin:stats','🛠','관리자','통계 · 갱신 · 모델']];
   $('#homeFeatures').innerHTML=F.map(([g,i,b,s])=>`<div class="fc link" data-go="${g}"><i>${i}</i><b>${b}</b><small>${s}</small></div>`).join('');
