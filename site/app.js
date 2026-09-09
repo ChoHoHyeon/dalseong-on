@@ -149,22 +149,34 @@ async function init(){
   renderPaper(); go('home'); DalseongHwpx.load().catch(()=>{});
 }
 /* 좌측 메뉴: 「질문하기」 하나를 주인공으로, 나머지는 조용히. 서브탭 없음(이용 안내·관리자는 한 페이지 세로 구성) */
-const FLAT=[
-  {mode:'staff',view:'on',   icon:'✦',  label:'달성On', cls:'on-item'},
+/* 좌측 메뉴는 두 벌로 완전히 분리
+   HOME_MENU : 홈·이용 안내·관리자 등 일반 화면에서 보이는 메뉴 (여기에 항목을 추가해도 달성On 화면에는 나오지 않음)
+   달성On 화면 : 달성On 항목 + 새 대화 + 최근 대화만 (고정)                                                       */
+const HOME_MENU=[
+  {mode:'staff',view:'on', icon:'✦', label:'달성On', cls:'on-item'},
+  // 예) {mode:'staff',view:'data', icon:'📊', label:'데이터 조회'},
+];
+const MINOR=[
   {mode:'home', view:'guide',icon:'📖', label:'이용 안내', cls:'minor'},
   {mode:'admin',view:'stats',icon:'🛠', label:'관리자', cls:'minor admin'},
 ];
+const ON_VIEWS=['on','doc'];   // 이 화면들에서는 달성On 전용 메뉴
 const ALIAS={qa:'on',flow:'guide',news:'guide',contact:'guide',update:'stats',model:'stats'};
 const COMPOSITE={guide:['guide','flow','news','contact'],stats:['stats','update','model']};
 function renderTabs(){}
 function loadRecent(){ try{ return JSON.parse(localStorage.getItem('dOnRecent')||'[]'); }catch(e){ return []; } }
 function pushRecent(q){ const r=loadRecent().filter(x=>x!==q); r.unshift(q); localStorage.setItem('dOnRecent',JSON.stringify(r.slice(0,12))); }
 function renderNav(){
-  const recent=loadRecent();
-  $('#nav').innerHTML=FLAT.map(n=>{ const on=n.mode==='admin'?S.mode==='admin':(S.mode===n.mode&&S.view===n.view);
-    let li=`<li data-mode="${n.mode}" data-view="${n.view}" class="${n.cls||''} ${on?'on':''}"><i>${n.icon}</i><b>${n.label}</b></li>`;
-    if(n.view==='on'&&S.view==='on') li+=`<li class="newchat" id="navNew">＋ 새 대화</li>`+(recent.length?`<li class="rh"><span>최근 대화</span><button class="rclear" id="navClear" title="전체 삭제">전체 삭제</button></li>`+recent.map(q=>`<li class="rc" data-q="${q.replace(/"/g,'&quot;')}" title="${q.replace(/"/g,'&quot;')}"><span>${q}</span><button class="rx" data-del="${q.replace(/"/g,'&quot;')}" title="삭제">✕</button></li>`).join(''):'');
-    return li; }).join('');
+  const inOn=S.mode==='staff'&&ON_VIEWS.includes(S.view);
+  const item=n=>{ const on=n.mode==='admin'?S.mode==='admin':(S.mode===n.mode&&S.view===n.view); return `<li data-mode="${n.mode}" data-view="${n.view}" class="${n.cls||''} ${on?'on':''}"><i>${n.icon}</i><b>${n.label}</b></li>`; };
+  let html='';
+  if(inOn){
+    const recent=loadRecent();
+    html=item(HOME_MENU.find(n=>n.view==='on'))+`<li class="newchat" id="navNew">＋ 새 대화</li>`
+      +(recent.length?`<li class="rh"><span>최근 대화</span><button class="rclear" id="navClear" title="전체 삭제">전체 삭제</button></li>`+recent.map(q=>`<li class="rc" data-q="${q.replace(/"/g,'&quot;')}" title="${q.replace(/"/g,'&quot;')}"><span>${q}</span><button class="rx" data-del="${q.replace(/"/g,'&quot;')}" title="삭제">✕</button></li>`).join(''):'');
+  } else html=HOME_MENU.map(item).join('');
+  html+=MINOR.map(item).join('');
+  $('#nav').innerHTML=html;
   $$('#nav li[data-view]').forEach(li=>li.onclick=()=>{ if(S.mode!==li.dataset.mode){ S.mode=li.dataset.mode; document.body.dataset.mode=S.mode; } go(li.dataset.view); });
   const nn=$('#navNew'); if(nn) nn.onclick=()=>{ S.mode='staff'; document.body.dataset.mode='staff'; resetChat(); go('on'); };
   $$('#nav li.rc').forEach(li=>li.onclick=e=>{ if(e.target.closest('.rx')) return; S.mode='staff'; document.body.dataset.mode='staff'; resetChat(); go('on'); ask(li.dataset.q); });

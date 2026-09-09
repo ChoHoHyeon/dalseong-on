@@ -238,7 +238,7 @@ body[data-theme=dark] .top-c.slogan img{filter:brightness(1.15)}
 .nav li.newchat{display:flex;justify-content:center;align-items:center;min-height:34px;margin:2px 6px 4px;border:1px dashed rgba(47,111,237,.45);border-radius:10px;color:var(--acc);font-size:12.5px;font-weight:600;padding:0}
 .nav li.rh{display:block;min-height:0;padding:8px 12px 2px;font-size:10.5px;font-weight:700;color:var(--mut);cursor:default} .nav li.rh:hover{background:none}
 .nav li.rc{display:block;min-height:30px;padding:6px 12px 6px 18px;font-size:12.5px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:8px}
-.nav li[data-view=guide]{margin-top:auto}
+.nav li[data-view=guide]{margin-top:auto;border-top:1px solid var(--line);border-radius:0;padding-top:12px}
 
 /* ── 달성On 페이지 (클로드식 단일 컬럼) ── */
 .on-page{align-items:center}
