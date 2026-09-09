@@ -167,7 +167,7 @@ function renderHome(){
   const cls={'공지':'notice','자료':'data','기능':''};
   $('#boardList').innerHTML=NEWS.slice(0,5).map(([d,t,s,body],i)=>`<li class="${i<2?'new':''}"><span class="t ${cls[t]||''}">${t}</span><b>${s}</b><span class="d">${d}</span><div class="body">${body||s}</div></li>`).join('');
   $$('#boardList li').forEach(li=>li.onclick=()=>li.classList.toggle('open'));
-  const P=$('#player'); if(VIDEO_ID){ P.innerHTML=`<iframe src="https://www.youtube.com/embed/${VIDEO_ID}?rel=0" title="달성On 안내 영상" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`; $('#videoNote').textContent='34초 · 유튜브'; }
+  const P=$('#player'); if(VIDEO_ID){ P.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${VIDEO_ID}?rel=0" title="달성On 안내 영상" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`; $('#videoNote').textContent='34초 · 유튜브'; }
   else { P.innerHTML=`<div class="poster"><div class="play" title="영상 준비 중">▶</div><b>달성군 AI 업무비서 달성On</b><small>소개 영상 준비 중 · 2분 · 직원용 → 한글 파일 → 군민용</small></div><div class="chap"><span>00:10 왜 만드나</span><span>00:40 질의응답</span><span>01:10 한글 파일 ★</span><span>01:40 카카오 채널</span></div>`; P.querySelector('.play').onclick=()=>toast('안내 영상은 제작 후 연결됩니다 (app.js의 VIDEO_ID)'); }
   // 기능 바로가기
   const F=[['staff:qa','💬','AI 질의응답','근거 조문과 함께'],['staff:doc','📄','한글 문서 생성','군 서식 hwpx ★'],['staff:data','📊','데이터 조회','읍·면별 집계'],['staff:lib','📚','자료함','3층 구조'],['citizen:kakao','📱','카카오 민원안내','군민 채널'],['admin:stats','🛠','관리자','통계 · 갱신 · 모델']];
