@@ -167,7 +167,7 @@ function renderHome(){
   const cls={'공지':'notice','자료':'data','기능':''};
   $('#boardList').innerHTML=NEWS.slice(0,5).map(([d,t,s,body],i)=>`<li class="${i<2?'new':''}"><span class="t ${cls[t]||''}">${t}</span><b>${s}</b><span class="d">${d}</span><div class="body">${body||s}</div></li>`).join('');
   $$('#boardList li').forEach(li=>li.onclick=()=>li.classList.toggle('open'));
-  const P=$('#player'); if(VIDEO_ID){ P.innerHTML=`<iframe src="https://www.youtube.com/embed/${VIDEO_ID}?rel=0" title="달성On 안내 영상" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`; $('#videoNote').textContent='유튜브'; }
+  const P=$('#player'); if(VIDEO_ID){ P.innerHTML=`<iframe src="https://www.youtube.com/embed/${VIDEO_ID}?rel=0" title="달성On 안내 영상" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`; $('#videoNote').textContent='34초 · 유튜브'; }
   else { P.innerHTML=`<div class="poster"><div class="play" title="영상 준비 중">▶</div><b>달성군 AI 업무비서 달성On</b><small>소개 영상 준비 중 · 2분 · 직원용 → 한글 파일 → 군민용</small></div><div class="chap"><span>00:10 왜 만드나</span><span>00:40 질의응답</span><span>01:10 한글 파일 ★</span><span>01:40 카카오 채널</span></div>`; P.querySelector('.play').onclick=()=>toast('안내 영상은 제작 후 연결됩니다 (app.js의 VIDEO_ID)'); }
   // 기능 바로가기
   const F=[['staff:qa','💬','AI 질의응답','근거 조문과 함께'],['staff:doc','📄','한글 문서 생성','군 서식 hwpx ★'],['staff:data','📊','데이터 조회','읍·면별 집계'],['staff:lib','📚','자료함','3층 구조'],['citizen:kakao','📱','카카오 민원안내','군민 채널'],['admin:stats','🛠','관리자','통계 · 갱신 · 모델']];
@@ -192,7 +192,7 @@ function renderUsage(){
   $('#lawList').innerHTML=S.meta.law_sources.map(s=>`<li><i></i><div>${s.replace('대구광역시 달성군 ','')}<small>${S.docs.filter(x=>x.source===s).length}개 조문·별표 색인</small></div></li>`).join('');
 }
 
-const VIDEO_ID='';  // 유튜브 영상 ID를 넣으면 안내 영상이 재생됨, 비우면 포스터 표시
+const VIDEO_ID='OVZoYQeUFIQ';  // 유튜브 영상 ID를 넣으면 안내 영상이 재생됨, 비우면 포스터 표시
 const NEWS=[['2026.09.10','공지','부군수 보고 시연 안내','시연 순서: ① 달성On 홈 → ② 직원용 질의응답·한글 파일 생성 → ③ 군민용 카카오 화면 → ④ 관리자 통계. 시연 중 질문은 예시 질문 버튼을 우선 사용해 주세요.'],['2026.09.09','공지','달성On 시연판 이용 안내','시연판은 예시 자료(민원안내 10건·내부지침 5건)를 포함합니다. 답변은 참고용이며 최종 판단은 담당자가 합니다. 문의: 정보통신과 053-668-2454'],['2026.09.09','기능','「달성군」 홈 대시보드 · 이용 안내 · 공지 화면 추가'],['2026.09.09','기능','직원용/군민용/관리자 3개 채널 구조로 개편, 우측 AI 대화 패널'],['2026.09.09','기능','한글 문서 생성 화면(문서 종류 · 서식 미리보기) 신설'],['2026.09.09','자료','민원안내 10건(예시) · 내부지침 5건(예시) 등록'],['2026.09.08','자료','2026.7.10 공포 조례·규칙 7건 색인(24개 조문·별표)'],['2026.09.08','자료','공공데이터 6종 1,107행 연결 (경로당·판매소·도서관·대형폐기물·봉투가격·무료급식소)'],['2026.09.08','기능','달성On 시연판 최초 공개']];
 function renderNews(){ $('#newsList').innerHTML=NEWS.map(([d,t,s])=>`<li><span class="d">${d}</span><span class="t">${t}</span>${s}</li>`).join(''); }
 
