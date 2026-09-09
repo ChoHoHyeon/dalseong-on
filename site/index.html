@@ -49,25 +49,25 @@
 
     <!-- 홈 · 서비스 구성 -->
     <section class="view" data-view="flow">
-      <div class="vh"><h2>서비스 구성</h2><p>하나의 자료·검색 엔진 위에 직원용과 군민용 두 채널을 얹은 구조입니다. 모델은 교체 가능(업무망 서버 모델 → 행안부 온AI API 개방 시 전환).</p></div>
+      <div class="vh"><h2>서비스 구성</h2><p>달성군 자료·검색 엔진 위에 생성형 AI를 연결한 직원용 업무비서 구조입니다. 모델은 교체 가능(업무망 서버 모델 → 행안부 온AI API 개방 시 전환).</p></div>
       <div class="arch">
-        <div class="arch-col"><h5>사용자</h5><div class="ab g"><i>🏛</i><b>내부 직원</b><small>본청·읍면·사업소 · 업무망 새올 배너</small></div><div class="ab y"><i>💬</i><b>군민</b><small>카카오톡 채널 · 인터넷망</small></div><div class="ab p"><i>🛠</i><b>관리자</b><small>정보통신과 · 자료 등록·통계</small></div></div>
+        <div class="arch-col"><h5>사용자</h5><div class="ab g"><i>🏛</i><b>내부 직원</b><small>본청·읍면·사업소 · 업무망 새올 배너</small></div><div class="ab p"><i>🛠</i><b>관리자</b><small>정보통신과 · 자료 등록·통계</small></div></div>
         <div class="arch-arrow">⇄</div>
         <div class="arch-col"><h5>달성On 엔진 (자체 서버)</h5><div class="ab b big"><b>검색 + 생성형 AI</b><small>자료에 있으면 근거 인용 · 없으면 AI 직접 답변</small><div class="mods"><span>권한별 자료 층</span><span>근거 카드</span><span>hwpx 생성 ★</span><span>이용 통계</span><span>모델 교체</span></div></div><div class="ab d"><i>🗄️</i><b>달성군 자료</b><small>자치법규 · 업무지침 · 공공데이터 · (2단계) 공문서</small></div></div>
         <div class="arch-arrow">⇄</div>
-        <div class="arch-col"><h5>제공</h5><div class="ab g"><b>직원</b><small>조례·지침 근거 답변 · 품의서·보고서 한글 파일 · 읍면별 데이터</small></div><div class="ab y"><b>군민</b><small>민원 절차·서류·수수료 · 시설 위치 · 접수 링크(정부24·국민신문고)</small></div><div class="ab p"><b>관리자</b><small>자료 한 번 갱신 → 전 직원 반영 · 부서별 이용통계</small></div></div>
+        <div class="arch-col"><h5>제공</h5><div class="ab g"><b>직원</b><small>조례·지침 근거 답변 · 품의서·보고서 한글 파일 · 읍면별 데이터</small></div><div class="ab p"><b>관리자</b><small>자료 한 번 갱신 → 전 직원 반영 · 부서별 이용통계</small></div></div>
       </div>
       <div class="card"><h4>타 지자체 대비 차별점</h4><div class="diff-grid" id="diffGrid"></div></div>
     </section>
 
     <!-- 홈 · 이용 안내 -->
     <section class="view" data-view="guide">
-      <div class="vh"><h2>이용 안내</h2><p>처음 쓰는 직원·군민을 위한 3단계 안내입니다.</p></div>
+      <div class="vh"><h2>이용 안내</h2><p>처음 쓰는 직원을 위한 3단계 안내입니다.</p></div>
       <div class="guide-grid">
         <div class="card"><h4>직원 (업무망)</h4><ol class="steps"><li><b>새올 배너 클릭</b><small>별도 설치·가입 없이 업무망 PC에서 접속</small></li><li><b>업무 질문 입력</b><small>"체육시설 사용료 감면 대상은?" 처럼 평소 말로</small></li><li><b>근거 확인 → 한글 파일</b><small>조문 번호를 눌러 원문 확인, [한글 파일로]를 누르면 군 서식 hwpx 다운로드</small></li></ol></div>
-        <div class="card"><h4>군민 (카카오톡)</h4><ol class="steps"><li><b>카카오톡에서 "달성군" 채널 추가</b><small>친구 추가 후 채팅 시작</small></li><li><b>민원·시설 질문</b><small>"대형폐기물 어떻게 버려요?", "현풍읍 경로당 위치"</small></li><li><b>안내 확인 → 접수 링크</b><small>절차·서류·수수료 안내 후 정부24·국민신문고로 연결(개인정보 입력 없음)</small></li></ol></div>
+        <div class="card"><h4>한글 문서 만들기</h4><ol class="steps"><li><b>질문하고 답변 확인</b><small>근거 조문이 붙은 답변을 먼저 검토</small></li><li><b>[한글 파일로] 클릭</b><small>품의서·검토보고·업무연락 중 서식 선택, 제목·근거 포함 여부 지정</small></li><li><b>hwpx 다운로드 → 한글에서 마무리</b><small>담당자 검토 문구가 자동으로 붙어 나옵니다</small></li></ol></div>
         <div class="card"><h4>이런 질문에 답합니다</h4><div class="chips" id="guideChips"></div><p class="hint" style="margin-top:10px">자료에 없는 질문은 <b>AI 일반 답변</b>으로 표시되어 근거 인용 답변과 구분됩니다. 답변은 참고용이며 최종 판단은 담당자가 합니다.</p></div>
-        <div class="card"><h4>자료 범위</h4><table class="tbl"><tr><th>층</th><th>자료</th><th>대상</th></tr><tr><td>1층</td><td>자치법규 · 민원안내 · 공공데이터</td><td>직원 · 군민</td></tr><tr><td>2층</td><td>복무 · 회계 · 계약 · 개인정보 · 보안 지침</td><td>직원</td></tr><tr><td>3층</td><td>온나라 문서 · 사업계획 (2단계)</td><td>권한별</td></tr></table></div>
+        <div class="card"><h4>자료 범위</h4><table class="tbl"><tr><th>층</th><th>자료</th><th>대상</th></tr><tr><td>1층</td><td>자치법규 · 민원안내 · 공공데이터</td><td>전 직원</td></tr><tr><td>2층</td><td>복무 · 회계 · 계약 · 개인정보 · 보안 지침</td><td>전 직원</td></tr><tr><td>3층</td><td>온나라 문서 · 사업계획 (2단계)</td><td>권한별</td></tr></table></div>
       </div>
     </section>
 
@@ -82,7 +82,7 @@
       <div class="vh"><h2>문의 · 지원</h2><p>달성On 운영·자료 등록·오류 신고는 정보통신과로 연락 주세요.</p></div>
       <div class="contact-grid">
         <div class="card"><h4>운영 부서</h4><b class="big">달성군 정보통신과</b><p class="hint">데이터기반행정 · 공공데이터 담당<br>☎ 053-668-2454 · ✉ 98turtle@korea.kr</p></div>
-        <div class="card"><h4>자료 등록 요청</h4><p class="hint">부서 지침·서식·FAQ를 달성On에 올리고 싶으면 파일과 공개 범위(직원/군민)를 알려주세요. 등록 후 전 직원 답변에 즉시 반영됩니다.</p></div>
+        <div class="card"><h4>자료 등록 요청</h4><p class="hint">부서 지침·서식·FAQ를 달성On에 올리고 싶으면 파일과 열람 범위(전 직원/부서)를 알려주세요. 등록 후 전 직원 답변에 즉시 반영됩니다.</p></div>
         <div class="card"><h4>오류·개선 제안</h4><p class="hint">잘못된 답변은 [근거 보기]에서 조문을 확인한 뒤 화면 캡처와 함께 알려주세요. 시연판은 예시 자료(민원안내·내부지침)를 포함합니다.</p></div>
       </div>
     </section>
@@ -95,7 +95,7 @@
           <div class="fc"><i>📎</i><b>근거 인용</b><small>조례·지침·공공데이터를 검색해 조문과 함께 답변</small></div>
           <div class="fc star"><i>📄</i><b>한글 파일 생성</b><small>답변을 달성군 서식 hwpx로 즉시 산출 ★</small></div>
           <div class="fc"><i>🔒</i><b>권한별 자료</b><small>공개자료·내부지침·공문서(2단계) 층 구조</small></div>
-          <div class="fc"><i>💬</i><b>군민 채널</b><small>같은 엔진으로 카카오 민원안내(공개자료만)</small></div>
+          <div class="fc"><i>🧠</i><b>범용 AI 답변</b><small>자료 밖 질문도 일반 생성형 AI처럼 답변</small></div>
         </div>
         <h4>예시 질문 <small>눌러서 바로 질문</small></h4>
         <div class="chips big" id="qaChips"></div>
@@ -133,35 +133,20 @@
     <section class="view" data-view="lib">
       <div class="vh"><h2>자료함</h2><p>AI가 참조하는 달성군 자료입니다. 관리자가 한 번 등록하면 전 직원 답변에 즉시 반영됩니다.</p></div>
       <div class="layers-grid" id="layers">
-        <div class="lc on" data-layer="1"><b>1층 · 공개자료</b><span class="cnt" id="c1">–</span><small>자치법규 · 민원안내 · 공공데이터 — 직원·군민 공통</small></div>
+        <div class="lc on" data-layer="1"><b>1층 · 공개자료</b><span class="cnt" id="c1">–</span><small>자치법규 · 민원안내 · 공공데이터 — 전 직원</small></div>
         <div class="lc on" data-layer="2"><b>2층 · 내부지침</b><span class="cnt" id="c2">–</span><small>복무 · 회계 · 계약 · 개인정보 · 보안 — 직원 전용</small></div>
         <div class="lc lock" data-layer="3"><b>3층 · 공문서</b><span class="cnt">🔒</span><small>온나라 문서 · 사업계획 — 2단계, 권한 체계 마련 후</small></div>
       </div>
       <div class="card"><h4>자료 목록 <small>현재 색인 기준</small></h4><table class="tbl" id="libTbl"></table></div>
     </section>
 
-    <!-- 직원·군민 · 데이터 조회 -->
+    <!-- 직원 · 데이터 조회 -->
     <section class="view" data-view="data">
       <div class="vh"><h2 id="dataTitle">데이터 조회</h2><p>달성군 공공데이터를 읍·면별로 집계하고 검색합니다. 대화창에서 "다사읍 경로당 몇 개소?"처럼 물어도 같은 데이터로 답합니다.</p></div>
       <div class="row rw"><div class="seg2" id="dsSeg"></div><input id="dsSearch" placeholder="이름·주소로 검색" style="max-width:280px"></div>
       <div class="data-grid">
         <div class="card"><h4>읍·면별 개소 수</h4><div class="bars" id="dsBars"></div></div>
         <div class="card grow"><h4 id="dsListTitle">목록</h4><div class="scroll"><table class="tbl" id="dsTbl"></table></div></div>
-      </div>
-    </section>
-
-    <!-- 군민 · 카카오 민원안내 -->
-    <section class="view" data-view="kakao">
-      <div class="vh"><h2>카카오톡 민원안내 챗봇</h2><p>군민용 채널. <b>공개자료만</b> 참조하고 개인정보를 받지 않으며, 접수·신청은 정부24·국민신문고로 연결합니다. (시연은 화면 목업, 실제 연동은 카카오 i 오픈빌더 스킬 서버)</p></div>
-      <div class="kakao-grid">
-        <div class="phone">
-          <div class="notch"></div>
-          <div class="k-head"><span class="k-back">‹</span><div class="k-title"><b>달성군 민원안내</b><small>카카오톡 채널 · 챗봇</small></div><span class="k-menu">≡</span></div>
-          <div class="k-msgs" id="kmsgs"></div>
-          <div class="k-quick" id="kquick"></div>
-          <form class="k-input" id="kform"><input id="kq" placeholder="메시지를 입력하세요" autocomplete="off"><button type="submit" aria-label="전송">➤</button></form>
-        </div>
-        <div class="card grow"><h4>근거 자료 <small id="kevNote">군민에게 보이지 않는 관리자 확인용</small></h4><div class="ev" id="kev"></div><h4 style="margin-top:14px">예시 질문</h4><div class="chips" id="kChips"></div></div>
       </div>
     </section>
 
@@ -214,7 +199,7 @@
 <div class="modal" id="mIntro"><div class="box intro">
   <div class="logo big"><span>On</span></div>
   <h2>달성군 AI 업무비서 <b>달성On</b> 시연판</h2>
-  <p>상단 탭으로 <b>직원용 · 군민용 · 관리자</b>를, 왼쪽 메뉴로 기능을 고릅니다. 오른쪽 대화창에 질문하면 근거와 함께 답합니다.</p>
+  <p>상단 탭으로 <b>달성On · 직원용 · 관리자</b>를, 왼쪽 메뉴로 기능을 고릅니다. 오른쪽 대화창에 질문하면 근거와 함께 답합니다.</p>
   <p class="hint">자료: 2026.7.10 공포 조례·규칙 7건, 민원안내 10건(예시), 공공데이터 6종 1,107행, 내부지침 5건(예시)</p>
   <button class="primary" data-close>시연 시작</button>
 </div></div>

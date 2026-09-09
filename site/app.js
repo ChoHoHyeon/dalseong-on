@@ -71,8 +71,6 @@ function sysPrompt(mode){
 2. 자료에 없는 내용은 첫 줄에 "※ 달성군 자료에 없는 내용으로 일반 지식으로 답변합니다."라고 밝힌 뒤 답하고, 없는 근거를 만들지 않습니다.
 3. 숫자·수수료·개소 수는 자료의 값을 그대로 쓰고 추정하지 않습니다.
 4. 한국어, 간결하게. 핵심 결론을 먼저 쓰고 필요한 경우만 ■(항목) ❍(내용) -(설명) 기호로 구조화합니다. 마크다운 표·헤더(#)는 쓰지 않습니다.`;
-  if(mode==='citizen') return base+`
-5. 지금은 군민용 카카오톡 채널입니다. 존댓말로 친절하고 짧게(6줄 이내) 답하고, 신청·접수가 필요한 민원은 "정부24 또는 국민신문고에서 접수" 문장을 끝에 붙입니다. 내부지침·직원용 정보는 언급하지 않습니다. 개인정보를 요구하지 않습니다.`;
   return base+`
 5. 지금은 직원용 업무망 화면입니다. 담당 직원이 바로 공문·품의에 옮겨 쓸 수 있는 문장으로 답하고, 관련 절차·결재선·유의사항을 덧붙입니다.`;
 }
@@ -92,10 +90,10 @@ async function callModel(mode,hits,q,hist,onDelta){
 function offlineAnswer(mode,hits,q){
   const ci=countIntent(q);
   if(ci){ const where=ci.eup?`${ci.eup} `:'달성군 전체 '; const nm=ci.ds.replace(' 현황',''); let a=`${where}${nm}${/[당관]$/.test(nm)?'은':'는'} ${ci.n.toLocaleString()}개소입니다 [1].`; if(ci.eup) a+=` (군 전체 ${ci.total.toLocaleString()}개소)`; if(ci.sample.length) a+='\n'+ci.sample.map(d=>'❍ '+d.text.split(' — ')[0].replace(/^(경로당|종량제봉투 판매소|도서관) /,'')+' — '+(d.text.split(' — ')[1]||'').split(',')[0]).join('\n'); a+=`\n※ 공공데이터 기준일 2026-09-08`; return a; }
-  if(!hits.length) return mode==='citizen'?'죄송합니다, 해당 내용은 안내 자료에 없습니다. 아래 버튼의 민원을 안내해 드릴 수 있어요.':'※ 달성군 자료에 없는 내용입니다. 시연판은 연결된 자료(조례 7건·민원안내·공공데이터 6종·내부지침) 범위 안에서 답하며, 실제 구축 시에는 자료 밖 질문도 AI가 직접 답변합니다.\n@@SUGGEST@@';
+  if(!hits.length) return '※ 달성군 자료에 없는 내용입니다. 시연판은 연결된 자료(조례 7건·민원안내·공공데이터 6종·내부지침) 범위 안에서 답하며, 실제 구축 시에는 자료 밖 질문도 AI가 직접 답변합니다.\n@@SUGGEST@@';
   const top=hits[0].doc; let a='';
   if(top.type==='law'){ const art=top.title.replace(top.source,'').trim(); a=`■ 「${top.source.replace('대구광역시 ','')}」 ${art} [1]\n`; let lines=top.text.split('\n').map(l=>l.trim()).filter(Boolean); if(art.startsWith('[별표')) lines=lines.slice(1).filter(l=>l.length>8||/:/.test(l)); a+=lines.slice(0,art.startsWith('[별표')?14:7).map(l=>(/^(①|②|③|④|⑤|\d+\.)/.test(l)?'❍ ':'- ')+l).join('\n'); if(lines.length>8&&!art.startsWith('[별표')) a+='\n- (이하 생략 — 근거 카드에서 전문 확인)'; const l2=hits.slice(1,3).filter(h=>h.doc.type==='law'); l2.forEach((h,i)=>a+=`\n- 관련: ${h.doc.title.replace('대구광역시 달성군 ','')} [${i+2}]`); }
-  else if(top.type==='minwon'){ const f=Object.fromEntries(top.text.split('\n').slice(1).map(l=>{const i=l.indexOf(': '); return [l.slice(0,i),l.slice(i+2)];})); a=`■ ${top.title} [1]\n❍ 신청 방법: ${f['신청 방법']}\n❍ 필요 서류: ${f['필요 서류']}\n❍ 수수료: ${f['수수료']} / 처리: ${f['처리 기간']}\n❍ 담당: ${f['담당']}`; if(mode==='citizen') a+='\n신청·접수는 정부24 또는 국민신문고에서 하실 수 있습니다.'; }
+  else if(top.type==='minwon'){ const f=Object.fromEntries(top.text.split('\n').slice(1).map(l=>{const i=l.indexOf(': '); return [l.slice(0,i),l.slice(i+2)];})); a=`■ ${top.title} [1]\n❍ 신청 방법: ${f['신청 방법']}\n❍ 필요 서류: ${f['필요 서류']}\n❍ 수수료: ${f['수수료']} / 처리: ${f['처리 기간']}\n❍ 담당: ${f['담당']}`; }
   else if(top.type==='data'){ const same=hits.filter(h=>h.doc.type==='data'&&h.doc.source===top.source).slice(0,4); a=`■ ${top.source} (공공데이터, 기준일 2026-09-08)\n`+same.map(h=>`❍ ${h.doc.text.replace(/^(경로당|종량제봉투 판매소|도서관|대형폐기물 수수료:) /,'')} [${hits.indexOf(h)+1}]`).join('\n'); }
   else { a=`■ ${top.title} (${top.source}) [1]\n`+top.text.split('\n').slice(1,6).join('\n'); }
   if(mode==='staff') a+='\n※ 오프라인 시연 모드 — 모델 연결 시 위 근거를 바탕으로 자연어 답변으로 정리됩니다.';
@@ -108,14 +106,13 @@ function offlineAnswer(mode,hits,q){
 const MODES=[
   {id:'home',   icon:'🏠', label:'달성On', sub:'한눈에 보기', cls:''},
   {id:'staff',  icon:'🏛', label:'직원용 달성On', sub:'업무망 · 새올 배너', cls:''},
-  {id:'citizen',icon:'💬', label:'군민용 카카오 채널', sub:'민원안내 · 공개자료만', cls:'citizen'},
   {id:'admin',  icon:'🛠', label:'관리자', sub:'정보통신과', cls:'admin'},
 ];
 const NAV={
   home:[
     {id:'home',   icon:'🏠', label:'대시보드', sub:'현황 · 바로가기'},
     {id:'flow',   icon:'🧭', label:'서비스 구성', sub:'구조 · 차별점'},
-    {id:'guide',  icon:'📖', label:'이용 안내', sub:'직원 · 군민 3단계'},
+    {id:'guide',  icon:'📖', label:'이용 안내', sub:'3단계 시작하기'},
     {id:'news',   icon:'📢', label:'공지 · 업데이트', sub:'자료 갱신 이력'},
     {id:'contact',icon:'☎️', label:'문의 · 지원', sub:'정보통신과'},
   ],
@@ -125,39 +122,34 @@ const NAV={
     {id:'lib',  icon:'📚', label:'자료함', sub:'연결 자료 · 층 구조'},
     {id:'data', icon:'📊', label:'데이터 조회', sub:'읍·면별 집계'},
   ],
-  citizen:[
-    {id:'kakao',icon:'📱', label:'카카오 민원안내', sub:'챗봇 화면'},
-    {id:'data', icon:'🏢', label:'시설 찾기', sub:'경로당 · 도서관 · 판매소'},
-  ],
   admin:[
     {id:'stats', icon:'📈', label:'이용 통계', sub:'질의 · 인용 · 문서'},
     {id:'update',icon:'🔄', label:'자료 갱신', sub:'한 번 등록 → 전 직원'},
     {id:'model', icon:'🤖', label:'모델 설정', sub:'API 키 · 온AI 전환'},
   ],
 };
-const CHIPS={staff:['거리공연 지원사업 내용과 조례 근거는?','다사읍 경로당은 몇 개소야?','체육시설 사용료 감면 대상과 감면율은?','연가 2일 신청하면 결재선이 어떻게 돼?','수의계약 1인 견적 가능 한도는?','급식시설 환경개선 지원 대상과 내용은?','악성민원 조례에서 민원상담 권장 시간 규정은?','국민체육센터 위치와 주요 시설은?','소파 카우치 대형폐기물 수수료는?','생성형 AI에 개인정보 넣어도 돼?'],
-             citizen:['대형폐기물은 어떻게 버려요?','전입신고 필요한 서류가 뭐예요?','다사읍 도서관 운영시간 알려주세요','출산지원금 신청 방법','종량제봉투 20L 가격은?','현풍읍 경로당 위치 알려줘','불법주차 신고는 어디서 하나요?','체육시설 대관은 어떻게 신청하죠?']};
+const CHIPS={staff:['거리공연 지원사업 내용과 조례 근거는?','다사읍 경로당은 몇 개소야?','체육시설 사용료 감면 대상과 감면율은?','연가 2일 신청하면 결재선이 어떻게 돼?','수의계약 1인 견적 가능 한도는?','급식시설 환경개선 지원 대상과 내용은?','악성민원 조례에서 민원상담 권장 시간 규정은?','국민체육센터 위치와 주요 시설은?','소파 카우치 대형폐기물 수수료는?','생성형 AI에 개인정보 넣어도 돼?']};
 const DATASETS=[['경로당 현황','경로당'],['종량제봉투 판매소','판매소'],['도서관','도서관'],['대형폐기물 수거수수료','대형폐기물'],['종량제봉투 가격','봉투 가격']];
 
 function typeName(t){ return {law:'자치법규',minwon:'민원안내',data:'공공데이터',internal:'내부지침'}[t]||t; }
 function toast(m){ let t=$('#toast'); if(!t){ t=document.createElement('div'); t.id='toast'; document.body.appendChild(t);} t.textContent=m; t.hidden=false; clearTimeout(t._t); t._t=setTimeout(()=>t.hidden=true,2600); }
 function chipsHtml(list,n){ return `<div class="chips">${list.slice(0,n).map(t=>`<button class="chip" data-q="${t.replace(/"/g,'&quot;')}">${t}</button>`).join('')}</div>`; }
-document.addEventListener('click',e=>{ const c=e.target.closest('.chip[data-q]'); if(!c) return; if(S.mode==='citizen'){ go('kakao'); $('#kq').value=c.dataset.q; $('#kform').requestSubmit(); } else { if(S.mode==='home') setMode('staff'); document.body.dataset.chat='on'; $('#btnUnfold').hidden=true; $('#q').value=c.dataset.q; $('#form').requestSubmit(); } });
+document.addEventListener('click',e=>{ const c=e.target.closest('.chip[data-q]'); if(!c) return; if(S.mode==='home') setMode('staff'); document.body.dataset.chat='on'; $('#btnUnfold').hidden=true; $('#q').value=c.dataset.q; $('#form').requestSubmit(); });
 
 /* ── 초기화 ── */
 async function init(){
   const j=await (await fetch('data/index.json')).json(); S.docs=j.docs; S.meta=j.meta; S.idx=buildIndex(S.docs);
   const c=S.meta.counts; $('#navFoot').textContent=`자료 ${(c.law+c.minwon+c.data+c.internal).toLocaleString()}건 연결 · 기준 ${S.meta.built}`;
   $('#c1').textContent=(c.law+c.minwon+c.data).toLocaleString(); $('#c2').textContent=c.internal;
-  renderTabs(); renderNav(); renderLib(); renderAdminSrc(); renderDataSeg(); resetChat(); resetKakao(); updPill();
-  $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,8).replace('class="chips"','class="chips big"'); $('#kChips').innerHTML=chipsHtml(CHIPS.citizen,8);
+  renderTabs(); renderNav(); renderLib(); renderAdminSrc(); renderDataSeg(); resetChat(); updPill();
+  $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,8).replace('class="chips"','class="chips big"');
   $('#hDate').value=`${new Date().getFullYear()}. ${new Date().getMonth()+1}. ${new Date().getDate()}. / 정보통신과`;
   renderPaper(); go('home'); DalseongHwpx.load().catch(()=>{});
 }
 function renderTabs(){ $('#tabs').innerHTML=MODES.map(m=>`<button class="tab ${m.cls} ${S.mode===m.id?'on':''}" data-mode="${m.id}"><i>${m.icon}</i><span>${m.label}<br><small>${m.sub}</small></span></button>`).join(''); $$('.tab').forEach(b=>b.onclick=()=>setMode(b.dataset.mode)); }
 function renderNav(){ $('#nav').innerHTML=NAV[S.mode].map(n=>`<li data-view="${n.id}" class="${S.view===n.id?'on':''}${n.soon?' soon':''}"><i>${n.icon}</i><div><b>${n.label}</b><small>${n.sub}</small></div></li>`).join(''); $$('#nav li').forEach(li=>li.onclick=()=>{ if(!li.classList.contains('soon')) go(li.dataset.view); }); }
-function setMode(m){ S.mode=m; document.body.dataset.mode=m; renderTabs(); go(NAV[m][0].id); $('#dataTitle').textContent=m==='citizen'?'시설 찾기':'데이터 조회'; }
-function go(v){ S.view=v; document.body.dataset.view=v; $('#main').scrollTop=0; $$('.view').forEach(s=>s.classList.toggle('on',s.dataset.view===v)); renderNav(); if(v==='data') renderData(); if(v==='home') renderHome(); if(v==='guide') $('#guideChips').innerHTML=chipsHtml([...CHIPS.staff.slice(0,5),...CHIPS.citizen.slice(0,3)],8); if(v==='news') renderNews(); if(v==='stats'){ renderUsage(); renderStats(); } if(v==='model') $('#adminModel').textContent=(S.key&&!S.offline)?S.model+' (Anthropic API, 브라우저 직접 호출 — 시연)':'오프라인 시연 모드(검색 결과 기반)'; if(v==='doc') renderPaper(); }
+function setMode(m){ S.mode=m; document.body.dataset.mode=m; renderTabs(); go(NAV[m][0].id);  }
+function go(v){ S.view=v; document.body.dataset.view=v; $('#main').scrollTop=0; $$('.view').forEach(s=>s.classList.toggle('on',s.dataset.view===v)); renderNav(); if(v==='data') renderData(); if(v==='home') renderHome(); if(v==='guide') $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); if(v==='news') renderNews(); if(v==='stats'){ renderUsage(); renderStats(); } if(v==='model') $('#adminModel').textContent=(S.key&&!S.offline)?S.model+' (Anthropic API, 브라우저 직접 호출 — 시연)':'오프라인 시연 모드(검색 결과 기반)'; if(v==='doc') renderPaper(); }
 
 /* ── 홈 대시보드 ── */
 document.addEventListener('click',e=>{ const g=e.target.closest('[data-go]'); if(!g) return; const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });
@@ -171,9 +163,9 @@ function renderHome(){
   if(VIDEO_FILE){ P.innerHTML=`<video src="${VIDEO_FILE}" poster="assets/intro_poster.jpg" controls playsinline preload="metadata" controlsList="nodownload noplaybackrate" disablePictureInPicture></video>`; $('#videoNote').textContent='34초'; }
   else if(VIDEO_ID){ P.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${VIDEO_ID}?rel=0" title="달성On 안내 영상" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`; $('#videoNote').textContent='34초 · 유튜브'; }
   // 기능 바로가기
-  const F=[['staff:qa','💬','AI 질의응답','근거 조문과 함께'],['staff:doc','📄','한글 문서 생성','군 서식 hwpx ★'],['staff:data','📊','데이터 조회','읍·면별 집계'],['staff:lib','📚','자료함','3층 구조'],['citizen:kakao','📱','카카오 민원안내','군민 채널'],['admin:stats','🛠','관리자','통계 · 갱신 · 모델']];
+  const F=[['staff:qa','💬','AI 질의응답','근거 조문과 함께'],['staff:doc','📄','한글 문서 생성','군 서식 hwpx ★'],['staff:data','📊','데이터 조회','읍·면별 집계'],['staff:lib','📚','자료함','3층 구조'],['home:guide','📖','이용 안내','3단계 시작하기'],['admin:stats','🛠','관리자','통계 · 갱신 · 모델']];
   $('#homeFeatures').innerHTML=F.map(([g,i,b,s])=>`<div class="fc link" data-go="${g}"><i>${i}</i><b>${b}</b><small>${s}</small></div>`).join('');
-  $('#diffGrid').innerHTML=[['① 문서 산출','답변을 달성군 서식 한글(hwpx)로 즉시 생성 — 타 도구는 텍스트만'],['② 운영 환경','업무망 자체 서버 · 내부자료 활용 (구글 개인 도구·인터넷망 ✗)'],['③ 지속성','개인 계정이 아닌 군 정보시스템 — 인사이동에도 유지'],['④ 자료 규모','제한 없음 (NotebookLM 50개 · Gem 10개 ✗) · 창구 하나'],['⑤ 군민 채널','같은 엔진으로 카카오 민원안내 · 공개자료만']].map(([b,s])=>`<div class="dg"><b>${b}</b><small>${s}</small></div>`).join('');
+  $('#diffGrid').innerHTML=[['① 문서 산출','답변을 달성군 서식 한글(hwpx)로 즉시 생성 — 타 도구는 텍스트만'],['② 운영 환경','업무망 자체 서버 · 내부자료 활용 (구글 개인 도구·인터넷망 ✗)'],['③ 지속성','개인 계정이 아닌 군 정보시스템 — 인사이동에도 유지'],['④ 자료 규모','제한 없음 (NotebookLM 50개 · Gem 10개 ✗) · 창구 하나'],['⑤ 범용 AI','자료 밖 질문도 일반 생성형 AI처럼 답변 · 개인 유료 구독 불필요']].map(([b,s])=>`<div class="dg"><b>${b}</b><small>${s}</small></div>`).join('');
 }
 /* 관리자 › 이용 통계·자료 현황 (KPI · 참조 순위 · 자료 구성 · 자치법규) */
 function renderUsage(){
@@ -195,7 +187,7 @@ function renderUsage(){
 
 const VIDEO_FILE='assets/intro.mp4';  // 사이트에 직접 넣은 영상(유튜브 오버레이 없음). 비우면 VIDEO_ID 유튜브 사용
 const VIDEO_ID='OVZoYQeUFIQ';  // 유튜브 영상 ID를 넣으면 안내 영상이 재생됨, 비우면 포스터 표시
-const NEWS=[['2026.09.10','공지','부군수 보고 시연 안내','시연 순서: ① 달성On 홈 → ② 직원용 질의응답·한글 파일 생성 → ③ 군민용 카카오 화면 → ④ 관리자 통계. 시연 중 질문은 예시 질문 버튼을 우선 사용해 주세요.'],['2026.09.09','공지','달성On 시연판 이용 안내','시연판은 예시 자료(민원안내 10건·내부지침 5건)를 포함합니다. 답변은 참고용이며 최종 판단은 담당자가 합니다. 문의: 정보통신과 053-668-2454'],['2026.09.09','기능','「달성군」 홈 대시보드 · 이용 안내 · 공지 화면 추가'],['2026.09.09','기능','직원용/군민용/관리자 3개 채널 구조로 개편, 우측 AI 대화 패널'],['2026.09.09','기능','한글 문서 생성 화면(문서 종류 · 서식 미리보기) 신설'],['2026.09.09','자료','민원안내 10건(예시) · 내부지침 5건(예시) 등록'],['2026.09.08','자료','2026.7.10 공포 조례·규칙 7건 색인(24개 조문·별표)'],['2026.09.08','자료','공공데이터 6종 1,107행 연결 (경로당·판매소·도서관·대형폐기물·봉투가격·무료급식소)'],['2026.09.08','기능','달성On 시연판 최초 공개']];
+const NEWS=[['2026.09.10','공지','부군수 보고 시연 안내','시연 순서: ① 달성On 홈 → ② 직원용 질의응답·한글 파일 생성 → ③ 관리자 통계. 시연 중 질문은 예시 질문 버튼을 우선 사용해 주세요.'],['2026.09.09','공지','달성On 시연판 이용 안내','시연판은 예시 자료(민원안내 10건·내부지침 5건)를 포함합니다. 답변은 참고용이며 최종 판단은 담당자가 합니다. 문의: 정보통신과 053-668-2454'],['2026.09.09','기능','「달성군」 홈 대시보드 · 이용 안내 · 공지 화면 추가'],['2026.09.09','기능','달성On/직원용/관리자 3개 탭 구조로 개편, 우측 AI 대화 패널'],['2026.09.09','기능','한글 문서 생성 화면(문서 종류 · 서식 미리보기) 신설'],['2026.09.09','자료','민원안내 10건(예시) · 내부지침 5건(예시) 등록'],['2026.09.08','자료','2026.7.10 공포 조례·규칙 7건 색인(24개 조문·별표)'],['2026.09.08','자료','공공데이터 6종 1,107행 연결 (경로당·판매소·도서관·대형폐기물·봉투가격·무료급식소)'],['2026.09.08','기능','달성On 시연판 최초 공개']];
 function renderNews(){ $('#newsList').innerHTML=NEWS.map(([d,t,s])=>`<li><span class="d">${d}</span><span class="t">${t}</span>${s}</li>`).join(''); }
 
 /* ── 우측 AI 대화 ── */
@@ -290,31 +282,6 @@ function renderData(){
   const list=rows.filter(r=>!q||(r.title+r.text).toLowerCase().includes(q)).slice(0,200);
   $('#dsListTitle').textContent=`${src} — ${list.length.toLocaleString()}건${rows.length>200&&!q?' (상위 200)':''}`;
   $('#dsTbl').innerHTML='<tr><th>명칭</th><th>내용</th></tr>'+list.map(r=>`<tr><td><b>${r.title}</b></td><td><small>${r.text.replace(/^[^—]*— /,'')}</small></td></tr>`).join('');
-}
-
-/* ── 군민용 카카오 ── */
-const KQUICK=['대형폐기물 배출','전입신고','출산지원금','종량제봉투 가격','경로당 찾기','도서관 시간','신고·접수'];
-function resetKakao(){ S.khist=[]; $('#kmsgs').innerHTML=''; kmsg('bot','안녕하세요! 달성군 민원안내 챗봇입니다 😊\n민원 절차·필요 서류·수수료, 경로당·도서관·종량제봉투 판매소 위치를 안내해 드려요.\n\n아래 버튼을 누르거나 궁금한 점을 입력해 주세요.'); const el=$('#kquick'); el.innerHTML=''; KQUICK.forEach(t=>{const b=document.createElement('button'); b.textContent=t; b.onclick=()=>{$('#kq').value=t; $('#kform').requestSubmit();}; el.appendChild(b);}); renderEv($('#kev'),[]); }
-function kmsg(who,text){ const r=document.createElement('div'); r.className='k-row '+(who==='me'?'me':''); const now=new Date(); const tm=`${now.getHours()<12?'오전':'오후'} ${now.getHours()%12||12}:${String(now.getMinutes()).padStart(2,'0')}`;
-  r.innerHTML=who==='me'?`<div class="k-bub"></div><span class="k-time">${tm}</span>`:`<div class="k-av">달성</div><div><div class="k-name">달성군 민원안내</div><div class="k-bub"></div></div><span class="k-time">${tm}</span>`;
-  const b=r.querySelector('.k-bub'); b.textContent=text; $('#kmsgs').appendChild(r); $('#kmsgs').scrollTop=1e9; return b; }
-$('#kform').onsubmit=async e=>{ e.preventDefault(); const q=$('#kq').value.trim(); if(!q||S.busy) return; $('#kq').value=''; await kask(q); };
-async function kask(q){
-  S.busy=true; kmsg('me',q); S.stats.q++;
-  let hits=rerank(q,search(expand(q),{filter:d=>d.access==='public',k:6})); const ci=countIntent(q); if(!ci&&!relevant(q,hits)) hits=[];
-  if(ci){ const agg=S.docs.find(d=>d.source===ci.ds&&d.title.endsWith('읍면별 집계')); if(agg&&!hits.some(h=>h.doc===agg)) hits.unshift({doc:agg,score:99}); }
-  renderEv($('#kev'),hits); hits.forEach(h=>{S.stats.hits[h.doc.title]=(S.stats.hits[h.doc.title]||0)+1;}); saveHits();
-  const b=kmsg('bot',''); b.innerHTML='<span class="k-typing"><i></i><i></i><i></i></span>'; let text='';
-  try{ if(S.key&&!S.offline) text=await callModel('citizen',hits,q,S.khist,t=>{ b.textContent=t.replace(/\[\d+\]/g,''); }); else { await new Promise(r=>setTimeout(r,650)); text=offlineAnswer('citizen',hits,q).replace(/※ 오프라인.*$/m,'').replace('\n@@SUGGEST@@','').trim(); } }
-  catch(err){ text='죄송합니다, 잠시 후 다시 시도해 주세요. ('+err.message.slice(0,60)+')'; }
-  const rag=/\[\d+\]/.test(text); S.stats[rag?'cite':'gen']++;
-  b.textContent=text.replace(/\[\d+\]/g,'').replace(/\n{3,}/g,'\n\n');
-  const top=hits[0]?.doc; const card=hits.filter((h,i)=>i===0||h.score>=hits[0].score*.9).slice(0,2).map(h=>`<div>${h.doc.title.replace('대구광역시 달성군 ','')}</div>`).join('');
-  if(!hits.length||!rag) b.insertAdjacentHTML('beforeend',chipsHtml(CHIPS.citizen,4));
-  if(rag&&card) b.insertAdjacentHTML('beforeend',`<div class="k-card"><b>📎 근거</b>${card}</div>`);
-  let link=null; if(top?.type==='minwon') link={href:top.link||'https://www.gov.kr',label:'정부24·국민신문고에서 접수하기'}; else if(top?.type==='data'&&/(경로당|판매소|도서관)/.test(top.source)&&!top.title.endsWith('읍면별 집계')) link={href:'https://map.kakao.com/?q='+encodeURIComponent('달성군 '+top.title),label:'카카오맵에서 위치 보기'};
-  if(link) b.insertAdjacentHTML('beforeend',`<a class="k-link" href="${link.href}" target="_blank" rel="noopener">${link.label}</a>`);
-  S.khist.push({role:'user',content:q},{role:'assistant',content:text}); S.busy=false; $('#kmsgs').scrollTop=1e9;
 }
 
 /* ── 관리자 ── */
