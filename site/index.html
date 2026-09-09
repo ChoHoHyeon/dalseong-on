@@ -33,14 +33,15 @@
     <!-- 홈 · 대시보드 -->
     <section class="view" data-view="home">
       <div class="hero">
-        <div><small id="heroDate"></small><h2>달성군 AI 업무비서 <b>달성On</b></h2><p>달성군 자료를 근거로 답하고, 답변을 <b>달성군 서식 한글 파일</b>로 만들어 주는 직원·군민 공용 AI 창구입니다.</p>
-          <div class="row rw"><button class="primary" data-go="staff:qa">💬 질문하기</button><button class="ghost" data-go="staff:doc">📄 한글 문서 만들기</button><button class="ghost" data-go="staff:data">📊 데이터 조회</button><button class="ghost" data-go="citizen:kakao">📱 군민 채널 보기</button></div>
+        <div><small id="heroDate"></small><h2>달성군 AI 업무비서 <b>달성On</b></h2>
+          <p class="lead">달성군 조례·지침·공공데이터를 근거로 답하고, 그 답을 <b>달성군 서식 한글 파일</b>로 바로 만들어 주는 AI 창구</p>
+          <p class="sub">직원은 업무망에서, 군민은 카카오톡에서 · 자료에 없으면 AI가 직접 답변 · 자료 갱신 한 번이면 전 직원 반영</p>
         </div>
         <div class="hero-art" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div><div class="flow"><span>질문</span><i>→</i><span>달성군 자료 검색</span><i>→</i><span>근거 인용 답변</span><i>→</i><span class="hl">한글 파일 ★</span></div></div>
       </div>
       <div class="kpis five" id="homeKpis"></div>
       <div class="home-grid">
-        <div class="card"><h4>읍·면별 생활 시설 현황 <small>공공데이터 · 2026.9.8 기준</small></h4><div id="chartEup"></div></div>
+        <div class="card"><h4>많이 참조된 자료 <small id="topNote">이용 누적 · 이 브라우저 기준</small></h4><ol class="rank" id="topUsed"></ol></div>
         <div class="card"><h4>연결 자료 구성 <small>출처 기준 · 색인 1,146건</small></h4><div id="chartDonut"></div></div>
         <div class="card"><h4>최근 공포 자치법규 <small>2026.7.10</small></h4><ul class="timeline" id="lawList"></ul></div>
       </div>
@@ -59,6 +60,33 @@
         <div class="arch-col"><h5>제공</h5><div class="ab g"><b>직원</b><small>조례·지침 근거 답변 · 품의서·보고서 한글 파일 · 읍면별 데이터</small></div><div class="ab y"><b>군민</b><small>민원 절차·서류·수수료 · 시설 위치 · 접수 링크(정부24·국민신문고)</small></div><div class="ab p"><b>관리자</b><small>자료 한 번 갱신 → 전 직원 반영 · 부서별 이용통계</small></div></div>
       </div>
       <div class="card"><h4>타 지자체 대비 차별점</h4><div class="diff-grid" id="diffGrid"></div></div>
+    </section>
+
+    <!-- 홈 · 이용 안내 -->
+    <section class="view" data-view="guide">
+      <div class="vh"><h2>이용 안내</h2><p>처음 쓰는 직원·군민을 위한 3단계 안내입니다.</p></div>
+      <div class="guide-grid">
+        <div class="card"><h4>직원 (업무망)</h4><ol class="steps"><li><b>새올 배너 클릭</b><small>별도 설치·가입 없이 업무망 PC에서 접속</small></li><li><b>업무 질문 입력</b><small>"체육시설 사용료 감면 대상은?" 처럼 평소 말로</small></li><li><b>근거 확인 → 한글 파일</b><small>조문 번호를 눌러 원문 확인, [한글 파일로]를 누르면 군 서식 hwpx 다운로드</small></li></ol></div>
+        <div class="card"><h4>군민 (카카오톡)</h4><ol class="steps"><li><b>카카오톡에서 "달성군" 채널 추가</b><small>친구 추가 후 채팅 시작</small></li><li><b>민원·시설 질문</b><small>"대형폐기물 어떻게 버려요?", "현풍읍 경로당 위치"</small></li><li><b>안내 확인 → 접수 링크</b><small>절차·서류·수수료 안내 후 정부24·국민신문고로 연결(개인정보 입력 없음)</small></li></ol></div>
+        <div class="card"><h4>이런 질문에 답합니다</h4><div class="chips" id="guideChips"></div><p class="hint" style="margin-top:10px">자료에 없는 질문은 <b>AI 일반 답변</b>으로 표시되어 근거 인용 답변과 구분됩니다. 답변은 참고용이며 최종 판단은 담당자가 합니다.</p></div>
+        <div class="card"><h4>자료 범위</h4><table class="tbl"><tr><th>층</th><th>자료</th><th>대상</th></tr><tr><td>1층</td><td>자치법규 · 민원안내 · 공공데이터</td><td>직원 · 군민</td></tr><tr><td>2층</td><td>복무 · 회계 · 계약 · 개인정보 · 보안 지침</td><td>직원</td></tr><tr><td>3층</td><td>온나라 문서 · 사업계획 (2단계)</td><td>권한별</td></tr></table></div>
+      </div>
+    </section>
+
+    <!-- 홈 · 공지·업데이트 -->
+    <section class="view" data-view="news">
+      <div class="vh"><h2>공지 · 업데이트</h2><p>자료 갱신과 기능 변경 이력입니다. 실제 운영 시 관리자 화면에서 등록합니다.</p></div>
+      <div class="card"><ul class="timeline big" id="newsList"></ul></div>
+    </section>
+
+    <!-- 홈 · 문의·지원 -->
+    <section class="view" data-view="contact">
+      <div class="vh"><h2>문의 · 지원</h2><p>달성On 운영·자료 등록·오류 신고는 정보통신과로 연락 주세요.</p></div>
+      <div class="contact-grid">
+        <div class="card"><h4>운영 부서</h4><b class="big">달성군 정보통신과</b><p class="hint">데이터기반행정 · 공공데이터 담당<br>☎ 053-668-2454 · ✉ 98turtle@korea.kr</p></div>
+        <div class="card"><h4>자료 등록 요청</h4><p class="hint">부서 지침·서식·FAQ를 달성On에 올리고 싶으면 파일과 공개 범위(직원/군민)를 알려주세요. 등록 후 전 직원 답변에 즉시 반영됩니다.</p></div>
+        <div class="card"><h4>오류·개선 제안</h4><p class="hint">잘못된 답변은 [근거 보기]에서 조문을 확인한 뒤 화면 캡처와 함께 알려주세요. 시연판은 예시 자료(민원안내·내부지침)를 포함합니다.</p></div>
+      </div>
     </section>
 
     <!-- 직원 · 질의응답(근거) -->
