@@ -224,3 +224,21 @@ b.big{font-size:18px;display:block;margin-bottom:6px}
 .player .poster b{font-size:18px} .player .poster small{color:rgba(255,255,255,.8);font-size:12.5px}
 .player .chap{position:absolute;left:14px;bottom:12px;display:flex;gap:6px;flex-wrap:wrap} .player .chap span{font-size:11px;background:rgba(0,0,0,.35);padding:3px 9px;border-radius:999px;backdrop-filter:blur(4px)}
 @media (max-width:1250px){.portal-grid{grid-template-columns:1fr}}
+
+/* ── 홈: 질문이 곧 첫 화면 ── */
+.hero.ask{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:360px;padding:36px 28px 30px;gap:0;background:linear-gradient(180deg,rgba(12,24,70,.38),rgba(12,24,70,.50)),url(assets/hero.jpg) center 45%/cover no-repeat}
+.hero.ask::after{display:none}
+.hero.ask small{font-size:12.5px;color:rgba(255,255,255,.8)}
+.hero.ask h2{font-size:34px;margin:6px 0 8px;text-shadow:0 2px 14px rgba(0,0,0,.5)}
+.hero.ask p.lead{max-width:740px;margin:0 auto 20px;font-size:15.5px;font-weight:500;color:rgba(255,255,255,.95)}
+.askbox{display:flex;align-items:center;gap:10px;width:min(760px,100%);background:#fff;border-radius:18px;padding:7px 7px 7px 18px;box-shadow:0 14px 40px rgba(0,0,0,.28)}
+.askbox .ti{color:var(--acc);font-size:16px} .askbox input{flex:1;border:0;outline:0;background:none;font:inherit;font-size:16px;color:#1c2333;min-width:0} .askbox input::placeholder{color:#8a94a6}
+.askbox button{border:0;font:inherit;font-weight:700;font-size:14px;color:#fff;background:linear-gradient(135deg,var(--acc),#3c6fe0);padding:11px 20px;border-radius:13px;cursor:pointer;white-space:nowrap} .askbox button:hover{filter:brightness(1.08)}
+.ask-ex{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:14px 0 0}
+.ask-ex .chip{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.4);color:#fff;font-size:13px;backdrop-filter:blur(6px)} .ask-ex .chip:hover{background:rgba(255,255,255,.28)}
+.ask-steps{margin-top:18px;font-size:12.5px;color:rgba(255,255,255,.85);display:flex;gap:8px;align-items:center;text-shadow:0 1px 6px rgba(0,0,0,.5)} .ask-steps i{font-style:normal;opacity:.7}
+.hero.ask .hero-cap{position:absolute;right:16px;bottom:12px}
+.home-strip{display:grid;grid-template-columns:400px 1fr;gap:14px;margin-top:14px}
+.home-strip .card{padding:14px 16px} .home-strip .card h4{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:13.5px} .home-strip .card h4 small{color:var(--mut);font-weight:500} .home-strip .card h4 .more{margin-left:auto}
+body[data-view=home] .top-c{visibility:hidden}
+@media (max-width:1250px){.home-strip{grid-template-columns:1fr}}

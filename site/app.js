@@ -172,14 +172,12 @@ const PAL=['#2f6fed','#0fa876','#d98a00','#a04ccf'];
 function renderHome(){
   $('#heroDate').textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'})+' · 정보통신과 시연판';
   const cls={'공지':'notice','자료':'data','기능':''};
-  $('#boardList').innerHTML=NEWS.slice(0,5).map(([d,t,s,body],i)=>`<li class="${i<2?'new':''}"><span class="t ${cls[t]||''}">${t}</span><b>${s}</b><span class="d">${d}</span><div class="body">${body||s}</div></li>`).join('');
+  $('#boardList').innerHTML=NEWS.slice(0,3).map(([d,t,s,body],i)=>`<li class="${i<2?'new':''}"><span class="t ${cls[t]||''}">${t}</span><b>${s}</b><span class="d">${d}</span><div class="body">${body||s}</div></li>`).join('');
   $$('#boardList li').forEach(li=>li.onclick=()=>li.classList.toggle('open'));
   const P=$('#player');
   if(VIDEO_FILE){ P.innerHTML=`<video src="${VIDEO_FILE}" poster="assets/intro_poster.jpg" controls playsinline preload="metadata" controlsList="nodownload noplaybackrate" disablePictureInPicture></video>`; $('#videoNote').textContent='29초'; }
   else if(VIDEO_ID){ P.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${VIDEO_ID}?rel=0" title="달성On 안내 영상" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`; $('#videoNote').textContent='29초 · 유튜브'; }
-  // 기능 바로가기
-  const F=[['staff:qa','💬','AI 질의응답','근거 조문과 함께'],['staff:doc','📄','한글 문서 생성','군 서식 hwpx ★'],['staff:data','📊','데이터 조회','읍·면별 집계'],['staff:lib','📚','자료함','3층 구조'],['home:guide','📖','이용 안내','3단계 시작하기'],['admin:stats','🛠','관리자','통계 · 갱신 · 모델']];
-  $('#homeFeatures').innerHTML=F.map(([g,i,b,s])=>`<div class="fc link" data-go="${g}"><i>${i}</i><b>${b}</b><small>${s}</small></div>`).join('');
+  $('#homeEx').innerHTML=chipsHtml(CHIPS.staff,3);
   $('#diffGrid').innerHTML=[['① 문서 산출','답변을 달성군 서식 한글(hwpx)로 즉시 생성 — 타 도구는 텍스트만'],['② 운영 환경','업무망 자체 서버 · 내부자료 활용 (구글 개인 도구·인터넷망 ✗)'],['③ 지속성','개인 계정이 아닌 군 정보시스템 — 인사이동에도 유지'],['④ 자료 규모','제한 없음 (NotebookLM 50개 · Gem 10개 ✗) · 창구 하나'],['⑤ 범용 AI','자료 밖 질문도 일반 생성형 AI처럼 답변 · 개인 유료 구독 불필요']].map(([b,s])=>`<div class="dg"><b>${b}</b><small>${s}</small></div>`).join('');
 }
 /* 관리자 › 이용 통계·자료 현황 (KPI · 참조 순위 · 자료 구성 · 자치법규) */
@@ -309,6 +307,7 @@ $('#apiKey').oninput=e=>{ S.key=e.target.value.trim(); updPill(); }; $('#model')
 
 /* ── 기타 ── */
 $('.brand').onclick=()=>{ setMode('home'); go('home'); };
+$('#homeAsk').onsubmit=e=>{ e.preventDefault(); const q=$('#homeQ').value.trim(); if(!q) return; $('#homeQ').value=''; setMode('staff'); go('qa'); document.body.dataset.chat='on'; $('#btnUnfold').hidden=true; $('#q').value=q; $('#form').requestSubmit(); };
 $('#topAsk').onsubmit=e=>{ e.preventDefault(); const q=$('#topQ').value.trim(); if(!q) return; $('#topQ').value=''; if(S.mode!=='staff') setMode('staff'); go('qa'); document.body.dataset.chat='on'; $('#btnUnfold').hidden=true; $('#q').value=q; $('#form').requestSubmit(); };
 $('#btnSet').onclick=()=>$('#mSet').hidden=false; $('#goModel').onclick=()=>{ $('#mSet').hidden=true; setMode('admin'); go('model'); };
 $$('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modal').hidden=true); $$('.modal').forEach(m=>m.onclick=e=>{ if(e.target===m&&m.id!=='mIntro') m.hidden=true; });
