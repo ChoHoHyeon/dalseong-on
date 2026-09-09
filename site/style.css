@@ -227,7 +227,7 @@ b.big{font-size:18px;display:block;margin-bottom:6px}
 
 
 
-.view.on+.view.on{margin-top:26px;padding-top:22px;border-top:1px dashed var(--line)}
+.main.composite .view{min-height:auto;flex:none} .main.composite .view.on+.view.on{margin-top:22px;padding-top:22px;border-top:1px dashed var(--line)} .main.composite .view.on+.view.on .vh h2{font-size:20px}
 
 /* ── 상단 슬로건(군 CI 원본) ── */
 .top-c.slogan{background:none;border:0;box-shadow:none;height:auto;padding:4px 10px;justify-content:center;cursor:pointer;border-radius:12px} .top-c.slogan:hover{background:rgba(47,111,237,.08)} .top-c.slogan img{height:30px;width:auto;display:block}

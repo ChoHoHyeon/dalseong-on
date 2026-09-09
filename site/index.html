@@ -24,7 +24,7 @@
 <div class="wrap">
   <!-- ═══════ 좌측: 통합 메뉴 (달성On · 직원용 · 관리자) ═══════ -->
   <aside class="nav"><ul id="nav"></ul>
-    <div class="nav-foot"><div class="pill" id="pillModel"><span class="dot"></span><span id="pillTxt">오프라인 시연 모드</span></div><small id="navFoot">자료 1,146건 연결</small><small class="nf2">문의 정보통신과 ☎ 668-2454</small></div>
+    <div class="nav-foot"><small id="navFoot">자료 1,146건 연결</small><small class="nf2">문의 정보통신과 ☎ 668-2454</small></div>
   </aside>
 
   <!-- ═══════ 메인: 기능 화면 ═══════ -->
@@ -45,7 +45,7 @@
       </div>
       <div class="home-usage">
       <div class="kpis five" id="homeKpis"></div>
-      <div class="home-grid">
+      <div class="home-grid" hidden>
         <div class="card"><h4>많이 참조된 자료 <small id="topNote">이용 누적 · 이 브라우저 기준</small></h4><ol class="rank" id="topUsed"></ol></div>
         <div class="card"><h4>연결 자료 구성 <small>출처 기준 · 색인 1,146건</small></h4><div id="chartDonut"></div></div>
         <div class="card"><h4>최근 공포 자치법규 <small>2026.7.10</small></h4><ul class="timeline" id="lawList"></ul></div>
@@ -104,7 +104,7 @@
         <div class="chips big on-chips" id="qaChips"></div>
         <p class="foot">답변은 참고용 · 최종 판단은 담당자 · 자료 외부 전송 없음(업무망 내 처리 개념)</p>
       </div>
-      <div hidden id="legacy"><div id="qaEmpty"></div><div id="qaRes"><b id="qaQ"></b><span id="qaTag"></span><small id="evNote"></small><div id="ev"></div><button id="qaToDoc"></button><button id="qaCopy"></button></div><button id="btnClear"></button><button id="btnFold"></button><small id="chatSub"></small></div>
+      <div hidden id="legacy"><div id="pillModel"><span id="pillTxt"></span></div><div id="qaEmpty"></div><div id="qaRes"><b id="qaQ"></b><span id="qaTag"></span><small id="evNote"></small><div id="ev"></div><button id="qaToDoc"></button><button id="qaCopy"></button></div><button id="btnClear"></button><button id="btnFold"></button><small id="chatSub"></small></div>
     </section>
 
     <!-- 직원 · 한글 문서 생성 -->
