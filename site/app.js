@@ -5,7 +5,7 @@
 (function(){
 'use strict';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const S={ mode:'staff', view:'qa', ds:0, docs:[], meta:null, idx:null, layers:{1:true,2:true}, key:'', model:'claude-sonnet-4-5', offline:false,
+const S={ mode:'home', view:'home', ds:0, docs:[], meta:null, idx:null, layers:{1:true,2:true}, key:'', model:'claude-sonnet-4-5', offline:false,
           hist:[], lastAnswer:null, lastCites:[], lastQ:'', stats:{q:0,cite:0,gen:0,hwpx:0,hits:{}}, busy:false, khist:[] };
 
 /* ───────── 1. 검색 색인 (BM25, 어절 + 문자 2-gram) ───────── */
@@ -104,11 +104,16 @@ function offlineAnswer(mode,hits,q){
  * 구조: 상단 대분류 탭(MODES) → 좌측 기능 메뉴(NAV) → 메인(view) + 우측 AI 대화
  * 기능 추가 = NAV 배열에 항목 추가 + index.html에 <section class="view" data-view="id"> 추가 + render 함수 등록 */
 const MODES=[
+  {id:'home',   icon:'🏠', label:'홈', sub:'한눈에 보기', cls:''},
   {id:'staff',  icon:'🏛', label:'직원용 달성On', sub:'업무망 · 새올 배너', cls:''},
   {id:'citizen',icon:'💬', label:'군민용 카카오 채널', sub:'민원안내 · 공개자료만', cls:'citizen'},
   {id:'admin',  icon:'🛠', label:'관리자', sub:'정보통신과', cls:'admin'},
 ];
 const NAV={
+  home:[
+    {id:'home', icon:'🏠', label:'대시보드', sub:'현황 · 바로가기'},
+    {id:'flow', icon:'🧭', label:'서비스 구성', sub:'구조 · 차별점'},
+  ],
   staff:[
     {id:'qa',   icon:'💬', label:'AI 질의응답', sub:'근거 조문과 함께 답변'},
     {id:'doc',  icon:'📄', label:'한글 문서 생성', sub:'군 서식 hwpx ★'},
@@ -132,7 +137,7 @@ const DATASETS=[['경로당 현황','경로당'],['종량제봉투 판매소','�
 function typeName(t){ return {law:'자치법규',minwon:'민원안내',data:'공공데이터',internal:'내부지침'}[t]||t; }
 function toast(m){ let t=$('#toast'); if(!t){ t=document.createElement('div'); t.id='toast'; document.body.appendChild(t);} t.textContent=m; t.hidden=false; clearTimeout(t._t); t._t=setTimeout(()=>t.hidden=true,2600); }
 function chipsHtml(list,n){ return `<div class="chips">${list.slice(0,n).map(t=>`<button class="chip" data-q="${t.replace(/"/g,'&quot;')}">${t}</button>`).join('')}</div>`; }
-document.addEventListener('click',e=>{ const c=e.target.closest('.chip[data-q]'); if(!c) return; if(S.mode==='citizen'){ go('kakao'); $('#kq').value=c.dataset.q; $('#kform').requestSubmit(); } else { document.body.dataset.chat='on'; $('#btnUnfold').hidden=true; $('#q').value=c.dataset.q; $('#form').requestSubmit(); } });
+document.addEventListener('click',e=>{ const c=e.target.closest('.chip[data-q]'); if(!c) return; if(S.mode==='citizen'){ go('kakao'); $('#kq').value=c.dataset.q; $('#kform').requestSubmit(); } else { if(S.mode==='home') setMode('staff'); document.body.dataset.chat='on'; $('#btnUnfold').hidden=true; $('#q').value=c.dataset.q; $('#form').requestSubmit(); } });
 
 /* ── 초기화 ── */
 async function init(){
@@ -142,12 +147,40 @@ async function init(){
   renderTabs(); renderNav(); renderLib(); renderAdminSrc(); renderDataSeg(); resetChat(); resetKakao(); updPill();
   $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,8).replace('class="chips"','class="chips big"'); $('#kChips').innerHTML=chipsHtml(CHIPS.citizen,8);
   $('#hDate').value=`${new Date().getFullYear()}. ${new Date().getMonth()+1}. ${new Date().getDate()}. / 정보통신과`;
-  renderPaper(); DalseongHwpx.load().catch(()=>{});
+  renderPaper(); go('home'); DalseongHwpx.load().catch(()=>{});
 }
 function renderTabs(){ $('#tabs').innerHTML=MODES.map(m=>`<button class="tab ${m.cls} ${S.mode===m.id?'on':''}" data-mode="${m.id}"><i>${m.icon}</i><span>${m.label}<br><small>${m.sub}</small></span></button>`).join(''); $$('.tab').forEach(b=>b.onclick=()=>setMode(b.dataset.mode)); }
 function renderNav(){ $('#nav').innerHTML=NAV[S.mode].map(n=>`<li data-view="${n.id}" class="${S.view===n.id?'on':''}${n.soon?' soon':''}"><i>${n.icon}</i><div><b>${n.label}</b><small>${n.sub}</small></div></li>`).join(''); $$('#nav li').forEach(li=>li.onclick=()=>{ if(!li.classList.contains('soon')) go(li.dataset.view); }); }
 function setMode(m){ S.mode=m; document.body.dataset.mode=m; renderTabs(); go(NAV[m][0].id); $('#dataTitle').textContent=m==='citizen'?'시설 찾기':'데이터 조회'; }
-function go(v){ S.view=v; document.body.dataset.view=v; $('#main').scrollTop=0; $$('.view').forEach(s=>s.classList.toggle('on',s.dataset.view===v)); renderNav(); if(v==='data') renderData(); if(v==='stats') renderStats(); if(v==='model') $('#adminModel').textContent=(S.key&&!S.offline)?S.model+' (Anthropic API, 브라우저 직접 호출 — 시연)':'오프라인 시연 모드(검색 결과 기반)'; if(v==='doc') renderPaper(); }
+function go(v){ S.view=v; document.body.dataset.view=v; $('#main').scrollTop=0; $$('.view').forEach(s=>s.classList.toggle('on',s.dataset.view===v)); renderNav(); if(v==='data') renderData(); if(v==='home') renderHome(); if(v==='stats') renderStats(); if(v==='model') $('#adminModel').textContent=(S.key&&!S.offline)?S.model+' (Anthropic API, 브라우저 직접 호출 — 시연)':'오프라인 시연 모드(검색 결과 기반)'; if(v==='doc') renderPaper(); }
+
+/* ── 홈 대시보드 ── */
+document.addEventListener('click',e=>{ const g=e.target.closest('[data-go]'); if(!g) return; const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });
+const PAL=['#2f6fed','#0fa876','#d98a00','#a04ccf'];
+function renderHome(){
+  const c=S.meta.counts, total=c.law+c.minwon+c.data+c.internal;
+  $('#heroDate').textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'})+' · 정보통신과 시연판';
+  $('#homeKpis').innerHTML=[['연결 자료',total.toLocaleString()+'건','4개 유형 · 3층 구조'],['자치법규',S.meta.law_sources.length+'건',c.law+'개 조문·별표'],['공공데이터',S.meta.datasets.length+'종',c.data.toLocaleString()+'행'],['민원 안내',c.minwon+'건','예시 · 홈페이지 기준'],['이번 세션',S.stats.q+'건 질의',`근거 인용 ${S.stats.cite} · 한글 ${S.stats.hwpx}`]].map(([a,b,s])=>`<div class="kpi"><small>${a}</small><b>${b}</b><span class="sub">${s}</span></div>`).join('');
+  // 읍면별 시설 현황 (그룹 막대)
+  const series=[['경로당 현황','경로당'],['종량제봉투 판매소','판매소'],['도서관','도서관']];
+  const cnt={}; EUP.forEach(e=>cnt[e]=[0,0,0]); S.docs.forEach(d=>{ if(d.type!=='data'||!d.eup||!cnt[d.eup]) return; const i=series.findIndex(s=>s[0]===d.source); if(i>=0) cnt[d.eup][i]++; });
+  const eups=[...EUP].sort((x,y)=>cnt[y].reduce((p,q)=>p+q)-cnt[x].reduce((p,q)=>p+q)); const mx=Math.max(...eups.map(e=>Math.max(...cnt[e])));
+  const W=560,H=210,L=44,B=26,T=18,gw=(W-L-10)/eups.length,bw=(gw-10)/3; let svg=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="읍면별 시설 수">`;
+  [0,.5,1].forEach(f=>{ const y=T+(H-T-B)*(1-f); svg+=`<line class="grid" x1="${L}" x2="${W}" y1="${y}" y2="${y}"/><text class="mut" x="${L-6}" y="${y+4}" text-anchor="end">${Math.round(mx*f)}</text>`; });
+  eups.forEach((e,i)=>{ const x0=L+i*gw+5; cnt[e].forEach((v,k)=>{ const h=(H-T-B)*v/mx, x=x0+k*bw, y=H-B-h; svg+=`<rect x="${x}" y="${y}" width="${bw-2}" height="${h}" rx="3" fill="${PAL[k]}"><title>${e} ${series[k][1]} ${v}개소</title></rect>`; if(v>0) svg+=`<text x="${x+(bw-2)/2}" y="${y-3}" text-anchor="middle" font-size="9">${v}</text>`; }); svg+=`<text class="mut" x="${x0+(gw-10)/2}" y="${H-8}" text-anchor="middle">${e.slice(0,2)}</text>`; });
+  svg+='</svg>'; $('#chartEup').innerHTML=`<div class="legend">${series.map((s,k)=>`<span><i style="background:${PAL[k]}"></i>${s[1]}</span>`).join('')}</div>`+svg;
+  // 자료 구성 도넛 (출처 기준)
+  const parts=[['자치법규',S.meta.law_sources.length,c.law+'개 조문·별표'],['민원안내',c.minwon,'예시 안내'],['공공데이터',S.meta.datasets.length,c.data.toLocaleString()+'행'],['내부지침',c.internal,'직원 전용']]; const psum=parts.reduce((p,x)=>p+x[1],0); let acc=0; const R=54,cx=70,cy=70,circ=2*Math.PI*R;
+  let d=`<svg viewBox="0 0 140 140" role="img" aria-label="자료 출처 구성">`; parts.forEach(([n,v],k)=>{ const f=v/psum; d+=`<circle r="${R}" cx="${cx}" cy="${cy}" fill="none" stroke="${PAL[k]}" stroke-width="18" stroke-dasharray="${Math.max(0,f*circ-2)} ${circ}" stroke-dashoffset="${-acc*circ}" transform="rotate(-90 ${cx} ${cy})"><title>${n} ${v}건</title></circle>`; acc+=f; });
+  d+=`<text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="18" font-weight="700" fill="currentColor">${psum}</text><text x="${cx}" y="${cy+14}" text-anchor="middle" font-size="10" fill="currentColor" opacity=".6">출처</text></svg>`;
+  $('#chartDonut').innerHTML=`<div class="donut-wrap">${d}<ul>${parts.map(([n,v,s],k)=>`<li><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${PAL[k]};margin-right:6px"></i>${n}<br><small style="margin-left:16px">${s}</small></span><b>${v}건</b></li>`).join('')}</ul></div>`;
+  // 최근 자치법규
+  $('#lawList').innerHTML=S.meta.law_sources.map(s=>`<li><i></i><div>${s.replace('대구광역시 달성군 ','')}<small>${S.docs.filter(x=>x.source===s).length}개 조문·별표 색인</small></div></li>`).join('');
+  // 기능 바로가기
+  const F=[['staff:qa','💬','AI 질의응답','근거 조문과 함께'],['staff:doc','📄','한글 문서 생성','군 서식 hwpx ★'],['staff:data','📊','데이터 조회','읍·면별 집계'],['staff:lib','📚','자료함','3층 구조'],['citizen:kakao','📱','카카오 민원안내','군민 채널'],['admin:stats','🛠','관리자','통계 · 갱신 · 모델']];
+  $('#homeFeatures').innerHTML=F.map(([g,i,b,s])=>`<div class="fc link" data-go="${g}"><i>${i}</i><b>${b}</b><small>${s}</small></div>`).join('');
+  $('#diffGrid').innerHTML=[['① 문서 산출','답변을 달성군 서식 한글(hwpx)로 즉시 생성 — 타 도구는 텍스트만'],['② 운영 환경','업무망 자체 서버 · 내부자료 활용 (구글 개인 도구·인터넷망 ✗)'],['③ 지속성','개인 계정이 아닌 군 정보시스템 — 인사이동에도 유지'],['④ 자료 규모','제한 없음 (NotebookLM 50개 · Gem 10개 ✗) · 창구 하나'],['⑤ 군민 채널','같은 엔진으로 카카오 민원안내 · 공개자료만']].map(([b,s])=>`<div class="dg"><b>${b}</b><small>${s}</small></div>`).join('');
+}
 
 /* ── 우측 AI 대화 ── */
 function resetChat(){ S.hist=[]; S.lastAnswer=null; S.lastCites=[]; S.lastQ=''; $('#msgs').innerHTML=''; addMsg('ai',`안녕하세요, <b>달성On</b>입니다. 업무 질문을 입력하세요.\n자료에 있으면 근거 조문을 인용하고, 없으면 AI가 직접 답합니다.\n`+chipsHtml(CHIPS.staff,4),{html:true}); $('#qaRes').hidden=true; $('#qaEmpty').hidden=false; }
@@ -164,7 +197,7 @@ async function ask(q){
   let hits=rerank(q,search(expand(q),{filter,k:8})); const ci=countIntent(q); if(!ci&&!relevant(q,hits)) hits=[];
   if(ci){ const agg=S.docs.find(d=>d.source===ci.ds&&d.title.endsWith('읍면별 집계')); if(agg&&!hits.some(h=>h.doc===agg)) hits.unshift({doc:agg,score:99}); }
   S.lastCites=hits; S.lastQ=q; hits.forEach(h=>{S.stats.hits[h.doc.title]=(S.stats.hits[h.doc.title]||0)+1;});
-  if(S.mode==='staff'&&S.view!=='doc') go('qa'); renderEv($('#ev'),hits); $('#qaEmpty').hidden=true; $('#qaRes').hidden=false; $('#qaQ').textContent=q; $('#evNote').textContent=hits.length?`${hits.length}건 · 카드를 누르면 전문`:'검색된 근거 없음';
+  if(S.mode==='home') setMode('staff'); if(S.mode==='staff'&&S.view!=='doc') go('qa'); renderEv($('#ev'),hits); $('#qaEmpty').hidden=true; $('#qaRes').hidden=false; $('#qaQ').textContent=q; $('#evNote').textContent=hits.length?`${hits.length}건 · 카드를 누르면 전문`:'검색된 근거 없음';
   const b=addMsg('ai','<span class="typing"><i></i><i></i><i></i></span>',{html:true}); let text='';
   try{ if(S.key&&!S.offline){ text=await callModel('staff',hits,q,S.hist,t=>{ b.innerHTML=fmt(t); $('#msgs').scrollTop=1e9; }); } else { await new Promise(r=>setTimeout(r,600)); text=offlineAnswer('staff',hits,q); } }
   catch(err){ text='⚠ '+err.message+'\n관리자 › 모델 설정에서 API 키·모델을 확인하세요.'; }
