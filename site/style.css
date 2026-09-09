@@ -244,3 +244,6 @@ b.big{font-size:18px;display:block;margin-bottom:6px}
 body[data-view=home] .top-c{visibility:hidden}
 
 .view.on+.view.on{margin-top:26px;padding-top:22px;border-top:1px dashed var(--line)}
+
+/* 스크롤바: 휠·드래그는 그대로, 막대만 숨김 (본문·좌측·대화창) */
+.main,.nav ul,.msgs,.ev{scrollbar-width:none} .main::-webkit-scrollbar,.nav ul::-webkit-scrollbar,.msgs::-webkit-scrollbar,.ev::-webkit-scrollbar{display:none}
