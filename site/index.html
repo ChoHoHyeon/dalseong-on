@@ -100,7 +100,7 @@
         <div class="on-empty" id="onEmpty"><h1>안녕하세요, <b>달성On</b>입니다</h1><p>달성군 조례·지침·공공데이터를 근거로 답하고, 답변을 군 서식 한글 파일로 만들어 드립니다</p></div>
         <div class="msgs" id="msgs"></div>
         <form class="on-box" id="form"><textarea id="q" rows="1" placeholder="무엇이든 물어보세요"></textarea>
-          <div class="bar"><span class="tg on" id="tgRag" title="달성군 자료를 먼저 검색해 근거와 함께 답합니다">📎 달성군 자료 근거</span><span class="tg" id="tgDoc" title="답변 아래 [한글 파일로] 버튼으로 군 서식 hwpx 생성">📄 한글 파일로 받기</span><button type="submit" class="send" id="btnSend" aria-label="전송">↑</button></div></form>
+          <div class="bar"><small class="hintline">Enter 전송 · Shift+Enter 줄바꿈</small><button type="submit" class="send" id="btnSend" aria-label="전송">↑</button></div></form>
         <div class="chips big on-chips" id="qaChips"></div>
         <p class="foot">답변은 참고용 · 최종 판단은 담당자 · 자료 외부 전송 없음(업무망 내 처리 개념)</p>
       </div>
@@ -167,7 +167,9 @@
     <section class="view" data-view="model">
       <div class="vh"><h2>답변 모델 설정</h2><p>시연판은 브라우저에서 모델 API를 직접 호출합니다(키는 메모리에만 보관). 실제 구축 시 업무망 서버의 모델 또는 행안부 온AI API로 교체하며 화면·자료는 그대로 유지됩니다.</p></div>
       <div class="card narrow">
-        <label>Anthropic API 키 <small>브라우저 메모리에만 보관 · 저장·전송 안 함</small><input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
+        <p class="hint">기본은 <b>서버 프록시</b>입니다 — API 키는 Netlify 환경변수(ANTHROPIC_API_KEY)에만 있고 화면·코드에 없습니다. 아래 키 칸은 서버 설정 전 임시 시연용입니다.</p>
+        <label>접속 코드 <small>서버에 ACCESS_CODE를 설정한 경우 · 이 브라우저에 저장</small><input id="accessCode" type="password" placeholder="설정했으면 입력" autocomplete="off"></label>
+        <label>(임시) Anthropic API 키 직접 입력 <small>브라우저 메모리에만 · 새로고침 시 사라짐</small><input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
         <label>모델<input id="model" value="claude-sonnet-4-5" list="models"><datalist id="models"><option value="claude-sonnet-4-5"><option value="claude-haiku-4-5"><option value="claude-opus-4-1"></datalist></label>
         <label class="chk"><input type="checkbox" id="offline"> 오프라인 시연 모드(검색 결과만으로 답변 구성)</label>
         <p class="hint">현재 상태: <b id="adminModel">–</b></p>

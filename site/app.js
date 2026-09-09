@@ -5,7 +5,7 @@
 (function(){
 'use strict';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const S={ mode:'home', view:'home', ds:0, docs:[], meta:null, idx:null, layers:{1:true,2:true}, key:'', model:'claude-sonnet-4-5', offline:false,
+const S={ mode:'home', view:'home', ds:0, docs:[], meta:null, idx:null, layers:{1:true,2:true}, key:'', code:(localStorage.getItem('dOnCode')||''), model:'claude-sonnet-4-5', offline:false, server:false,
           hist:[], lastAnswer:null, lastCites:[], lastQ:'', stats:{q:0,cite:0,gen:0,hwpx:0,hits:{}}, busy:false, khist:[] };
 try{ const hh=JSON.parse(localStorage.getItem('dOnHits')||'{}'); if(hh&&typeof hh==='object') S.stats.hits=hh; }catch(e){}
 function saveHits(){ try{ localStorage.setItem('dOnHits',JSON.stringify(S.stats.hits)); }catch(e){} }
@@ -78,8 +78,10 @@ function ctxBlock(hits){ return '<자료>\n'+hits.map((h,i)=>`[${i+1}] (${typeNa
 
 async function callModel(mode,hits,q,hist,onDelta){
   const msgs=[...hist.slice(-6), {role:'user',content:ctxBlock(hits)+'\n\n질문: '+q}];
-  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:S.model,max_tokens:1200,stream:true,system:sysPrompt(mode),messages:msgs})});
+  const payload=JSON.stringify({model:S.model,max_tokens:1200,stream:true,system:sysPrompt(mode),messages:msgs});
+  const r=S.key
+    ? await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:payload})
+    : await fetch('/api/chat',{method:'POST',headers:{'content-type':'application/json','x-access-code':S.code||''},body:payload});
   if(!r.ok){ const e=await r.text(); throw new Error(`모델 호출 실패 (${r.status}) ${e.slice(0,200)}`); }
   const rd=r.body.getReader(), dec=new TextDecoder(); let buf='', full='';
   while(true){ const {value,done}=await rd.read(); if(done) break; buf+=dec.decode(value,{stream:true}); const lines=buf.split('\n'); buf=lines.pop();
@@ -149,8 +151,6 @@ async function init(){
 /* 좌측 메뉴: 「질문하기」 하나를 주인공으로, 나머지는 조용히. 서브탭 없음(이용 안내·관리자는 한 페이지 세로 구성) */
 const FLAT=[
   {mode:'staff',view:'on',   icon:'✦',  label:'달성On', cls:'on-item'},
-  {mode:'staff',view:'data', icon:'📊', label:'데이터 조회'},
-  {mode:'staff',view:'lib',  icon:'📚', label:'자료함'},
   {mode:'home', view:'guide',icon:'📖', label:'이용 안내', cls:'minor'},
   {mode:'admin',view:'stats',icon:'🛠', label:'관리자', cls:'minor admin'},
 ];
@@ -158,19 +158,21 @@ const ALIAS={qa:'on',flow:'guide',news:'guide',contact:'guide',update:'stats',mo
 const COMPOSITE={guide:['guide','flow','news','contact'],stats:['stats','update','model']};
 function renderTabs(){}
 function loadRecent(){ try{ return JSON.parse(localStorage.getItem('dOnRecent')||'[]'); }catch(e){ return []; } }
-function pushRecent(q){ const r=loadRecent().filter(x=>x!==q); r.unshift(q); localStorage.setItem('dOnRecent',JSON.stringify(r.slice(0,5))); }
+function pushRecent(q){ const r=loadRecent().filter(x=>x!==q); r.unshift(q); localStorage.setItem('dOnRecent',JSON.stringify(r.slice(0,12))); }
 function renderNav(){
   const recent=loadRecent();
   $('#nav').innerHTML=FLAT.map(n=>{ const on=n.mode==='admin'?S.mode==='admin':(S.mode===n.mode&&S.view===n.view);
     let li=`<li data-mode="${n.mode}" data-view="${n.view}" class="${n.cls||''} ${on?'on':''}"><i>${n.icon}</i><b>${n.label}</b></li>`;
-    if(n.view==='on') li+=`<li class="newchat" id="navNew">＋ 새 대화</li>`+(recent.length?`<li class="rh">최근 대화</li>`+recent.map(q=>`<li class="rc" data-q="${q.replace(/"/g,'&quot;')}" title="${q.replace(/"/g,'&quot;')}">${q}</li>`).join(''):'');
+    if(n.view==='on') li+=`<li class="newchat" id="navNew">＋ 새 대화</li>`+(recent.length?`<li class="rh"><span>최근 대화</span><button class="rclear" id="navClear" title="전체 삭제">전체 삭제</button></li>`+recent.map(q=>`<li class="rc" data-q="${q.replace(/"/g,'&quot;')}" title="${q.replace(/"/g,'&quot;')}"><span>${q}</span><button class="rx" data-del="${q.replace(/"/g,'&quot;')}" title="삭제">✕</button></li>`).join(''):'');
     return li; }).join('');
   $$('#nav li[data-view]').forEach(li=>li.onclick=()=>{ if(S.mode!==li.dataset.mode){ S.mode=li.dataset.mode; document.body.dataset.mode=S.mode; } go(li.dataset.view); });
   $('#navNew').onclick=()=>{ S.mode='staff'; document.body.dataset.mode='staff'; resetChat(); go('on'); };
-  $$('#nav li.rc').forEach(li=>li.onclick=()=>{ S.mode='staff'; document.body.dataset.mode='staff'; resetChat(); go('on'); ask(li.dataset.q); });
+  $$('#nav li.rc').forEach(li=>li.onclick=e=>{ if(e.target.closest('.rx')) return; S.mode='staff'; document.body.dataset.mode='staff'; resetChat(); go('on'); ask(li.dataset.q); });
+  $$('#nav .rx').forEach(b=>b.onclick=e=>{ e.stopPropagation(); localStorage.setItem('dOnRecent',JSON.stringify(loadRecent().filter(x=>x!==b.dataset.del))); renderNav(); });
+  const nc=$('#navClear'); if(nc) nc.onclick=()=>{ localStorage.removeItem('dOnRecent'); renderNav(); };
 }
 function setMode(m){ S.mode=m; document.body.dataset.mode=m; go(NAV[m][0].id); }
-function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); } if(top==='stats'){ renderStats(); $('#adminModel').textContent=(S.key&&!S.offline)?S.model+' (Anthropic API, 브라우저 직접 호출 — 시연)':'오프라인 시연 모드(검색 결과 기반)'; } if(top==='doc') renderPaper(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,4); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
+function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); } if(top==='stats'){ renderStats(); updPill(); } if(top==='doc') renderPaper(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
 
 /* ── 홈 대시보드 ── */
 document.addEventListener('click',e=>{ const g=e.target.closest('[data-go]'); if(!g) return; const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });
@@ -226,7 +228,7 @@ async function ask(q){
   S.lastCites=hits; S.lastQ=q; hits.forEach(h=>{S.stats.hits[h.doc.title]=(S.stats.hits[h.doc.title]||0)+1;}); saveHits();
   if(S.mode!=='staff'){ S.mode='staff'; document.body.dataset.mode='staff'; } if(S.view!=='on') go('on'); $('#onCol').classList.remove('empty'); pushRecent(q); renderNav(); renderEv($('#ev'),hits); $('#qaEmpty').hidden=true; $('#qaRes').hidden=false; $('#qaQ').textContent=q; $('#evNote').textContent=hits.length?`${hits.length}건 · 카드를 누르면 전문`:'검색된 근거 없음';
   const b=addMsg('ai','<span class="typing"><i></i><i></i><i></i></span>',{html:true}); let text='';
-  try{ if(S.key&&!S.offline){ text=await callModel('staff',hits,q,S.hist,t=>{ b.innerHTML=fmt(t); $('#msgs').scrollTop=1e9; }); } else { await new Promise(r=>setTimeout(r,600)); text=offlineAnswer('staff',hits,q); } }
+  try{ if((S.key||S.server)&&!S.offline){ text=await callModel('staff',hits,q,S.hist,t=>{ b.innerHTML=fmt(t); $('#msgs').scrollTop=1e9; }); } else { await new Promise(r=>setTimeout(r,600)); text=offlineAnswer('staff',hits,q); } }
   catch(err){ text='⚠ '+err.message+'\n관리자 › 모델 설정에서 API 키·모델을 확인하세요.'; }
   const sug=text.includes('@@SUGGEST@@'); text=text.replace('\n@@SUGGEST@@','');
   const rag=/\[\d+\]/.test(text)&&!/자료에 없는 내용/.test(text); S.stats[rag?'cite':'gen']++;
@@ -309,7 +311,11 @@ function renderStats(){ $('#kQ').textContent=S.stats.q; $('#kCite').textContent=
 function renderAdminSrc(){ const t=$('#adminSrc'); const rows=[...S.meta.law_sources.map(s=>['자치법규',s.replace('대구광역시 달성군 ',''),'2026.7.10 공포']),['민원안내','민원 안내 10건(예시)','2026.9.9'],...S.meta.datasets.map(d=>['공공데이터',d.name+' '+d.rows.toLocaleString()+'행','2026.9.8 기준']),['내부지침','복무·계약·보안·문서·공공데이터 5건(예시)','직원 전용']];
   t.innerHTML='<tr><th>구분</th><th>자료</th><th class="r">기준 · 갱신</th></tr>'+rows.map(([a,b,c])=>`<tr><td><span class="ty-badge">${a}</span></td><td>${b}</td><td class="r">${c}<button data-up>갱신</button></td></tr>`).join('');
   t.onclick=e=>{ if(e.target.dataset.up!==undefined){ e.target.textContent='반영됨 ✓'; e.target.disabled=true; toast('자료 갱신 완료 — 전 직원 화면에 즉시 반영됩니다 (시연)'); } }; }
-function updPill(){ const on=S.key&&!S.offline; $('#pillModel').classList.toggle('on',!!on); $('#pillTxt').textContent=on?`모델 연결: ${S.model}`:'오프라인 시연 모드'; }
+function updPill(){ const on=(S.key||S.server)&&!S.offline; $('#pillModel').classList.toggle('on',!!on); $('#pillTxt').textContent=on?(S.key?`모델 연결(브라우저 직접): ${S.model}`:`모델 연결(서버 프록시): ${S.model}`):(S.serverGate&&!S.server?'서버 연결됨 · 접속 코드 필요(관리자 › 모델 설정)':'오프라인 시연 모드'); if($('#adminModel')) $('#adminModel').textContent=$('#pillTxt').textContent; }
+$('#accessCode').value=S.code; $('#accessCode').onchange=e=>{ S.code=e.target.value.trim(); localStorage.setItem('dOnCode',S.code); probeServer(); };
+/* 서버 프록시(Netlify Function) 사용 가능 여부 확인 — 키가 서버에 있으면 화면에서 키 입력 불필요 */
+function probeServer(){ fetch('/api/chat',{method:'POST',headers:{'content-type':'application/json','x-access-code':S.code||''},body:'{"ping":1}'}).then(r=>r.ok?r.json():null).then(j=>{ S.server=!!(j&&j.ok&&j.codeOk); S.serverGate=!!(j&&j.gate); updPill(); }).catch(()=>{ S.server=false; updPill(); }); }
+probeServer();
 $('#apiKey').oninput=e=>{ S.key=e.target.value.trim(); updPill(); }; $('#model').oninput=e=>{ S.model=e.target.value.trim()||'claude-sonnet-4-5'; updPill(); }; $('#offline').onchange=e=>{ S.offline=e.target.checked; updPill(); };
 
 /* ── 기타 ── */

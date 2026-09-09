@@ -48,3 +48,11 @@ kakao_skill/app.py    (선택) 카카오 i 오픈빌더 스킬 서버 — 실제
 ```
 python build_data.py      # data/ 수정 후 실행 → site/data/index.json 재생성
 ```
+
+## API 연결 (서버 프록시 방식 · 키를 코드에 넣지 않음)
+1. Netlify 대시보드 → 사이트(ds-on) → **Site configuration → Environment variables → Add a variable**
+   - `ANTHROPIC_API_KEY` = `sk-ant-…` (필수)
+   - `ACCESS_CODE` = 아무 문자열 (선택 · 설정하면 이 코드를 아는 브라우저만 호출 가능. 관리자 › 모델 설정에서 한 번 입력하면 브라우저에 저장)
+2. `deploy.bat` 실행 → 재배포되면 `netlify/functions/chat.mjs`가 `/api/chat`으로 올라감
+3. 사이트 접속 → 좌측 하단/관리자 상태가 "모델 연결(서버 프록시)"이면 완료. 어떤 PC에서든 키 재입력 없이 동작
+- 키는 Netlify 서버에만 있고 GitHub·브라우저·화면 어디에도 노출되지 않음. 화면의 "(임시) API 키 직접 입력" 칸은 서버 설정 전 시연용
