@@ -154,7 +154,8 @@ async function init(){
    달성On 화면 : 달성On 항목 + 새 대화 + 최근 대화만 (고정)                                                       */
 const HOME_MENU=[
   {mode:'staff',view:'on', icon:'✦', label:'달성On', cls:'on-item'},
-  // 예) {mode:'staff',view:'data', icon:'📊', label:'데이터 조회'},
+  {mode:'staff',view:'data', icon:'📊', label:'임시메뉴1'},   // 데이터 조회 화면 (이름은 추후 확정)
+  {mode:'staff',view:'lib',  icon:'📚', label:'임시메뉴2'},   // 자료함 화면 (이름은 추후 확정)
 ];
 const MINOR=[
   {mode:'home', view:'guide',icon:'📖', label:'이용 안내', cls:'minor'},
