@@ -230,7 +230,7 @@ b.big{font-size:18px;display:block;margin-bottom:6px}
 .view.on+.view.on{margin-top:26px;padding-top:22px;border-top:1px dashed var(--line)}
 
 /* ── 상단 슬로건(군 CI 원본) ── */
-.top-c.slogan{background:none;border:0;box-shadow:none;height:auto;padding:0;justify-content:center} .top-c.slogan img{height:30px;width:auto;display:block}
+.top-c.slogan{background:none;border:0;box-shadow:none;height:auto;padding:4px 10px;justify-content:center;cursor:pointer;border-radius:12px} .top-c.slogan:hover{background:rgba(47,111,237,.08)} .top-c.slogan img{height:30px;width:auto;display:block}
 body[data-theme=dark] .top-c.slogan img{filter:brightness(1.15)}
 
 /* ── 좌측 메뉴: 달성On 항목 · 새 대화 · 최근 대화 ── */
@@ -262,7 +262,8 @@ body[data-theme=dark] .top-c.slogan img{filter:brightness(1.15)}
 .bub .ev.inline{margin-top:10px;white-space:normal;grid-template-columns:1fr 1fr}
 
 /* ── 홈 하단: 자료 현황 · 참조 순위 (명확한 카드 경계) ── */
-.home-stats{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;margin-top:4px;padding-top:16px;border-top:1px solid var(--line)}
+.home-stats{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;margin-top:4px;padding-top:16px;border-top:1px solid var(--line);align-items:stretch}
+.home-stats .card{display:flex;flex-direction:column} .home-stats .kpis.five{flex:1;align-items:stretch} .home-stats .kpi{justify-content:center;gap:4px} .home-stats .kpi b{font-size:26px} .home-stats ol.rank{flex:1;justify-content:space-between}
 .home-stats .card{border:1px solid var(--line);box-shadow:var(--shadow)} .home-stats .card h4{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:14px} .home-stats .card h4 small{color:var(--mut);font-weight:500}
 .home-stats .kpis.five{grid-template-columns:repeat(5,1fr);gap:10px} .home-stats .kpi{border:1px solid var(--line);border-radius:12px;padding:12px 12px;background:var(--panel2)}
 .home-stats ol.rank li{padding:8px 10px}
@@ -273,3 +274,6 @@ body[data-theme=dark] .top-c.slogan img{filter:brightness(1.15)}
 .top-r .ic{position:relative} .badge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:#ff5a5f;color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;padding:0 4px;border:2px solid var(--bg,#fff)}
 .user{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 4px;border:1px solid var(--line);border-radius:999px;background:var(--panel)} .user .uav{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#2f6fed,#35d39b);color:#fff;font-weight:800;font-size:12px;display:grid;place-items:center} .user b{display:block;font-size:12.5px;line-height:1.1} .user small{font-size:10.5px;color:var(--mut)}
 .nav-foot .pill{font-size:11px;padding:4px 10px;margin-bottom:4px;width:max-content}
+
+/* 홈 하단: 관리자 자료 현황 블록 */
+.home-usage{display:flex;flex-direction:column;gap:14px;margin-top:4px;padding-top:16px;border-top:1px solid var(--line)} .home-usage .kpi,.home-usage .card{border:1px solid var(--line);box-shadow:var(--shadow)}

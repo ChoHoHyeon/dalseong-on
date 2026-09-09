@@ -148,7 +148,6 @@ async function init(){
 }
 /* 좌측 메뉴: 「질문하기」 하나를 주인공으로, 나머지는 조용히. 서브탭 없음(이용 안내·관리자는 한 페이지 세로 구성) */
 const FLAT=[
-  {mode:'home', view:'home', icon:'🏠', label:'홈'},
   {mode:'staff',view:'on',   icon:'✦',  label:'달성On', cls:'on-item'},
   {mode:'staff',view:'data', icon:'📊', label:'데이터 조회'},
   {mode:'staff',view:'lib',  icon:'📚', label:'자료함'},
@@ -171,7 +170,7 @@ function renderNav(){
   $$('#nav li.rc').forEach(li=>li.onclick=()=>{ S.mode='staff'; document.body.dataset.mode='staff'; resetChat(); go('on'); ask(li.dataset.q); });
 }
 function setMode(m){ S.mode=m; document.body.dataset.mode=m; go(NAV[m][0].id); }
-function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); } if(top==='stats'){ renderUsage(); renderStats(); $('#adminModel').textContent=(S.key&&!S.offline)?S.model+' (Anthropic API, 브라우저 직접 호출 — 시연)':'오프라인 시연 모드(검색 결과 기반)'; } if(top==='doc') renderPaper(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,4); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
+function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); } if(top==='stats'){ renderStats(); $('#adminModel').textContent=(S.key&&!S.offline)?S.model+' (Anthropic API, 브라우저 직접 호출 — 시연)':'오프라인 시연 모드(검색 결과 기반)'; } if(top==='doc') renderPaper(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,4); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
 
 /* ── 홈 대시보드 ── */
 document.addEventListener('click',e=>{ const g=e.target.closest('[data-go]'); if(!g) return; const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });
@@ -184,17 +183,8 @@ function renderHome(){
   const P=$('#player');
   if(VIDEO_FILE){ P.innerHTML=`<video src="${VIDEO_FILE}" poster="assets/intro_poster.jpg" controls playsinline preload="metadata" controlsList="nodownload noplaybackrate" disablePictureInPicture></video>`; $('#videoNote').textContent='29초'; }
   else if(VIDEO_ID){ P.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${VIDEO_ID}?rel=0" title="달성On 안내 영상" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`; $('#videoNote').textContent='29초 · 유튜브'; }
-  renderHomeStats();
+  renderUsage();
   $('#diffGrid').innerHTML=[['① 문서 산출','답변을 달성군 서식 한글(hwpx)로 즉시 생성 — 타 도구는 텍스트만'],['② 운영 환경','업무망 자체 서버 · 내부자료 활용 (구글 개인 도구·인터넷망 ✗)'],['③ 지속성','개인 계정이 아닌 군 정보시스템 — 인사이동에도 유지'],['④ 자료 규모','제한 없음 (NotebookLM 50개 · Gem 10개 ✗) · 창구 하나'],['⑤ 범용 AI','자료 밖 질문도 일반 생성형 AI처럼 답변 · 개인 유료 구독 불필요']].map(([b,s])=>`<div class="dg"><b>${b}</b><small>${s}</small></div>`).join('');
-}
-function renderHomeStats(){
-  const c=S.meta.counts, total=c.law+c.minwon+c.data+c.internal;
-  $('#homeStatNote').textContent=`총 ${total.toLocaleString()}건 · 기준 ${S.meta.built}`;
-  $('#homeKpis2').innerHTML=[['자치법규',S.meta.law_sources.length+'건',c.law+'개 조문·별표'],['내부지침',c.internal+'건','복무·회계·계약·개인정보'],['공공데이터',S.meta.datasets.length+'종',c.data.toLocaleString()+'행 · 읍면별'],['민원안내',c.minwon+'건','절차·서류·수수료'],['자료 갱신',S.meta.built.slice(5).replace('-','.'),'한 번 등록 → 전 직원']].map(([a,b,s])=>`<div class="kpi"><small>${a}</small><b>${b}</b><span class="sub">${s}</span></div>`).join('');
-  let top=Object.entries(S.stats.hits).sort((x,y)=>y[1]-x[1]).slice(0,5); let note='이용 누적';
-  if(!top.length){ note='시연 예시'; top=[['대구광역시 달성군 체육시설 관리·운영 조례 일부개정조례 [별표 5] 사용료의 감면(제14조 관련)',42],['연가 신청 및 승인 절차',37],['대형폐기물 배출 신고',31],['수의계약 한도 및 절차',28],['대구광역시 달성군 거리공연 활성화 및 지원 조례 제4조(지원사업)',22]]; }
-  const mx=top[0][1]; $('#homeTopNote').textContent=note;
-  $('#homeTop').innerHTML=top.map(([t,n],i)=>{ const d=S.docs.find(x=>x.title===t); const ty=d?typeName(d.type):''; return `<li><span class="n">${i+1}</span><div><b title="${t}">${t.replace('대구광역시 달성군 ','')}</b><small>${ty}</small></div><span class="bar"><i style="width:${Math.max(24,Math.round(n/mx*90))}px"></i>${n}회</span></li>`; }).join('');
 }
 /* 관리자 › 이용 통계·자료 현황 (KPI · 참조 순위 · 자료 구성 · 자치법규) */
 function renderUsage(){
@@ -323,7 +313,7 @@ function updPill(){ const on=S.key&&!S.offline; $('#pillModel').classList.toggle
 $('#apiKey').oninput=e=>{ S.key=e.target.value.trim(); updPill(); }; $('#model').oninput=e=>{ S.model=e.target.value.trim()||'claude-sonnet-4-5'; updPill(); }; $('#offline').onchange=e=>{ S.offline=e.target.checked; updPill(); };
 
 /* ── 기타 ── */
-$('.brand').onclick=()=>{ setMode('home'); go('home'); };
+$('.brand').onclick=()=>{ setMode('home'); go('home'); }; $('.top-c.slogan').onclick=()=>{ setMode('home'); go('home'); };
 $('#btnNoti').onclick=()=>{ $('#notiN').hidden=true; S.mode='home'; document.body.dataset.mode='home'; go('news'); }; $('#goModel').onclick=()=>{ $('#mSet').hidden=true; setMode('admin'); go('model'); };
 $$('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modal').hidden=true); $$('.modal').forEach(m=>m.onclick=e=>{ if(e.target===m&&m.id!=='mIntro') m.hidden=true; });
 $('#btnTheme').onclick=()=>{ const l=document.body.dataset.theme!=='light'; document.body.dataset.theme=l?'light':'dark'; $('#btnTheme').textContent=l?'🌙':'☀️'; try{localStorage.setItem('dOnTheme',l?'light':'dark');}catch(e){} };
