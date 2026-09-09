@@ -176,7 +176,6 @@ function renderHome(){
   const P=$('#player');
   if(VIDEO_FILE){ P.innerHTML=`<video src="${VIDEO_FILE}" poster="assets/intro_poster.jpg" controls playsinline preload="metadata" controlsList="nodownload noplaybackrate" disablePictureInPicture></video>`; $('#videoNote').textContent='29초'; }
   else if(VIDEO_ID){ P.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${VIDEO_ID}?rel=0" title="달성On 안내 영상" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`; $('#videoNote').textContent='29초 · 유튜브'; }
-  $('#homeEx').innerHTML=chipsHtml(CHIPS.staff,3);
   // 기능 바로가기
   const F=[['staff:qa','💬','AI 질의응답','근거 조문과 함께'],['staff:doc','📄','한글 문서 생성','군 서식 hwpx ★'],['staff:data','📊','데이터 조회','읍·면별 집계'],['staff:lib','📚','자료함','3층 구조'],['home:guide','📖','이용 안내','3단계 시작하기'],['admin:stats','🛠','관리자','통계 · 갱신 · 모델']];
   $('#homeFeatures').innerHTML=F.map(([g,i,b,s])=>`<div class="fc link" data-go="${g}"><i>${i}</i><b>${b}</b><small>${s}</small></div>`).join('');
@@ -309,7 +308,6 @@ $('#apiKey').oninput=e=>{ S.key=e.target.value.trim(); updPill(); }; $('#model')
 
 /* ── 기타 ── */
 $('.brand').onclick=()=>{ setMode('home'); go('home'); };
-$('#homeAsk').onsubmit=e=>{ e.preventDefault(); const q=$('#homeQ').value.trim(); if(!q) return; $('#homeQ').value=''; setMode('staff'); go('qa'); document.body.dataset.chat='on'; $('#btnUnfold').hidden=true; $('#q').value=q; $('#form').requestSubmit(); };
 $('#topAsk').onsubmit=e=>{ e.preventDefault(); const q=$('#topQ').value.trim(); if(!q) return; $('#topQ').value=''; if(S.mode!=='staff') setMode('staff'); go('qa'); document.body.dataset.chat='on'; $('#btnUnfold').hidden=true; $('#q').value=q; $('#form').requestSubmit(); };
 $('#btnSet').onclick=()=>$('#mSet').hidden=false; $('#goModel').onclick=()=>{ $('#mSet').hidden=true; setMode('admin'); go('model'); };
 $$('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modal').hidden=true); $$('.modal').forEach(m=>m.onclick=e=>{ if(e.target===m&&m.id!=='mIntro') m.hidden=true; });
