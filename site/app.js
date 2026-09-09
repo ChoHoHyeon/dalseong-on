@@ -146,12 +146,22 @@ async function init(){
   $('#hDate').value=`${new Date().getFullYear()}. ${new Date().getMonth()+1}. ${new Date().getDate()}. / 정보통신과`;
   renderPaper(); go('home'); DalseongHwpx.load().catch(()=>{});
 }
-/* 좌측 통합 메뉴: 대분류(달성On·직원용·관리자)는 그룹 제목으로, 기능은 항목으로 한 줄에 표시 */
+/* 좌측 메뉴: 대분류 없이 동등한 6항목. 홈·관리자의 세부 화면은 본문 상단 서브탭으로 */
+const FLAT=[
+  {mode:'home', view:'home', icon:'🏠', label:'홈'},
+  {mode:'staff',view:'qa',   icon:'💬', label:'AI 질의응답'},
+  {mode:'staff',view:'doc',  icon:'📄', label:'한글 문서 생성'},
+  {mode:'staff',view:'data', icon:'📊', label:'데이터 조회'},
+  {mode:'staff',view:'lib',  icon:'📚', label:'자료함'},
+  {mode:'admin',view:'stats',icon:'🛠', label:'관리자', cls:'admin'},
+];
+const SUB={ home:[['home','대시보드'],['flow','서비스 구성'],['guide','이용 안내'],['news','공지·업데이트'],['contact','문의·지원']],
+            admin:[['stats','이용 통계'],['update','자료 갱신'],['model','모델 설정']] };
 function renderTabs(){}
 function renderNav(){
-  $('#nav').innerHTML=MODES.map(m=>`<li class="grp ${m.cls}"><span>${m.icon} ${m.label}</span><small>${m.sub}</small></li>`+
-    NAV[m.id].map(n=>`<li data-mode="${m.id}" data-view="${n.id}" class="${S.mode===m.id&&S.view===n.id?'on':''}${n.soon?' soon':''}"><i>${n.icon}</i><div><b>${n.label}</b><small>${n.sub}</small></div></li>`).join('')).join('');
-  $$('#nav li[data-view]').forEach(li=>li.onclick=()=>{ if(li.classList.contains('soon')) return; if(S.mode!==li.dataset.mode){ S.mode=li.dataset.mode; document.body.dataset.mode=S.mode; } go(li.dataset.view); });
+  $('#nav').innerHTML=FLAT.map(n=>{ const on=n.mode==='staff'?(S.mode==='staff'&&S.view===n.view):S.mode===n.mode; return `<li data-mode="${n.mode}" data-view="${n.view}" class="${n.cls||''} ${on?'on':''}"><i>${n.icon}</i><b>${n.label}</b></li>`; }).join('');
+  $$('#nav li').forEach(li=>li.onclick=()=>{ if(S.mode!==li.dataset.mode){ S.mode=li.dataset.mode; document.body.dataset.mode=S.mode; } go(li.dataset.view); });
+  const sub=SUB[S.mode]; const T=$('#subtabs'); T.hidden=!sub; if(sub){ T.innerHTML=sub.map(([v,l])=>`<button class="${S.view===v?'on':''}" data-view="${v}">${l}</button>`).join(''); $$('#subtabs button').forEach(b=>b.onclick=()=>go(b.dataset.view)); }
 }
 function setMode(m){ S.mode=m; document.body.dataset.mode=m; go(NAV[m][0].id); }
 function go(v){ S.view=v; document.body.dataset.view=v; $('#main').scrollTop=0; $$('.view').forEach(s=>s.classList.toggle('on',s.dataset.view===v)); renderNav(); if(v==='data') renderData(); if(v==='home') renderHome(); if(v==='guide') $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); if(v==='news') renderNews(); if(v==='stats'){ renderUsage(); renderStats(); } if(v==='model') $('#adminModel').textContent=(S.key&&!S.offline)?S.model+' (Anthropic API, 브라우저 직접 호출 — 시연)':'오프라인 시연 모드(검색 결과 기반)'; if(v==='doc') renderPaper(); }
@@ -298,6 +308,7 @@ function updPill(){ const on=S.key&&!S.offline; $('#pillModel').classList.toggle
 $('#apiKey').oninput=e=>{ S.key=e.target.value.trim(); updPill(); }; $('#model').oninput=e=>{ S.model=e.target.value.trim()||'claude-sonnet-4-5'; updPill(); }; $('#offline').onchange=e=>{ S.offline=e.target.checked; updPill(); };
 
 /* ── 기타 ── */
+$('.brand').onclick=()=>{ setMode('home'); go('home'); };
 $('#topAsk').onsubmit=e=>{ e.preventDefault(); const q=$('#topQ').value.trim(); if(!q) return; $('#topQ').value=''; if(S.mode!=='staff') setMode('staff'); go('qa'); document.body.dataset.chat='on'; $('#btnUnfold').hidden=true; $('#q').value=q; $('#form').requestSubmit(); };
 $('#btnSet').onclick=()=>$('#mSet').hidden=false; $('#goModel').onclick=()=>{ $('#mSet').hidden=true; setMode('admin'); go('model'); };
 $$('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modal').hidden=true); $$('.modal').forEach(m=>m.onclick=e=>{ if(e.target===m&&m.id!=='mIntro') m.hidden=true; });
