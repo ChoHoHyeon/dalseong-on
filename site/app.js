@@ -146,25 +146,24 @@ async function init(){
   $('#hDate').value=`${new Date().getFullYear()}. ${new Date().getMonth()+1}. ${new Date().getDate()}. / 정보통신과`;
   renderPaper(); go('home'); DalseongHwpx.load().catch(()=>{});
 }
-/* 좌측 메뉴: 대분류 없이 동등한 6항목. 홈·관리자의 세부 화면은 본문 상단 서브탭으로 */
+/* 좌측 메뉴: 「질문하기」 하나를 주인공으로, 나머지는 조용히. 서브탭 없음(이용 안내·관리자는 한 페이지 세로 구성) */
 const FLAT=[
-  {mode:'home', view:'home', icon:'🏠', label:'홈'},
-  {mode:'staff',view:'qa',   icon:'💬', label:'AI 질의응답'},
+  {mode:'staff',view:'qa',   icon:'💬', label:'질문하기', cls:'ask'},
   {mode:'staff',view:'doc',  icon:'📄', label:'한글 문서 생성'},
   {mode:'staff',view:'data', icon:'📊', label:'데이터 조회'},
   {mode:'staff',view:'lib',  icon:'📚', label:'자료함'},
-  {mode:'admin',view:'stats',icon:'🛠', label:'관리자', cls:'admin'},
+  {mode:'home', view:'guide',icon:'📖', label:'이용 안내', cls:'minor'},
+  {mode:'admin',view:'stats',icon:'🛠', label:'관리자', cls:'minor admin'},
 ];
-const SUB={ home:[['home','대시보드'],['flow','서비스 구성'],['guide','이용 안내'],['news','공지·업데이트'],['contact','문의·지원']],
-            admin:[['stats','이용 통계'],['update','자료 갱신'],['model','모델 설정']] };
+const ALIAS={flow:'guide',news:'guide',contact:'guide',update:'stats',model:'stats'};   // 세부 화면 → 상위 페이지 + 해당 위치로 스크롤
+const COMPOSITE={guide:['guide','flow','news','contact'],stats:['stats','update','model']};
 function renderTabs(){}
 function renderNav(){
-  $('#nav').innerHTML=FLAT.map(n=>{ const on=n.mode==='staff'?(S.mode==='staff'&&S.view===n.view):S.mode===n.mode; return `<li data-mode="${n.mode}" data-view="${n.view}" class="${n.cls||''} ${on?'on':''}"><i>${n.icon}</i><b>${n.label}</b></li>`; }).join('');
+  $('#nav').innerHTML=FLAT.map(n=>{ const on=n.mode==='admin'?S.mode==='admin':(S.mode===n.mode&&S.view===n.view); return `<li data-mode="${n.mode}" data-view="${n.view}" class="${n.cls||''} ${on?'on':''}"><i>${n.icon}</i><b>${n.label}</b></li>`; }).join('');
   $$('#nav li').forEach(li=>li.onclick=()=>{ if(S.mode!==li.dataset.mode){ S.mode=li.dataset.mode; document.body.dataset.mode=S.mode; } go(li.dataset.view); });
-  const sub=SUB[S.mode]; const T=$('#subtabs'); T.hidden=!sub; if(sub){ T.innerHTML=sub.map(([v,l])=>`<button class="${S.view===v?'on':''}" data-view="${v}">${l}</button>`).join(''); $$('#subtabs button').forEach(b=>b.onclick=()=>go(b.dataset.view)); }
 }
 function setMode(m){ S.mode=m; document.body.dataset.mode=m; go(NAV[m][0].id); }
-function go(v){ S.view=v; document.body.dataset.view=v; $('#main').scrollTop=0; $$('.view').forEach(s=>s.classList.toggle('on',s.dataset.view===v)); renderNav(); if(v==='data') renderData(); if(v==='home') renderHome(); if(v==='guide') $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); if(v==='news') renderNews(); if(v==='stats'){ renderUsage(); renderStats(); } if(v==='model') $('#adminModel').textContent=(S.key&&!S.offline)?S.model+' (Anthropic API, 브라우저 직접 호출 — 시연)':'오프라인 시연 모드(검색 결과 기반)'; if(v==='doc') renderPaper(); }
+function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); } if(top==='stats'){ renderUsage(); renderStats(); $('#adminModel').textContent=(S.key&&!S.offline)?S.model+' (Anthropic API, 브라우저 직접 호출 — 시연)':'오프라인 시연 모드(검색 결과 기반)'; } if(top==='doc') renderPaper(); const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
 
 /* ── 홈 대시보드 ── */
 document.addEventListener('click',e=>{ const g=e.target.closest('[data-go]'); if(!g) return; const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });
@@ -172,12 +171,15 @@ const PAL=['#2f6fed','#0fa876','#d98a00','#a04ccf'];
 function renderHome(){
   $('#heroDate').textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'})+' · 정보통신과 시연판';
   const cls={'공지':'notice','자료':'data','기능':''};
-  $('#boardList').innerHTML=NEWS.slice(0,3).map(([d,t,s,body],i)=>`<li class="${i<2?'new':''}"><span class="t ${cls[t]||''}">${t}</span><b>${s}</b><span class="d">${d}</span><div class="body">${body||s}</div></li>`).join('');
+  $('#boardList').innerHTML=NEWS.slice(0,5).map(([d,t,s,body],i)=>`<li class="${i<2?'new':''}"><span class="t ${cls[t]||''}">${t}</span><b>${s}</b><span class="d">${d}</span><div class="body">${body||s}</div></li>`).join('');
   $$('#boardList li').forEach(li=>li.onclick=()=>li.classList.toggle('open'));
   const P=$('#player');
   if(VIDEO_FILE){ P.innerHTML=`<video src="${VIDEO_FILE}" poster="assets/intro_poster.jpg" controls playsinline preload="metadata" controlsList="nodownload noplaybackrate" disablePictureInPicture></video>`; $('#videoNote').textContent='29초'; }
   else if(VIDEO_ID){ P.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${VIDEO_ID}?rel=0" title="달성On 안내 영상" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`; $('#videoNote').textContent='29초 · 유튜브'; }
   $('#homeEx').innerHTML=chipsHtml(CHIPS.staff,3);
+  // 기능 바로가기
+  const F=[['staff:qa','💬','AI 질의응답','근거 조문과 함께'],['staff:doc','📄','한글 문서 생성','군 서식 hwpx ★'],['staff:data','📊','데이터 조회','읍·면별 집계'],['staff:lib','📚','자료함','3층 구조'],['home:guide','📖','이용 안내','3단계 시작하기'],['admin:stats','🛠','관리자','통계 · 갱신 · 모델']];
+  $('#homeFeatures').innerHTML=F.map(([g,i,b,s])=>`<div class="fc link" data-go="${g}"><i>${i}</i><b>${b}</b><small>${s}</small></div>`).join('');
   $('#diffGrid').innerHTML=[['① 문서 산출','답변을 달성군 서식 한글(hwpx)로 즉시 생성 — 타 도구는 텍스트만'],['② 운영 환경','업무망 자체 서버 · 내부자료 활용 (구글 개인 도구·인터넷망 ✗)'],['③ 지속성','개인 계정이 아닌 군 정보시스템 — 인사이동에도 유지'],['④ 자료 규모','제한 없음 (NotebookLM 50개 · Gem 10개 ✗) · 창구 하나'],['⑤ 범용 AI','자료 밖 질문도 일반 생성형 AI처럼 답변 · 개인 유료 구독 불필요']].map(([b,s])=>`<div class="dg"><b>${b}</b><small>${s}</small></div>`).join('');
 }
 /* 관리자 › 이용 통계·자료 현황 (KPI · 참조 순위 · 자료 구성 · 자치법규) */

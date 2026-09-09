@@ -29,9 +29,8 @@
 
   <!-- ═══════ 메인: 기능 화면 ═══════ -->
   <main class="main" id="main">
-    <div class="subtabs" id="subtabs" hidden></div>
 
-    <!-- 홈 · 대시보드 : 질문이 곧 첫 화면 -->
+    <!-- 홈 · 대시보드 -->
     <section class="view" data-view="home">
       <div class="hero ask">
         <small id="heroDate"></small>
@@ -42,9 +41,22 @@
         <p class="ask-steps"><span>① 질문</span><i>→</i><span>② 근거 조문과 답변</span><i>→</i><span>③ [한글 파일로] 군 서식 문서</span></p>
         <span class="hero-cap">비슬산 참꽃군락 · 달성군</span>
       </div>
-      <div class="home-strip">
-        <div class="card video"><h4>달성On 안내 영상 <small id="videoNote">29초</small></h4><div class="player" id="player"></div></div>
-        <div class="card board"><h4>공지사항 <small>최근 3건</small><button class="ghost sm more" data-go="home:news">전체 보기 ›</button></h4><ul class="board-list" id="boardList"></ul></div>
+      <div class="portal-grid">
+        <div class="card board"><h4>공지사항 <small>최근 5건</small><button class="ghost sm more" data-go="home:news">전체 보기 ›</button></h4><ul class="board-list" id="boardList"></ul></div>
+        <div class="card video"><h4>달성On 안내 영상 <small id="videoNote">소개 · 이용 방법</small></h4><div class="player" id="player"></div><p class="hint" style="margin-top:10px">달성On이 무엇을 해 주는지 29초로 보여주는 소개 영상입니다. (시우가 안내합니다)</p></div>
+      </div>
+      <h4 style="margin-top:4px">기능 바로가기</h4>
+      <div class="feature-grid six" id="homeFeatures"></div>
+    </section>
+
+    <!-- 홈 · 이용 안내 -->
+    <section class="view" data-view="guide">
+      <div class="vh"><h2>이용 안내</h2><p>처음 쓰는 직원을 위한 3단계 안내입니다.</p></div>
+      <div class="guide-grid">
+        <div class="card"><h4>직원 (업무망)</h4><ol class="steps"><li><b>새올 배너 클릭</b><small>별도 설치·가입 없이 업무망 PC에서 접속</small></li><li><b>업무 질문 입력</b><small>"체육시설 사용료 감면 대상은?" 처럼 평소 말로</small></li><li><b>근거 확인 → 한글 파일</b><small>조문 번호를 눌러 원문 확인, [한글 파일로]를 누르면 군 서식 hwpx 다운로드</small></li></ol></div>
+        <div class="card"><h4>한글 문서 만들기</h4><ol class="steps"><li><b>질문하고 답변 확인</b><small>근거 조문이 붙은 답변을 먼저 검토</small></li><li><b>[한글 파일로] 클릭</b><small>품의서·검토보고·업무연락 중 서식 선택, 제목·근거 포함 여부 지정</small></li><li><b>hwpx 다운로드 → 한글에서 마무리</b><small>담당자 검토 문구가 자동으로 붙어 나옵니다</small></li></ol></div>
+        <div class="card"><h4>이런 질문에 답합니다</h4><div class="chips" id="guideChips"></div><p class="hint" style="margin-top:10px">자료에 없는 질문은 <b>AI 일반 답변</b>으로 표시되어 근거 인용 답변과 구분됩니다. 답변은 참고용이며 최종 판단은 담당자가 합니다.</p></div>
+        <div class="card"><h4>자료 범위</h4><table class="tbl"><tr><th>층</th><th>자료</th><th>대상</th></tr><tr><td>1층</td><td>자치법규 · 민원안내 · 공공데이터</td><td>전 직원</td></tr><tr><td>2층</td><td>복무 · 회계 · 계약 · 개인정보 · 보안 지침</td><td>전 직원</td></tr><tr><td>3층</td><td>온나라 문서 · 사업계획 (2단계)</td><td>권한별</td></tr></table></div>
       </div>
     </section>
 
@@ -59,17 +71,6 @@
         <div class="arch-col"><h5>제공</h5><div class="ab g"><b>직원</b><small>조례·지침 근거 답변 · 품의서·보고서 한글 파일 · 읍면별 데이터</small></div><div class="ab p"><b>관리자</b><small>자료 한 번 갱신 → 전 직원 반영 · 부서별 이용통계</small></div></div>
       </div>
       <div class="card"><h4>타 지자체 대비 차별점</h4><div class="diff-grid" id="diffGrid"></div></div>
-    </section>
-
-    <!-- 홈 · 이용 안내 -->
-    <section class="view" data-view="guide">
-      <div class="vh"><h2>이용 안내</h2><p>처음 쓰는 직원을 위한 3단계 안내입니다.</p></div>
-      <div class="guide-grid">
-        <div class="card"><h4>직원 (업무망)</h4><ol class="steps"><li><b>새올 배너 클릭</b><small>별도 설치·가입 없이 업무망 PC에서 접속</small></li><li><b>업무 질문 입력</b><small>"체육시설 사용료 감면 대상은?" 처럼 평소 말로</small></li><li><b>근거 확인 → 한글 파일</b><small>조문 번호를 눌러 원문 확인, [한글 파일로]를 누르면 군 서식 hwpx 다운로드</small></li></ol></div>
-        <div class="card"><h4>한글 문서 만들기</h4><ol class="steps"><li><b>질문하고 답변 확인</b><small>근거 조문이 붙은 답변을 먼저 검토</small></li><li><b>[한글 파일로] 클릭</b><small>품의서·검토보고·업무연락 중 서식 선택, 제목·근거 포함 여부 지정</small></li><li><b>hwpx 다운로드 → 한글에서 마무리</b><small>담당자 검토 문구가 자동으로 붙어 나옵니다</small></li></ol></div>
-        <div class="card"><h4>이런 질문에 답합니다</h4><div class="chips" id="guideChips"></div><p class="hint" style="margin-top:10px">자료에 없는 질문은 <b>AI 일반 답변</b>으로 표시되어 근거 인용 답변과 구분됩니다. 답변은 참고용이며 최종 판단은 담당자가 합니다.</p></div>
-        <div class="card"><h4>자료 범위</h4><table class="tbl"><tr><th>층</th><th>자료</th><th>대상</th></tr><tr><td>1층</td><td>자치법규 · 민원안내 · 공공데이터</td><td>전 직원</td></tr><tr><td>2층</td><td>복무 · 회계 · 계약 · 개인정보 · 보안 지침</td><td>전 직원</td></tr><tr><td>3층</td><td>온나라 문서 · 사업계획 (2단계)</td><td>권한별</td></tr></table></div>
-      </div>
     </section>
 
     <!-- 홈 · 공지·업데이트 -->
