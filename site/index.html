@@ -39,11 +39,9 @@
         </div>
         <div class="hero-art" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div><div class="flow"><span>질문</span><i>→</i><span>달성군 자료 검색</span><i>→</i><span>근거 인용 답변</span><i>→</i><span class="hl">한글 파일 ★</span></div></div>
       </div>
-      <div class="kpis five" id="homeKpis"></div>
-      <div class="home-grid">
-        <div class="card"><h4>많이 참조된 자료 <small id="topNote">이용 누적 · 이 브라우저 기준</small></h4><ol class="rank" id="topUsed"></ol></div>
-        <div class="card"><h4>연결 자료 구성 <small>출처 기준 · 색인 1,146건</small></h4><div id="chartDonut"></div></div>
-        <div class="card"><h4>최근 공포 자치법규 <small>2026.7.10</small></h4><ul class="timeline" id="lawList"></ul></div>
+      <div class="portal-grid">
+        <div class="card board"><h4>공지사항 <small>최근 5건</small><button class="ghost sm more" data-go="home:news">전체 보기 ›</button></h4><ul class="board-list" id="boardList"></ul></div>
+        <div class="card video"><h4>달성On 안내 영상 <small id="videoNote">소개 · 이용 방법</small></h4><div class="player" id="player"></div><p class="hint" style="margin-top:10px">직원용·군민용 화면과 한글 파일 생성까지 2분 안에 보여주는 소개 영상입니다.</p></div>
       </div>
       <h4 style="margin-top:4px">기능 바로가기</h4>
       <div class="feature-grid six" id="homeFeatures"></div>
@@ -169,7 +167,14 @@
 
     <!-- 관리자 · 이용통계 -->
     <section class="view" data-view="stats">
-      <div class="vh"><h2>이용 통계</h2><p>이번 세션 기준 시연 수치입니다. 실제 구축 시 부서별·기간별 통계와 자주 묻는 질문 분석을 제공합니다.</p></div>
+      <div class="vh"><h2>이용 통계 · 자료 현황</h2><p>연결 자료 규모, 많이 참조된 자료, 이용 수치입니다. 실제 구축 시 부서별·기간별 통계와 자주 묻는 질문 분석을 제공합니다.</p></div>
+      <div class="kpis five" id="homeKpis"></div>
+      <div class="home-grid">
+        <div class="card"><h4>많이 참조된 자료 <small id="topNote">이용 누적 · 이 브라우저 기준</small></h4><ol class="rank" id="topUsed"></ol></div>
+        <div class="card"><h4>연결 자료 구성 <small>출처 기준 · 색인 1,146건</small></h4><div id="chartDonut"></div></div>
+        <div class="card"><h4>최근 공포 자치법규 <small>2026.7.10</small></h4><ul class="timeline" id="lawList"></ul></div>
+      </div>
+      <h4>이번 세션</h4>
       <div class="kpis"><div class="kpi"><small>질의</small><b id="kQ">0</b></div><div class="kpi"><small>근거 인용 답변</small><b id="kCite">0</b></div><div class="kpi"><small>자료 외 AI 답변</small><b id="kGen">0</b></div><div class="kpi"><small>한글 파일 생성</small><b id="kHwpx">0</b></div></div>
       <div class="card"><h4>자주 찾은 자료</h4><ol class="toplist" id="topDocs"><li class="muted">아직 질의가 없습니다</li></ol></div>
     </section>
