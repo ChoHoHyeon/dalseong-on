@@ -34,7 +34,7 @@ h4{font-size:13px;font-weight:700;color:var(--mut);letter-spacing:.3px;margin-bo
 .tag.rag{background:rgba(15,168,118,.12);color:var(--ok)} .tag.gen{background:rgba(217,138,0,.12);color:var(--warn)}
 
 /* ── 상단 ── */
-.top{height:54px;display:grid;grid-template-columns:1fr minmax(380px,640px) 1fr;column-gap:16px;align-items:center;padding:0 20px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.55);backdrop-filter:blur(14px);z-index:5}
+.top{height:54px;display:grid;grid-template-columns:1fr auto 1fr;column-gap:16px;align-items:center;padding:0 20px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.55);backdrop-filter:blur(14px);z-index:5}
 body[data-theme=dark] .top{background:rgba(11,18,32,.6)}
 .brand{display:flex;align-items:center;gap:11px;cursor:pointer;border-radius:12px;padding:4px 8px 4px 4px;margin-left:-4px;transition:.15s} .brand:hover{background:rgba(47,111,237,.08)}
 .logo{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#4f8cff,#35d39b);display:grid;place-items:center;font-weight:800;color:#06101f;box-shadow:0 6px 18px rgba(79,140,255,.35)}
@@ -53,10 +53,8 @@ body[data-theme=dark] .tabs{background:rgba(255,255,255,.06)}
 .tab.on.admin{background:linear-gradient(135deg,rgba(160,76,207,.18),rgba(79,140,255,.15));border-color:rgba(160,76,207,.4)}
 
 /* ── 레이아웃 ── */
-.wrap{flex:1;display:grid;grid-template-columns:232px 1fr 430px;gap:14px;padding:14px 16px;min-height:0;position:relative;transition:grid-template-columns .28s ease}
-body[data-chat=off] .wrap{grid-template-columns:232px 1fr 0}
+.wrap{flex:1;display:grid;grid-template-columns:232px 1fr;gap:14px;padding:14px 16px;min-height:0;position:relative}
 body[data-chat=off] .chat{display:none}
-body[data-mode=home] .wrap,body[data-mode=admin] .wrap{grid-template-columns:232px 1fr 0} body[data-mode=home] .chat,body[data-mode=admin] .chat{opacity:0;pointer-events:none;margin-left:-14px;min-width:0}
 .chat{transition:opacity .2s ease}
 
 /* ── 좌측 메뉴 ── */
@@ -164,7 +162,7 @@ ol.toplist{padding-left:18px;font-size:13px;display:flex;flex-direction:column;g
 .intro{text-align:center;align-items:center} .intro h2{font-size:22px;font-weight:600} .intro h2 b{color:var(--acc2)}
 #toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:#14213d;color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;z-index:99;box-shadow:0 10px 30px rgba(0,0,0,.3)}
 
-@media (max-width:1250px){.wrap{grid-template-columns:210px 1fr 360px}.feature-grid{grid-template-columns:repeat(2,1fr)}.doc-grid,.data-grid{grid-template-columns:1fr}}
+@media (max-width:1250px){.wrap{grid-template-columns:210px 1fr}.feature-grid{grid-template-columns:repeat(2,1fr)}.doc-grid,.data-grid{grid-template-columns:1fr}}
 
 /* ── 홈 대시보드 ── */
 .hero{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;background:linear-gradient(90deg,rgba(16,32,88,.78) 0%,rgba(22,48,120,.62) 36%,rgba(47,111,237,.14) 58%,rgba(214,90,170,0) 100%),url(assets/hero.jpg) center 45%/cover no-repeat;color:#fff;border-radius:20px;padding:26px 28px;box-shadow:0 20px 50px rgba(47,111,237,.3);position:relative;overflow:hidden}
@@ -230,3 +228,48 @@ b.big{font-size:18px;display:block;margin-bottom:6px}
 
 
 .view.on+.view.on{margin-top:26px;padding-top:22px;border-top:1px dashed var(--line)}
+
+/* ── 상단 슬로건(군 CI 원본) ── */
+.top-c.slogan{background:none;border:0;box-shadow:none;height:auto;padding:0;justify-content:center} .top-c.slogan img{height:30px;width:auto;display:block}
+body[data-theme=dark] .top-c.slogan img{filter:brightness(1.15)}
+
+/* ── 좌측 메뉴: 달성On 항목 · 새 대화 · 최근 대화 ── */
+.nav li.on-item b{font-weight:800} .nav li.on-item i{background:linear-gradient(135deg,var(--acc),#35d39b);color:#fff}
+.nav li.newchat{display:flex;justify-content:center;align-items:center;min-height:34px;margin:2px 6px 4px;border:1px dashed rgba(47,111,237,.45);border-radius:10px;color:var(--acc);font-size:12.5px;font-weight:600;padding:0}
+.nav li.rh{display:block;min-height:0;padding:8px 12px 2px;font-size:10.5px;font-weight:700;color:var(--mut);cursor:default} .nav li.rh:hover{background:none}
+.nav li.rc{display:block;min-height:30px;padding:6px 12px 6px 18px;font-size:12.5px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:8px}
+.nav li[data-view=guide]{margin-top:auto}
+
+/* ── 달성On 페이지 (클로드식 단일 컬럼) ── */
+.on-page{align-items:center}
+.on-col{width:min(820px,100%);display:flex;flex-direction:column;flex:1;min-height:0;gap:12px}
+.on-col.empty{justify-content:center;padding-bottom:60px} .on-col.empty .msgs{display:none} .on-col.empty .on-empty{display:block}
+.on-empty{display:none;text-align:center;margin-bottom:6px} .on-empty h1{font-size:30px;font-weight:800;letter-spacing:-.5px;margin-bottom:8px} .on-empty h1 b{color:var(--acc)} .on-empty p{color:var(--mut);font-size:14px}
+.on-col .msgs{padding:18px 4px;gap:22px}
+.on-col .msg{max-width:100%} .on-col .msg.user{max-width:70%} .on-col .msg.ai .av{width:30px;height:30px;font-size:11px}
+.on-col .msg.ai .bub{background:none;border:0;padding:2px 0 0;font-size:14.5px;line-height:1.75}
+.on-col .msg.user .bub{border-radius:16px 16px 4px 16px;font-size:14px}
+.on-box{display:flex;flex-direction:column;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:12px 12px 10px;box-shadow:0 10px 30px rgba(31,45,80,.08)}
+.on-col:not(.empty) .on-box{position:sticky;bottom:0}
+.on-box textarea{border:0;background:none;resize:none;font:inherit;font-size:15px;color:var(--tx);outline:none;min-height:28px;max-height:140px;padding:4px 6px}
+.on-box .bar{display:flex;align-items:center;gap:8px}
+.on-box .tg{border:1px solid var(--line);border-radius:999px;padding:5px 10px;font-size:12px;color:var(--mut);cursor:default} .on-box .tg.on{background:rgba(47,111,237,.08);border-color:rgba(47,111,237,.4);color:var(--acc2)}
+.on-box .send{margin-left:auto;width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,var(--acc),#3c6fe0);color:#fff;border:0;font-weight:800;cursor:pointer}
+.on-chips{justify-content:center} .on-col:not(.empty) .on-chips{display:none}
+.on-col .foot{padding:0 0 4px}
+.bub .src{margin-top:10px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel2);font-size:12.5px;white-space:normal} .bub .src b{display:block;margin-bottom:4px} .bub .src div{color:var(--mut);font-size:12px;line-height:1.5} .bub .src .more{color:var(--acc2)}
+.bub .actions button.p{background:linear-gradient(135deg,var(--acc),#3c6fe0);color:#fff;border-color:transparent;font-weight:700}
+.bub .ev.inline{margin-top:10px;white-space:normal;grid-template-columns:1fr 1fr}
+
+/* ── 홈 하단: 자료 현황 · 참조 순위 (명확한 카드 경계) ── */
+.home-stats{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;margin-top:4px;padding-top:16px;border-top:1px solid var(--line)}
+.home-stats .card{border:1px solid var(--line);box-shadow:var(--shadow)} .home-stats .card h4{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:14px} .home-stats .card h4 small{color:var(--mut);font-weight:500}
+.home-stats .kpis.five{grid-template-columns:repeat(5,1fr);gap:10px} .home-stats .kpi{border:1px solid var(--line);border-radius:12px;padding:12px 12px;background:var(--panel2)}
+.home-stats ol.rank li{padding:8px 10px}
+@media (max-width:1250px){.home-stats{grid-template-columns:1fr}.home-stats .kpis.five{grid-template-columns:repeat(3,1fr)}}
+.on-col .msg.user .av{display:none}
+
+/* ── 상단 우측: 알림 · 테마 · 사용자 ── */
+.top-r .ic{position:relative} .badge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:#ff5a5f;color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;padding:0 4px;border:2px solid var(--bg,#fff)}
+.user{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 4px;border:1px solid var(--line);border-radius:999px;background:var(--panel)} .user .uav{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#2f6fed,#35d39b);color:#fff;font-weight:800;font-size:12px;display:grid;place-items:center} .user b{display:block;font-size:12.5px;line-height:1.1} .user small{font-size:10.5px;color:var(--mut)}
+.nav-foot .pill{font-size:11px;padding:4px 10px;margin-bottom:4px;width:max-content}

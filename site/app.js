@@ -134,7 +134,7 @@ const DATASETS=[['경로당 현황','경로당'],['종량제봉투 판매소','�
 function typeName(t){ return {law:'자치법규',minwon:'민원안내',data:'공공데이터',internal:'내부지침'}[t]||t; }
 function toast(m){ let t=$('#toast'); if(!t){ t=document.createElement('div'); t.id='toast'; document.body.appendChild(t);} t.textContent=m; t.hidden=false; clearTimeout(t._t); t._t=setTimeout(()=>t.hidden=true,2600); }
 function chipsHtml(list,n){ return `<div class="chips">${list.slice(0,n).map(t=>`<button class="chip" data-q="${t.replace(/"/g,'&quot;')}">${t}</button>`).join('')}</div>`; }
-document.addEventListener('click',e=>{ const c=e.target.closest('.chip[data-q]'); if(!c) return; if(S.mode==='home') setMode('staff'); document.body.dataset.chat='on'; $('#btnUnfold').hidden=true; $('#q').value=c.dataset.q; $('#form').requestSubmit(); });
+document.addEventListener('click',e=>{ const c=e.target.closest('.chip[data-q]'); if(!c) return; if(S.mode!=='staff'){ S.mode='staff'; document.body.dataset.mode='staff'; } go('on'); ask(c.dataset.q); });
 
 /* ── 초기화 ── */
 async function init(){
@@ -148,22 +148,30 @@ async function init(){
 }
 /* 좌측 메뉴: 「질문하기」 하나를 주인공으로, 나머지는 조용히. 서브탭 없음(이용 안내·관리자는 한 페이지 세로 구성) */
 const FLAT=[
-  {mode:'staff',view:'qa',   icon:'💬', label:'질문하기', cls:'ask'},
-  {mode:'staff',view:'doc',  icon:'📄', label:'한글 문서 생성'},
+  {mode:'home', view:'home', icon:'🏠', label:'홈'},
+  {mode:'staff',view:'on',   icon:'✦',  label:'달성On', cls:'on-item'},
   {mode:'staff',view:'data', icon:'📊', label:'데이터 조회'},
   {mode:'staff',view:'lib',  icon:'📚', label:'자료함'},
   {mode:'home', view:'guide',icon:'📖', label:'이용 안내', cls:'minor'},
   {mode:'admin',view:'stats',icon:'🛠', label:'관리자', cls:'minor admin'},
 ];
-const ALIAS={flow:'guide',news:'guide',contact:'guide',update:'stats',model:'stats'};   // 세부 화면 → 상위 페이지 + 해당 위치로 스크롤
+const ALIAS={qa:'on',flow:'guide',news:'guide',contact:'guide',update:'stats',model:'stats'};
 const COMPOSITE={guide:['guide','flow','news','contact'],stats:['stats','update','model']};
 function renderTabs(){}
+function loadRecent(){ try{ return JSON.parse(localStorage.getItem('dOnRecent')||'[]'); }catch(e){ return []; } }
+function pushRecent(q){ const r=loadRecent().filter(x=>x!==q); r.unshift(q); localStorage.setItem('dOnRecent',JSON.stringify(r.slice(0,5))); }
 function renderNav(){
-  $('#nav').innerHTML=FLAT.map(n=>{ const on=n.mode==='admin'?S.mode==='admin':(S.mode===n.mode&&S.view===n.view); return `<li data-mode="${n.mode}" data-view="${n.view}" class="${n.cls||''} ${on?'on':''}"><i>${n.icon}</i><b>${n.label}</b></li>`; }).join('');
-  $$('#nav li').forEach(li=>li.onclick=()=>{ if(S.mode!==li.dataset.mode){ S.mode=li.dataset.mode; document.body.dataset.mode=S.mode; } go(li.dataset.view); });
+  const recent=loadRecent();
+  $('#nav').innerHTML=FLAT.map(n=>{ const on=n.mode==='admin'?S.mode==='admin':(S.mode===n.mode&&S.view===n.view);
+    let li=`<li data-mode="${n.mode}" data-view="${n.view}" class="${n.cls||''} ${on?'on':''}"><i>${n.icon}</i><b>${n.label}</b></li>`;
+    if(n.view==='on') li+=`<li class="newchat" id="navNew">＋ 새 대화</li>`+(recent.length?`<li class="rh">최근 대화</li>`+recent.map(q=>`<li class="rc" data-q="${q.replace(/"/g,'&quot;')}" title="${q.replace(/"/g,'&quot;')}">${q}</li>`).join(''):'');
+    return li; }).join('');
+  $$('#nav li[data-view]').forEach(li=>li.onclick=()=>{ if(S.mode!==li.dataset.mode){ S.mode=li.dataset.mode; document.body.dataset.mode=S.mode; } go(li.dataset.view); });
+  $('#navNew').onclick=()=>{ S.mode='staff'; document.body.dataset.mode='staff'; resetChat(); go('on'); };
+  $$('#nav li.rc').forEach(li=>li.onclick=()=>{ S.mode='staff'; document.body.dataset.mode='staff'; resetChat(); go('on'); ask(li.dataset.q); });
 }
 function setMode(m){ S.mode=m; document.body.dataset.mode=m; go(NAV[m][0].id); }
-function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); } if(top==='stats'){ renderUsage(); renderStats(); $('#adminModel').textContent=(S.key&&!S.offline)?S.model+' (Anthropic API, 브라우저 직접 호출 — 시연)':'오프라인 시연 모드(검색 결과 기반)'; } if(top==='doc') renderPaper(); const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
+function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); } if(top==='stats'){ renderUsage(); renderStats(); $('#adminModel').textContent=(S.key&&!S.offline)?S.model+' (Anthropic API, 브라우저 직접 호출 — 시연)':'오프라인 시연 모드(검색 결과 기반)'; } if(top==='doc') renderPaper(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,4); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
 
 /* ── 홈 대시보드 ── */
 document.addEventListener('click',e=>{ const g=e.target.closest('[data-go]'); if(!g) return; const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });
@@ -176,10 +184,17 @@ function renderHome(){
   const P=$('#player');
   if(VIDEO_FILE){ P.innerHTML=`<video src="${VIDEO_FILE}" poster="assets/intro_poster.jpg" controls playsinline preload="metadata" controlsList="nodownload noplaybackrate" disablePictureInPicture></video>`; $('#videoNote').textContent='29초'; }
   else if(VIDEO_ID){ P.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${VIDEO_ID}?rel=0" title="달성On 안내 영상" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`; $('#videoNote').textContent='29초 · 유튜브'; }
-  // 기능 바로가기
-  const F=[['staff:qa','💬','AI 질의응답','근거 조문과 함께'],['staff:doc','📄','한글 문서 생성','군 서식 hwpx ★'],['staff:data','📊','데이터 조회','읍·면별 집계'],['staff:lib','📚','자료함','3층 구조'],['home:guide','📖','이용 안내','3단계 시작하기'],['admin:stats','🛠','관리자','통계 · 갱신 · 모델']];
-  $('#homeFeatures').innerHTML=F.map(([g,i,b,s])=>`<div class="fc link" data-go="${g}"><i>${i}</i><b>${b}</b><small>${s}</small></div>`).join('');
+  renderHomeStats();
   $('#diffGrid').innerHTML=[['① 문서 산출','답변을 달성군 서식 한글(hwpx)로 즉시 생성 — 타 도구는 텍스트만'],['② 운영 환경','업무망 자체 서버 · 내부자료 활용 (구글 개인 도구·인터넷망 ✗)'],['③ 지속성','개인 계정이 아닌 군 정보시스템 — 인사이동에도 유지'],['④ 자료 규모','제한 없음 (NotebookLM 50개 · Gem 10개 ✗) · 창구 하나'],['⑤ 범용 AI','자료 밖 질문도 일반 생성형 AI처럼 답변 · 개인 유료 구독 불필요']].map(([b,s])=>`<div class="dg"><b>${b}</b><small>${s}</small></div>`).join('');
+}
+function renderHomeStats(){
+  const c=S.meta.counts, total=c.law+c.minwon+c.data+c.internal;
+  $('#homeStatNote').textContent=`총 ${total.toLocaleString()}건 · 기준 ${S.meta.built}`;
+  $('#homeKpis2').innerHTML=[['자치법규',S.meta.law_sources.length+'건',c.law+'개 조문·별표'],['내부지침',c.internal+'건','복무·회계·계약·개인정보'],['공공데이터',S.meta.datasets.length+'종',c.data.toLocaleString()+'행 · 읍면별'],['민원안내',c.minwon+'건','절차·서류·수수료'],['자료 갱신',S.meta.built.slice(5).replace('-','.'),'한 번 등록 → 전 직원']].map(([a,b,s])=>`<div class="kpi"><small>${a}</small><b>${b}</b><span class="sub">${s}</span></div>`).join('');
+  let top=Object.entries(S.stats.hits).sort((x,y)=>y[1]-x[1]).slice(0,5); let note='이용 누적';
+  if(!top.length){ note='시연 예시'; top=[['대구광역시 달성군 체육시설 관리·운영 조례 일부개정조례 [별표 5] 사용료의 감면(제14조 관련)',42],['연가 신청 및 승인 절차',37],['대형폐기물 배출 신고',31],['수의계약 한도 및 절차',28],['대구광역시 달성군 거리공연 활성화 및 지원 조례 제4조(지원사업)',22]]; }
+  const mx=top[0][1]; $('#homeTopNote').textContent=note;
+  $('#homeTop').innerHTML=top.map(([t,n],i)=>{ const d=S.docs.find(x=>x.title===t); const ty=d?typeName(d.type):''; return `<li><span class="n">${i+1}</span><div><b title="${t}">${t.replace('대구광역시 달성군 ','')}</b><small>${ty}</small></div><span class="bar"><i style="width:${Math.max(24,Math.round(n/mx*90))}px"></i>${n}회</span></li>`; }).join('');
 }
 /* 관리자 › 이용 통계·자료 현황 (KPI · 참조 순위 · 자료 구성 · 자치법규) */
 function renderUsage(){
@@ -205,7 +220,7 @@ const NEWS=[['2026.09.10','공지','부군수 보고 시연 안내','시연 순�
 function renderNews(){ $('#newsList').innerHTML=NEWS.map(([d,t,s])=>`<li><span class="d">${d}</span><span class="t">${t}</span>${s}</li>`).join(''); }
 
 /* ── 우측 AI 대화 ── */
-function resetChat(){ S.hist=[]; S.lastAnswer=null; S.lastCites=[]; S.lastQ=''; $('#msgs').innerHTML=''; addMsg('ai',`안녕하세요, <b>달성On</b>입니다. 업무 질문을 입력하세요.\n자료에 있으면 근거 조문을 인용하고, 없으면 AI가 직접 답합니다.\n`+chipsHtml(CHIPS.staff,4),{html:true}); $('#qaRes').hidden=true; $('#qaEmpty').hidden=false; }
+function resetChat(){ S.hist=[]; S.lastAnswer=null; S.lastCites=[]; S.lastQ=''; $('#msgs').innerHTML=''; $('#onCol').classList.add('empty'); return;  addMsg('ai',`안녕하세요, <b>달성On</b>입니다. 업무 질문을 입력하세요.\n자료에 있으면 근거 조문을 인용하고, 없으면 AI가 직접 답합니다.\n`+chipsHtml(CHIPS.staff,4),{html:true}); $('#qaRes').hidden=true; $('#qaEmpty').hidden=false; }
 function addMsg(role,text,{html=false}={}){ const m=document.createElement('div'); m.className='msg '+(role==='user'?'user':'ai'); m.innerHTML=`<div class="av">${role==='user'?'나':'On'}</div><div class="bub"></div>`; const b=m.querySelector('.bub'); if(html) b.innerHTML=text; else b.textContent=text; $('#msgs').appendChild(m); $('#msgs').scrollTop=1e9; return b; }
 function fmt(text){ return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\[(\d+)\]/g,'<span class="cite" data-n="$1">$1</span>').replace(/^(■.*)$/gm,'<b>$1</b>'); }
 $('#form').onsubmit=async e=>{ e.preventDefault(); const q=$('#q').value.trim(); if(!q||S.busy) return; $('#q').value=''; await ask(q); };
@@ -214,20 +229,21 @@ $('#btnClear').onclick=resetChat;
 $('#btnFold').onclick=()=>{ document.body.dataset.chat='off'; $('#btnUnfold').hidden=false; };
 $('#btnUnfold').onclick=()=>{ document.body.dataset.chat='on'; $('#btnUnfold').hidden=true; };
 async function ask(q){
-  S.busy=true; $('#btnSend').disabled=true; addMsg('user',q); S.stats.q++;
+  S.busy=true; $('#btnSend').disabled=true; $('#onCol').classList.remove('empty'); addMsg('user',q); S.stats.q++;
   const filter=d=>{ if(d.type==='internal') return S.layers[2]; return S.layers[1]; };
   let hits=rerank(q,search(expand(q),{filter,k:8})); const ci=countIntent(q); if(!ci&&!relevant(q,hits)) hits=[];
   if(ci){ const agg=S.docs.find(d=>d.source===ci.ds&&d.title.endsWith('읍면별 집계')); if(agg&&!hits.some(h=>h.doc===agg)) hits.unshift({doc:agg,score:99}); }
   S.lastCites=hits; S.lastQ=q; hits.forEach(h=>{S.stats.hits[h.doc.title]=(S.stats.hits[h.doc.title]||0)+1;}); saveHits();
-  if(S.mode==='home') setMode('staff'); if(S.mode==='staff'&&S.view!=='doc') go('qa'); renderEv($('#ev'),hits); $('#qaEmpty').hidden=true; $('#qaRes').hidden=false; $('#qaQ').textContent=q; $('#evNote').textContent=hits.length?`${hits.length}건 · 카드를 누르면 전문`:'검색된 근거 없음';
+  if(S.mode!=='staff'){ S.mode='staff'; document.body.dataset.mode='staff'; } if(S.view!=='on') go('on'); $('#onCol').classList.remove('empty'); pushRecent(q); renderNav(); renderEv($('#ev'),hits); $('#qaEmpty').hidden=true; $('#qaRes').hidden=false; $('#qaQ').textContent=q; $('#evNote').textContent=hits.length?`${hits.length}건 · 카드를 누르면 전문`:'검색된 근거 없음';
   const b=addMsg('ai','<span class="typing"><i></i><i></i><i></i></span>',{html:true}); let text='';
   try{ if(S.key&&!S.offline){ text=await callModel('staff',hits,q,S.hist,t=>{ b.innerHTML=fmt(t); $('#msgs').scrollTop=1e9; }); } else { await new Promise(r=>setTimeout(r,600)); text=offlineAnswer('staff',hits,q); } }
   catch(err){ text='⚠ '+err.message+'\n관리자 › 모델 설정에서 API 키·모델을 확인하세요.'; }
   const sug=text.includes('@@SUGGEST@@'); text=text.replace('\n@@SUGGEST@@','');
   const rag=/\[\d+\]/.test(text)&&!/자료에 없는 내용/.test(text); S.stats[rag?'cite':'gen']++;
   $('#qaTag').className='tag '+(rag?'rag':'gen'); $('#qaTag').textContent=rag?'📎 달성군 자료 근거':'🤖 AI 일반 답변';
-  b.innerHTML=`<span class="tag ${rag?'rag':'gen'}">${rag?'📎 달성군 자료 근거':'🤖 AI 일반 답변'}</span>\n`+fmt(text)+(sug?'\n<small>이런 질문은 지금 바로 가능합니다:</small>'+chipsHtml([...CHIPS.staff].sort(()=>Math.random()-.5),4):'')+`<div class="actions"><button data-act="hwpx">📄 한글 파일로</button><button data-act="ev">📎 근거 보기</button><button data-act="copy">복사</button></div>`;
-  b.onclick=ev=>{ const c=ev.target.closest('.cite'); if(c){ go('qa'); hlEv(+c.dataset.n); return; } const a=ev.target.dataset.act; if(a==='copy'){ navigator.clipboard.writeText(text); toast('복사했습니다'); } if(a==='hwpx'){ fillDoc(); go('doc'); } if(a==='ev') go('qa'); };
+  b.innerHTML=`<span class="tag ${rag?'rag':'gen'}">${rag?'📎 달성군 자료 근거':'🤖 AI 일반 답변'}</span>\n`+fmt(text)+(sug?'\n<small>이런 질문은 지금 바로 가능합니다:</small>'+chipsHtml([...CHIPS.staff].sort(()=>Math.random()-.5),4):'')+(hits.length?`<div class="src"><b>📎 근거 자료 ${hits.length}건</b>${hits.slice(0,3).map((h,i)=>`<div>[${i+1}] ${h.doc.title.replace('대구광역시 달성군 ','')}</div>`).join('')}${hits.length>3?`<div class="more">외 ${hits.length-3}건 — 근거 원문 보기</div>`:''}</div>`:'')+`<div class="actions"><button data-act="hwpx" class="p">📄 한글 파일로</button><button data-act="copy">복사</button>${hits.length?'<button data-act="ev">근거 원문 보기</button>':''}</div><div class="ev inline" hidden></div>`;
+  const evBox=b.querySelector('.ev.inline'); if(hits.length) renderEv(evBox,hits);
+  b.onclick=ev=>{ const c=ev.target.closest('.cite'); if(c){ evBox.hidden=false; $$('.evc',evBox).forEach(x=>x.classList.toggle('hl',+x.dataset.n===+c.dataset.n)); const t=evBox.querySelector(`.evc[data-n="${c.dataset.n}"]`); if(t){ t.classList.add('open'); t.scrollIntoView({behavior:'smooth',block:'center'}); } return; } const a=ev.target.dataset.act; if(a==='copy'){ navigator.clipboard.writeText(text); toast('복사했습니다'); } if(a==='hwpx'){ fillDoc(); go('doc'); } if(a==='ev'){ evBox.hidden=!evBox.hidden; } };
   S.hist.push({role:'user',content:q},{role:'assistant',content:text}); S.lastAnswer=text;
   S.busy=false; $('#btnSend').disabled=false; $('#msgs').scrollTop=1e9;
 }
@@ -308,8 +324,7 @@ $('#apiKey').oninput=e=>{ S.key=e.target.value.trim(); updPill(); }; $('#model')
 
 /* ── 기타 ── */
 $('.brand').onclick=()=>{ setMode('home'); go('home'); };
-$('#topAsk').onsubmit=e=>{ e.preventDefault(); const q=$('#topQ').value.trim(); if(!q) return; $('#topQ').value=''; if(S.mode!=='staff') setMode('staff'); go('qa'); document.body.dataset.chat='on'; $('#btnUnfold').hidden=true; $('#q').value=q; $('#form').requestSubmit(); };
-$('#btnSet').onclick=()=>$('#mSet').hidden=false; $('#goModel').onclick=()=>{ $('#mSet').hidden=true; setMode('admin'); go('model'); };
+$('#btnNoti').onclick=()=>{ $('#notiN').hidden=true; S.mode='home'; document.body.dataset.mode='home'; go('news'); }; $('#goModel').onclick=()=>{ $('#mSet').hidden=true; setMode('admin'); go('model'); };
 $$('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modal').hidden=true); $$('.modal').forEach(m=>m.onclick=e=>{ if(e.target===m&&m.id!=='mIntro') m.hidden=true; });
 $('#btnTheme').onclick=()=>{ const l=document.body.dataset.theme!=='light'; document.body.dataset.theme=l?'light':'dark'; $('#btnTheme').textContent=l?'🌙':'☀️'; try{localStorage.setItem('dOnTheme',l?'light':'dark');}catch(e){} };
 try{ const th=localStorage.getItem('dOnTheme'); if(th){ document.body.dataset.theme=th; $('#btnTheme').textContent=th==='light'?'🌙':'☀️'; } }catch(e){}

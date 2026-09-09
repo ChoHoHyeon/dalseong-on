@@ -13,18 +13,18 @@
 <!-- ═══════ 상단: 브랜드 · 상태 ═══════ -->
 <header class="top">
   <div class="brand"><div class="logo"><span>On</span></div><div class="brand-t"><b>달성On</b><small>달성군 AI 업무비서 · 시연판</small></div></div>
-  <form class="top-c" id="topAsk" autocomplete="off"><span class="ti">✦</span><input id="topQ" type="text" placeholder="무엇이든 물어보세요 — 조례·지침·데이터 근거로 답하고 한글 파일까지" aria-label="질문"><kbd>Enter</kbd></form>
+  <div class="top-c slogan"><img src="assets/slogan.png" alt="군민이 빛나는 달성"></div>
   <div class="top-r">
-    <div class="pill" id="pillModel"><span class="dot"></span><span id="pillTxt">오프라인 시연 모드</span></div>
+    <button class="ghost ic" id="btnNoti" title="공지·업데이트">🔔<span class="badge" id="notiN">2</span></button>
     <button class="ghost ic" id="btnTheme" title="밝게/어둡게">🌙</button>
-    <button class="ghost ic" id="btnSet" title="설정">⚙</button>
+    <div class="user" id="userChip" title="새올 인증 사용자 (시연)"><span class="uav">조</span><div><b>조호현</b><small>정보통신과</small></div></div>
   </div>
 </header>
 
 <div class="wrap">
   <!-- ═══════ 좌측: 통합 메뉴 (달성On · 직원용 · 관리자) ═══════ -->
   <aside class="nav"><ul id="nav"></ul>
-    <div class="nav-foot"><small id="navFoot">자료 1,146건 연결</small><small class="nf2">문의 정보통신과 ☎ 668-2454</small></div>
+    <div class="nav-foot"><div class="pill" id="pillModel"><span class="dot"></span><span id="pillTxt">오프라인 시연 모드</span></div><small id="navFoot">자료 1,146건 연결</small><small class="nf2">문의 정보통신과 ☎ 668-2454</small></div>
   </aside>
 
   <!-- ═══════ 메인: 기능 화면 ═══════ -->
@@ -43,8 +43,7 @@
         <div class="card board"><h4>공지사항 <small>최근 5건</small><button class="ghost sm more" data-go="home:news">전체 보기 ›</button></h4><ul class="board-list" id="boardList"></ul></div>
         <div class="card video"><h4>달성On 안내 영상 <small id="videoNote">소개 · 이용 방법</small></h4><div class="player" id="player"></div><p class="hint" style="margin-top:10px">달성On이 무엇을 해 주는지 29초로 보여주는 소개 영상입니다. (시우가 안내합니다)</p></div>
       </div>
-      <h4 style="margin-top:4px">기능 바로가기</h4>
-      <div class="feature-grid six" id="homeFeatures"></div>
+      <div class="home-stats"><div class="card"><h4>연결 자료 현황 <small id="homeStatNote"></small></h4><div class="kpis five" id="homeKpis2"></div></div><div class="card"><h4>많이 참조된 자료 <small id="homeTopNote"></small></h4><ol class="rank" id="homeTop"></ol></div></div>
     </section>
 
     <!-- 홈 · 이용 안내 -->
@@ -88,24 +87,17 @@
     </section>
 
     <!-- 직원 · 질의응답(근거) -->
-    <section class="view" data-view="qa">
-      <div class="vh"><h2>AI 질의응답</h2><p>오른쪽 대화창에 질문하면 달성군 자료에서 찾은 <b>근거</b>가 여기에 표시됩니다. 자료에 있으면 조문을 인용하고, 없으면 AI가 일반 지식으로 답합니다.</p></div>
-      <div class="qa-empty" id="qaEmpty">
-        <div class="feature-grid">
-          <div class="fc"><i>📎</i><b>근거 인용</b><small>조례·지침·공공데이터를 검색해 조문과 함께 답변</small></div>
-          <div class="fc star"><i>📄</i><b>한글 파일 생성</b><small>답변을 달성군 서식 hwpx로 즉시 산출 ★</small></div>
-          <div class="fc"><i>🔒</i><b>권한별 자료</b><small>공개자료·내부지침·공문서(2단계) 층 구조</small></div>
-          <div class="fc"><i>🧠</i><b>범용 AI 답변</b><small>자료 밖 질문도 일반 생성형 AI처럼 답변</small></div>
-        </div>
-        <h4>예시 질문 <small>눌러서 바로 질문</small></h4>
-        <div class="chips big" id="qaChips"></div>
+    <!-- 달성On · 생성형 AI 대화 (클로드식 단일 컬럼) -->
+    <section class="view on-page" data-view="on">
+      <div class="on-col empty" id="onCol">
+        <div class="on-empty" id="onEmpty"><h1>안녕하세요, <b>달성On</b>입니다</h1><p>달성군 조례·지침·공공데이터를 근거로 답하고, 답변을 군 서식 한글 파일로 만들어 드립니다</p></div>
+        <div class="msgs" id="msgs"></div>
+        <form class="on-box" id="form"><textarea id="q" rows="1" placeholder="무엇이든 물어보세요"></textarea>
+          <div class="bar"><span class="tg on" id="tgRag" title="달성군 자료를 먼저 검색해 근거와 함께 답합니다">📎 달성군 자료 근거</span><span class="tg" id="tgDoc" title="답변 아래 [한글 파일로] 버튼으로 군 서식 hwpx 생성">📄 한글 파일로 받기</span><button type="submit" class="send" id="btnSend" aria-label="전송">↑</button></div></form>
+        <div class="chips big on-chips" id="qaChips"></div>
+        <p class="foot">답변은 참고용 · 최종 판단은 담당자 · 자료 외부 전송 없음(업무망 내 처리 개념)</p>
       </div>
-      <div class="qa-res" id="qaRes" hidden>
-        <div class="qa-q"><small>질문</small><b id="qaQ"></b><span class="tag" id="qaTag"></span></div>
-        <h4>근거 자료 <small id="evNote"></small></h4>
-        <div class="ev" id="ev"></div>
-        <div class="row"><button class="primary" id="qaToDoc">📄 이 답변을 한글 파일로</button><button class="ghost" id="qaCopy">답변 복사</button></div>
-      </div>
+      <div hidden id="legacy"><div id="qaEmpty"></div><div id="qaRes"><b id="qaQ"></b><span id="qaTag"></span><small id="evNote"></small><div id="ev"></div><button id="qaToDoc"></button><button id="qaCopy"></button></div><button id="btnClear"></button><button id="btnFold"></button><small id="chatSub"></small></div>
     </section>
 
     <!-- 직원 · 한글 문서 생성 -->
@@ -183,13 +175,8 @@
   </main>
 
   <!-- ═══════ 우측: AI 대화 패널 ═══════ -->
-  <aside class="chat" id="chat">
-    <div class="chat-head"><div><b>AI 대화</b><small id="chatSub">달성군 자료 근거 · 자료 밖 질문은 AI 직접 답변</small></div><div class="row"><button class="ghost sm" id="btnClear">새 대화</button><button class="ghost sm" id="btnFold" title="접기">›</button></div></div>
-    <div class="msgs" id="msgs"></div>
-    <form class="composer" id="form"><textarea id="q" rows="1" placeholder="업무 질문을 입력하세요 (Enter 전송 · Shift+Enter 줄바꿈)"></textarea><button type="submit" class="send" id="btnSend" aria-label="전송">↑</button></form>
-    <p class="foot">답변은 참고용 · 최종 판단은 담당자 · 자료 외부 전송 없음(업무망 내 처리 개념)</p>
-  </aside>
-  <button class="chat-open" id="btnUnfold" hidden>💬 AI 대화</button>
+
+  <button id="btnUnfold" hidden></button>
 </div>
 
 <!-- 설정(빠른 접근) -->
