@@ -8,187 +8,152 @@
 <script src="vendor/jszip.min.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
-<body data-mode="staff" data-theme="light">
+<body data-mode="staff" data-theme="light" data-view="qa">
 
-<!-- ───────── 상단 바 ───────── -->
+<!-- ═══════ 상단: 브랜드 · 대분류 탭 · 상태 ═══════ -->
 <header class="top">
-  <div class="brand">
-    <div class="logo"><span>On</span></div>
-    <div class="brand-t">
-      <b>달성On</b>
-      <small>달성군 AI 업무비서 · 시연판(Prototype)</small>
-    </div>
-  </div>
-
-  <nav class="seg" role="tablist" aria-label="채널 선택">
-    <button class="seg-b on" data-mode="staff" role="tab">
-      <i class="ic">🏛</i><span>직원용 <em>달성On</em></span><small>업무망 · 새올 배너</small>
-    </button>
-    <button class="seg-b" data-mode="citizen" role="tab">
-      <i class="ic">💬</i><span>군민용 <em>카카오 채널</em></span><small>민원안내 · 공개자료만</small>
-    </button>
-    <span class="seg-slider"></span>
-  </nav>
-
+  <div class="brand"><div class="logo"><span>On</span></div><div class="brand-t"><b>달성On</b><small>달성군 AI 업무비서 · 시연판</small></div></div>
+  <nav class="tabs" id="tabs" role="tablist"></nav>
   <div class="top-r">
-    <div class="pill" id="pillModel" title="답변 모델 연결 상태"><span class="dot"></span><span id="pillTxt">오프라인 시연 모드</span></div>
-    <button class="ghost" id="btnAdmin" title="관리자 화면">📊 관리자</button>
-    <button class="ghost theme-btn" id="btnTheme" title="밝게/어둡게">🌙</button>
-    <button class="ghost" id="btnSet" title="설정">⚙ 설정</button>
+    <div class="pill" id="pillModel"><span class="dot"></span><span id="pillTxt">오프라인 시연 모드</span></div>
+    <button class="ghost ic" id="btnTheme" title="밝게/어둡게">🌙</button>
+    <button class="ghost ic" id="btnSet" title="설정">⚙</button>
   </div>
 </header>
 
-<!-- ───────── 본문 ───────── -->
-<main class="wrap">
-
-  <!-- 좌: 자료함 -->
-  <aside class="side left">
-    <section class="card">
-      <h3>연결 자료 <span class="badge" id="docTotal">–</span></h3>
-      <ul class="layers" id="layers">
-        <li data-layer="1" class="on"><b>1층 · 공개자료</b><small>자치법규 · 민원안내 · 공공데이터</small><span class="cnt" id="c1">–</span></li>
-        <li data-layer="2" class="on staff-only"><b>2층 · 내부지침</b><small>복무 · 회계 · 계약 · 보안 <em>직원 전용</em></small><span class="cnt" id="c2">–</span></li>
-        <li data-layer="3" class="lock staff-only"><b>3층 · 공문서</b><small>온나라 문서 · 사업계획 <em>2단계 예정</em></small><span class="cnt">🔒</span></li>
-      </ul>
-      <p class="hint citizen-only">군민 채널은 <b>1층 공개자료만</b> 참조합니다. 접수·신청은 국민신문고·정부24로 연결합니다.</p>
-    </section>
-
-    <section class="card">
-      <h3>예시 질문</h3>
-      <div class="chips" id="chips"></div>
-    </section>
-    <section class="card">
-      <h3>자료 목록</h3>
-      <div class="srcs" id="srcList"></div>
-    </section>
-
+<div class="wrap">
+  <!-- ═══════ 좌측: 기능 메뉴 ═══════ -->
+  <aside class="nav"><ul id="nav"></ul>
+    <div class="nav-foot"><small id="navFoot">자료 1,146건 연결</small></div>
   </aside>
 
-  <!-- 중앙: 직원용 채팅 -->
-  <section class="center staff-only" id="staffPane">
-    <div class="chat-head">
-      <div>
-        <b>업무 질의응답</b>
-        <small>달성군 자료에 있으면 근거 조문을 인용하고, 없으면 AI가 일반 지식으로 답변합니다.</small>
+  <!-- ═══════ 메인: 기능 화면 ═══════ -->
+  <main class="main" id="main">
+
+    <!-- 직원 · 질의응답(근거) -->
+    <section class="view" data-view="qa">
+      <div class="vh"><h2>AI 질의응답</h2><p>오른쪽 대화창에 질문하면 달성군 자료에서 찾은 <b>근거</b>가 여기에 표시됩니다. 자료에 있으면 조문을 인용하고, 없으면 AI가 일반 지식으로 답합니다.</p></div>
+      <div class="qa-empty" id="qaEmpty">
+        <div class="feature-grid">
+          <div class="fc"><i>📎</i><b>근거 인용</b><small>조례·지침·공공데이터를 검색해 조문과 함께 답변</small></div>
+          <div class="fc star"><i>📄</i><b>한글 파일 생성</b><small>답변을 달성군 서식 hwpx로 즉시 산출 ★</small></div>
+          <div class="fc"><i>🔒</i><b>권한별 자료</b><small>공개자료·내부지침·공문서(2단계) 층 구조</small></div>
+          <div class="fc"><i>💬</i><b>군민 채널</b><small>같은 엔진으로 카카오 민원안내(공개자료만)</small></div>
+        </div>
+        <h4>예시 질문 <small>눌러서 바로 질문</small></h4>
+        <div class="chips big" id="qaChips"></div>
       </div>
-      <button class="ghost sm" id="btnClear">새 대화</button>
-    </div>
+      <div class="qa-res" id="qaRes" hidden>
+        <div class="qa-q"><small>질문</small><b id="qaQ"></b><span class="tag" id="qaTag"></span></div>
+        <h4>근거 자료 <small id="evNote"></small></h4>
+        <div class="ev" id="ev"></div>
+        <div class="row"><button class="primary" id="qaToDoc">📄 이 답변을 한글 파일로</button><button class="ghost" id="qaCopy">답변 복사</button></div>
+      </div>
+    </section>
+
+    <!-- 직원 · 한글 문서 생성 -->
+    <section class="view" data-view="doc">
+      <div class="vh"><h2>한글 문서 생성 <span class="star">★ 달성군만의 기능</span></h2><p>답변이나 직접 쓴 내용을 <b>달성군 표준 서식 한글(hwpx)</b> 파일로 만듭니다. 챗GPT·온AI·타 지자체 도구는 텍스트만 제공합니다.</p></div>
+      <div class="doc-grid">
+        <div class="card">
+          <label>문서 종류<select id="docKind"><option value="review">검토보고(1장)</option><option value="pumui">품의서</option><option value="memo">업무연락 메모</option></select></label>
+          <label>제목<input id="hTitle" placeholder="예) 거리공연 지원사업 검토"></label>
+          <label>부제<input id="hSub" value="달성군 AI 업무비서(달성On) 생성 초안"></label>
+          <label>작성일 / 부서<input id="hDate"></label>
+          <label>검토 요청(질문)<input id="hQ" placeholder="마지막 질문이 자동 입력됩니다"></label>
+          <label>본문 <small>■ 항목 · ❍ 내용 · - 설명 · ※ 비고 기호로 계층 구분 (수정 가능)</small><textarea id="hBody" rows="14" placeholder="오른쪽 대화창에서 답변을 받으면 자동으로 채워집니다. 직접 입력해도 됩니다."></textarea></label>
+          <label class="chk"><input type="checkbox" id="hCite" checked> 근거 자료 목록을 문서 끝에 포함</label>
+          <div class="row end"><button class="ghost" id="hFill">마지막 답변 불러오기</button><button class="primary" id="btnHwpxGo">한글 파일 생성 · 다운로드</button></div>
+        </div>
+        <div class="card preview">
+          <h4>서식 미리보기 <small>달성군 보고서 서식(■ □ ❍ - ※)</small></h4>
+          <div class="paper" id="paper"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 직원 · 자료함 -->
+    <section class="view" data-view="lib">
+      <div class="vh"><h2>자료함</h2><p>AI가 참조하는 달성군 자료입니다. 관리자가 한 번 등록하면 전 직원 답변에 즉시 반영됩니다.</p></div>
+      <div class="layers-grid" id="layers">
+        <div class="lc on" data-layer="1"><b>1층 · 공개자료</b><span class="cnt" id="c1">–</span><small>자치법규 · 민원안내 · 공공데이터 — 직원·군민 공통</small></div>
+        <div class="lc on" data-layer="2"><b>2층 · 내부지침</b><span class="cnt" id="c2">–</span><small>복무 · 회계 · 계약 · 개인정보 · 보안 — 직원 전용</small></div>
+        <div class="lc lock" data-layer="3"><b>3층 · 공문서</b><span class="cnt">🔒</span><small>온나라 문서 · 사업계획 — 2단계, 권한 체계 마련 후</small></div>
+      </div>
+      <div class="card"><h4>자료 목록 <small>현재 색인 기준</small></h4><table class="tbl" id="libTbl"></table></div>
+    </section>
+
+    <!-- 직원·군민 · 데이터 조회 -->
+    <section class="view" data-view="data">
+      <div class="vh"><h2 id="dataTitle">데이터 조회</h2><p>달성군 공공데이터를 읍·면별로 집계하고 검색합니다. 대화창에서 "다사읍 경로당 몇 개소?"처럼 물어도 같은 데이터로 답합니다.</p></div>
+      <div class="row rw"><div class="seg2" id="dsSeg"></div><input id="dsSearch" placeholder="이름·주소로 검색" style="max-width:280px"></div>
+      <div class="data-grid">
+        <div class="card"><h4>읍·면별 개소 수</h4><div class="bars" id="dsBars"></div></div>
+        <div class="card grow"><h4 id="dsListTitle">목록</h4><div class="scroll"><table class="tbl" id="dsTbl"></table></div></div>
+      </div>
+    </section>
+
+    <!-- 군민 · 카카오 민원안내 -->
+    <section class="view" data-view="kakao">
+      <div class="vh"><h2>카카오톡 민원안내 챗봇</h2><p>군민용 채널. <b>공개자료만</b> 참조하고 개인정보를 받지 않으며, 접수·신청은 정부24·국민신문고로 연결합니다. (시연은 화면 목업, 실제 연동은 카카오 i 오픈빌더 스킬 서버)</p></div>
+      <div class="kakao-grid">
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="k-head"><span class="k-back">‹</span><div class="k-title"><b>달성군 민원안내</b><small>카카오톡 채널 · 챗봇</small></div><span class="k-menu">≡</span></div>
+          <div class="k-msgs" id="kmsgs"></div>
+          <div class="k-quick" id="kquick"></div>
+          <form class="k-input" id="kform"><input id="kq" placeholder="메시지를 입력하세요" autocomplete="off"><button type="submit" aria-label="전송">➤</button></form>
+        </div>
+        <div class="card grow"><h4>근거 자료 <small id="kevNote">군민에게 보이지 않는 관리자 확인용</small></h4><div class="ev" id="kev"></div><h4 style="margin-top:14px">예시 질문</h4><div class="chips" id="kChips"></div></div>
+      </div>
+    </section>
+
+    <!-- 관리자 · 이용통계 -->
+    <section class="view" data-view="stats">
+      <div class="vh"><h2>이용 통계</h2><p>이번 세션 기준 시연 수치입니다. 실제 구축 시 부서별·기간별 통계와 자주 묻는 질문 분석을 제공합니다.</p></div>
+      <div class="kpis"><div class="kpi"><small>질의</small><b id="kQ">0</b></div><div class="kpi"><small>근거 인용 답변</small><b id="kCite">0</b></div><div class="kpi"><small>자료 외 AI 답변</small><b id="kGen">0</b></div><div class="kpi"><small>한글 파일 생성</small><b id="kHwpx">0</b></div></div>
+      <div class="card"><h4>자주 찾은 자료</h4><ol class="toplist" id="topDocs"><li class="muted">아직 질의가 없습니다</li></ol></div>
+    </section>
+
+    <!-- 관리자 · 자료 갱신 -->
+    <section class="view" data-view="update">
+      <div class="vh"><h2>자료 갱신</h2><p>자료를 한 번 등록·갱신하면 전 직원 화면에 즉시 반영됩니다. 개인 계정·개인 PC에 묶이지 않는 <b>군 정보시스템</b> 방식입니다.</p></div>
+      <div class="card"><table class="tbl" id="adminSrc"></table></div>
+    </section>
+
+    <!-- 관리자 · 모델 설정 -->
+    <section class="view" data-view="model">
+      <div class="vh"><h2>답변 모델 설정</h2><p>시연판은 브라우저에서 모델 API를 직접 호출합니다(키는 메모리에만 보관). 실제 구축 시 업무망 서버의 모델 또는 행안부 온AI API로 교체하며 화면·자료는 그대로 유지됩니다.</p></div>
+      <div class="card narrow">
+        <label>Anthropic API 키 <small>브라우저 메모리에만 보관 · 저장·전송 안 함</small><input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
+        <label>모델<input id="model" value="claude-sonnet-4-5" list="models"><datalist id="models"><option value="claude-sonnet-4-5"><option value="claude-haiku-4-5"><option value="claude-opus-4-1"></datalist></label>
+        <label class="chk"><input type="checkbox" id="offline"> 오프라인 시연 모드(검색 결과만으로 답변 구성)</label>
+        <p class="hint">현재 상태: <b id="adminModel">–</b></p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ═══════ 우측: AI 대화 패널 ═══════ -->
+  <aside class="chat" id="chat">
+    <div class="chat-head"><div><b>AI 대화</b><small id="chatSub">달성군 자료 근거 · 자료 밖 질문은 AI 직접 답변</small></div><div class="row"><button class="ghost sm" id="btnClear">새 대화</button><button class="ghost sm" id="btnFold" title="접기">›</button></div></div>
     <div class="msgs" id="msgs"></div>
-    <form class="composer" id="form">
-      <textarea id="q" rows="1" placeholder="예) 체육시설 사용료 감면 대상은?  ·  다사읍 경로당 몇 개소?  ·  연가 2일 결재선은?  (Enter 전송 · Shift+Enter 줄바꿈)"></textarea>
-      <button type="submit" class="send" id="btnSend" aria-label="전송">↑</button>
-    </form>
-    <p class="foot">답변은 참고용이며 최종 판단은 담당자가 합니다 · 자료 외부 전송 없음(업무망 내 처리 개념) · 시연판</p>
-  </section>
-
-  <!-- 중앙: 군민용 카카오 목업 -->
-  <section class="center citizen-only" id="citizenPane">
-    <div class="phone">
-      <div class="notch"></div>
-      <div class="k-head">
-        <span class="k-back">‹</span>
-        <div class="k-title"><b>달성군 민원안내</b><small>카카오톡 채널 · 챗봇</small></div>
-        <span class="k-menu">≡</span>
-      </div>
-      <div class="k-msgs" id="kmsgs"></div>
-      <div class="k-quick" id="kquick"></div>
-      <form class="k-input" id="kform">
-        <input id="kq" placeholder="메시지를 입력하세요" autocomplete="off">
-        <button type="submit" aria-label="전송">➤</button>
-      </form>
-    </div>
-    <p class="foot">군민 채널은 공개자료만 참조 · 개인정보 입력 불가 · 실제 접수는 국민신문고/정부24 연결 · 카카오 i 오픈빌더 스킬 서버로 연동(시연은 화면 목업)</p>
-  </section>
-
-  <!-- 우: 근거 · 산출 -->
-  <aside class="side right">
-    <section class="card grow">
-      <h3>근거 자료 <small id="evNote">질문하면 검색된 근거가 표시됩니다</small></h3>
-      <div class="ev" id="ev"></div>
-    </section>
-    <section class="card staff-only">
-      <h3>문서 산출 <span class="star">★ 달성군만의 기능</span></h3>
-      <p class="hint">마지막 답변을 <b>달성군 표준 서식 한글(hwpx)</b> 파일로 만듭니다.</p>
-      <div class="row">
-        <select id="docKind">
-          <option value="review">검토보고(1장)</option>
-          <option value="pumui">품의서</option>
-          <option value="memo">업무연락 메모</option>
-        </select>
-        <button class="primary" id="btnHwpx" disabled>한글 파일 생성</button>
-      </div>
-      <small class="muted" id="hwpxNote">답변이 생기면 활성화됩니다.</small>
-    </section>
+    <form class="composer" id="form"><textarea id="q" rows="1" placeholder="업무 질문을 입력하세요 (Enter 전송 · Shift+Enter 줄바꿈)"></textarea><button type="submit" class="send" id="btnSend" aria-label="전송">↑</button></form>
+    <p class="foot">답변은 참고용 · 최종 판단은 담당자 · 자료 외부 전송 없음(업무망 내 처리 개념)</p>
   </aside>
-</main>
-
-<!-- ───────── 관리자 화면 ───────── -->
-<div class="modal" id="mAdmin" hidden>
-  <div class="box wide">
-    <div class="box-h"><b>📊 관리자 화면 (정보통신과)</b><button class="x" data-close>✕</button></div>
-    <div class="kpis">
-      <div class="kpi"><small>이번 세션 질의</small><b id="kQ">0</b></div>
-      <div class="kpi"><small>근거 인용 답변</small><b id="kCite">0</b></div>
-      <div class="kpi"><small>자료 외 AI 답변</small><b id="kGen">0</b></div>
-      <div class="kpi"><small>한글 파일 생성</small><b id="kHwpx">0</b></div>
-    </div>
-    <div class="cols">
-      <div>
-        <h4>자료 갱신 <small>등록 한 번 → 전 직원 즉시 반영</small></h4>
-        <table class="tbl" id="adminSrc"></table>
-      </div>
-      <div>
-        <h4>자주 찾은 자료</h4>
-        <ol class="toplist" id="topDocs"><li class="muted">아직 질의가 없습니다</li></ol>
-        <h4>답변 모델</h4>
-        <p class="hint">현재: <b id="adminModel">–</b><br>행안부 온AI API 개방 시 모델만 교체(자료·화면 유지)</p>
-      </div>
-    </div>
-  </div>
+  <button class="chat-open" id="btnUnfold" hidden>💬 AI 대화</button>
 </div>
 
-<!-- ───────── 설정 ───────── -->
-<div class="modal" id="mSet" hidden>
-  <div class="box">
-    <div class="box-h"><b>⚙ 설정</b><button class="x" data-close>✕</button></div>
-    <label>답변 모델 API 키 <small>(Anthropic) — 브라우저 메모리에만 보관, 저장·전송 안 함</small>
-      <input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
-    <label>모델
-      <input id="model" value="claude-sonnet-4-5" list="models">
-      <datalist id="models"><option value="claude-sonnet-4-5"><option value="claude-haiku-4-5"><option value="claude-opus-4-1"></datalist></label>
-    <label class="chk"><input type="checkbox" id="offline"> 오프라인 시연 모드(키 없이 검색 결과만으로 답변 구성)</label>
-    <p class="hint">키가 없으면 자동으로 오프라인 시연 모드로 동작합니다. 실제 구축 시에는 업무망 서버의 모델(또는 온AI API)로 대체되며 브라우저에 키를 두지 않습니다.</p>
-    <div class="row end"><button class="primary" data-close>확인</button></div>
-  </div>
-</div>
+<!-- 설정(빠른 접근) -->
+<div class="modal" id="mSet" hidden><div class="box"><div class="box-h"><b>⚙ 설정</b><button class="x" data-close>✕</button></div><p class="hint">모델·API 키 설정은 <b>관리자 › 모델 설정</b>에 있습니다.</p><div class="row end"><button class="primary" id="goModel">모델 설정으로</button></div></div></div>
 
-<!-- ───────── 한글 생성 ───────── -->
-<div class="modal" id="mHwpx" hidden>
-  <div class="box">
-    <div class="box-h"><b>📄 한글(hwpx) 파일 생성</b><button class="x" data-close>✕</button></div>
-    <label>제목<input id="hTitle"></label>
-    <label>부제<input id="hSub"></label>
-    <label>작성일 / 부서<input id="hDate"></label>
-    <label class="chk"><input type="checkbox" id="hCite" checked> 근거 자료 목록을 문서 끝에 포함</label>
-    <div class="row end"><button class="primary" id="btnHwpxGo">생성 · 다운로드</button></div>
-  </div>
-</div>
-
-<!-- ───────── 첫 안내 ───────── -->
-<div class="modal" id="mIntro">
-  <div class="box intro">
-    <div class="logo big"><span>On</span></div>
-    <h2>달성군 AI 업무비서 <b>달성On</b> 시연판</h2>
-    <p>상단 스위치로 <b>직원용</b>과 <b>군민용(카카오)</b> 두 채널을 오가며 기능 범위를 확인할 수 있습니다.</p>
-    <ul>
-      <li><b>근거 인용</b> — 달성군 조례·지침·공공데이터를 검색해 조문과 함께 답변</li>
-      <li><b>한글 파일 생성</b> — 답변을 군 서식 hwpx로 즉시 산출 <span class="star">★</span></li>
-      <li><b>군민 민원안내</b> — 공개자료만으로 절차·서류·시설 안내, 접수는 국민신문고 연결</li>
-    </ul>
-    <p class="hint">자료: 2026.7.10 공포 조례·규칙 7건, 민원안내 10건(예시), 공공데이터 6종 1,104행, 내부지침 5건(예시)</p>
-    <button class="primary" data-close>시연 시작</button>
-  </div>
-</div>
+<!-- 첫 안내 -->
+<div class="modal" id="mIntro"><div class="box intro">
+  <div class="logo big"><span>On</span></div>
+  <h2>달성군 AI 업무비서 <b>달성On</b> 시연판</h2>
+  <p>상단 탭으로 <b>직원용 · 군민용 · 관리자</b>를, 왼쪽 메뉴로 기능을 고릅니다. 오른쪽 대화창에 질문하면 근거와 함께 답합니다.</p>
+  <p class="hint">자료: 2026.7.10 공포 조례·규칙 7건, 민원안내 10건(예시), 공공데이터 6종 1,107행, 내부지침 5건(예시)</p>
+  <button class="primary" data-close>시연 시작</button>
+</div></div>
 
 <script src="hwpx.js"></script>
 <script src="app.js"></script>
