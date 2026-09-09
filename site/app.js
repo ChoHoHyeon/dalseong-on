@@ -298,6 +298,7 @@ function updPill(){ const on=S.key&&!S.offline; $('#pillModel').classList.toggle
 $('#apiKey').oninput=e=>{ S.key=e.target.value.trim(); updPill(); }; $('#model').oninput=e=>{ S.model=e.target.value.trim()||'claude-sonnet-4-5'; updPill(); }; $('#offline').onchange=e=>{ S.offline=e.target.checked; updPill(); };
 
 /* ── 기타 ── */
+$('#topAsk').onsubmit=e=>{ e.preventDefault(); const q=$('#topQ').value.trim(); if(!q) return; $('#topQ').value=''; if(S.mode!=='staff') setMode('staff'); go('qa'); document.body.dataset.chat='on'; $('#btnUnfold').hidden=true; $('#q').value=q; $('#form').requestSubmit(); };
 $('#btnSet').onclick=()=>$('#mSet').hidden=false; $('#goModel').onclick=()=>{ $('#mSet').hidden=true; setMode('admin'); go('model'); };
 $$('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modal').hidden=true); $$('.modal').forEach(m=>m.onclick=e=>{ if(e.target===m&&m.id!=='mIntro') m.hidden=true; });
 $('#btnTheme').onclick=()=>{ const l=document.body.dataset.theme!=='light'; document.body.dataset.theme=l?'light':'dark'; $('#btnTheme').textContent=l?'🌙':'☀️'; try{localStorage.setItem('dOnTheme',l?'light':'dark');}catch(e){} };
