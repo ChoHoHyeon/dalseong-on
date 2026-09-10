@@ -297,3 +297,5 @@ body[data-theme=dark] .top-c.slogan img{filter:brightness(1.15)}
 .soon-card .soon-list{list-style:none;display:flex;flex-direction:column;gap:8px;margin-top:2px}
 .soon-card .soon-list li{padding:11px 14px;border:1px dashed var(--line);border-radius:12px;background:var(--panel2);font-size:13.5px;color:var(--mut)}
 .soon-card .soon-list li b{font-weight:600;color:var(--tx)}
+
+.user .uav{font-size:15px} .user b{font-variant-numeric:tabular-nums;letter-spacing:-.2px}
