@@ -153,7 +153,7 @@ async function init(){
    HOME_MENU : 홈·이용 안내·관리자 등 일반 화면에서 보이는 메뉴 (여기에 항목을 추가해도 달성On 화면에는 나오지 않음)
    달성On 화면 : 달성On 항목 + 새 대화 + 최근 대화만 (고정)                                                       */
 const HOME_MENU=[
-  {mode:'staff',view:'on',     icon:'✦',  label:'달성On', cls:'on-item'},
+  {mode:'staff',view:'on',     icon:'✦',  label:'달성On\n사용하기', cls:'on-item'},
   {mode:'staff',view:'report', icon:'📄', label:'결과보고서\n작성하기'},
   {mode:'staff',view:'analyze',icon:'📊', label:'데이터\n분석하기'},
   {mode:'staff',view:'press',  icon:'📰', label:'보도자료\n작성하기'},
