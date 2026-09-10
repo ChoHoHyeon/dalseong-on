@@ -333,8 +333,10 @@ const dstr=d=>{d=String(d||'');return d.length===8?`${d.slice(0,4)}.${+d.slice(4
    본문 한컴바탕확장 15pt(줄간격 160%) · 표제 궁서 20/30pt · 표 항목 휴먼명조 15pt        */
 const PRESS_RULE = `[달성군 보도자료 작성 규칙 — 실제 발행본 600건에서 추출]
 · 제목: 「대구 달성군, ○○○ 개최」처럼 주체+무엇을+동사로 끝낸다. 20자 안팎. 마침표 없음.
-  내용이 길면 두 줄로 나눈다(예: "근로자 안전이 최우선! / 달성군, 산업안전 우수기업 5곳 선정").
-· 부제: ▸ 로 시작하는 2~3줄. 각 줄 25~35자. 제목에 없는 알맹이(대상·규모·금액·기간)를 담는다.
+  24자를 넘으면 의미가 끊기지 않는 자리에서 / 로 나눠 두 줄로 준다(예: "근로자 안전이 최우선! / 달성군, 산업안전 우수기업 5곳 선정").
+  두 줄 길이는 비슷하게 맞추고, 조사(을·를·의·로) 바로 뒤나 「」 안에서는 끊지 않는다.
+  같은 낱말(예: 달성군)을 제목 안에서 두 번 쓰지 않는다.
+· 부제: ▸ 로 시작하는 2~3줄. **각 줄 32자 이내**(넘으면 서식 상자를 벗어남). 한 줄에 한 가지만 담는다. 제목에 없는 알맹이(대상·규모·금액·기간)를 담는다.
 · 본문 첫 문단(리드): "달성군(군수 최재훈)은 지난 O일 △△에서 ~을 개최했다고 밝혔다." 형태로
   누가·언제·어디서·무엇을 한 문장에 담는다. 기관명 뒤에는 괄호로 대표자를 적는다.
 · 둘째 문단: 배경·목적. "이번 ~은 ~하기 위해 마련됐다."
@@ -435,23 +437,53 @@ function pressHead(){
           dept:v('pfDept',PH.dept).t, lead:v('pfLead',PH.lead).t, pic:v('pfPic',PH.pic).t, tel:v('pfTel',PH.tel).t};
 }
 
+/* 제목 줄나눔 — 한 줄이 길면 의미 단위에서 자연스럽게 두 줄로 */
+function splitTitle(raw){
+  let t=String(raw||'').trim();
+  if(t.includes('/')){                                   // 모델이 직접 나눈 경우 그대로
+    const a=t.split('/').map(x=>x.trim()).filter(Boolean);
+    if(a.length>=2) return [a[0],a.slice(1).join(' ')];
+    t=a[0]||t;
+  }
+  const L=s=>[...s].reduce((n,c)=>n+(/[\x00-\x7F]/.test(c)?0.5:1),0);   // 한글 1, 영문·숫자 0.5칸
+  if(L(t)<=24) return [t];
+  // 나눌 수 있는 자리 : 공백 위치 (「」·()·"" 안쪽은 제외)
+  const open='「『（("\u2018\u201C', close='」』）)"\u2019\u201D';
+  let depth=0; const cand=[];
+  for(let i=0;i<t.length;i++){
+    const c=t[i];
+    if(open.includes(c)) depth++;
+    else if(close.includes(c)) depth=Math.max(0,depth-1);
+    else if(c===' '&&depth===0) cand.push(i);
+  }
+  if(!cand.length) return [t];
+  const total=L(t), mid=total/2;
+  let best=null,bestScore=1e9;
+  for(const i of cand){
+    const a=t.slice(0,i).trim(), b=t.slice(i+1).trim();
+    if(!a||!b) continue;
+    const la=L(a), lb=L(b);
+    if(la>30||lb>30) continue;                            // 한 줄 30칸 넘으면 제외
+    let sc=Math.abs(la-mid)*2;                            // 가운데에 가까울수록 좋음
+    if(/[,·]$/.test(a)) sc-=6;                            // 쉼표 뒤에서 끊으면 자연스러움
+    if(/[을를이가은는와과의로]$/.test(a)) sc+=8;             // 조사 뒤 끊기는 어색
+    if(/^(및|등|또는|그리고)/.test(b)) sc+=6;               // 접속어로 줄 시작 어색
+    if(la<8||lb<8) sc+=10;                                // 한쪽만 너무 짧으면 감점
+    if(sc<bestScore){ bestScore=sc; best=i; }
+  }
+  if(best===null) return [t];
+  return [t.slice(0,best).trim(), t.slice(best+1).trim()];
+}
+const cutSub=t=>{ t=String(t||'').trim(); return t.length>34? t.slice(0,33).replace(/[\s,·]+$/,'')+'…' : t; };
 function pressRender(o){
   const H=pressHead();
   const V=x=>`<span${x&&x.miss?' class="miss"':''}>${esc0(x&&x.t!==undefined?x.t:x)}</span>`;
-  /* 원본 한글 서식과 같은 표 구조 : 6행 5열, 열너비 23.1 / 53.4 / 2.7 / 27.7 / 61.5 mm */
-  const tbl=`<table class="pvt"><colgroup>
-      <col style="width:13.7%"><col style="width:31.7%"><col style="width:1.6%"><col style="width:16.5%"><col style="width:36.5%"></colgroup>
-    <tr><td colspan="2" rowspan="2" class="org">대구광역시 달성군</td><td rowspan="6" class="gap"></td>
-        <td class="k">제공일자</td><td class="v">${V({t:H.date,miss:false})}</td></tr>
-    <tr><td rowspan="2" class="k">담당부서</td><td rowspan="2" class="v">${V(H.deptO)}</td></tr>
-    <tr><td rowspan="4" class="ci"><img src="assets/dalseong_ci.png" alt="달성군 상징"></td>
-        <td rowspan="4" class="big">보도자료</td></tr>
-    <tr><td class="k">팀　　장</td><td class="v">${V(H.leadO)}</td></tr>
-    <tr><td class="k">담 당 자</td><td class="v">${V(H.picO)}</td></tr>
-    <tr><td class="k">전　　화</td><td class="v">${V(H.telO)}</td></tr></table>`;
-  $('#pressView').innerHTML = tbl +
-    `<div class="ttlbox"><h3>${o.title.split('/').map(x=>esc0(x.trim())).join('<br>')}</h3>
-       ${o.subs.map(s=>`<div class="psub">▸ ${esc0(s)}</div>`).join('')}</div>
+  /* 표는 한글 파일에만 들어간다. 미리보기는 내용에 집중하도록 한 줄 요약만 표시 */
+  const meta=`<div class="pvmeta">제공일자 ${V({t:H.date,miss:false})}<i>·</i>담당부서 ${V(H.deptO)}`+
+             `<i>·</i>팀장 ${V(H.leadO)}<i>·</i>담당자 ${V(H.picO)}<i>·</i>전화 ${V(H.telO)}</div>`;
+  $('#pressView').innerHTML = meta +
+    `<div class="ttlbox"><h3>${splitTitle(o.title).map(x=>esc0(x)).join('<br>')}</h3>
+       ${o.subs.map(s=>`<div class="psub">▸ ${esc0(cutSub(s))}</div>`).join('')}</div>
      <div class="pbody">${o.body.map(p=>`<p>${esc0(p)}</p>`).join('')}</div>`;
   $('#pressOut').hidden=false;
   $('#pressOut').scrollIntoView({behavior:'smooth',block:'start'});
@@ -505,11 +537,11 @@ async function makePress(){
         const ls=buf.split('\n'); buf=ls.pop();
         for(const ln of ls){ if(!ln.startsWith('data:')) continue;
           try{ const j=JSON.parse(ln.slice(5)); if(j.type==='content_block_delta'&&j.delta?.text) text+=j.delta.text; }catch(e){} } }
-      PS.out=pressParse(text);
+      PS.out=pressParse(text); PS.out.subs=(PS.out.subs||[]).map(cutSub);
       $('#pfMsg').textContent='작성 완료 — 내용을 확인하고 수정해 주세요.';
     }else{
       await new Promise(r=>setTimeout(r,500));
-      PS.out=pressOffline();
+      PS.out=pressOffline(); PS.out.subs=(PS.out.subs||[]).map(cutSub);
       $('#pfMsg').textContent='오프라인 시연 모드 — 모델 연결 시 실제 문체로 작성됩니다.';
     }
     pressRender(PS.out);
@@ -522,7 +554,7 @@ async function pressHwpx(){
   if(!PS.out) return;
   const H=pressHead();
   try{
-    const blob=await DalseongHwpx.build({kind:'press', title:PS.out.title.replace(/\s*\/\s*/g,' '), sub:PS.out.subs.join(' / '),
+    const blob=await DalseongHwpx.build({kind:'press', title:PS.out.title.replace(/\s*\/\s*/g,' '), titleLines:splitTitle(PS.out.title), sub:PS.out.subs.join(' / '),
       date:H.date, head:H, subs:PS.out.subs, paras:PS.out.body,
       question:'', answer:PS.out.body.join('\n\n'), cites:[], includeCites:false});
     const nm=`달성군_보도자료_${($('#pfName').value||'초안').replace(/[\\/:*?"<>|]/g,'')}_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.hwpx`;

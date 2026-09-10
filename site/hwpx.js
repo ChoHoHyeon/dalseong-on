@@ -47,8 +47,10 @@ window.DalseongHwpx = (function(){
     const head = fill(PTPL.pHead,{'@@DATE@@':' '+(H.date||''),'@@DEPT@@':' '+(H.dept||''),
                                  '@@LEAD@@':' '+(H.lead||''),'@@PIC@@':' '+(H.pic||''),'@@TEL@@':' '+(H.tel||'')});
     const subs=(o.subs||[]).slice(0,3);
-    const title= fill(PTPL.pTitle,{'@@TITLE@@':String(o.title||'').replace(/\s*\/\s*/g,' ').trim(),
-                                   '@@SUB1@@':subs[0]?'▸ '+subs[0]:'', '@@SUB2@@':subs[1]?'▸ '+subs[1]:'', '@@SUB3@@':subs[2]?'▸ '+subs[2]:''});
+    const lines=(o.titleLines&&o.titleLines.length)?o.titleLines:[String(o.title||'').replace(/\s*\/\s*/g,' ').trim()];
+    const block=lines.map(l=>fill(PTPL.titlePara,{'@@TITLE@@':l})).join('');
+    const title= fill(PTPL.pTitle,{'@@SUB1@@':subs[0]?'▸ '+subs[0]:'', '@@SUB2@@':subs[1]?'▸ '+subs[1]:'', '@@SUB3@@':subs[2]?'▸ '+subs[2]:''})
+                 .split('@@TITLE_BLOCK@@').join(block);
     const body = (o.paras||[]).map((t,i)=>(i?PTPL.pGap:'')+fill(PTPL.pBody,{'@@TEXT@@':' '+t})).join('');
     const section = PTPL.head + head + PTPL.pBlank + title + PTPL.pGap + body + PTPL.tail;
 
