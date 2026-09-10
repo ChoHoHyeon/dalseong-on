@@ -7,6 +7,7 @@ SITE=os.path.join(BASE,'site','data')
 old=json.load(io.open(os.path.join(SITE,'index.json'),encoding='utf-8'))
 ordin=json.load(io.open(os.path.join(REF,'dalseong_ordin_574.json'),encoding='utf-8'))
 elis=json.load(io.open(os.path.join(REF,'dalseong_elis_648.json'),encoding='utf-8'))
+hun=json.load(io.open(os.path.join(REF,'dalseong_hunryeong_70.json'),encoding='utf-8'))
 
 # ELIS: 법규명 -> 편, 소관부서
 E={}
@@ -42,15 +43,34 @@ for d in ordin['docs']:
     n+=1; cnt[src]+=1
     if dept: dept_map[src]=dept
 
+# 훈령·예규 (ELIS)
+for d in hun['docs']:
+    src=d['src'].strip(); meta=E.get(src,{})
+    txt=re.sub(r'\s+',' ',one(d['txt'])).strip()[:2000]
+    if len(txt)<10: continue
+    label=one(d.get('no')) or ''
+    ttl=one(d.get('ttl')).strip()
+    title='%s %s%s'%(src,label,'(%s)'%ttl if ttl else '') if label else '%s %s'%(src,ttl or '본문')
+    docs.append({'id':'law-%d'%n,'type':'law','source':src,'title':title.strip(),'text':txt,
+                 'access':'public','dept':(d.get('dept') or meta.get('dept') or '').strip(),
+                 'kind':d.get('kind','훈령'),'field':meta.get('p','')})
+    n+=1; cnt[src]+=1
+
 for d in old['docs']:
     if d['type']!='law': docs.append(d)
 
+# (훈령·예규 포함 후 재계산)
 law_sources=sorted(cnt.keys())
 laws=[]
 for L in ordin['laws']:
     nm=L['name'].strip(); m=E.get(nm,{})
     laws.append({'n':nm,'k':KIND.get(L['kind'],L['kind']),'d':(L.get('dept') or m.get('dept') or ''),
                  'e':L.get('eff',''),'f':m.get('p',''),'c':cnt.get(nm,0)})
+for L in hun['laws']:
+    nm=L['name'].strip(); m=E.get(nm,{})
+    laws.append({'n':nm,'k':L.get('kind','훈령'),'d':(L.get('dept') or m.get('dept') or ''),
+                 'e':L.get('eff',''),'f':L.get('field') or m.get('p',''),'c':cnt.get(nm,0)})
+
 TODAY='20260910'
 _ok=[x for x in laws if x['e'] and x['e'].isdigit() and len(x['e'])==8 and x['e']<=TODAY]
 laws_recent=sorted(_ok,key=lambda x:x['e'],reverse=True)[:12]
