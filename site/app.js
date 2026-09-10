@@ -164,7 +164,7 @@ const HOME_MENU=[
   {mode:'staff',view:'press',  icon:'📰', label:'보도자료\n작성하기', cls:'sep'},
   {mode:'staff',view:'banner', icon:'🎏', label:'홍보 현수막\n제작하기'},
   {mode:'staff',view:'info',   icon:'📈', label:'인포그래픽\n제작하기'},
-  {mode:'staff',view:'card',   icon:'📱', label:'SNS 카드뉴스\n제작하기'},
+  {mode:'staff',view:'card',   icon:'📱', label:'카드뉴스\n제작하기'},
   {mode:'staff',view:'movie',  icon:'🎬', label:'홍보영상\n만들기'},
   {mode:'staff',view:'voice',  icon:'🔊', label:'안내방송\n만들기'},
   // ── 찾아보기 · 나눔
@@ -226,17 +226,17 @@ function renderUsage(){
   const mx=top[0][1]; $('#topNote').textContent=note;
   $('#topUsed').innerHTML=top.map(([t,n],i)=>{ const d=S.docs.find(x=>x.title===t); const ty=d?typeName(d.type):''; return `<li><span class="n">${i+1}</span><div><b title="${t}">${t.replace('대구광역시 달성군 ','')}</b><small>${ty}${d&&d.access==='staff'?' · 직원 전용':''}</small></div><span class="bar"><i style="width:${Math.max(24,Math.round(n/mx*90))}px"></i>${n}회</span></li>`; }).join('');
   // 자료 구성 도넛 (출처 기준)
-  const parts=[['자치법규',S.meta.law_sources.length,c.law+'개 조문·별표'],['민원안내',c.minwon,'예시 안내'],['공공데이터',S.meta.datasets.length,c.data.toLocaleString()+'행'],['내부지침',c.internal,'직원 전용']]; const psum=parts.reduce((p,x)=>p+x[1],0); let acc=0; const R=54,cx=70,cy=70,circ=2*Math.PI*R;
+  const parts=[['자치법규',c.law,S.meta.law_sources.length+'건 조례·규칙'],['공공데이터',c.data,S.meta.datasets.length+'종 데이터셋'],['민원안내',c.minwon,'예시 안내'],['내부지침',c.internal,'직원 전용']]; const psum=parts.reduce((p,x)=>p+x[1],0); let acc=0; const R=54,cx=70,cy=70,circ=2*Math.PI*R;
   let d=`<svg viewBox="0 0 140 140" role="img" aria-label="자료 출처 구성">`; parts.forEach(([n,v],k)=>{ const f=v/psum; d+=`<circle r="${R}" cx="${cx}" cy="${cy}" fill="none" stroke="${PAL[k]}" stroke-width="18" stroke-dasharray="${Math.max(0,f*circ-2)} ${circ}" stroke-dashoffset="${-acc*circ}" transform="rotate(-90 ${cx} ${cy})"><title>${n} ${v}건</title></circle>`; acc+=f; });
-  d+=`<text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="18" font-weight="700" fill="currentColor">${psum}</text><text x="${cx}" y="${cy+14}" text-anchor="middle" font-size="10" fill="currentColor" opacity=".6">출처</text></svg>`;
-  $('#chartDonut').innerHTML=`<div class="donut-wrap">${d}<ul>${parts.map(([n,v,s],k)=>`<li><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${PAL[k]};margin-right:6px"></i>${n}<br><small style="margin-left:16px">${s}</small></span><b>${v}건</b></li>`).join('')}</ul></div>`;
+  d+=`<text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor">${psum.toLocaleString()}</text><text x="${cx}" y="${cy+14}" text-anchor="middle" font-size="10" fill="currentColor" opacity=".6">색인 문서</text></svg>`;
+  $('#chartDonut').innerHTML=`<div class="donut-wrap">${d}<ul>${parts.map(([n,v,s],k)=>`<li><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${PAL[k]};margin-right:6px"></i>${n}<br><small style="margin-left:16px">${s}</small></span><b>${v.toLocaleString()}건</b></li>`).join('')}</ul></div>`;
   // 최근 자치법규
-  $('#lawList').innerHTML=S.meta.law_sources.map(s=>`<li><i></i><div>${s.replace('대구광역시 달성군 ','')}<small>${S.docs.filter(x=>x.source===s).length}개 조문·별표 색인</small></div></li>`).join('');
+  $('#lawList').innerHTML=(S.meta.law_recent||[]).map(L=>`<li><i></i><div>${shortNm(L.n)}<small>${L.d?L.d+' · ':''}${L.c}개 조문 색인 · 시행 ${dstr(L.e)}</small></div></li>`).join('');
 }
 
 const VIDEO_FILE='assets/intro.mp4';  // 사이트에 직접 넣은 영상(유튜브 오버레이 없음). 비우면 VIDEO_ID 유튜브 사용
 const VIDEO_ID='OVZoYQeUFIQ';  // 유튜브 영상 ID를 넣으면 안내 영상이 재생됨, 비우면 포스터 표시
-const NEWS=[['2026.09.10','공지','부군수 보고 결과 — 직원용 우선 도입 확정','① 우선 <b>직원용</b>으로 도입하여 전 직원이 자유롭게 사용할 수 있도록 구축<br>② 2027년 사업비 <b>20백만원</b> 범위에서 추진<br>③ 도입 후 <b>이용 활성화 상황을 지켜본 뒤</b>, 향후 <b>군민 대상(민원 안내) 서비스로 확장</b>할 수 있는 구조로 설계<br>※ 군민용 챗봇은 이번 단계에서 제외하되, 확장 가능한 구조는 유지합니다.'],['2026.09.10','공지','부군수 보고 시연 안내','시연 순서: ① 달성On 홈 → ② 직원용 질의응답·한글 파일 생성 → ③ 관리자 통계. 시연 중 질문은 예시 질문 버튼을 우선 사용해 주세요.'],['2026.09.09','공지','달성On 시연판 이용 안내','시연판은 예시 자료(민원안내 10건·내부지침 5건)를 포함합니다. 답변은 참고용이며 최종 판단은 담당자가 합니다. 문의: 정보통신과 053-668-2454'],['2026.09.09','기능','「달성군」 홈 대시보드 · 이용 안내 · 공지 화면 추가'],['2026.09.09','기능','달성On/직원용/관리자 3개 탭 구조로 개편, 우측 AI 대화 패널'],['2026.09.09','기능','한글 문서 생성 화면(문서 종류 · 서식 미리보기) 신설'],['2026.09.09','자료','민원안내 10건(예시) · 내부지침 5건(예시) 등록'],['2026.09.08','자료','2026.7.10 공포 조례·규칙 7건 색인(24개 조문·별표)'],['2026.09.08','자료','공공데이터 6종 1,107행 연결 (경로당·판매소·도서관·대형폐기물·봉투가격·무료급식소)'],['2026.09.08','기능','달성On 시연판 최초 공개']];
+const NEWS=[['2026.09.10','자료','달성군 자치법규 <b>전량 색인</b> — 조례 479건 · 규칙 95건','법제처 「국가법령정보 공동활용」 API와 자치법규정보시스템(ELIS)을 통해 <b>대구광역시 달성군 자치법규 574건(8,701개 조문)</b>을 전부 색인했습니다.<br>· 이전: 7건 24개 조문(예시) → 현재: <b>574건 8,701개 조문(전량)</b><br>· 법규별 <b>소관부서</b>(42개 부서)와 시행일자를 함께 저장하여 「담당 부서 찾기」 근거로 사용합니다<br>· 모두 공개 자료이며, 조문 원문을 근거로 인용합니다<br>※ 훈령 52건·예규 18건은 다음 단계에 추가할 예정입니다.'],['2026.09.10','공지','부군수 보고 결과 — 직원용 우선 도입 확정','① 우선 <b>직원용</b>으로 도입하여 전 직원이 자유롭게 사용할 수 있도록 구축<br>② 2027년 사업비 <b>20백만원</b> 범위에서 추진<br>③ 도입 후 <b>이용 활성화 상황을 지켜본 뒤</b>, 향후 <b>군민 대상(민원 안내) 서비스로 확장</b>할 수 있는 구조로 설계<br>※ 군민용 챗봇은 이번 단계에서 제외하되, 확장 가능한 구조는 유지합니다.'],['2026.09.10','공지','부군수 보고 시연 안내','시연 순서: ① 달성On 홈 → ② 직원용 질의응답·한글 파일 생성 → ③ 관리자 통계. 시연 중 질문은 예시 질문 버튼을 우선 사용해 주세요.'],['2026.09.09','공지','달성On 시연판 이용 안내','시연판은 달성군 자치법규 전량과 공공데이터 6종, 예시 자료(민원안내 10건·내부지침 5건)를 포함합니다. 답변은 참고용이며 최종 판단은 담당자가 합니다. 문의: 정보통신과 053-668-2454'],['2026.09.09','기능','「달성군」 홈 대시보드 · 이용 안내 · 공지 화면 추가'],['2026.09.09','기능','달성On/직원용/관리자 3개 탭 구조로 개편, 우측 AI 대화 패널'],['2026.09.09','기능','한글 문서 생성 화면(문서 종류 · 서식 미리보기) 신설'],['2026.09.09','자료','민원안내 10건(예시) · 내부지침 5건(예시) 등록'],['2026.09.08','자료','2026.7.10 공포 조례·규칙 7건 색인(24개 조문·별표)'],['2026.09.08','자료','공공데이터 6종 1,107행 연결 (경로당·판매소·도서관·대형폐기물·봉투가격·무료급식소)'],['2026.09.08','기능','달성On 시연판 최초 공개']];
 function renderNews(){ $('#newsList').innerHTML=NEWS.map(([d,t,s])=>`<li><span class="d">${d}</span><span class="t">${t}</span>${s}</li>`).join(''); }
 
 /* ── 우측 AI 대화 ── */
@@ -309,10 +309,15 @@ $('#btnHwpxGo').onclick=async()=>{
   btn.disabled=false; btn.textContent='한글 파일 생성 · 다운로드';
 };
 
+const lawCnt=n=>(S.meta.law_counts&&S.meta.law_counts[n])||S.docs.filter(x=>x.source===n).length;
+const shortNm=n=>n.replace('대구광역시 달성군 ','');
+const dstr=d=>{d=String(d||'');return d.length===8?`${d.slice(0,4)}.${+d.slice(4,6)}.${+d.slice(6,8)}`:d;};
+
 /* ── 자료함 ── */
 function renderLib(){
   const t=$('#libTbl'); const rows=[];
-  S.meta.law_sources.forEach(s=>rows.push(['law',s.replace('대구광역시 달성군 ',''),S.docs.filter(d=>d.source===s).length+'조문','2026.7.10 공포','공개']));
+  (S.meta.laws||[]).slice().sort((a,b)=>b.c-a.c).slice(0,40).forEach(L=>rows.push(['law',shortNm(L.n),L.c+'조문',(L.d||'')+(L.e?' · 시행 '+dstr(L.e):''),'공개']));
+  if((S.meta.laws||[]).length>40) rows.push(['law','… 그 외 자치법규 '+((S.meta.laws.length)-40)+'건',(S.meta.counts.law).toLocaleString()+'조문 전체 색인','법제처 국가법령정보 공동활용','공개']);
   rows.push(['minwon','민원 안내(예시 10건)',S.meta.counts.minwon+'건','홈페이지·정부24 기준','공개']);
   S.meta.datasets.forEach(d=>rows.push(['data',d.name,d.rows.toLocaleString()+'행','2026.9.8 기준','공개']));
   [...new Set(S.docs.filter(d=>d.type==='internal').map(d=>d.source))].forEach(s=>rows.push(['internal',s,'1건','예시','직원 전용']));
@@ -336,7 +341,7 @@ function renderData(){
 
 /* ── 관리자 ── */
 function renderStats(){ $('#kQ').textContent=S.stats.q; $('#kCite').textContent=S.stats.cite; $('#kGen').textContent=S.stats.gen; $('#kHwpx').textContent=S.stats.hwpx; const top=Object.entries(S.stats.hits).sort((a,b)=>b[1]-a[1]).slice(0,8); $('#topDocs').innerHTML=top.length?top.map(([t,n])=>`<li>${t.replace('대구광역시 달성군 ','')} <small>(${n})</small></li>`).join(''):'<li class="muted">아직 질의가 없습니다</li>'; }
-function renderAdminSrc(){ const t=$('#adminSrc'); const rows=[...S.meta.law_sources.map(s=>['자치법규',s.replace('대구광역시 달성군 ',''),'2026.7.10 공포']),['민원안내','민원 안내 10건(예시)','2026.9.9'],...S.meta.datasets.map(d=>['공공데이터',d.name+' '+d.rows.toLocaleString()+'행','2026.9.8 기준']),['내부지침','복무·계약·보안·문서·공공데이터 5건(예시)','직원 전용']];
+function renderAdminSrc(){ const t=$('#adminSrc'); const rows=[['자치법규','조례 '+((S.meta.law_kinds||{})['조례']||0)+'건 · 규칙 '+((S.meta.law_kinds||{})['규칙']||0)+'건 (전문 '+(S.meta.counts.law).toLocaleString()+'조문)','법제처 API · '+S.meta.built],...(S.meta.law_recent||[]).slice(0,8).map(L=>['자치법규',shortNm(L.n)+' <small>('+(L.d||'')+')</small>','시행 '+dstr(L.e)]),['민원안내','민원 안내 10건(예시)','2026.9.9'],...S.meta.datasets.map(d=>['공공데이터',d.name+' '+d.rows.toLocaleString()+'행','2026.9.8 기준']),['내부지침','복무·계약·보안·문서·공공데이터 5건(예시)','직원 전용']];
   t.innerHTML='<tr><th>구분</th><th>자료</th><th class="r">기준 · 갱신</th></tr>'+rows.map(([a,b,c])=>`<tr><td><span class="ty-badge">${a}</span></td><td>${b}</td><td class="r">${c}<button data-up>갱신</button></td></tr>`).join('');
   t.onclick=e=>{ if(e.target.dataset.up!==undefined){ e.target.textContent='반영됨 ✓'; e.target.disabled=true; toast('자료 갱신 완료 — 전 직원 화면에 즉시 반영됩니다 (시연)'); } }; }
 function updPill(){ const on=(S.key||S.server)&&!S.offline; $('#pillModel').classList.toggle('on',!!on); $('#pillTxt').textContent=on?(S.key?`모델 연결(브라우저 직접): ${S.model}`:`모델 연결(서버 프록시): ${S.model}`):(S.serverGate&&!S.server?'서버 연결됨 · 접속 코드 필요(관리자 › 모델 설정)':'오프라인 시연 모드'); if($('#adminModel')) $('#adminModel').textContent=$('#pillTxt').textContent; }
