@@ -153,18 +153,24 @@ async function init(){
    HOME_MENU : 홈·이용 안내·관리자 등 일반 화면에서 보이는 메뉴 (여기에 항목을 추가해도 달성On 화면에는 나오지 않음)
    달성On 화면 : 달성On 항목 + 새 대화 + 최근 대화만 (고정)                                                       */
 const HOME_MENU=[
+  // ── 핵심
   {mode:'staff',view:'on',     icon:'✦',  label:'달성On\n사용하기', cls:'on-item'},
-  {mode:'staff',view:'draft',  icon:'📝', label:'공문 초안\n작성하기'},
+  // ── 문서 만들기
+  {mode:'staff',view:'draft',  icon:'📝', label:'공문 초안\n작성하기', cls:'sep'},
+  {mode:'staff',view:'rule',   icon:'⚖️', label:'조례·지침\n초안 만들기'},
   {mode:'staff',view:'report', icon:'📄', label:'결과보고서\n작성하기'},
   {mode:'staff',view:'minutes',icon:'🎙', label:'회의록\n정리하기'},
-  {mode:'staff',view:'voice',  icon:'🔊', label:'안내방송\n만들기'},
-  {mode:'staff',view:'analyze',icon:'📊', label:'데이터\n분석하기'},
-  {mode:'staff',view:'press',  icon:'📰', label:'보도자료\n작성하기'},
+  // ── 알리기 · 홍보물 만들기
+  {mode:'staff',view:'press',  icon:'📰', label:'보도자료\n작성하기', cls:'sep'},
   {mode:'staff',view:'banner', icon:'🎏', label:'홍보 현수막\n제작하기'},
   {mode:'staff',view:'info',   icon:'📈', label:'인포그래픽\n제작하기'},
   {mode:'staff',view:'card',   icon:'📱', label:'SNS 카드뉴스\n제작하기'},
   {mode:'staff',view:'movie',  icon:'🎬', label:'홍보영상\n만들기'},
+  {mode:'staff',view:'voice',  icon:'🔊', label:'안내방송\n만들기'},
+  // ── 찾아보기 · 나눔
+  {mode:'staff',view:'analyze',icon:'📊', label:'데이터\n분석하기', cls:'sep'},
   {mode:'staff',view:'past',   icon:'🔎', label:'지난 사례\n찾아보기'},
+  {mode:'staff',view:'share',  icon:'💡', label:'활용사례\n나눔터'},
 ];
 const MINOR=[
   {mode:'home', view:'guide',icon:'📖', label:'이용 안내', cls:'minor'},

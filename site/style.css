@@ -312,3 +312,7 @@ body[data-theme=dark] .top-c.slogan img{filter:brightness(1.15)}
 .nav li:not(.minor):not(.newchat):not(.rh):not(.rc){min-height:56px;padding:10px}
 .nav li b{line-height:1.35}
 .nav li.minor{min-height:42px}
+
+/* 메뉴 그룹 구분선 — 항목 위쪽에 옅은 가로선 */
+.nav li.sep{position:relative;margin-top:16px}
+.nav li.sep::before{content:'';position:absolute;left:10px;right:10px;top:-9px;height:1px;background:var(--line)}
