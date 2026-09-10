@@ -424,3 +424,9 @@ body[data-theme=dark] .soon-card{background:rgba(255,255,255,.04)}
 .pv .ttlbox{border-top:2.5px solid #111;border-bottom:2.5px solid #111;padding:16px 4px 14px;margin-bottom:16px}
 .pv .ttlbox h3{margin:0 0 12px}
 .pv .ttlbox .psub{padding-left:24px;text-indent:-18px}
+
+/* 라벨과 필수(*) 표시를 한 줄로 — 세로 공간 절약 */
+.pfull>.cap{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.pfull>.cap .req{font-size:13px;line-height:1}
+.pfull>.cap .hint{font-weight:500}
+.pgrid label,.pfull{gap:4px}
