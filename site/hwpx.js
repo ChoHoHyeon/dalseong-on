@@ -91,23 +91,50 @@ window.DalseongHwpx = (function(){
   }
 
   function pressSection(o, C, PR){
-    const t=s=>`<hp:t>${esc(s)}</hp:t>`;
+    const t=x=>`<hp:t>${esc(x)}</hp:t>`;
     const line=(prid,crid,txt)=>`<hp:p id="0" paraPrIDRef="${prid}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="${crid}">${t(txt)}</hp:run></hp:p>`;
-    /* 첫 문단에 용지·여백 설정(secPr)을 싣는다 */
+    /* ── 원본 hwp에서 실측한 표 치수 (mm) ────────────────────────────
+       6행 5열 · 셀 안여백 0.5mm
+       열: [대구광역시 달성군 76.5(2열2행 병합)] [2.7(6행 병합)] [항목 27.7] [값 61.5]
+           2행부터 좌측은 [23.1] [보도자료 53.4](각 4행 병합)
+       행높이: 7.2 / 7.2 / 16.5 / 7.2 / 7.2 / 7.2                        */
+    const W1=MM(76.5), W2=MM(2.7), W3=MM(27.7), W4=MM(61.5), W5=MM(23.1), W6=MM(53.4);
+    const R=MM(7.2), R2=MM(16.5);
+    const TBLW=W1+W2+W3+W4, TBLH=R*5+R2;
+    const BF=7;                                   // 실선 테두리 borderFill
+    const cellP=(prid,crid,txt)=>`<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">${line(prid,crid,txt)}</hp:subList>`;
+    const TC=(col,row,cs,rs,w,h,prid,crid,txt)=>
+      `<hp:tc name="" header="0" hasMargin="0" protect="0" editable="0" dirty="0" borderFillIDRef="${BF}">`+
+      cellP(prid,crid,txt)+
+      `<hp:cellAddr colAddr="${col}" rowAddr="${row}"/><hp:cellSpan colSpan="${cs}" rowSpan="${rs}"/>`+
+      `<hp:cellSz width="${w}" height="${h}"/><hp:cellMargin left="140" right="140" top="140" bottom="140"/></hp:tc>`;
+    const H=o.head||{};
+    const tbl =
+      `<hp:tbl id="1" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="CELL" repeatHeader="1" rowCnt="6" colCnt="5" cellSpacing="0" borderFillIDRef="${BF}" noAdjust="0">`+
+      `<hp:sz width="${TBLW}" widthRelTo="ABSOLUTE" height="${TBLH}" heightRelTo="ABSOLUTE" protect="0"/>`+
+      `<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>`+
+      `<hp:outMargin left="0" right="0" top="0" bottom="283"/><hp:inMargin left="140" right="140" top="140" bottom="140"/>`+
+      `<hp:tr>`+TC(0,0,2,2,W1,R*2,PR.ctr,C.org,'대구광역시 달성군')
+             +TC(2,0,1,6,W2,TBLH,PR.ctr,C.tblV,'')
+             +TC(3,0,1,1,W3,R,PR.ctr,C.tblK,'제공일자')
+             +TC(4,0,1,1,W4,R,PR.sub,C.tblV,' '+(H.date||''))+`</hp:tr>`+
+      `<hp:tr>`+TC(3,1,1,2,W3,R+R2,PR.ctr,C.tblK,'담당부서')
+             +TC(4,1,1,2,W4,R+R2,PR.sub,C.tblV,' '+(H.dept||''))+`</hp:tr>`+
+      `<hp:tr>`+TC(0,2,1,4,W5,R2+R*3,PR.ctr,C.tblV,'')
+             +TC(1,2,1,4,W6,R2+R*3,PR.ctr,C.big,'보도자료')+`</hp:tr>`+
+      `<hp:tr>`+TC(3,3,1,1,W3,R,PR.ctr,C.tblK,'팀    장')
+             +TC(4,3,1,1,W4,R,PR.sub,C.tblV,' '+(H.lead||''))+`</hp:tr>`+
+      `<hp:tr>`+TC(3,4,1,1,W3,R,PR.ctr,C.tblK,'담 당 자')
+             +TC(4,4,1,1,W4,R,PR.sub,C.tblV,' '+(H.pic||''))+`</hp:tr>`+
+      `<hp:tr>`+TC(3,5,1,1,W3,R,PR.ctr,C.tblK,'전    화')
+             +TC(4,5,1,1,W4,R,PR.sub,C.tblV,' '+(H.tel||''))+`</hp:tr>`+
+      `</hp:tbl>`;
+    /* 용지·여백(secPr)은 첫 문단에 싣는다 */
     let sec = TPL.para.title.slice(TPL.para.title.indexOf('<hp:secPr'), TPL.para.title.indexOf('</hp:secPr>')+11);
     sec = sec.replace(/<hp:margin[^>]*\/>/, `<hp:margin header="${PRESS_MARGIN.header}" footer="${PRESS_MARGIN.footer}" gutter="0" left="${PRESS_MARGIN.left}" right="${PRESS_MARGIN.right}" top="${PRESS_MARGIN.top}" bottom="${PRESS_MARGIN.bottom}"/>`);
     sec = sec.replace(/<hp:header id[\s\S]*?<\/hp:header>/g,'').replace(/<hp:footer id[\s\S]*?<\/hp:footer>/g,'');
-    const H=o.head||{};
-    const first = `<hp:p id="0" paraPrIDRef="${PR.ctr}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="${C.org}">${sec}${t('대구광역시 달성군')}</hp:run></hp:p>`;
-    const out=[first,
-      line(PR.ctr,C.big,'보 도 자 료'),
-      line(PR.sub,C.tblV,''),
-      line(PR.sub,C.tblK,`제공일자   ${H.date||''}`),
-      line(PR.sub,C.tblK,`담당부서   ${H.dept||''}`),
-      line(PR.sub,C.tblK,`팀    장   ${H.lead||''}`),
-      line(PR.sub,C.tblK,`담 당 자   ${H.pic||''}`),
-      line(PR.sub,C.tblK,`전    화   ${H.tel||''}`),
-      line(PR.sub,C.tblV,'')];
+    const out=[`<hp:p id="0" paraPrIDRef="${PR.sub}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="${C.tblV}">${sec}${tbl}</hp:run></hp:p>`,
+               line(PR.sub,C.tblV,'')];
     String(o.title||'').split('/').map(x=>x.trim()).filter(Boolean).forEach(x=>out.push(line(PR.title,C.title,x)));
     (o.subs||[]).forEach(x=>out.push(line(PR.sub,C.sub,'▸ '+x)));
     out.push(line(PR.sub,C.body,''));
