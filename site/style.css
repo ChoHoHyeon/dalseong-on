@@ -289,3 +289,11 @@ body[data-theme=dark] .top-c.slogan img{filter:brightness(1.15)}
 .nav li.rh{display:flex;justify-content:space-between;align-items:center} .nav .rclear{border:0;background:none;font:inherit;font-size:10.5px;color:var(--mut);cursor:pointer;padding:2px 4px;border-radius:6px} .nav .rclear:hover{color:#ff5a5f;background:rgba(255,90,95,.08)}
 .nav li.rc{display:flex;align-items:center;gap:6px} .nav li.rc span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nav .rx{flex:none;border:0;background:none;font:inherit;font-size:11px;color:var(--mut);width:20px;height:20px;border-radius:6px;cursor:pointer;opacity:0;transition:.15s} .nav li.rc:hover .rx{opacity:1} .nav .rx:hover{color:#ff5a5f;background:rgba(255,90,95,.1)}
+
+/* 좌측 메뉴 2줄 라벨 */
+.nav li b{line-height:1.3}
+.nav li:not(.minor):not(.on-item){min-height:56px}
+/* 준비 중 화면 */
+.soon-card .soon-list{list-style:none;display:flex;flex-direction:column;gap:8px;margin-top:2px}
+.soon-card .soon-list li{padding:11px 14px;border:1px dashed var(--line);border-radius:12px;background:var(--panel2);font-size:13.5px;color:var(--mut)}
+.soon-card .soon-list li b{font-weight:600;color:var(--tx)}

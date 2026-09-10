@@ -153,9 +153,11 @@ async function init(){
    HOME_MENU : 홈·이용 안내·관리자 등 일반 화면에서 보이는 메뉴 (여기에 항목을 추가해도 달성On 화면에는 나오지 않음)
    달성On 화면 : 달성On 항목 + 새 대화 + 최근 대화만 (고정)                                                       */
 const HOME_MENU=[
-  {mode:'staff',view:'on', icon:'✦', label:'달성On', cls:'on-item'},
-  {mode:'staff',view:'data', icon:'📊', label:'임시메뉴1'},   // 데이터 조회 화면 (이름은 추후 확정)
-  {mode:'staff',view:'lib',  icon:'📚', label:'임시메뉴2'},   // 자료함 화면 (이름은 추후 확정)
+  {mode:'staff',view:'on',     icon:'✦',  label:'달성On', cls:'on-item'},
+  {mode:'staff',view:'report', icon:'📄', label:'결과보고서\n작성하기'},
+  {mode:'staff',view:'analyze',icon:'📊', label:'데이터\n분석하기'},
+  {mode:'staff',view:'press',  icon:'📰', label:'보도자료\n작성하기'},
+  {mode:'staff',view:'banner', icon:'🎏', label:'홍보 현수막\n제작하기'},
 ];
 const MINOR=[
   {mode:'home', view:'guide',icon:'📖', label:'이용 안내', cls:'minor'},
@@ -169,7 +171,7 @@ function loadRecent(){ try{ return JSON.parse(localStorage.getItem('dOnRecent')|
 function pushRecent(q){ const r=loadRecent().filter(x=>x!==q); r.unshift(q); localStorage.setItem('dOnRecent',JSON.stringify(r.slice(0,12))); }
 function renderNav(){
   const inOn=S.mode==='staff'&&ON_VIEWS.includes(S.view);
-  const item=n=>{ const on=n.mode==='admin'?S.mode==='admin':(S.mode===n.mode&&S.view===n.view); return `<li data-mode="${n.mode}" data-view="${n.view}" class="${n.cls||''} ${on?'on':''}"><i>${n.icon}</i><b>${n.label}</b></li>`; };
+  const item=n=>{ const on=n.mode==='admin'?S.mode==='admin':(S.mode===n.mode&&S.view===n.view); return `<li data-mode="${n.mode}" data-view="${n.view}" class="${n.cls||''} ${on?'on':''}"><i>${n.icon}</i><b>${n.label.replace(/\n/g,'<br>')}</b></li>`; };
   let html='';
   if(inOn){
     const recent=loadRecent();
