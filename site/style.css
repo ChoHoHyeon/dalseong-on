@@ -437,7 +437,7 @@ body[data-theme=dark] .soon-card{background:rgba(255,255,255,.04)}
 .pgrid label,.pfull{gap:4px}
 
 /* 보도자료 폼 — 필수(왼쪽) · 선택(오른쪽) 좌우 배치 */
-.pcols{display:grid;grid-template-columns:58fr 42fr;gap:14px;align-items:start}
+.pcols{display:grid;grid-template-columns:58fr 42fr;gap:14px;align-items:stretch}
 .pcols .pbox{margin-top:14px}
 .pgrid2{grid-template-columns:repeat(2,1fr)}
 .opt-box{opacity:.94}
@@ -448,3 +448,9 @@ body[data-theme=dark] .soon-card{background:rgba(255,255,255,.04)}
 .pcols .pfull{margin-top:10px}
 .pcols .pbox{padding:6px 14px 14px}
 .pcols .pfile{margin-top:10px}
+
+/* 두 상자 세로 길이 맞춤 — 주요 내용 칸이 남는 높이를 채운다 */
+.pcols .pbox{display:flex;flex-direction:column}
+.pcols .req-box>label.pfull:nth-of-type(2){flex:1;min-height:0}
+.pcols .req-box>label.pfull:nth-of-type(2) textarea{flex:1;min-height:150px}
+.pcols .opt-box>label.pfull:last-of-type{margin-top:auto}
