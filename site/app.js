@@ -336,7 +336,7 @@ const PRESS_RULE = `[달성군 보도자료 작성 규칙 — 실제 발행본 6
   24자를 넘으면 의미가 끊기지 않는 자리에서 / 로 나눠 두 줄로 준다(예: "근로자 안전이 최우선! / 달성군, 산업안전 우수기업 5곳 선정").
   두 줄 길이는 비슷하게 맞추고, 조사(을·를·의·로) 바로 뒤나 「」 안에서는 끊지 않는다.
   같은 낱말(예: 달성군)을 제목 안에서 두 번 쓰지 않는다.
-· 부제: ▸ 로 시작하는 2~3줄. **각 줄 32자 이내**(넘으면 서식 상자를 벗어남). 한 줄에 한 가지만 담는다. 제목에 없는 알맹이(대상·규모·금액·기간)를 담는다.
+· 부제: ▸ 로 시작하는 2~3줄. **각 줄 32자 이내**로 끊어 쓴다(길면 두 줄로 넘어가 서식이 흐트러진다). 한 줄에 한 가지만 담고, 문장을 중간에 자르지 않는다. 제목에 없는 알맹이(대상·규모·금액·기간)를 담는다.
 · 본문 첫 문단(리드): "달성군(군수 최재훈)은 지난 O일 △△에서 ~을 개최했다고 밝혔다." 형태로
   누가·언제·어디서·무엇을 한 문장에 담는다. 기관명 뒤에는 괄호로 대표자를 적는다.
 · 둘째 문단: 배경·목적. "이번 ~은 ~하기 위해 마련됐다."
@@ -474,7 +474,6 @@ function splitTitle(raw){
   if(best===null) return [t];
   return [t.slice(0,best).trim(), t.slice(best+1).trim()];
 }
-const cutSub=t=>{ t=String(t||'').trim(); return t.length>34? t.slice(0,33).replace(/[\s,·]+$/,'')+'…' : t; };
 function pressRender(o){
   const H=pressHead();
   const V=x=>`<span${x&&x.miss?' class="miss"':''}>${esc0(x&&x.t!==undefined?x.t:x)}</span>`;
@@ -483,7 +482,7 @@ function pressRender(o){
              `<i>·</i>팀장 ${V(H.leadO)}<i>·</i>담당자 ${V(H.picO)}<i>·</i>전화 ${V(H.telO)}</div>`;
   $('#pressView').innerHTML = meta +
     `<div class="ttlbox"><h3>${splitTitle(o.title).map(x=>esc0(x)).join('<br>')}</h3>
-       ${o.subs.map(s=>`<div class="psub">▸ ${esc0(cutSub(s))}</div>`).join('')}</div>
+       ${o.subs.map(s=>`<div class="psub">▸ ${esc0(s)}</div>`).join('')}</div>
      <div class="pbody">${o.body.map(p=>`<p>${esc0(p)}</p>`).join('')}</div>`;
   $('#pressOut').hidden=false;
   $('#pressOut').scrollIntoView({behavior:'smooth',block:'start'});
@@ -537,11 +536,11 @@ async function makePress(){
         const ls=buf.split('\n'); buf=ls.pop();
         for(const ln of ls){ if(!ln.startsWith('data:')) continue;
           try{ const j=JSON.parse(ln.slice(5)); if(j.type==='content_block_delta'&&j.delta?.text) text+=j.delta.text; }catch(e){} } }
-      PS.out=pressParse(text); PS.out.subs=(PS.out.subs||[]).map(cutSub);
+      PS.out=pressParse(text); 
       $('#pfMsg').textContent='작성 완료 — 내용을 확인하고 수정해 주세요.';
     }else{
       await new Promise(r=>setTimeout(r,500));
-      PS.out=pressOffline(); PS.out.subs=(PS.out.subs||[]).map(cutSub);
+      PS.out=pressOffline(); 
       $('#pfMsg').textContent='오프라인 시연 모드 — 모델 연결 시 실제 문체로 작성됩니다.';
     }
     pressRender(PS.out);
