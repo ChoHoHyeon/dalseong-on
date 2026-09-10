@@ -380,11 +380,11 @@ function initPress(){
       : '계획서·기안문을 올리면 내용을 읽어 반영합니다';
   };
   $('#pfSample').onclick=()=>{
-    $('#pfName').value='반부패·청렴 특별교육';
-    $('#pfWhen').value='2026. 9. 9.(수) 14:00';
+    $('#pfName').value='달성군 AI 업무비서 「달성On」 시범 운영';
+    $('#pfWhen').value='2026. 9. 10.(목) 14:00';
     $('#pfWhere').value='달성군청 군민소통관';
-    $('#pfDept').value='법무감사실'; $('#pfLead').value='박중현'; $('#pfPic').value='김은희'; $('#pfTel').value='053)668-2134';
-    $('#pfBody').value='승진자·신규 임용자 등 직원 150여 명 대상\n국민권익위원회 청렴교육 전문강사 초청 특강\n주제: 청렴, 더 나은 세상을 위한 선택\n내용: 청탁금지법, 공무원 행동강령, 이해충돌방지법 사례 중심\n목적: 바람직한 공직자상 정립, 청렴 실천 의지 제고';
+    $('#pfDept').value='정보통신과'; $('#pfLead').value='김화연'; $('#pfPic').value='조호현'; $('#pfTel').value='053)668-2454';
+    $('#pfBody').value='전 직원 대상 AI 업무비서 「달성On」 시범 운영 개시\n달성군 자치법규 644건(조례·규칙·훈령·예규)과 공공데이터를 근거로 답변\n질문하면 근거 조문을 인용하고, 답변을 군 서식 한글 파일로 바로 생성\n공문 초안·보고서·보도자료 작성 기능 순차 제공 예정\n목적: 반복 문서 작성 시간 단축, 규정 확인에 드는 시간 절감';
     $('#pfQuote').value='';
     toast('예시를 채웠습니다 — 「보도자료 초안 만들기」를 눌러보세요');
   };
@@ -424,20 +424,23 @@ function pressPlain(o){
   return [`대구광역시 달성군  보도자료`,`제공일자 ${H.date}`,`담당부서 ${H.dept}`,`팀    장 ${H.lead}`,`담 당 자 ${H.pic}`,`전    화 ${H.tel}`,'',
     o.title,'',...o.subs.map(s=>'▸ '+s),'',...o.body.map(p=>' '+p)].join('\n');
 }
+const PH={when:'○○월 ○○일',where:'○○○○',dept:'○○○○',lead:'○○○',pic:'○○○',tel:'053)668-○○○○'};
 function pressHead(){
   const d=$('#pfDate').value||new Date().toISOString().slice(0,10);
   const dt=new Date(d+'T00:00:00');
   const W='일월화수목금토'[dt.getDay()];
-  return {date:`${dt.getFullYear()}. ${dt.getMonth()+1}. ${dt.getDate()}.(${W})`,
-          dept:$('#pfDept').value||'', lead:$('#pfLead').value||'', pic:$('#pfPic').value||'', tel:$('#pfTel').value||''};
+  const v=(id,ph)=>{ const x=$('#'+id).value.trim(); return x?{t:x,miss:false}:{t:ph,miss:true}; };
+  return {date:`${dt.getFullYear()}. ${dt.getMonth()+1}. ${dt.getDate()}.(${W})`, dateMiss:false,
+          deptO:v('pfDept',PH.dept), leadO:v('pfLead',PH.lead), picO:v('pfPic',PH.pic), telO:v('pfTel',PH.tel),
+          dept:v('pfDept',PH.dept).t, lead:v('pfLead',PH.lead).t, pic:v('pfPic',PH.pic).t, tel:v('pfTel',PH.tel).t};
 }
 
 function pressRender(o){
   const H=pressHead();
-  const row=(k,v)=>`<span class="k">${k}</span><span>${esc0(v)}</span>`;
+  const row=(k,o)=>`<span class="k">${k}</span><span${o&&o.miss?' class="miss"':''}>${esc0(o&&o.t!==undefined?o.t:o)}</span>`;
   $('#pressView').innerHTML=
    `<div class="ptbl"><div class="lc"><b>대구광역시 달성군</b><i>보도자료</i></div>
-      <div class="rc">${row('제공일자',H.date)}${row('담당부서',H.dept)}${row('팀　　장',H.lead)}${row('담 당 자',H.pic)}${row('전　　화',H.tel)}</div></div>
+      <div class="rc">${row('제공일자',{t:H.date,miss:false})}${row('담당부서',H.deptO)}${row('팀　　장',H.leadO)}${row('담 당 자',H.picO)}${row('전　　화',H.telO)}</div></div>
     <h3>${o.title.split('/').map(x=>esc0(x.trim())).join('<br>')}</h3>
     ${o.subs.map(s=>`<div class="psub">▸ ${esc0(s)}</div>`).join('')}
     <div class="pbody">${o.body.map(p=>`<p>${esc0(p)}</p>`).join('')}</div>`;
@@ -452,7 +455,7 @@ function pressOffline(){
   const day=(when.match(/(\d{1,2})일/)||when.match(/\.\s*(\d{1,2})\.?\s*\(/)||[])[1]||'';
   const o={title:`대구 달성군, ${name} 개최`,
     subs:[`▸ ${name} 개최`.replace('▸ ',''), pts[0]||'', pts[1]||''].filter(Boolean).slice(0,3),
-    body:[`달성군(군수 최재훈)은 ${day?`지난 ${day}일 `:''}${where?where+'에서 ':''}${name}을(를) 개최했다고 밝혔다.`,
+    body:[`달성군(군수 최재훈)은 ${day?`지난 ${day}일 `:(when?'':PH.when+' ')}${where||PH.where}에서 ${name}을(를) 개최했다고 밝혔다.`,
           pts.length>2?`이번 ${name}은 ${pts[2]}`:`이번 ${name}은 관련 시책을 추진하기 위해 마련됐다.`,
           ...pts.slice(3,5),
           $('#pfQuote').value.trim()||`최재훈 달성군수는 "앞으로도 군민이 체감할 수 있는 시책을 지속적으로 추진하겠다"고 말했다.`]
