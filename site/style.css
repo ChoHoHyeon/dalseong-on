@@ -313,6 +313,12 @@ body[data-theme=dark] .top-c.slogan img{filter:brightness(1.15)}
 .nav li b{line-height:1.35}
 .nav li.minor{min-height:42px}
 
-/* 메뉴 그룹 구분선 — 항목 위쪽에 옅은 가로선 */
-.nav li.sep{position:relative;margin-top:16px}
-.nav li.sep::before{content:'';position:absolute;left:10px;right:10px;top:-9px;height:1px;background:var(--line)}
+/* 메뉴 그룹 구분선 — 양끝이 부드럽게 사라지는 가로선 + 넉넉한 여백 */
+.nav li.sep{position:relative;margin-top:26px}
+.nav li.sep::before{content:'';position:absolute;left:2px;right:2px;top:-14px;height:1px;
+  background:linear-gradient(90deg,rgba(30,60,120,0) 0%,rgba(30,60,120,.30) 14%,rgba(30,60,120,.30) 86%,rgba(30,60,120,0) 100%)}
+.nav li.sep::after{content:'';position:absolute;left:50%;top:-14px;transform:translate(-50%,-50%);
+  width:5px;height:5px;border-radius:50%;background:var(--panel);
+  box-shadow:0 0 0 1px rgba(30,60,120,.28) inset,0 0 0 4px var(--panel)}
+body[data-theme=dark] .nav li.sep::before{background:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.26) 14%,rgba(255,255,255,.26) 86%,rgba(255,255,255,0) 100%)}
+body[data-theme=dark] .nav li.sep::after{box-shadow:0 0 0 1px rgba(255,255,255,.30) inset,0 0 0 4px var(--panel)}
