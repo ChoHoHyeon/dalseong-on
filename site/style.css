@@ -368,14 +368,6 @@ body[data-theme=dark] .bub.gen .tag{background:rgba(255,255,255,.10);color:#c8d3
 /* 미리보기 — 실제 서식 비율 */
 .pv{border:1px solid var(--line);border-radius:12px;background:#fff;padding:26px 30px;margin-top:10px;color:#111;max-width:820px}
 body[data-theme=dark] .pv{background:#f7f8fb}
-.pv .ptbl{display:grid;grid-template-columns:150px 1fr;border:2px solid #333;margin-bottom:22px}
-.pv .ptbl .lc{border-right:1px solid #333;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:10px 6px}
-.pv .ptbl .lc b{font-family:궁서,Batang,serif;font-size:15px;font-weight:400}
-.pv .ptbl .lc i{font-family:궁서,Batang,serif;font-size:23px;font-style:normal;letter-spacing:2px}
-.pv .ptbl .rc{display:grid;grid-template-columns:78px 1fr}
-.pv .ptbl .rc span{border-bottom:1px solid #999;padding:4px 8px;font-size:12.5px;font-family:'휴먼명조',Batang,serif}
-.pv .ptbl .rc span.k{border-right:1px solid #999;font-weight:700;background:#f3f4f7;text-align:center}
-.pv .ptbl .rc span:nth-last-child(-n+2){border-bottom:0}
 .pv h3{font-family:'HY헤드라인M','맑은 고딕',sans-serif;font-size:22px;font-weight:800;line-height:1.35;text-align:center;margin:0 0 14px}
 .pv .psub{font-family:'한컴바탕확장',Batang,serif;font-size:14px;font-weight:700;line-height:1.5;margin:2px 0}
 .pv .pbody{font-family:'한컴바탕확장',Batang,serif;font-size:14px;line-height:1.75;margin:14px 0 0;text-indent:2px}
@@ -407,3 +399,17 @@ body[data-theme=dark] .pv{background:#f7f8fb}
 .flownote{margin-top:14px;font-size:12.5px;color:var(--mut);background:rgba(217,138,0,.08);border:1px solid rgba(217,138,0,.25);border-radius:10px;padding:10px 12px}
 .flownote b{color:var(--warn)}
 @media(max-width:820px){.flow3{flex-direction:column}.flow3>li.farr{flex:0 0 22px;transform:rotate(90deg)}}
+
+/* 보도자료 미리보기 — 한글 원본 서식과 동일한 표 */
+.pv .pvt{width:100%;border-collapse:collapse;table-layout:fixed;border:2px solid #111;margin-bottom:20px;background:#fff}
+.pv .pvt td{border:1px solid #111;padding:4px 8px;font-family:'휴먼명조','바탕',Batang,serif;font-size:12.5px;color:#111;vertical-align:middle}
+.pv .pvt td.org{text-align:center;font-family:궁서,Batang,serif;font-size:16px;letter-spacing:3px;border-bottom:1px solid #111}
+.pv .pvt td.big{text-align:center;font-family:궁서,Batang,serif;font-size:24px;letter-spacing:6px;border-left:0}
+.pv .pvt td.ci{text-align:center;padding:2px;border-right:0}
+.pv .pvt td.ci img{width:100%;max-width:46px;height:auto;display:inline-block}
+.pv .pvt td.gap{padding:0;background:#fff}
+.pv .pvt td.k{text-align:center;font-weight:700;letter-spacing:1px;white-space:nowrap}
+.pv .pvt td.v{padding-left:10px}
+.pv .ttlbox{border-top:2.5px solid #111;border-bottom:2.5px solid #111;padding:16px 4px 14px;margin-bottom:16px}
+.pv .ttlbox h3{margin:0 0 12px}
+.pv .ttlbox .psub{padding-left:6px}

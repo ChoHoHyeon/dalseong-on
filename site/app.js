@@ -437,16 +437,26 @@ function pressHead(){
 
 function pressRender(o){
   const H=pressHead();
-  const row=(k,o)=>`<span class="k">${k}</span><span${o&&o.miss?' class="miss"':''}>${esc0(o&&o.t!==undefined?o.t:o)}</span>`;
-  $('#pressView').innerHTML=
-   `<div class="ptbl"><div class="lc"><b>대구광역시 달성군</b><i>보도자료</i></div>
-      <div class="rc">${row('제공일자',{t:H.date,miss:false})}${row('담당부서',H.deptO)}${row('팀　　장',H.leadO)}${row('담 당 자',H.picO)}${row('전　　화',H.telO)}</div></div>
-    <h3>${o.title.split('/').map(x=>esc0(x.trim())).join('<br>')}</h3>
-    ${o.subs.map(s=>`<div class="psub">▸ ${esc0(s)}</div>`).join('')}
-    <div class="pbody">${o.body.map(p=>`<p>${esc0(p)}</p>`).join('')}</div>`;
+  const V=x=>`<span${x&&x.miss?' class="miss"':''}>${esc0(x&&x.t!==undefined?x.t:x)}</span>`;
+  /* 원본 한글 서식과 같은 표 구조 : 6행 5열, 열너비 23.1 / 53.4 / 2.7 / 27.7 / 61.5 mm */
+  const tbl=`<table class="pvt"><colgroup>
+      <col style="width:13.7%"><col style="width:31.7%"><col style="width:1.6%"><col style="width:16.5%"><col style="width:36.5%"></colgroup>
+    <tr><td colspan="2" rowspan="2" class="org">대구광역시 달성군</td><td rowspan="6" class="gap"></td>
+        <td class="k">제공일자</td><td class="v">${V({t:H.date,miss:false})}</td></tr>
+    <tr><td rowspan="2" class="k">담당부서</td><td rowspan="2" class="v">${V(H.deptO)}</td></tr>
+    <tr><td rowspan="4" class="ci"><img src="assets/dalseong_ci.png" alt="달성군 상징"></td>
+        <td rowspan="4" class="big">보도자료</td></tr>
+    <tr><td class="k">팀　　장</td><td class="v">${V(H.leadO)}</td></tr>
+    <tr><td class="k">담 당 자</td><td class="v">${V(H.picO)}</td></tr>
+    <tr><td class="k">전　　화</td><td class="v">${V(H.telO)}</td></tr></table>`;
+  $('#pressView').innerHTML = tbl +
+    `<div class="ttlbox"><h3>${o.title.split('/').map(x=>esc0(x.trim())).join('<br>')}</h3>
+       ${o.subs.map(s=>`<div class="psub">▸ ${esc0(s)}</div>`).join('')}</div>
+     <div class="pbody">${o.body.map(p=>`<p>${esc0(p)}</p>`).join('')}</div>`;
   $('#pressOut').hidden=false;
   $('#pressOut').scrollIntoView({behavior:'smooth',block:'start'});
 }
+
 const esc0=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 function pressOffline(){
