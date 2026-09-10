@@ -199,10 +199,49 @@
 
     <!-- 보도자료 작성하기 (세부 내역 추후 확정) -->
     <section class="view" data-view="press">
-      <div class="vh"><h2>보도자료 작성하기</h2><p>사업 내용을 보도자료 형식으로 정리해 주는 화면입니다.</p></div>
+      <div class="vh"><h2>보도자료 작성하기</h2><p>입력한 내용을 달성군 보도자료 서식에 맞춰 초안으로 만들어 주는 화면입니다.</p></div>
       <div class="card soon-card"><h4>준비 중 <small>메뉴 자리만 잡아둔 화면입니다</small></h4>
         <ul class="soon-list"><li><b>핵심 내용 입력 → 보도자료 초안 생성</b></li><li><b>제목·리드문 후보 제시</b></li><li><b>담당자·연락처 등 배포 서식 자동 삽입</b></li></ul>
         <p class="hint" style="margin-top:12px">세부 기능·화면 구성은 협의 후 확정합니다.</p></div>
+
+      <div class="card pcard">
+        <h4>보도자료 초안 만들기 <small id="pfLearn">달성군 보도자료 색인 기준</small></h4>
+        <div class="pgrid">
+          <label>행사·사업명 <span class="req">*</span><input id="pfName" placeholder="예) 반부패·청렴 특별교육"></label>
+          <label>일시<input id="pfWhen" placeholder="예) 2026. 9. 9.(수) 14:00"></label>
+          <label>장소<input id="pfWhere" placeholder="예) 군청 군민소통관"></label>
+          <label>담당부서<input id="pfDept" placeholder="예) 법무감사실"></label>
+          <label>팀장<input id="pfLead" placeholder="예) 홍길동"></label>
+          <label>담당자<input id="pfPic" placeholder="예) 김달성"></label>
+          <label>전화<input id="pfTel" placeholder="예) 053)668-0000"></label>
+          <label>제공일자<input id="pfDate" type="date"></label>
+        </div>
+        <label class="pfull">주요 내용 <span class="req">*</span>
+          <textarea id="pfBody" rows="6" placeholder="누가·무엇을·왜·어떻게 — 아는 만큼만 적으시면 됩니다.&#10;추진계획서나 기안문 내용을 그대로 붙여넣어도 됩니다."></textarea></label>
+        <label class="pfull">인용문 <small class="hint">비워두면 군수 말씀을 문맥에 맞게 만들어 드립니다</small>
+          <textarea id="pfQuote" rows="2" placeholder='예) 최재훈 달성군수 — "앞으로도 ~하겠다"'></textarea></label>
+        <div class="pfile">
+          <label class="filebtn">📎 파일 첨부<input type="file" id="pfFile" multiple accept=".txt,.md,.csv,.json,.htm,.html,.hwpx,.docx,.pdf,.jpg,.jpeg,.png"></label>
+          <span class="hint" id="pfFileList">계획서·기안문을 올리면 내용을 읽어 반영합니다 (txt·md·csv·html은 본문까지 읽고, 그 외는 파일명만 참고)</span>
+        </div>
+        <div class="pact">
+          <button id="pfGo" class="p">보도자료 초안 만들기</button>
+          <button id="pfSample">예시로 채우기</button>
+          <button id="pfReset">비우기</button>
+          <span class="hint" id="pfMsg"></span>
+        </div>
+      </div>
+
+      <div class="card pout" id="pressOut" hidden>
+        <h4>생성된 초안 <small>담당자 검토 후 사용하세요</small></h4>
+        <div class="pv" id="pressView"></div>
+        <div class="pact">
+          <button id="pfHwpx" class="p">📄 한글 파일로 내려받기</button>
+          <button id="pfCopy">복사</button>
+          <button id="pfAgain">다시 생성</button>
+        </div>
+        <p class="hint" style="margin-top:10px">※ 용지 A4 · 여백 위7·아래15·좌우20·머리말20·꼬리말5mm / 제목 HY헤드라인M 22pt · 부제 한컴바탕확장 15pt 진하게 · 본문 한컴바탕확장 15pt(줄간격 160%) — 달성군 보도자료 원본 서식 기준</p>
+      </div>
     </section>
 
     <!-- 홍보 현수막 제작하기 (세부 내역 추후 확정) -->

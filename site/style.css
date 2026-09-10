@@ -322,3 +322,62 @@ body[data-theme=dark] .top-c.slogan img{filter:brightness(1.15)}
   box-shadow:0 0 0 1px rgba(30,60,120,.28) inset,0 0 0 4px var(--panel)}
 body[data-theme=dark] .nav li.sep::before{background:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.26) 14%,rgba(255,255,255,.26) 86%,rgba(255,255,255,0) 100%)}
 body[data-theme=dark] .nav li.sep::after{box-shadow:0 0 0 1px rgba(255,255,255,.30) inset,0 0 0 4px var(--panel)}
+
+/* ── 답변 구분: 달성군 자료 근거(파랑) vs AI 일반 답변(검정) ───────────────── */
+.on-col .msg.ai .bub.rag,
+.on-col .msg.ai .bub.gen{position:relative;padding-left:16px;border-radius:0}
+.on-col .msg.ai .bub.rag::before,
+.on-col .msg.ai .bub.gen::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:3px;border-radius:3px}
+.on-col .msg.ai .bub.rag::before{background:linear-gradient(180deg,var(--acc),#3c6fe0)}
+.on-col .msg.ai .bub.gen::before{background:rgba(30,60,120,.28)}
+/* 본문 글자색 */
+.bub.rag{color:#17418f}
+.bub.gen{color:#16181d}
+.bub.rag b,.bub.rag strong{color:#0f3078}
+.bub.gen b,.bub.gen strong{color:#000}
+/* 근거·안내 영역은 본문 색을 따르지 않음 */
+.bub.rag .src,.bub.gen .src,.bub.rag .src div,.bub.gen .src div{color:var(--mut)}
+.bub.rag .actions,.bub.gen .actions{color:var(--tx)}
+.bub.rag .actions button,.bub.gen .actions button{color:var(--tx)}
+.bub.gen .tag{background:rgba(30,60,120,.10);color:#3a4256}
+body[data-theme=dark] .bub.rag{color:#9dc2ff}
+body[data-theme=dark] .bub.gen{color:#e8eefc}
+body[data-theme=dark] .bub.rag b,body[data-theme=dark] .bub.rag strong{color:#c3daff}
+body[data-theme=dark] .bub.gen b,body[data-theme=dark] .bub.gen strong{color:#fff}
+body[data-theme=dark] .on-col .msg.ai .bub.gen::before{background:rgba(255,255,255,.25)}
+body[data-theme=dark] .bub.gen .tag{background:rgba(255,255,255,.10);color:#c8d3ea}
+
+/* ── 보도자료 작성하기 ─────────────────────────────── */
+.pcard,.pout{margin-top:14px}
+.pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 12px;margin-top:6px}
+.pgrid label,.pfull{display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:600;color:var(--mut)}
+.pfull{margin-top:12px}
+.pgrid input,.pfull input,.pfull textarea{border:1px solid var(--line);border-radius:10px;padding:9px 11px;font:inherit;font-size:13.5px;font-weight:400;color:var(--tx);background:var(--panel)}
+.pgrid input:focus,.pfull textarea:focus{outline:2px solid rgba(47,111,237,.35);outline-offset:-1px;border-color:transparent}
+.pfull textarea{resize:vertical;line-height:1.6}
+.req{color:#e0483d}
+.pfile{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+.filebtn{display:inline-flex;align-items:center;gap:6px;border:1px dashed rgba(47,111,237,.5);color:var(--acc);border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer}
+.filebtn:hover{background:rgba(47,111,237,.06)}
+.filebtn input{display:none}
+.pact{display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap}
+.pact button{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 16px;font:inherit;font-size:13px;color:var(--tx);cursor:pointer}
+.pact button:hover{border-color:var(--acc)}
+.pact button.p{background:linear-gradient(135deg,var(--acc),#3c6fe0);color:#fff;border-color:transparent;font-weight:700}
+.pact button:disabled{opacity:.5;cursor:default}
+/* 미리보기 — 실제 서식 비율 */
+.pv{border:1px solid var(--line);border-radius:12px;background:#fff;padding:26px 30px;margin-top:10px;color:#111;max-width:820px}
+body[data-theme=dark] .pv{background:#f7f8fb}
+.pv .ptbl{display:grid;grid-template-columns:150px 1fr;border:2px solid #333;margin-bottom:22px}
+.pv .ptbl .lc{border-right:1px solid #333;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:10px 6px}
+.pv .ptbl .lc b{font-family:궁서,Batang,serif;font-size:15px;font-weight:400}
+.pv .ptbl .lc i{font-family:궁서,Batang,serif;font-size:23px;font-style:normal;letter-spacing:2px}
+.pv .ptbl .rc{display:grid;grid-template-columns:78px 1fr}
+.pv .ptbl .rc span{border-bottom:1px solid #999;padding:4px 8px;font-size:12.5px;font-family:'휴먼명조',Batang,serif}
+.pv .ptbl .rc span.k{border-right:1px solid #999;font-weight:700;background:#f3f4f7;text-align:center}
+.pv .ptbl .rc span:nth-last-child(-n+2){border-bottom:0}
+.pv h3{font-family:'HY헤드라인M','맑은 고딕',sans-serif;font-size:22px;font-weight:800;line-height:1.35;text-align:center;margin:0 0 14px}
+.pv .psub{font-family:'한컴바탕확장',Batang,serif;font-size:14px;font-weight:700;line-height:1.5;margin:2px 0}
+.pv .pbody{font-family:'한컴바탕확장',Batang,serif;font-size:14px;line-height:1.75;margin:14px 0 0;text-indent:2px}
+.pv .pbody p{margin:0 0 10px;text-indent:6px}
+@media(max-width:900px){.pgrid{grid-template-columns:repeat(2,1fr)}}

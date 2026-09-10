@@ -8,6 +8,8 @@ old=json.load(io.open(os.path.join(SITE,'index.json'),encoding='utf-8'))
 ordin=json.load(io.open(os.path.join(REF,'dalseong_ordin_574.json'),encoding='utf-8'))
 elis=json.load(io.open(os.path.join(REF,'dalseong_elis_648.json'),encoding='utf-8'))
 hun=json.load(io.open(os.path.join(REF,'dalseong_hunryeong_70.json'),encoding='utf-8'))
+pressf=os.path.join(REF,'..','dalseong_press_600.json')
+press=json.load(io.open(pressf,encoding='utf-8')) if os.path.exists(pressf) else {'docs':[]}
 
 # ELIS: 법규명 -> 편, 소관부서
 E={}
@@ -56,6 +58,18 @@ for d in hun['docs']:
                  'kind':d.get('kind','훈령'),'field':meta.get('p','')})
     n+=1; cnt[src]+=1
 
+# 보도자료 (달성군 홈페이지 공개 게시판)
+pn=0
+for d in press.get('docs',[]):
+    txt=re.sub(r'[ \t]+',' ',one(d.get('text'))).strip()
+    if len(txt)<80: continue
+    ttl=one(d.get('title')).strip()
+    ttl=re.sub(r'^\d{4}년\s*\d{1,2}월\s*\d{1,2}일[_\s]*','',ttl)
+    docs.append({'id':'pr-%d'%pn,'type':'press','source':'보도자료 '+one(d.get('date')),
+                 'title':ttl,'text':txt[:4000],'access':'public',
+                 'dept':one(d.get('dept')).strip(),'date':one(d.get('date')).strip()})
+    pn+=1
+
 for d in old['docs']:
     if d['type']!='law': docs.append(d)
 
@@ -77,7 +91,8 @@ laws_recent=sorted(_ok,key=lambda x:x['e'],reverse=True)[:12]
 
 meta=dict(old['meta'])
 meta['built']='2026-09-10'
-meta['counts']={'law':cnt.total() if hasattr(cnt,'total') else sum(cnt.values()),
+meta['press_n']=pn
+meta['counts']={'press':pn,'law':cnt.total() if hasattr(cnt,'total') else sum(cnt.values()),
                 'minwon':sum(1 for d in docs if d['type']=='minwon'),
                 'data':sum(1 for d in docs if d['type']=='data'),
                 'internal':sum(1 for d in docs if d['type']=='internal')}

@@ -54,7 +54,18 @@ const SYN=[[/버려|버리|버릴|버림/g,'배출 버려'],[/사요|살 수|살
 function expand(q){ let e=q; SYN.forEach(([r,t])=>{ if(r.test(q)) e+=' '+t; }); return e; }
 const GEN=new Set(['어떻게','무엇','뭐','뭐야','뭐예요','알려','알려줘','알려주세요','방법','절차','필요','서류','가격','얼마','어디','어디서','누구','언제','해줘','해주세요','하나요','하죠','되나요','내용','대상','기준','규정','근거','있어','있나요','싶어','원해','좀','관련','달성군','대구광역시']);
 /* 상위 결과가 질문의 핵심어를 실제로 담고 있는지 확인 — 없으면 '자료 없음'으로 처리 */
-function relevant(q,hits){ if(!hits.length) return false; if(hits[0].score>=12) return true; const qw=tok(q).filter(t=>t.startsWith('W:')&&t.length>=4&&!GEN.has(t.slice(2))); if(!qw.length) return false; const tf=S.idx.tf[S.docs.indexOf(hits[0].doc)]; return qw.some(w=>tf.has(w)); }
+function relevant(q,hits){
+  if(!hits.length) return false;
+  const N=S.idx.N, df=S.idx.df;
+  const qw=[...new Set(tok(q))].filter(t=>t.startsWith('W:')&&!GEN.has(t.slice(2)));
+  // 변별력 있는 말 : 한글 3자(영문 4자) 이상 + 전체 문서의 2% 미만에만 등장
+  const RARE=Math.max(3,Math.round(N*0.02));
+  const key=qw.filter(t=>{ const w=t.slice(2); const n=df.get(t);
+    return n && n<=RARE && (/[가-힣]/.test(w)? w.length>=3 : w.length>=4); });
+  if(!key.length) return false;                 // 질문에 우리 자료의 고유 용어가 없음 → 자료 밖 질문
+  const tf=S.idx.tf[S.docs.indexOf(hits[0].doc)];
+  return key.some(t=>tf.has(t));                // 그 고유 용어가 최상위 근거에 실제로 들어 있어야 인정
+}
 /* 읍면 + 시설 개소 수 질의는 색인 통계로 정확히 계산 */
 function countIntent(q){
   const e=EUP.find(x=>q.includes(x)); const ds=[['경로당','경로당 현황'],['판매소','종량제봉투 판매소'],['봉투 파는','종량제봉투 판매소'],['도서관','도서관']].find(([w])=>q.includes(w));
@@ -92,7 +103,7 @@ async function callModel(mode,hits,q,hist,onDelta){
 function offlineAnswer(mode,hits,q){
   const ci=countIntent(q);
   if(ci){ const where=ci.eup?`${ci.eup} `:'달성군 전체 '; const nm=ci.ds.replace(' 현황',''); let a=`${where}${nm}${/[당관]$/.test(nm)?'은':'는'} ${ci.n.toLocaleString()}개소입니다 [1].`; if(ci.eup) a+=` (군 전체 ${ci.total.toLocaleString()}개소)`; if(ci.sample.length) a+='\n'+ci.sample.map(d=>'❍ '+d.text.split(' — ')[0].replace(/^(경로당|종량제봉투 판매소|도서관) /,'')+' — '+(d.text.split(' — ')[1]||'').split(',')[0]).join('\n'); a+=`\n※ 공공데이터 기준일 2026-09-08`; return a; }
-  if(!hits.length) return '※ 달성군 자료에 없는 내용입니다. 시연판은 연결된 자료(조례 7건·민원안내·공공데이터 6종·내부지침) 범위 안에서 답하며, 실제 구축 시에는 자료 밖 질문도 AI가 직접 답변합니다.\n@@SUGGEST@@';
+  if(!hits.length) return '※ 달성군 자료에 없는 내용입니다. 시연판은 연결된 자료(자치법규 644건·민원안내·공공데이터 6종·내부지침) 범위 안에서 답하며, 실제 구축 시에는 자료 밖 질문도 AI가 직접 답변합니다.\n@@SUGGEST@@';
   const top=hits[0].doc; let a='';
   if(top.type==='law'){ const art=top.title.replace(top.source,'').trim(); a=`■ 「${top.source.replace('대구광역시 ','')}」 ${art} [1]\n`; let lines=top.text.split('\n').map(l=>l.trim()).filter(Boolean); if(art.startsWith('[별표')) lines=lines.slice(1).filter(l=>l.length>8||/:/.test(l)); a+=lines.slice(0,art.startsWith('[별표')?14:7).map(l=>(/^(①|②|③|④|⑤|\d+\.)/.test(l)?'❍ ':'- ')+l).join('\n'); if(lines.length>8&&!art.startsWith('[별표')) a+='\n- (이하 생략 — 근거 카드에서 전문 확인)'; const l2=hits.slice(1,3).filter(h=>h.doc.type==='law'); l2.forEach((h,i)=>a+=`\n- 관련: ${h.doc.title.replace('대구광역시 달성군 ','')} [${i+2}]`); }
   else if(top.type==='minwon'){ const f=Object.fromEntries(top.text.split('\n').slice(1).map(l=>{const i=l.indexOf(': '); return [l.slice(0,i),l.slice(i+2)];})); a=`■ ${top.title} [1]\n❍ 신청 방법: ${f['신청 방법']}\n❍ 필요 서류: ${f['필요 서류']}\n❍ 수수료: ${f['수수료']} / 처리: ${f['처리 기간']}\n❍ 담당: ${f['담당']}`; }
@@ -200,7 +211,7 @@ function renderNav(){
   const nc=$('#navClear'); if(nc) nc.onclick=()=>{ localStorage.removeItem('dOnRecent'); renderNav(); };
 }
 function setMode(m){ S.mode=m; document.body.dataset.mode=m; go(NAV[m][0].id); }
-function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); } if(top==='stats'){ renderStats(); updPill(); } if(top==='doc') renderPaper(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
+function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); } if(top==='stats'){ renderStats(); updPill(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
 
 /* ── 홈 대시보드 ── */
 document.addEventListener('click',e=>{ const g=e.target.closest('[data-go]'); if(!g) return; const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });
@@ -261,6 +272,7 @@ async function ask(q){
   const sug=text.includes('@@SUGGEST@@'); text=text.replace('\n@@SUGGEST@@','');
   const rag=/\[\d+\]/.test(text)&&!/자료에 없는 내용/.test(text); S.stats[rag?'cite':'gen']++;
   $('#qaTag').className='tag '+(rag?'rag':'gen'); $('#qaTag').textContent=rag?'📎 달성군 자료 근거':'🤖 AI 일반 답변';
+  b.classList.remove('rag','gen'); b.classList.add(rag?'rag':'gen');
   b.innerHTML=`<span class="tag ${rag?'rag':'gen'}">${rag?'📎 달성군 자료 근거':'🤖 AI 일반 답변'}</span>\n`+fmt(text)+(sug?'\n<small>이런 질문은 지금 바로 가능합니다:</small>'+chipsHtml([...CHIPS.staff].sort(()=>Math.random()-.5),4):'')+(hits.length?`<div class="src"><b>📎 근거 자료 ${hits.length}건</b>${hits.slice(0,3).map((h,i)=>`<div>[${i+1}] ${h.doc.title.replace('대구광역시 달성군 ','')}</div>`).join('')}${hits.length>3?`<div class="more">외 ${hits.length-3}건 — 근거 원문 보기</div>`:''}</div>`:'')+`<div class="actions"><button data-act="hwpx" class="p">📄 한글 파일로</button><button data-act="copy">복사</button>${hits.length?'<button data-act="ev">근거 원문 보기</button>':''}</div><div class="ev inline" hidden></div>`;
   const evBox=b.querySelector('.ev.inline'); if(hits.length) renderEv(evBox,hits);
   b.onclick=ev=>{ const c=ev.target.closest('.cite'); if(c){ evBox.hidden=false; $$('.evc',evBox).forEach(x=>x.classList.toggle('hl',+x.dataset.n===+c.dataset.n)); const t=evBox.querySelector(`.evc[data-n="${c.dataset.n}"]`); if(t){ t.classList.add('open'); t.scrollIntoView({behavior:'smooth',block:'center'}); } return; } const a=ev.target.dataset.act; if(a==='copy'){ navigator.clipboard.writeText(text); toast('복사했습니다'); } if(a==='hwpx'){ fillDoc(); go('doc'); } if(a==='ev'){ evBox.hidden=!evBox.hidden; } };
@@ -312,6 +324,198 @@ $('#btnHwpxGo').onclick=async()=>{
 const lawCnt=n=>(S.meta.law_counts&&S.meta.law_counts[n])||S.docs.filter(x=>x.source===n).length;
 const shortNm=n=>n.replace('대구광역시 달성군 ','');
 const dstr=d=>{d=String(d||'');return d.length===8?`${d.slice(0,4)}.${+d.slice(4,6)}.${+d.slice(6,8)}`:d;};
+
+
+/* ══════════ 보도자료 작성하기 ══════════
+   달성군 보도자료 원본(hwp) 서식 분석 결과를 그대로 적용한다.
+   용지 A4 · 여백 위7/아래15/좌20/우20/머리말20/꼬리말5(mm)
+   제목 HY헤드라인M 22pt 진하게 · 부제 한컴바탕확장 15pt 진하게
+   본문 한컴바탕확장 15pt(줄간격 160%) · 표제 궁서 20/30pt · 표 항목 휴먼명조 15pt        */
+const PRESS_RULE = `[달성군 보도자료 작성 규칙 — 실제 발행본 600건에서 추출]
+· 제목: 「대구 달성군, ○○○ 개최」처럼 주체+무엇을+동사로 끝낸다. 20자 안팎. 마침표 없음.
+  내용이 길면 두 줄로 나눈다(예: "근로자 안전이 최우선! / 달성군, 산업안전 우수기업 5곳 선정").
+· 부제: ▸ 로 시작하는 2~3줄. 각 줄 25~35자. 제목에 없는 알맹이(대상·규모·금액·기간)를 담는다.
+· 본문 첫 문단(리드): "달성군(군수 최재훈)은 지난 O일 △△에서 ~을 개최했다고 밝혔다." 형태로
+  누가·언제·어디서·무엇을 한 문장에 담는다. 기관명 뒤에는 괄호로 대표자를 적는다.
+· 둘째 문단: 배경·목적. "이번 ~은 ~하기 위해 마련됐다."
+· 셋째~넷째 문단: 세부 내용(프로그램·규모·대상·예산 등 구체적 수치).
+· 마지막 문단: 인용. "최재훈 달성군수는 "~"고 말했다." 또는 "~며 밝혔다."
+· 문장은 과거형 종결(~했다/~밝혔다/~전했다). 문단마다 앞에 공백 한 칸을 둔다.
+· 4~6개 문단, 전체 700~1,100자. 보도자료 1건은 A4 1쪽을 넘지 않는다.
+· 홍보성 수식어("최고의","획기적")는 쓰지 않고 사실과 수치로 쓴다.
+· 주민등록번호·개인 연락처 등 개인정보는 넣지 않는다.`;
+
+function pressSys(){
+  return `당신은 대구광역시 달성군 홍보 담당자입니다. 아래 규칙과 실제 발행 사례를 그대로 따라 보도자료 초안을 작성합니다.
+${PRESS_RULE}
+
+반드시 아래 형식으로만 출력합니다. 다른 말·설명·마크다운은 절대 쓰지 않습니다.
+제목: (한 줄. 두 줄이면 / 로 구분)
+부제: ▸ 첫째 줄
+부제: ▸ 둘째 줄
+부제: ▸ 셋째 줄 (없으면 생략)
+본문:
+(문단들. 빈 줄로 문단 구분)`;
+}
+
+const PS={busy:false,files:[],out:null};
+
+function initPress(){
+  if($('#pfGo')._on) return; $('#pfGo')._on=1;
+  const n=(S.meta&&S.meta.counts&&S.meta.counts.press)||0;
+  $('#pfLearn').textContent = n? `달성군 실제 보도자료 ${n.toLocaleString()}건의 문체·구성을 참고합니다` : '달성군 보도자료 서식 기준';
+  const t=new Date(); $('#pfDate').value=t.toISOString().slice(0,10);
+  $('#pfFile').onchange=async e=>{
+    PS.files=[];
+    const fs=[...e.target.files];
+    for(const f of fs){
+      let txt='';
+      if(/\.(txt|md|csv|json|htm|html)$/i.test(f.name)){
+        try{ txt=(await f.text()).slice(0,8000); if(/\.html?$/i.test(f.name)){ const d=new DOMParser().parseFromString(txt,'text/html'); txt=(d.body.innerText||'').slice(0,8000);} }catch(err){}
+      }
+      PS.files.push({name:f.name,size:f.size,text:txt});
+    }
+    $('#pfFileList').textContent = PS.files.length
+      ? PS.files.map(f=>f.name+(f.text?' (본문 읽음)':' (파일명만)')).join(' · ')
+      : '계획서·기안문을 올리면 내용을 읽어 반영합니다';
+  };
+  $('#pfSample').onclick=()=>{
+    $('#pfName').value='반부패·청렴 특별교육';
+    $('#pfWhen').value='2026. 9. 9.(수) 14:00';
+    $('#pfWhere').value='달성군청 군민소통관';
+    $('#pfDept').value='법무감사실'; $('#pfLead').value='박중현'; $('#pfPic').value='김은희'; $('#pfTel').value='053)668-2134';
+    $('#pfBody').value='승진자·신규 임용자 등 직원 150여 명 대상\n국민권익위원회 청렴교육 전문강사 초청 특강\n주제: 청렴, 더 나은 세상을 위한 선택\n내용: 청탁금지법, 공무원 행동강령, 이해충돌방지법 사례 중심\n목적: 바람직한 공직자상 정립, 청렴 실천 의지 제고';
+    $('#pfQuote').value='';
+    toast('예시를 채웠습니다 — 「보도자료 초안 만들기」를 눌러보세요');
+  };
+  $('#pfReset').onclick=()=>{ ['pfName','pfWhen','pfWhere','pfDept','pfLead','pfPic','pfTel','pfBody','pfQuote'].forEach(id=>$('#'+id).value=''); PS.files=[]; $('#pfFile').value=''; $('#pfFileList').textContent='계획서·기안문을 올리면 내용을 읽어 반영합니다'; $('#pressOut').hidden=true; };
+  $('#pfGo').onclick=()=>makePress();
+  $('#pfAgain').onclick=()=>makePress();
+  $('#pfCopy').onclick=()=>{ if(!PS.out) return; navigator.clipboard.writeText(pressPlain(PS.out)); toast('복사했습니다'); };
+  $('#pfHwpx').onclick=()=>pressHwpx();
+}
+
+function pressExamples(q){
+  try{
+    const hits=search(q,{filter:d=>d.type==='press',k:3});
+    return hits.map((h,i)=>`[사례 ${i+1}] ${h.doc.title}\n${h.doc.text.slice(0,900)}`).join('\n\n');
+  }catch(e){ return ''; }
+}
+
+function pressParse(t){
+  const o={title:'',subs:[],body:[]};
+  const lines=String(t||'').split(/\r?\n/);
+  let inBody=false, buf=[];
+  for(const raw of lines){
+    const l=raw.trim();
+    if(/^본문\s*:?\s*$/.test(l)){ inBody=true; continue; }
+    if(!inBody && /^제목\s*:/.test(l)){ o.title=l.replace(/^제목\s*:\s*/,'').trim(); continue; }
+    if(!inBody && /^부제\s*:/.test(l)){ const v=l.replace(/^부제\s*:\s*/,'').replace(/^▸\s*/,'').trim(); if(v) o.subs.push(v); continue; }
+    if(!inBody && /^▸/.test(l)){ o.subs.push(l.replace(/^▸\s*/,'').trim()); continue; }
+    if(inBody) buf.push(raw);
+  }
+  o.body=buf.join('\n').split(/\n\s*\n/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+  if(!o.title){ const m=String(t).match(/^\s*(.+)$/m); o.title=m?m[1].slice(0,60):''; }
+  return o;
+}
+
+function pressPlain(o){
+  const H=pressHead();
+  return [`대구광역시 달성군  보도자료`,`제공일자 ${H.date}`,`담당부서 ${H.dept}`,`팀    장 ${H.lead}`,`담 당 자 ${H.pic}`,`전    화 ${H.tel}`,'',
+    o.title,'',...o.subs.map(s=>'▸ '+s),'',...o.body.map(p=>' '+p)].join('\n');
+}
+function pressHead(){
+  const d=$('#pfDate').value||new Date().toISOString().slice(0,10);
+  const dt=new Date(d+'T00:00:00');
+  const W='일월화수목금토'[dt.getDay()];
+  return {date:`${dt.getFullYear()}. ${dt.getMonth()+1}. ${dt.getDate()}.(${W})`,
+          dept:$('#pfDept').value||'', lead:$('#pfLead').value||'', pic:$('#pfPic').value||'', tel:$('#pfTel').value||''};
+}
+
+function pressRender(o){
+  const H=pressHead();
+  const row=(k,v)=>`<span class="k">${k}</span><span>${esc0(v)}</span>`;
+  $('#pressView').innerHTML=
+   `<div class="ptbl"><div class="lc"><b>대구광역시 달성군</b><i>보도자료</i></div>
+      <div class="rc">${row('제공일자',H.date)}${row('담당부서',H.dept)}${row('팀　　장',H.lead)}${row('담 당 자',H.pic)}${row('전　　화',H.tel)}</div></div>
+    <h3>${o.title.split('/').map(x=>esc0(x.trim())).join('<br>')}</h3>
+    ${o.subs.map(s=>`<div class="psub">▸ ${esc0(s)}</div>`).join('')}
+    <div class="pbody">${o.body.map(p=>`<p>${esc0(p)}</p>`).join('')}</div>`;
+  $('#pressOut').hidden=false;
+  $('#pressOut').scrollIntoView({behavior:'smooth',block:'start'});
+}
+const esc0=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function pressOffline(){
+  const name=$('#pfName').value.trim(), when=$('#pfWhen').value.trim(), where=$('#pfWhere').value.trim();
+  const pts=$('#pfBody').value.split(/\r?\n/).map(x=>x.replace(/^[-·•\s]+/,'').trim()).filter(Boolean);
+  const day=(when.match(/(\d{1,2})일/)||when.match(/\.\s*(\d{1,2})\.?\s*\(/)||[])[1]||'';
+  const o={title:`대구 달성군, ${name} 개최`,
+    subs:[`▸ ${name} 개최`.replace('▸ ',''), pts[0]||'', pts[1]||''].filter(Boolean).slice(0,3),
+    body:[`달성군(군수 최재훈)은 ${day?`지난 ${day}일 `:''}${where?where+'에서 ':''}${name}을(를) 개최했다고 밝혔다.`,
+          pts.length>2?`이번 ${name}은 ${pts[2]}`:`이번 ${name}은 관련 시책을 추진하기 위해 마련됐다.`,
+          ...pts.slice(3,5),
+          $('#pfQuote').value.trim()||`최재훈 달성군수는 "앞으로도 군민이 체감할 수 있는 시책을 지속적으로 추진하겠다"고 말했다.`]
+      .filter(Boolean)};
+  return o;
+}
+
+async function makePress(){
+  if(PS.busy) return;
+  const name=$('#pfName').value.trim(), body=$('#pfBody').value.trim();
+  if(!name||!body){ $('#pfMsg').textContent='행사·사업명과 주요 내용은 입력해 주세요.'; $('#pfName').focus(); return; }
+  PS.busy=true; $('#pfGo').disabled=true; $('#pfMsg').textContent='작성 중…';
+  try{
+    let text='';
+    if((S.key||S.server)&&!S.offline){
+      const H=pressHead();
+      const ex=pressExamples(name+' '+body.slice(0,80));
+      const u=[`<실제 발행 사례 — 문체와 구성을 이대로 따르세요>\n${ex}\n</실제 발행 사례>`,
+        `<작성 요청>`,
+        `행사·사업명: ${name}`,
+        $('#pfWhen').value?`일시: ${$('#pfWhen').value}`:'',
+        $('#pfWhere').value?`장소: ${$('#pfWhere').value}`:'',
+        H.dept?`담당부서: ${H.dept}`:'',
+        `제공일자: ${H.date}`,
+        `주요 내용:\n${body}`,
+        $('#pfQuote').value.trim()?`인용문(그대로 사용): ${$('#pfQuote').value.trim()}`:'인용문: 문맥에 맞게 군수 말씀을 생성',
+        PS.files.filter(f=>f.text).map(f=>`첨부 「${f.name}」 내용:\n${f.text.slice(0,3000)}`).join('\n\n'),
+        PS.files.filter(f=>!f.text).length?`첨부 파일명: ${PS.files.filter(f=>!f.text).map(f=>f.name).join(', ')}`:'',
+        `</작성 요청>`].filter(Boolean).join('\n');
+      const payload=JSON.stringify({model:S.model,max_tokens:1600,stream:true,system:pressSys(),messages:[{role:'user',content:u}]});
+      const r=S.key
+        ? await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:payload})
+        : await fetch('/api/chat',{method:'POST',headers:{'content-type':'application/json','x-access-code':S.code||''},body:payload});
+      if(!r.ok) throw new Error('모델 호출 실패 ('+r.status+')');
+      const rd=r.body.getReader(), dec=new TextDecoder(); let buf='';
+      while(true){ const {value,done}=await rd.read(); if(done) break; buf+=dec.decode(value,{stream:true});
+        const ls=buf.split('\n'); buf=ls.pop();
+        for(const ln of ls){ if(!ln.startsWith('data:')) continue;
+          try{ const j=JSON.parse(ln.slice(5)); if(j.type==='content_block_delta'&&j.delta?.text) text+=j.delta.text; }catch(e){} } }
+      PS.out=pressParse(text);
+      $('#pfMsg').textContent='작성 완료 — 내용을 확인하고 수정해 주세요.';
+    }else{
+      await new Promise(r=>setTimeout(r,500));
+      PS.out=pressOffline();
+      $('#pfMsg').textContent='오프라인 시연 모드 — 모델 연결 시 실제 문체로 작성됩니다.';
+    }
+    pressRender(PS.out);
+    S.stats.gen++;
+  }catch(err){ $('#pfMsg').textContent='⚠ '+err.message; }
+  finally{ PS.busy=false; $('#pfGo').disabled=false; }
+}
+
+async function pressHwpx(){
+  if(!PS.out) return;
+  const H=pressHead();
+  try{
+    const blob=await DalseongHwpx.build({kind:'press', title:PS.out.title.replace(/\s*\/\s*/g,' '), sub:PS.out.subs.join(' / '),
+      date:H.date, head:H, subs:PS.out.subs, paras:PS.out.body,
+      question:'', answer:PS.out.body.join('\n\n'), cites:[], includeCites:false});
+    const nm=`달성군_보도자료_${($('#pfName').value||'초안').replace(/[\\/:*?"<>|]/g,'')}_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.hwpx`;
+    DalseongHwpx.download(blob,nm); S.stats.hwpx++; toast('한글 파일 생성: '+nm);
+  }catch(e){ toast('한글 파일 생성 실패: '+e.message); }
+}
 
 /* ── 자료함 ── */
 function renderLib(){
