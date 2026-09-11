@@ -544,3 +544,35 @@ table.mltbl select{width:100%;padding:4px 7px;border:1px solid var(--line);borde
   .view[data-view="meal"] #mlLedger,.view[data-view="meal"] #mlLedger *{visibility:visible}
   .view[data-view="meal"] #mlLedger{position:absolute;left:0;top:0;width:100%}
 }
+.mlcard.verify{border-color:#c9d6ee;background:linear-gradient(180deg,rgba(23,65,143,.03),transparent 60px)}
+.mlcard.verify h4{color:var(--accent)}
+
+/* 시범 범위 안내 */
+.scopecard{border-color:#e0d3b4;background:linear-gradient(180deg,rgba(196,148,42,.05),transparent 80px)}
+.scopecard>h4{color:#8a5a00}
+.scopelead{font-size:13.2px;line-height:1.75;margin:0 0 14px}
+.scopetbl{width:100%;border-collapse:collapse;font-size:12.8px}
+.scopetbl th,.scopetbl td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.6}
+.scopetbl thead th{background:var(--bg);font-weight:600;text-align:center}
+.scopetbl thead th:nth-child(2){color:var(--muted)}
+.scopetbl thead th:nth-child(3){color:#8a5a00}
+.scopetbl tbody td:first-child{background:var(--bg);color:var(--muted);font-weight:600;white-space:nowrap}
+.scopetbl tbody td:nth-child(2){color:var(--muted)}
+.scopenote{margin:16px 0 0;padding:12px 15px;border-radius:7px;background:#fdf6e8;
+  border:1px solid #ecd6a6;color:#8a5a00;font-size:12.8px;line-height:1.75}
+.scopenote2{margin:10px 0 0;font-size:12.5px;line-height:1.7;color:var(--muted)}
+@media(max-width:720px){.scopetbl,.scopetbl tbody,.scopetbl tr,.scopetbl td{display:block;width:100%}
+  .scopetbl thead{display:none}
+  .scopetbl tr{border:1px solid var(--line);border-radius:7px;margin-bottom:10px;padding:4px}
+  .scopetbl td{border:none;border-bottom:1px dashed var(--line)}
+  .scopetbl td:last-child{border-bottom:none}
+  .scopetbl tbody td:nth-child(2)::before{content:'지금 : ';font-weight:600}
+  .scopetbl tbody td:nth-child(3)::before{content:'2027 : ';font-weight:600;color:#8a5a00}}
+.mlc.a{background:#fdf6e8;color:#8a5a00;border:1px solid #ecd6a6;font-weight:700;font-size:11px}
+.mlteam{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;
+  padding:9px 13px;border-radius:7px;font-size:12.5px;line-height:1.7}
+.mlteam.warn{background:#fdf6e8;border:1px solid #ecd6a6;color:#8a5a00}
+.mlteam.ok{background:#e6f4ee;border:1px solid #b9e0ce;color:#0f7b53}
+.mladd{border:1px solid #ecd6a6;background:#fff;color:#8a5a00;border-radius:20px;
+  padding:2px 9px;font:inherit;font-size:12px;cursor:pointer;margin:0 2px}
+.mladd:hover{background:#8a5a00;color:#fff;border-color:#8a5a00}

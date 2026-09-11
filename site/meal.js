@@ -20,14 +20,28 @@ const SHOPS=['이삭토스트','맘스터치','한솥','대복성','부산진국
 let S={all:[],rows:[],days:[],names:[],depts:[],dept:'',cells:{},shop:{},cfg:{},chk:[],pdfText:'',built:false};
 
 /* ---------- 설정 저장 (이 브라우저에만 보관) ---------- */
+let PROF='';                                  // 현재 부서 프로필
+const LSP='dsOn.meal.prof';
 const LS='dsOn.meal.cfg.v1';
-const CFGF=['mlPrice','mlWs','mlWe','mlEarly','mlHoli','mlShops'];
+const K=b=>b+(PROF?'::'+PROF:'');             // 부서별 저장 키
+function useProfile(name,silent){
+  name=String(name||'').trim();
+  if(name===PROF) return false;
+  PROF=name;
+  try{ localStorage.setItem(LSP,PROF); }catch(e){}
+  const el=$('#mlProf'); if(el&&el.value!==PROF) el.value=PROF;
+  loadCfg();                                  // 그 부서가 쓰던 설정을 불러온다
+  if(!silent){ const n=$('#mlProfNote');
+    if(n) n.innerHTML=PROF?('<b>'+esc(PROF)+'</b> 설정을 불러왔습니다.'):'부서를 지정하면 부서별로 따로 저장됩니다.'; }
+  return true;
+}
+const CFGF=['mlPrice','mlWs','mlWe','mlEarly','mlHoli','mlShops','mlShift','mlTrip','mlTeam'];
 function saveCfg(){
   try{ const o={}; CFGF.forEach(k=>{const el=$('#'+k); if(el) o[k]=el.value;});
-       localStorage.setItem(LS,JSON.stringify(o)); flash(); }catch(e){}
+       localStorage.setItem(K(LS),JSON.stringify(o)); flash(); }catch(e){}
 }
 function loadCfg(){
-  try{ const o=JSON.parse(localStorage.getItem(LS)||'{}');
+  try{ const o=JSON.parse(localStorage.getItem(K(LS))||'{}');
        CFGF.forEach(k=>{const el=$('#'+k); if(el&&o[k]!=null) el.value=o[k];}); }catch(e){}
 }
 let fTimer=null;
@@ -58,12 +72,12 @@ function holiFor(y){ return (CFG&&CFG['공휴일']&&CFG['공휴일'][y]&&CFG['�
 
 /* 가맹업소 사용 이력 — 자주 쓰는 곳을 위로 올리고 목록을 스스로 채운다 */
 const LSH='dsOn.meal.shop.v1';
-function histGet(){ try{ return JSON.parse(localStorage.getItem(LSH)||'{}'); }catch(e){ return {}; } }
+function histGet(){ try{ return JSON.parse(localStorage.getItem(K(LSH))||'{}'); }catch(e){ return {}; } }
 function histAdd(name,ym,n){
   if(!name) return;
   try{ const h=histGet(); h[name]=h[name]||{n:0,last:''};
        h[name].n+=(n||1); if(ym>h[name].last) h[name].last=ym;
-       localStorage.setItem(LSH,JSON.stringify(h)); }catch(e){}
+       localStorage.setItem(K(LSH),JSON.stringify(h)); }catch(e){}
 }
 function shopList(){
   const h=histGet(), typed=S.cfg.shops||[];
@@ -93,7 +107,34 @@ function cfgRead(){
   return { ym:$('#mlYm').value.trim(), price:+$('#mlPrice').value||0,
     ws:toMin($('#mlWs').value)||540, we:toMin($('#mlWe').value)||1080,
     early:$('#mlEarly').value==='1',
-    holi:new Set(list($('#mlHoli').value)), shops:list($('#mlShops').value) };
+    holi:new Set(list($('#mlHoli').value)), shops:list($('#mlShops').value),
+    shift:new Set(list($('#mlShift').value)), trip:parseTrip($('#mlTrip').value),
+    team:list($('#mlTeam').value) };
+}
+
+/* 출장(여비 식비 수령) 내역 파싱 — 「8/12 조호현」 「조호현 2026-08-12, 8-13」 등 자유 형식 */
+function parseTrip(raw){
+  const map={}, ym=($('#mlYm')&&$('#mlYm').value.trim())||'';
+  const y=ym.slice(0,4)||String(new Date().getFullYear()), mm=ym.slice(5,7);
+  for(const line of String(raw||'').split(/\r?\n/)){
+    if(!line.trim()) continue;
+    const names=line.match(/[가-힣]{2,4}/g)||[];
+    const nm=names.filter(n=>!/월|일|출장|식비|관내|관외/.test(n));
+    if(!nm.length) continue;
+    const ds=new Set();
+    (line.match(/20\d\d[-.\/]\d{1,2}[-.\/]\d{1,2}/g)||[]).forEach(d=>{
+      const a=d.split(/[-.\/]/); ds.add(a[0]+'-'+pad(+a[1])+'-'+pad(+a[2]));
+    });
+    const rest=line.replace(/20\d\d[-.\/]\d{1,2}[-.\/]\d{1,2}/g,'');
+    (rest.match(/\b(\d{1,2})[-.\/](\d{1,2})\b/g)||[]).forEach(d=>{
+      const a=d.split(/[-.\/]/); ds.add(y+'-'+pad(+a[0])+'-'+pad(+a[1]));
+    });
+    if(!ds.size&&mm) (rest.match(/(?:^|[^\d])(\d{1,2})\s*일/g)||[]).forEach(d=>{
+      ds.add(y+'-'+mm+'-'+pad(+d.replace(/\D/g,'')));
+    });
+    nm.forEach(n=>{ map[n]=map[n]||new Set(); ds.forEach(d=>map[n].add(d)); });
+  }
+  return map;
 }
 const isHol=(d,c)=>{const w=new Date(d+'T00:00:00').getDay();return w===0||w===6||c.holi.has(d);};
 function regOK(r,c){                       // 조기출근 사전등록 : 근무일 이전 or 당일 정규개시 전
@@ -120,10 +161,13 @@ function judge(r,c){
 
 /* ---------- 실행 ---------- */
 function run(text){
-  const c=cfgRead(); S.cfg=c;
   const all=parse(text);
   if(!all.length){ alert('초과근무 확인서 형식을 읽지 못했습니다.\n[텍스트 붙여넣기]로 다시 시도해 보세요.'); return; }
-  const ym=c.ym||all[0].date.slice(0,7); $('#mlYm').value=ym; c.ym=ym;
+  const ym0=($('#mlYm').value||'').trim()||all[0].date.slice(0,7);
+  const d0=[...new Set(all.filter(r=>r.date.startsWith(ym0)).map(r=>r.dept))];
+  if(d0.length===1 && (!PROF || PROF.indexOf(d0[0])<0)) useProfile(d0[0]);  // 과가 다를 때만 전환(팀명 보존)
+  const c=cfgRead(); S.cfg=c;
+  const ym=c.ym||ym0; $('#mlYm').value=ym; c.ym=ym;
   autoBase(ym); c.price=+$('#mlPrice').value||c.price; c.holi=new Set(
     String($('#mlHoli').value||'').split(/[\s,]+/).map(x=>x.trim()).filter(Boolean));
   S.all=all.filter(r=>r.date.startsWith(ym));
@@ -134,13 +178,25 @@ function run(text){
 function apply(){
   const c=S.cfg;
   S.rows=S.dept?S.all.filter(r=>r.dept===S.dept):S.all.slice();
+  const inDoc=[...new Set(S.rows.map(r=>r.name))];
+  if(c.team&&c.team.length){
+    const T=new Set(c.team);
+    S.rows=S.rows.filter(r=>T.has(r.name));
+    S.outside=inDoc.filter(n=>!T.has(n));
+    S.missing=c.team.filter(n=>inDoc.indexOf(n)<0);
+  } else { S.outside=[]; S.missing=[]; }
   S.names=[...new Set(S.rows.map(r=>r.name))];
   const [y,mm]=ym.split('-').map(Number), last=new Date(y,mm,0).getDate();
   S.days=[]; for(let d=1;d<=last;d++) S.days.push(ym+'-'+pad(d));
   const cells={}, chk=[];
   for(const r of S.rows){
     const k=r.date+'|'+r.name, j=judge(r,c), p=cells[k];
-    if(!p||(j.ok&&!p.ok)) cells[k]={...j,on:j.ok};
+    if(!p||(j.ok&&!p.ok)){
+      let auto='';
+      if(c.shift.has(r.name)) auto='교대근무자·야간/휴일근무수당 지급대상자';
+      else if(c.trip[r.name]&&c.trip[r.name].has(r.date)) auto='출장 식비 수령(여비 규정)';
+      cells[k]={...j, on:j.ok&&!auto, auto:auto};
+    }
     const diff=j.calc-r.pay;
     if(Math.abs(diff)>=1) chk.push({r,j,diff});
   }
@@ -150,11 +206,30 @@ function apply(){
 
 function draw(){
   const c=S.cfg;
-  let cnt=0,hol=0,off=0;
-  for(const k in S.cells){const x=S.cells[k]; if(x.on){cnt++; if(x.hol)hol++;} else if(x.ok) off++;}
+  let cnt=0,hol=0,off=0,aut=0;
+  for(const k in S.cells){const x=S.cells[k];
+    if(x.on){cnt++; if(x.hol)hol++;} else if(x.ok){ if(x.auto) aut++; else off++; }}
   $('#mlStats').innerHTML=
     st('지급 식수',cnt,'식')+st('지급 총액',won(cnt*c.price),'원')+
-    st('대상 인원',S.names.length,'명')+st('휴일 근무분',hol,'식')+st('담당자 제외',off,'식');
+    st('대상 인원',S.names.length,'명')+st('자동 제외',aut,'식')+st('직접 제외',off,'식');
+  const tb=$('#mlTeamBox');
+  if(tb){
+    const c2=S.cfg, on=c2.team&&c2.team.length;
+    if(!on){
+      tb.hidden=false; tb.className='mlteam warn';
+      tb.innerHTML='<span>⚠ <b>우리 팀 직원 명단이 비어 있어 확인서에 있는 '+
+        [...new Set(S.all.map(r=>r.name))].length+'명 전원</b>을 처리했습니다. '+
+        '과 단위로 출력된 확인서라면 다른 팀 직원이 섞일 수 있습니다 — 설정에 팀원 이름을 적어 주세요.</span>';
+    } else if(S.outside.length||S.missing.length){
+      tb.hidden=false; tb.className='mlteam warn';
+      let h='<span>우리 팀 <b>'+S.names.length+'명</b> 처리';
+      if(S.outside.length) h+=' · 명단에 없어 <b>제외한 '+S.outside.length+'명</b> : '+
+        S.outside.map(n=>'<button class="mladd" data-n="'+esc(n)+'">'+esc(n)+' ＋</button>').join(' ');
+      if(S.missing.length) h+=' · 명단에 있으나 <b>초과근무 없음</b> : '+esc(S.missing.join(', '));
+      tb.innerHTML=h+'</span>';
+    } else { tb.hidden=false; tb.className='mlteam ok';
+      tb.innerHTML='<span>✓ 우리 팀 <b>'+S.names.length+'명</b> — 명단과 확인서가 일치합니다.</span>'; }
+  }
   const dbox=$('#mlDeptBox');
   if(dbox){
     if(S.depts.length>1){
@@ -175,7 +250,9 @@ function draw(){
       if(!x) return '<td></td>';
       if(!x.ok) return '<td><span class="mlc x" title="'+esc(x.why)+'">·</span></td>';
       if(x.on) n++;
-      return '<td><span class="mlc '+(x.on?'y':'n')+'" data-k="'+d+'|'+nm+'" title="'+esc(x.why)+'">'+(x.on?'1':'–')+'</span></td>';
+      const cls=x.on?'y':(x.auto?'a':'n');
+      const tip=x.auto?('자동 제외 — '+x.auto+' / '+x.why):x.why;
+      return '<td><span class="mlc '+cls+'" data-k="'+d+'|'+nm+'" title="'+esc(tip)+'">'+(x.on?'1':(x.auto?'제':'–'))+'</span></td>';
     }).join('');
     h+='<tr'+(H?' class="hol"':'')+'><td class="day">'+(+d.slice(8))+'일 ('+w+')'+(H?' 휴':'')+'</td>'+tds+'<td>'+(n||'')+'</td></tr>';
   }
@@ -234,8 +311,8 @@ function commitHist(){
 }
 const payDays=()=>S.days.filter(d=>S.names.some(n=>{const x=S.cells[d+'|'+n];return x&&x.on;}));
 function drawShops(){
-  const c=S.cfg, ds=payDays(), L=shopList(), h=histGet();
-  $('#mlBulk').innerHTML=L.map(s=>'<option>'+esc(s)+(h[s]&&h[s].n?' ('+h[s].n+'회)':'')+'</option>').join('');
+  const c=S.cfg, ds=payDays(), L=shopList(), hist=histGet();
+  $('#mlBulk').innerHTML=L.map(s=>'<option>'+esc(s)+(hist[s]&&hist[s].n?' ('+hist[s].n+'회)':'')+'</option>').join('');
   const t=topShop(), tb=$('#mlTop');
   if(tb) tb.textContent=t?('자주 쓰는 '+t+'로 전부 채우기'):'자주 쓰는 곳으로 전부 채우기';
   let h='<thead><tr><th style="width:110px">특근일자</th><th style="width:60px">인원</th><th>특근자 명단</th><th style="width:170px">가맹업소명</th><th style="width:110px">금액</th></tr></thead><tbody>';
@@ -273,6 +350,38 @@ function drawLedger(){
   }
   h+='<p class="mlnote">※ 근거 「지방자치단체 회계관리에 관한 훈령」(행정안전부훈령 제416호, 2026. 1. 2. 시행) [별표2] 201-01 사무관리비 마. 급량비 — 1인 1식 '+won(c.price)+'원</p>';
   $('#mlLedger').innerHTML=h;
+}
+
+/* ---------- 과거 실적 대조 (검증) ---------- */
+function verify(){
+  const box=$('#mlVout'), raw=$('#mlVin').value||'';
+  const want={}; let m;
+  const re=/([가-힣]{2,4})\s*[:\s]\s*(\d{1,3})/g;
+  while((m=re.exec(raw))) want[m[1]]=+m[2];
+  if(!Object.keys(want).length){ box.innerHTML='<div class="mlwarn">이름과 식수를 읽지 못했습니다. <code>조호현 17</code> 형태로 적어 주세요.</div>'; return; }
+  const got={}; S.names.forEach(n=>got[n]=0);
+  for(const k in S.cells){ if(!S.cells[k].on) continue; const n=k.split('|')[1]; got[n]=(got[n]||0)+1; }
+  const all=[...new Set([...Object.keys(want),...Object.keys(got)])].sort((a,b)=>a.localeCompare(b,'ko'));
+  let same=0, diff=0, rows='';
+  for(const n of all){
+    const w=want[n], g=got[n], has=(w!=null&&g!=null);
+    const d=has?(g-w):null;
+    if(has&&d===0) same++; else diff++;
+    rows+='<tr class="'+(has&&d===0?'':'bad')+'"><td class="l">'+esc(n)+'</td>'+
+      '<td>'+(w==null?'<span class="mlmut">없음</span>':w+'식')+'</td>'+
+      '<td>'+(g==null?'<span class="mlmut">없음</span>':g+'식')+'</td>'+
+      '<td>'+(d==null?'—':(d===0?'일치':(d>0?'+':'')+d+'식'))+'</td>'+
+      '<td class="l">'+(d===0?'':(w==null?'확인서에만 있음':g==null?'확인서에 없음':
+        d<0?'우리 계산이 적음 — 요건 미달·공휴일 누락 확인':'우리 계산이 많음 — <b>제외 대상</b>(출장 식비·야간/휴일수당·교대)일 가능성'))+'</td></tr>';
+  }
+  const tw=Object.values(want).reduce((a,b)=>a+b,0), tg=Object.values(got).reduce((a,b)=>a+b,0);
+  box.innerHTML=(diff===0
+      ? '<div class="mlok">✓ <b>완전 일치</b> — '+all.length+'명 '+tg+'식 모두 기존 실적과 같습니다.</div>'
+      : '<div class="mlwarn"><b>'+diff+'명 차이</b> (일치 '+same+'명) — 아래 사유를 확인하세요. 차이가 곧 오류는 아닙니다.</div>')
+    +'<table class="mltbl"><thead><tr><th>성명</th><th style="width:88px">기존 실적</th>'
+    +'<th style="width:88px">우리 계산</th><th style="width:78px">차이</th><th>해석</th></tr></thead><tbody>'+rows
+    +'<tr class="sum"><th>합계</th><th>'+tw+'식</th><th>'+tg+'식</th><th>'+(tg-tw>0?'+':'')+(tg-tw)+'식</th>'
+    +'<th class="l">금액차 '+won((tg-tw)*S.cfg.price)+'원</th></tr></tbody></table>';
 }
 
 /* ---------- PDF ---------- */
@@ -316,6 +425,14 @@ function build(){
   root.innerHTML=`
   <div class="card mlcard">
     <h4>① 설정 <small>한 번만 맞춰 두면 다음 달부터는 PDF만 올리면 됩니다</small></h4>
+    <label class="mlfull"><span>우리 과·팀 <small class="mlmut">— 설정과 업소 목록이 이 이름으로 따로 저장됩니다</small></span>
+      <input id="mlProf" placeholder="예) 정보통신과 정보통계팀"></label>
+    <p class="mlnote" id="mlProfNote">과 이름은 확인서에서 자동으로 채워집니다. <b>뒤에 팀 이름을 붙여 주세요</b> —
+      같은 과의 다른 팀 서무와 설정이 섞이지 않습니다.</p>
+    <label class="mlfull"><span>우리 팀 직원 명단 <small class="mlmut">— 확인서에 팀 구분이 없어 이름으로 가려냅니다</small></span>
+      <textarea id="mlTeam" placeholder="예) 김화연, 김원규, 배지현, 조호현, 김규태, 김경민"></textarea></label>
+    <p class="mlnote">비워 두면 <b>확인서에 있는 전원</b>을 처리합니다. 확인서를 과 단위로 뽑으신다면 반드시 적어 주세요.
+      초과근무가 없던 팀원은 적어 두어도 아무 영향이 없습니다.</p>
     <p class="mlbase" id="mlBaseNote">⚙ 기준파일을 불러오는 중…</p>
     <p class="mlsaved" id="mlSaved"></p>
     <div class="mlgrid">
@@ -332,6 +449,11 @@ function build(){
     <label class="mlfull"><span>공휴일·대체공휴일</span>
       <textarea id="mlHoli">${HOLI_2026.join(', ')}</textarea></label>
     <p class="mlnote">2026년 관공서 공휴일(대체공휴일 포함)입니다. <b>해마다 갱신하세요.</b> 6/3은 제9회 전국동시지방선거일입니다.</p>
+    <label class="mlfull"><span>교대근무자 · 야간/휴일근무수당 지급대상자 <small class="mlmut">— 규정상 제외 대상. 한 번 적어두면 계속 자동 제외됩니다</small></span>
+      <textarea id="mlShift" placeholder="예) 홍길동, 김철수   (해당 없으면 비워 두세요)"></textarea></label>
+    <label class="mlfull"><span>출장 식비 수령 내역 <small class="mlmut">— 「공무원 여비 규정」에 따라 식비를 받은 날. 새올 출장 내역을 붙여넣으면 됩니다</small></span>
+      <textarea id="mlTrip" placeholder="예)  8/12 조호현&#10;      김원규 2026-08-20, 8/21"></textarea></label>
+    <p class="mlnote">날짜와 이름만 있으면 형식은 상관없습니다. 해당 날짜는 <b>자동으로 제외</b>되고 격자에 「제」로 표시됩니다.</p>
     <label class="mlfull"><span>가맹업소 목록</span><textarea id="mlShops">${SHOPS.join(', ')}</textarea></label>
     <p class="mlnote">업소명만 사용합니다. <b>대표자 성명·계좌번호는 입력하지 마세요.</b></p>
     <div class="mlbtns"><button class="btn" id="mlExport">설정 내보내기</button>
@@ -361,9 +483,11 @@ function build(){
     <div class="card mlcard">
       <h4>③ 판정 결과 <small>초록 칸을 누르면 제외됩니다</small></h4>
       <div class="mlstats" id="mlStats"></div>
+      <div class="mlteam" id="mlTeamBox" hidden></div>
       <div class="mldept" id="mlDeptBox" hidden></div>
-      <p class="mlnote">제외 대상(교대근무자 · 야간/휴일근무수당 수령자 · 출장 식비 수령자)은 자동 판단이 불가하므로 담당자가 직접 해제합니다.
-        점선 칸은 근무기록은 있으나 시간 요건에 못 미치는 날입니다.</p>
+      <p class="mlnote"><b>1</b> 지급 대상 · <b>제</b> 규정상 자동 제외(설정에 등록된 교대근무자·출장 식비 수령일) ·
+        <b>–</b> 담당자가 직접 해제 · <b>·</b> 근무기록은 있으나 시간 요건 미달.
+        칸을 누르면 켜고 끌 수 있으며, 마우스를 올리면 판정 사유가 나옵니다.</p>
       <div class="mlscroll"><table class="mlgrid" id="mlGrid"></table></div>
     </div>
     <div class="card mlcard"><h4>④ 검산 <small>확인서 수당시간 ↔ 출퇴근 시각 대조</small></h4>
@@ -377,7 +501,15 @@ function build(){
       <p class="mlnote">드롭다운은 <b>많이 쓰신 순서</b>로 정렬되며, 지정할 때마다 이 브라우저에 기억됩니다.
         다음 달부터는 버튼 한 번이면 채워집니다.</p>
       <div class="mlscroll"><table class="mltbl" id="mlShopTbl"></table></div></div>
-    <div class="card mlcard"><h4>⑥ 집행대장</h4>
+    <div class="card mlcard verify"><h4>⑥ 과거 실적과 대조 <small>검증용 — 이미 지급된 달로 확인해 보세요</small></h4>
+      <p class="mlnote">기존 「특근매식비 입력」 시트 맨 아래 <b>「계」 행</b>을 그대로 긁어 붙여넣거나,
+        <code>조호현 17, 김원규 18</code> 처럼 <b>이름과 식수</b>를 적어 주세요. 순서·구분자는 상관없습니다.</p>
+      <textarea id="mlVin" class="mlraw" style="min-height:76px"
+        placeholder="예)  조호현 17  김원규 18  김경민 18  김규태 1"></textarea>
+      <div class="mlbtns"><button class="btn pri" id="mlVrun">대조하기</button>
+        <button class="btn" id="mlVclr">지우기</button></div>
+      <div id="mlVout"></div></div>
+    <div class="card mlcard"><h4>⑦ 집행대장</h4>
       <div id="mlLedger"></div>
       <div class="mlbtns"><button class="btn pri" id="mlPrint">인쇄 / PDF 저장</button>
         <button class="btn" id="mlCsv">CSV 내려받기</button></div>
@@ -402,6 +534,12 @@ function build(){
       const o=$('#mlOut'); if(o&&!o.hidden) setTimeout(()=>o.scrollIntoView({behavior:'smooth',block:'start'}),120);} },60);
   });
   $('#mlDemo').onclick=()=>{$('#mlTabT').click();$('#mlRaw').value=DEMO;$('#mlYm').value='2026-08';run(DEMO);};
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('.mladd'); if(!b) return;
+    const el=$('#mlTeam'); if(!el) return;
+    el.value=(el.value.trim()?el.value.trim()+', ':'')+b.dataset.n;
+    saveCfg(); S.cfg=cfgRead(); apply();
+  });
   $('#mlGrid').addEventListener('click',e=>{
     const el=e.target.closest('.mlc[data-k]'); if(!el) return;
     S.cells[el.dataset.k].on=!S.cells[el.dataset.k].on; draw();
@@ -427,11 +565,16 @@ function build(){
     const f=e.target.files[0]; if(!f) return;
     try{ const o=JSON.parse(await f.text());
       CFGF.forEach(k=>{ if(o[k]!=null&&$('#'+k)) $('#'+k).value=o[k]; });
-      if(o._hist) localStorage.setItem(LSH,JSON.stringify(o._hist));
+      if(o._hist) localStorage.setItem(K(LSH),JSON.stringify(o._hist));
       saveCfg(); alert('설정을 불러왔습니다.');
     }catch(err){ alert('설정 파일을 읽지 못했습니다.'); }
   };
+  $('#mlVrun').onclick=verify;
+  $('#mlVclr').onclick=()=>{$('#mlVin').value='';$('#mlVout').innerHTML='';};
   $('#mlPrint').onclick=()=>window.print();
+  try{ PROF=localStorage.getItem(LSP)||''; }catch(e){ PROF=''; }
+  const pf=$('#mlProf'); if(pf) pf.value=PROF;
+  $('#mlProf').addEventListener('change',e=>useProfile(e.target.value));
   loadCfg();
   loadBase().then(()=>autoBase($('#mlYm').value.trim()||'2026-08'));
   $('#mlYm').addEventListener('change',()=>autoBase($('#mlYm').value.trim()));
