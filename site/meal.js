@@ -581,8 +581,6 @@ function build(){
       <p class="mlnote" id="mlTripMsg">없으면 넣지 않으셔도 됩니다.</p>
     </div>
     <textarea id="mlTrip" hidden></textarea>
-    <div class="mlbtns"><button class="btn pri" id="mlRun">다시 판정하기</button>
-      <button class="btn" id="mlDemo">8월 예시로 시험</button></div>
   </div>
 
   <div id="mlOut" hidden>
@@ -725,12 +723,6 @@ function build(){
     el.addEventListener('dragleave',()=>el.classList.remove('on'));
   });
   $('#mlSet').addEventListener('toggle',()=>drawTeamSet());
-  $('#mlRun').onclick=()=>{
-    if(!String(S.pdfText||'').trim()){ alert('먼저 초과근무 확인서 PDF를 올려 주세요.'); return; }
-    run(S.pdfText);
-  };
-  $('#mlDemo').onclick=()=>{ S.pdfText=DEMO; $('#mlYm').value='2026-08'; run(DEMO);
-    $('#mlPdfMsg').innerHTML='<b>8월 예시</b>로 계산했습니다. (실제 파일이 아닙니다)'; };
   document.addEventListener('click',e=>{
     const sd=e.target.closest('.mlsdel');
     if(sd){ shiftSet(shiftGet().filter(x=>x!==sd.dataset.n)); refresh(); }
@@ -857,5 +849,5 @@ const DEMO=`1 2026-08-04 정보통신과 주사보 조호현 09:00 20:04 64
 53 2026-08-30 정보통신과 전산서기 김경민 19:16 22:45 209
 54 2026-08-30 정보통신과 전산서기 김규태 11:18 15:30 240`;
 
-window.MEAL={init:build};
+window.MEAL={init:build, _demo:()=>{ S.pdfText=DEMO; run(DEMO); }};
 })();
