@@ -177,7 +177,7 @@ function judge(r,c){
 /* ---------- 실행 ---------- */
 function run(text){
   const all=parse(text);
-  if(!all.length){ alert('초과근무 확인서 형식을 읽지 못했습니다.\n새올에서 다시 출력한 PDF인지 확인해 주세요.'); return; }
+  if(!all.length) return false;   // 실패 안내는 드롭존이 맡는다
   const ym0=($('#mlYm').value||'').trim()||all[0].date.slice(0,7);
   const d0=[...new Set(all.filter(r=>r.date.startsWith(ym0)).map(r=>r.dept))];
   if(d0.length===1) useProfile(d0[0]);   // 확인서의 과로 저장 칸을 나눈다
@@ -527,11 +527,19 @@ async function readPdf(f){
     await new Promise(r=>setTimeout(r,0));
     S.pdfText=txt;
     run(txt);
-    const n=(S.rows||[]).length, p2=(S.names||[]).length;
+    const n=(S.rows||[]).length;
     if(n){
       setDrop('mlDrop','done','<b>✅ '+esc(f.name)+'</b>');
       const o=$('#mlOut'); if(o&&!o.hidden) setTimeout(()=>o.scrollIntoView({behavior:'smooth',block:'start'}),150);
-    } else setDrop('mlDrop','err','<b>⚠ '+esc(f.name)+'</b><small>근무기록을 찾지 못했습니다</small>');
+    }else if(txt.replace(/\s/g,'').length<80){
+      /* 글자가 한 톨도 없다 = 복합기로 스캔한 그림 PDF */
+      setDrop('mlDrop','err','<b>⚠ 스캔한 PDF 파일입니다</b>'+
+        '<em>새올에서 <b>인쇄 → PDF로 저장</b>한 파일을 올려 주세요</em>');
+    }else{
+      setDrop('mlDrop','err','<b>⚠ 근무기록을 찾지 못했습니다</b>'+
+        '<small>'+esc(f.name)+' · 초과근무 확인서 형식이 아닌 것 같습니다</small>'+
+        '<em>다른 파일로 다시 시도하려면 클릭하세요</em>');
+    }
   }catch(e){
     const why = e && e.message==='LOAD' ? 'PDF 읽기 모듈을 불러오지 못했습니다'
               : e && e.message==='LIB'  ? 'PDF 읽기 모듈이 실행되지 않았습니다'
