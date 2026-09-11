@@ -716,9 +716,7 @@ table.mlsign tr:last-child td{height:34px}
 .paysum .f em{font-style:normal;font-size:11.5px;color:#5b8f77}
 .mlfoot{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
 .mlfoot .mltbl{font-size:12.4px}
-/* 집행대장 화면 : 행 높이를 2/3로 (스크롤을 덜 내리게) */
-#mlLedger table.mltbl th,#mlLedger table.mltbl td{padding:3px 8px;line-height:1.35}
-#mlLedger td.nm{line-height:1.35}
+#mlLedger td.nm{line-height:1.8}
 .lname{cursor:pointer;border-radius:4px;padding:1px 3px}
 .lname:hover{background:#eef3fb;color:var(--acc)}
 .lname.ex{color:var(--mut);text-decoration:line-through;opacity:.65}

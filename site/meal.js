@@ -219,7 +219,7 @@ function draw(){
     if(x.on){cnt++; if(x.hol)hol++;} else if(x.ok){ if(x.auto) aut++; else off++; }}
   $('#mlStats').innerHTML='<div class="mlsum">'+
     '<b>'+S.names.length+'</b>명 · 지급 <b>'+cnt+'</b>식'+
-    (hol?' <span class="mlmut">(휴일 '+hol+')</span>':'')+
+    (hol?' <span class="mlmut">(휴일 '+hol+'식)</span>':'')+
     (aut?' · 자동 제외 <b>'+aut+'</b>식':'')+(off?' · 직접 해제 <b>'+off+'</b>식':'')+
     '</div>';
   const dbox=$('#mlDeptBox');
@@ -465,35 +465,41 @@ function badAmtMsg(r,i){
   return '⚠ '+esc(r.shop||'이 줄')+' <b>'+won(v)+'원</b>은 '+won(p)+'원 단위가 아닙니다 — '+pick.join(' 또는 ');
 }
 
-/* 지금 무엇이 잘못됐는지 — 고칠 곳이 한 군데면 그 금액을 딱 집어 준다 */
+/* 지금 무엇이 잘못됐는지 — 고칠 곳이 한 군데뿐일 때만 그 금액을 딱 집어 준다 */
 function payProblems(){
-  const c=S.cfg, p=c.price, tot=payTotal(), gap=tot-paySum(), L=[];
-  const bad=PAY.map((r,i)=>({r,i})).filter(x=>(+x.r.amt>0)&&((+x.r.amt)%p));
+  const c=S.cfg, p=c.price, tot=payTotal(), gap=tot-paySum();
+  const bad  =PAY.map((r,i)=>({r,i})).filter(x=>(+x.r.amt>0)&&((+x.r.amt)%p));
+  const blank=PAY.map((r,i)=>({r,i})).filter(x=>!(+x.r.amt>0));   // 아직 금액을 안 적은 줄
 
-  /* ① 단위가 틀린 줄이 하나뿐이고, 그 줄만 고치면 합계까지 맞는 경우 */
-  if(bad.length===1){
+  /* ① 단위가 틀린 줄이 하나뿐 + 나머지 줄은 금액이 다 적혀 있음 → 답이 하나로 정해진다
+        (빈 줄이 남아 있으면 그 줄 몫이 있으므로 「하나뿐」이라고 말하면 안 된다) */
+  if(bad.length===1 && !blank.length){
     const {r,i}=bad[0], need=needFor(i);
     if(need>0 && need%p===0)
       return ['⚠ '+rowName(r,i)+' <b>'+won(+r.amt)+'원</b>은 '+won(p)+'원 단위가 아닙니다. '+
               '합계까지 맞추려면 <b>'+won(need)+'원</b> 하나뿐입니다 — '+fixChip(i,need)];
   }
-  /* ② 단위는 다 맞는데 합계만 어긋난 경우 → 마지막 줄을 고치면 된다 */
+  /* ② 단위는 다 맞는데 합계만 어긋남 → 채울 줄 하나를 집어 준다 */
   if(!bad.length && gap!==0){
-    let i=-1; for(let j=PAY.length-1;j>=0;j--) if(+PAY[j].amt>0){ i=j; break; }
-    const need=(i>=0)?needFor(i):0;
+    let t=-1;
+    if(gap>0 && blank.length===1) t=blank[0].i;                   // 비어 있는 줄에 남은 금액을
+    else if(!blank.length) for(let j=PAY.length-1;j>=0;j--) if(+PAY[j].amt>0){ t=j; break; }
+    const need=(t>=0)?needFor(t):0;
     const head=gap<0
       ? '⚠ 합계가 결제할 금액 <b>'+won(tot)+'원</b>보다 <b>'+won(-gap)+'원</b> 많습니다'
       : '⚠ 합계가 결제할 금액 <b>'+won(tot)+'원</b>에 <b>'+won(gap)+'원</b> 모자랍니다';
-    if(i>=0 && need>0 && need%p===0)
-      return [head+' — 마지막 줄을 '+fixChip(i,need)+' 하면 맞습니다.'];
-    return [head+(gap>0?' — 업소를 추가해 남은 금액을 적으세요.':' — 금액을 줄여 주세요.')];
+    if(t>=0 && need>0 && need%p===0)
+      return [head+' — '+rowName(PAY[t],t)+'에 '+fixChip(t,need)+' 하면 맞습니다.'];
+    return [head+(gap>0?' — 남은 금액을 적거나 업소를 추가하세요.':' — 금액을 줄여 주세요.')];
   }
   /* ③ 그 밖에는 문제를 모두 나열한다 (총액이 먼저) */
+  const L=[];
   if(gap<0) L.push('⚠ 합계가 결제할 금액 <b>'+won(tot)+'원</b>보다 <b>'+won(-gap)+'원</b> 많습니다 — 금액을 줄여 주세요.');
-  else if(gap>0) L.push('⚠ 합계가 결제할 금액 <b>'+won(tot)+'원</b>에 <b>'+won(gap)+'원</b> 모자랍니다 — 금액을 늘리거나 업소를 추가하세요.');
+  else if(gap>0) L.push('⚠ 합계가 결제할 금액 <b>'+won(tot)+'원</b>에 <b>'+won(gap)+'원</b> 모자랍니다 — 남은 금액을 적거나 업소를 추가하세요.');
   bad.forEach(x=>L.push(badAmtMsg(x.r,x.i)));
   return L;
 }
+
 
 /* 배치 결과를 지운다 — 금액이나 업소명이 바뀌면 다시 눌러야 한다 */
 function unplace(){
