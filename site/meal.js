@@ -29,13 +29,17 @@ function useProfile(name,silent){
   if(name===PROF) return false;
   PROF=name;
   try{ localStorage.setItem(LSP,PROF); }catch(e){}
-  const el=$('#mlProf'); if(el&&el.value!==PROF) el.value=PROF;
   loadCfg();                                  // 그 부서가 쓰던 설정을 불러온다
-  if(!silent){ const n=$('#mlProfNote');
-    if(n) n.innerHTML=PROF?('<b>'+esc(PROF)+'</b> 설정을 불러왔습니다.'):'부서를 지정하면 부서별로 따로 저장됩니다.'; }
   return true;
 }
-const CFGF=['mlPrice','mlWs','mlWe','mlEarly','mlHoli','mlShops','mlShift','mlTrip','mlTeam'];
+const CFGF=['mlShift'];   // 사람이 적어야만 알 수 있는 값만 저장한다
+
+/* 우리 팀 명단 — 적는 게 아니라 확인서에서 스스로 배운다 */
+const LST='dsOn.meal.team.v1', LSN='dsOn.meal.notteam.v1';
+const teamGet=()=>{ try{ return JSON.parse(localStorage.getItem(K(LST))||'[]'); }catch(e){ return []; } };
+const teamSet=v=>{ try{ localStorage.setItem(K(LST),JSON.stringify([...new Set(v)])); }catch(e){} };
+const notGet =()=>{ try{ return JSON.parse(localStorage.getItem(K(LSN))||'[]'); }catch(e){ return []; } };
+const notSet =v=>{ try{ localStorage.setItem(K(LSN),JSON.stringify([...new Set(v)])); }catch(e){} };
 function saveCfg(){
   try{ const o={}; CFGF.forEach(k=>{const el=$('#'+k); if(el) o[k]=el.value;});
        localStorage.setItem(K(LS),JSON.stringify(o)); flash(); }catch(e){}
@@ -80,9 +84,8 @@ function histAdd(name,ym,n){
        localStorage.setItem(K(LSH),JSON.stringify(h)); }catch(e){}
 }
 function shopList(){
-  const h=histGet(), typed=S.cfg.shops||[];
-  const all=[...new Set([...Object.keys(h),...typed])];
-  return all.sort((a,b)=>((h[b]&&h[b].n)||0)-((h[a]&&h[a].n)||0)||a.localeCompare(b,'ko'));
+  const h=histGet();
+  return Object.keys(h).sort((a,b)=>(h[b].n||0)-(h[a].n||0)||a.localeCompare(b,'ko'));
 }
 function topShop(){ const l=shopList(); return l[0]||''; }
 
@@ -107,9 +110,8 @@ function cfgRead(){
   return { ym:$('#mlYm').value.trim(), price:+$('#mlPrice').value||0,
     ws:toMin($('#mlWs').value)||540, we:toMin($('#mlWe').value)||1080,
     early:$('#mlEarly').value==='1',
-    holi:new Set(list($('#mlHoli').value)), shops:list($('#mlShops').value),
-    shift:new Set(list($('#mlShift').value)), trip:parseTrip($('#mlTrip').value),
-    team:list($('#mlTeam').value) };
+    holi:new Set(list($('#mlHoli').value)),
+    shift:new Set(list($('#mlShift').value)), trip:parseTrip($('#mlTrip').value) };
 }
 
 /* 출장(여비 식비 수령) 내역 파싱 — 「8/12 조호현」 「조호현 2026-08-12, 8-13」 등 자유 형식 */
@@ -165,7 +167,7 @@ function run(text){
   if(!all.length){ alert('초과근무 확인서 형식을 읽지 못했습니다.\n[텍스트 붙여넣기]로 다시 시도해 보세요.'); return; }
   const ym0=($('#mlYm').value||'').trim()||all[0].date.slice(0,7);
   const d0=[...new Set(all.filter(r=>r.date.startsWith(ym0)).map(r=>r.dept))];
-  if(d0.length===1 && (!PROF || PROF.indexOf(d0[0])<0)) useProfile(d0[0]);  // 과가 다를 때만 전환(팀명 보존)
+  if(d0.length===1) useProfile(d0[0]);   // 확인서의 과로 저장 칸을 나눈다
   const c=cfgRead(); S.cfg=c;
   const ym=c.ym||ym0; $('#mlYm').value=ym; c.ym=ym;
   autoBase(ym); c.price=+$('#mlPrice').value||c.price; c.holi=new Set(
@@ -179,12 +181,13 @@ function apply(){
   const c=S.cfg;
   S.rows=S.dept?S.all.filter(r=>r.dept===S.dept):S.all.slice();
   const inDoc=[...new Set(S.rows.map(r=>r.name))];
-  if(c.team&&c.team.length){
-    const T=new Set(c.team);
-    S.rows=S.rows.filter(r=>T.has(r.name));
-    S.outside=inDoc.filter(n=>!T.has(n));
-    S.missing=c.team.filter(n=>inDoc.indexOf(n)<0);
-  } else { S.outside=[]; S.missing=[]; }
+  let team=teamGet(); const not=notGet();
+  S.firstTime=false;
+  if(!team.length){ team=inDoc.slice(); teamSet(team); S.firstTime=true; }   // 첫 사용 : 확인서 전원을 우리 팀으로
+  const T=new Set(team), N=new Set(not);
+  S.rows=S.rows.filter(r=>T.has(r.name));
+  S.newNames=inDoc.filter(n=>!T.has(n)&&!N.has(n));                          // 처음 보는 이름만 물어본다
+  S.team=team;
   S.names=[...new Set(S.rows.map(r=>r.name))];
   const [y,mm]=ym.split('-').map(Number), last=new Date(y,mm,0).getDate();
   S.days=[]; for(let d=1;d<=last;d++) S.days.push(ym+'-'+pad(d));
@@ -214,21 +217,18 @@ function draw(){
     st('대상 인원',S.names.length,'명')+st('자동 제외',aut,'식')+st('직접 제외',off,'식');
   const tb=$('#mlTeamBox');
   if(tb){
-    const c2=S.cfg, on=c2.team&&c2.team.length;
-    if(!on){
+    if(S.newNames&&S.newNames.length){
       tb.hidden=false; tb.className='mlteam warn';
-      tb.innerHTML='<span>⚠ <b>우리 팀 직원 명단이 비어 있어 확인서에 있는 '+
-        [...new Set(S.all.map(r=>r.name))].length+'명 전원</b>을 처리했습니다. '+
-        '과 단위로 출력된 확인서라면 다른 팀 직원이 섞일 수 있습니다 — 설정에 팀원 이름을 적어 주세요.</span>';
-    } else if(S.outside.length||S.missing.length){
-      tb.hidden=false; tb.className='mlteam warn';
-      let h='<span>우리 팀 <b>'+S.names.length+'명</b> 처리';
-      if(S.outside.length) h+=' · 명단에 없어 <b>제외한 '+S.outside.length+'명</b> : '+
-        S.outside.map(n=>'<button class="mladd" data-n="'+esc(n)+'">'+esc(n)+' ＋</button>').join(' ');
-      if(S.missing.length) h+=' · 명단에 있으나 <b>초과근무 없음</b> : '+esc(S.missing.join(', '));
-      tb.innerHTML=h+'</span>';
-    } else { tb.hidden=false; tb.className='mlteam ok';
-      tb.innerHTML='<span>✓ 우리 팀 <b>'+S.names.length+'명</b> — 명단과 확인서가 일치합니다.</span>'; }
+      tb.innerHTML='<span><b>처음 보는 이름이 '+S.newNames.length+'명</b> 있습니다 — 우리 팀인가요? '+
+        '(모르면 그냥 두셔도 계산에는 들어가지 않습니다)</span>'+
+        S.newNames.map(n=>'<span class="mlask"><b>'+esc(n)+'</b>'+
+          '<button class="mladd" data-n="'+esc(n)+'">우리 팀 ＋</button>'+
+          '<button class="mlno" data-n="'+esc(n)+'">아님 ✕</button></span>').join('');
+    } else if(S.firstTime){
+      tb.hidden=false; tb.className='mlteam ok';
+      tb.innerHTML='<span>✓ 확인서에 있는 <b>'+S.names.length+'명</b>을 우리 팀으로 기억했습니다. '+
+        '다음 달부터는 새 이름이 보일 때만 여쭤봅니다.</span>';
+    } else { tb.hidden=true; }
   }
   const dbox=$('#mlDeptBox');
   if(dbox){
@@ -257,7 +257,7 @@ function draw(){
     h+='<tr'+(H?' class="hol"':'')+'><td class="day">'+(+d.slice(8))+'일 ('+w+')'+(H?' 휴':'')+'</td>'+tds+'<td>'+(n||'')+'</td></tr>';
   }
   $('#mlGrid').innerHTML=h+'</tbody>';
-  drawChk(); drawShops(); drawLedger();
+  drawChk(); drawPay(); drawLedger(); drawTeamSet();
   $('#mlOut').hidden=false;
 }
 const st=(k,v,u)=>'<div class="mlstat"><div class="k">'+k+'</div><div class="v">'+v+'<small>'+u+'</small></div></div>';
@@ -281,6 +281,15 @@ function autoBase(ym){
     if(days>180) msg.push('<span class="mlred">규정 확인일로부터 '+days+'일 경과 — 현행 [별표2] 재확인 권장</span>');
   }
   if(note) note.innerHTML='⚙ '+msg.join(' · ');
+}
+
+function drawTeamSet(){
+  const box=$('#mlTeamSet'); if(!box) return;
+  const t=teamGet();
+  box.innerHTML = t.length
+    ? t.map(n=>'<span class="mlchip">'+esc(n)+'<button class="mldel" data-n="'+esc(n)+'" title="빼기">✕</button></span>').join('')
+      +'<span class="mlchipnote">확인서를 올리면 새 이름을 자동으로 여쭤봅니다.</span>'
+    : '<span class="mlchipnote">아직 없습니다 — 확인서를 한 번 올리면 그 명단으로 채워집니다.</span>';
 }
 
 /* ---------- 검산 ---------- */
@@ -308,6 +317,48 @@ function drawChk(){
 function commitHist(){
   const seen={}; ledgerRows().forEach(r=>{ if(r.shop) seen[r.shop]=(seen[r.shop]||0)+1; });
   for(const k in seen) histAdd(k,S.cfg.ym,seen[k]);
+}
+let PAY=[{shop:'',amt:null}];
+function totalCnt(){ let n=0; for(const k in S.cells) if(S.cells[k].on) n++; return n; }
+function drawPay(){
+  const c=S.cfg, cnt=totalCnt(), tot=cnt*c.price;
+  $('#mlPayBox').innerHTML=
+    '<div class="paysum"><span class="k">이번 달 결제할 금액</span>'+
+    '<span class="v">'+won(tot)+'<small>원</small></span>'+
+    '<span class="f">'+won(c.price)+'원 × '+cnt+'식</span></div>';
+  $('#mlShopList').innerHTML=shopList().map(x=>'<option value="'+esc(x)+'">').join('');
+  const multi=PAY.length>1;
+  let h='<thead><tr><th>결제한 가맹업소</th><th style="width:150px">금액(원)</th>'+
+        (multi?'<th style="width:70px">식수</th><th style="width:44px"></th>':'<th style="width:70px">식수</th>')+'</tr></thead><tbody>';
+  PAY.forEach((r,i)=>{
+    const amt=(i===0&&PAY.length===1)?tot:(r.amt==null?'':r.amt);
+    const n=Math.round((amt||0)/c.price);
+    h+='<tr><td class="l"><input class="payshop" list="mlShopList" data-i="'+i+'" value="'+esc(r.shop)+'" placeholder="결제 후 상호를 적으세요"></td>'+
+       '<td><input class="payamt r" type="number" step="1000" data-i="'+i+'" value="'+amt+'"'+(PAY.length===1?' readonly':'')+'></td>'+
+       '<td>'+(n?n+'식':'')+'</td>'+(multi?'<td><button class="paydel" data-i="'+i+'">✕</button></td>':'')+'</tr>';
+  });
+  if(multi){
+    const sum=PAY.reduce((a,r)=>a+(+r.amt||0),0), gap=tot-sum;
+    h+='<tr class="sum"><th class="l">합계</th><th class="r">'+won(sum)+'</th><th>'+Math.round(sum/c.price)+'식</th><th></th></tr>';
+    h+='<tr class="'+(gap?'bad':'')+'"><td colspan="4" class="l">'+
+       (gap===0?'✓ 총액과 일치합니다.':'⚠ 총액과 <b>'+won(Math.abs(gap))+'원</b> '+(gap>0?'모자랍니다':'초과합니다')+' — 맞추어 주세요.')+'</td></tr>';
+  }
+  $('#mlPayTbl').innerHTML=h+'</tbody>';
+  allocate();
+}
+/* 결제 내역을 일자에 순서대로 배분 — 어느 날을 어느 업소로 묶든 무방하므로 */
+function allocate(){
+  const c=S.cfg, ds=payDays(); S.shop={};
+  const bl=$('#mlBlank'); if(bl&&bl.checked) return;
+  const q=PAY.filter(r=>r.shop).map(r=>({shop:r.shop,
+    left:(PAY.length===1)?1e9:Math.round((+r.amt||0)/c.price)}));
+  if(!q.length) return;
+  let qi=0;
+  for(const d of ds){
+    const n=S.names.filter(x=>{const y=S.cells[d+'|'+x];return y&&y.on;}).length;
+    while(qi<q.length-1 && q[qi].left<n) qi++;
+    S.shop[d]=q[qi].shop; q[qi].left-=n;
+  }
 }
 const payDays=()=>S.days.filter(d=>S.names.some(n=>{const x=S.cells[d+'|'+n];return x&&x.on;}));
 function drawShops(){
@@ -493,15 +544,15 @@ function build(){
     </div>
     <div class="card mlcard"><h4>③ 검산 <small>확인서 수당시간 ↔ 출퇴근 시각 대조</small></h4>
       <div id="mlChk"></div></div>
-    <div class="card mlcard"><h4>④ 가맹업소 지정</h4>
-      <div class="mlbtns" style="margin:0 0 10px">
-        <button class="btn pri" id="mlTop">자주 쓰는 곳으로 전부 채우기</button>
-        <select id="mlBulk"></select>
-        <button class="btn" id="mlBulkAll">선택한 곳으로 전부</button>
-        <button class="btn" id="mlBulkEmpty">빈 날만</button></div>
-      <p class="mlnote">드롭다운은 <b>많이 쓰신 순서</b>로 정렬되며, 지정할 때마다 기억됩니다.
-        다음 달부터는 버튼 한 번이면 채워집니다.</p>
-      <div class="mlscroll"><table class="mltbl" id="mlShopTbl"></table></div></div>
+    <div class="card mlcard paycard"><h4>④ 결제하기 <small>이 금액만 맞추면 됩니다</small></h4>
+      <div class="mlpay" id="mlPayBox"></div>
+      <p class="mlnote">가맹업소는 <b>어디든 상관없습니다.</b> 1인 1식 단가 × 인원으로 계산되므로
+        총액만 맞추어 과카드로 결제하시면 됩니다. 결제한 곳을 아래에 적으면 집행대장의 「가맹업소명」 칸이 채워집니다.</p>
+      <table class="mltbl pay" id="mlPayTbl"></table>
+      <datalist id="mlShopList"></datalist>
+      <div class="mlbtns"><button class="btn" id="mlPayAdd">＋ 나눠 결제한 곳 추가</button>
+        <label class="mlchk"><input type="checkbox" id="mlBlank"> 가맹업소명을 <b>비워서 인쇄</b>하고 손으로 적기</label></div>
+    </div>
     <div class="card mlcard verify"><h4>⑤ 과거 실적과 대조 <small>검증용 — 이미 지급된 달로 확인해 보세요</small></h4>
       <p class="mlnote">기존 「특근매식비 입력」 시트 맨 아래 <b>「계」 행</b>을 긁어 붙여넣거나,
         <code>조호현 17, 김원규 18</code> 처럼 <b>이름과 식수</b>를 적어 주세요.</p>
@@ -520,27 +571,29 @@ function build(){
   <details class="card mlcard setcard" id="mlSet">
     <summary><b>⚙ 설정</b> <small>처음 한 번만 — 평소에는 열 일이 없습니다</small></summary>
     <div class="setbody">
-      <p class="mlkeep">💾 여기서 고친 값은 <b>이 브라우저에 저장</b>되어 다음에 열 때 그대로 나옵니다.
-        다만 <b>같은 자리·같은 브라우저</b>에서 쓰셔야 유지됩니다 — PC나 브라우저를 바꾸면 아래 「설정 내보내기」 파일로 옮기세요.
-        <span class="mlkeep2">2027년 본 구축에서 <b>계정 단위 서버 저장</b>으로 바뀌면 어느 자리에서 열어도 그대로 나옵니다.</span></p>
+      <p class="mlkeep">💾 <b>기억은 필수가 아니라 편의입니다.</b> 아무것도 기억하지 않아도 계산은 똑같이 됩니다 —
+        확인서·출장 내역 두 파일과 군 공통 기준파일만으로 결과가 나옵니다.
+        다만 매달 같은 답을 반복하지 않도록 <b>「우리 팀으로 인정한 사람」·「교대근무자」·「결제했던 상호」</b> 세 가지만 기억하며,
+        그것도 쓰다 보면 스스로 쌓입니다. 공용 PC라면 아래 <b>「이 브라우저 기억 지우기」</b>로 비우시면 됩니다.
+        <span class="mlkeep2">단가·공휴일·근무시간은 <b>군 공통 기준파일에서 매번 새로 적용</b>하므로 저장하지 않습니다 —
+        훈령이 개정됐는데 브라우저에 옛 단가가 남아 집행 오류가 나는 것을 막기 위해서입니다.
+        출장 내역도 달마다 다르므로 저장하지 않습니다.</span></p>
+      <p class="mlkeep b2">같은 자리·같은 브라우저에서 쓰셔야 유지됩니다. PC나 브라우저를 바꾸면 아래 「설정 내보내기」로 옮기세요.
+        <b>2027년 본 구축에서 계정 단위 서버 저장으로 바뀌면</b> 어느 자리에서 열어도 그대로 나옵니다.</p>
       <p class="mlbase" id="mlBaseNote">⚙ 기준파일을 불러오는 중…</p>
       <p class="mlsaved" id="mlSaved"></p>
 
-      <label class="mlfull"><span>우리 과·팀 <small class="mlmut">— 설정이 이 이름으로 따로 저장됩니다</small></span>
-        <input id="mlProf" placeholder="예) 정보통신과 정보통계팀"></label>
-      <p class="mlnote" id="mlProfNote">과 이름은 확인서에서 자동으로 채워집니다. 뒤에 <b>팀 이름</b>만 붙여 주세요.</p>
-
-      <label class="mlfull"><span>우리 팀 직원 명단 <small class="mlmut">— 확인서에 팀 구분이 없어 이름으로 가려냅니다</small></span>
-        <textarea id="mlTeam" placeholder="예) 김화연, 김원규, 배지현, 조호현, 김규태, 김경민"></textarea></label>
-      <p class="mlnote">비워 두면 확인서에 있는 <b>전원</b>을 처리합니다. 판정 결과 화면에서 이름을 눌러 바로 추가할 수도 있습니다.</p>
+      <div class="mlfull"><span class="mllab">우리 팀으로 기억하고 있는 사람 <small class="mlmut">— 적지 않으셔도 됩니다. 확인서에서 자동으로 익힙니다</small></span>
+        <div id="mlTeamSet" class="mlchips"></div></div>
 
       <label class="mlfull"><span>교대근무자 · 야간/휴일근무수당 지급대상자 <small class="mlmut">— 규정상 제외 대상</small></span>
         <textarea id="mlShift" placeholder="예) 홍길동, 김철수   (해당 없으면 비워 두세요)"></textarea></label>
 
-      <label class="mlfull"><span>가맹업소 목록 <small class="mlmut">— 쓰다 보면 알아서 쌓입니다</small></span>
-        <textarea id="mlShops">${SHOPS.join(', ')}</textarea></label>
-      <p class="mlnote">업소명만 사용합니다. <b>대표자 성명·계좌번호는 입력하지 마세요.</b></p>
+      <p class="mlnote">가맹업소는 따로 등록하지 않습니다 — 결제 후 적으신 상호가 다음부터 자동완성으로 나옵니다.
+        <b>업소명만 사용하며, 대표자 성명·계좌번호는 입력하지 마세요.</b></p>
 
+      <p class="mlauto">⚙ <b>아래는 군 공통 기준값</b>입니다. <code>data/meal_config.json</code>에서 자동으로 채워지며,
+        여기서 고치면 <b>이번 계산에만</b> 적용되고 저장되지 않습니다(새로 고치면 기준값으로 돌아갑니다).</p>
       <div class="mlgrid">
         <label><span>대상 연월</span><input id="mlYm" value="2026-08" placeholder="YYYY-MM"></label>
         <label><span>1인 1식 단가(원)</span><input id="mlPrice" type="number" value="9000" step="500"></label>
@@ -557,7 +610,8 @@ function build(){
 
       <div class="mlbtns"><button class="btn" id="mlExport">설정 내보내기</button>
         <button class="btn" id="mlImport">설정 가져오기</button>
-        <input type="file" id="mlImportFile" accept="application/json" hidden></div>
+        <input type="file" id="mlImportFile" accept="application/json" hidden>
+        <button class="btn danger" id="mlWipe">이 브라우저 기억 지우기</button></div>
       <p class="mlnote">PC를 바꾸거나 담당자가 바뀔 때 <b>파일 하나로 인수인계</b>할 수 있습니다.
         단가·공휴일은 <code>data/meal_config.json</code>(군 공통 기준)에서 자동 적용됩니다.</p>
     </div>
@@ -579,6 +633,7 @@ function build(){
   tf.onchange=()=>{if(tf.files[0])readTrip(tf.files[0]);};
   $('#mlTrip').addEventListener('input',()=>{ if(S.all&&S.all.length){ S.cfg=cfgRead(); apply(); } });
   $('#mlShift').addEventListener('input',()=>{ if(S.all&&S.all.length){ S.cfg=cfgRead(); apply(); } });
+  $('#mlSet').addEventListener('toggle',()=>drawTeamSet());
   $('#mlRun').onclick=()=>{
     const t=$('#mlPaneT').hidden?S.pdfText:$('#mlRaw').value;
     if(!String(t).trim()){alert('먼저 PDF를 불러오거나 텍스트를 붙여넣어 주세요.');return;}
@@ -590,10 +645,12 @@ function build(){
   });
   $('#mlDemo').onclick=()=>{$('#mlTabT').click();$('#mlRaw').value=DEMO;$('#mlYm').value='2026-08';run(DEMO);};
   document.addEventListener('click',e=>{
-    const b=e.target.closest('.mladd'); if(!b) return;
-    const el=$('#mlTeam'); if(!el) return;
-    el.value=(el.value.trim()?el.value.trim()+', ':'')+b.dataset.n;
-    saveCfg(); S.cfg=cfgRead(); apply();
+    const y=e.target.closest('.mladd'), n=e.target.closest('.mlno');
+    if(y){ teamSet([...teamGet(),y.dataset.n]); apply(); }
+    if(n){ notSet([...notGet(),n.dataset.n]); apply(); }
+    const d=e.target.closest('.mldel');
+    if(d){ teamSet(teamGet().filter(x=>x!==d.dataset.n)); notSet([...notGet(),d.dataset.n]);
+           if(S.all&&S.all.length) apply(); else drawTeamSet(); }
   });
   $('#mlGrid').addEventListener('click',e=>{
     const el=e.target.closest('.mlc[data-k]'); if(!el) return;
@@ -601,7 +658,19 @@ function build(){
   });
   $('#mlShopTbl').addEventListener('change',e=>{
     if(!e.target.classList.contains('mlsel')) return;
-    S.shop[e.target.dataset.d]=e.target.value; commitHist(); drawShops(); drawLedger();
+    S.shop[e.target.dataset.d]=e.target.value; drawLedger();
+  });
+  $('#mlBlank').addEventListener('change',()=>{ allocate(); drawLedger(); });
+  $('#mlPayAdd').onclick=()=>{ if(PAY.length===1) PAY[0].amt=null; PAY.push({shop:'',amt:null}); drawPay(); drawLedger(); };
+  $('#mlPayTbl').addEventListener('input',e=>{
+    const i=+e.target.dataset.i;
+    if(e.target.classList.contains('payshop')){ PAY[i].shop=e.target.value; allocate(); drawLedger();
+      if(e.target.value) histAdd(e.target.value,S.cfg.ym,1); }
+    if(e.target.classList.contains('payamt')){ PAY[i].amt=+e.target.value||0; drawPay(); drawLedger(); }
+  });
+  $('#mlPayTbl').addEventListener('click',e=>{
+    const b=e.target.closest('.paydel'); if(!b) return;
+    PAY.splice(+b.dataset.i,1); if(!PAY.length) PAY=[{shop:'',amt:null}]; drawPay(); drawLedger();
   });
   $('#mlTop').onclick=()=>{const v=topShop(); if(!v){alert('아직 사용 이력이 없습니다. 업소를 한 번 지정해 주세요.');return;}
     payDays().forEach(d=>S.shop[d]=v); commitHist(); drawShops(); drawLedger();};
@@ -626,11 +695,16 @@ function build(){
   };
   $('#mlVrun').onclick=verify;
   $('#mlVclr').onclick=()=>{$('#mlVin').value='';$('#mlVout').innerHTML='';};
+  $('#mlWipe').onclick=()=>{
+    if(!confirm('이 브라우저에 기억된 팀 명단·교대근무자·상호를 모두 지웁니다.\n계산 결과와 규정 기준값에는 영향이 없습니다.\n\n지울까요?')) return;
+    try{ [LS,LSH,LST,LSN].forEach(b=>localStorage.removeItem(K(b))); }catch(e){}
+    $('#mlShift').value=''; drawTeamSet();
+    if(S.all&&S.all.length){ S.cfg=cfgRead(); apply(); }
+    alert('지웠습니다. 다음 판정부터 처음 쓰는 것과 같아집니다.');
+  };
   $('#mlPrint').onclick=()=>window.print();
   try{ PROF=localStorage.getItem(LSP)||''; }catch(e){ PROF=''; }
-  const pf=$('#mlProf'); if(pf) pf.value=PROF;
-  $('#mlProf').addEventListener('change',e=>useProfile(e.target.value));
-  loadCfg();
+  loadCfg(); drawTeamSet();
   loadBase().then(()=>autoBase($('#mlYm').value.trim()||'2026-08'));
   $('#mlYm').addEventListener('change',()=>autoBase($('#mlYm').value.trim()));
   root.addEventListener('change',e=>{ if(CFGF.indexOf(e.target.id)>=0) saveCfg(); });
