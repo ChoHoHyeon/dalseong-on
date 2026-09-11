@@ -529,8 +529,7 @@ async function readPdf(f){
     run(txt);
     const n=(S.rows||[]).length, p2=(S.names||[]).length;
     if(n){
-      setDrop('mlDrop','done','<b>✅ '+esc(f.name)+'</b>'+
-        '<small>'+n+'건 · '+p2+'명</small><em>바꾸려면 클릭</em>');
+      setDrop('mlDrop','done','<b>✅ '+esc(f.name)+'</b>');
       const o=$('#mlOut'); if(o&&!o.hidden) setTimeout(()=>o.scrollIntoView({behavior:'smooth',block:'start'}),150);
     } else setDrop('mlDrop','err','<b>⚠ '+esc(f.name)+'</b><small>근무기록을 찾지 못했습니다</small>');
   }catch(e){
@@ -579,7 +578,7 @@ async function readTrip(f){
     $('#mlTrip').value=txt;
     const map=parseTrip(txt), n=Object.keys(map).length;
     let cnt=0; for(const k in map) cnt+=map[k].size;
-    setDrop('mlTripDrop','done','<b>✅ '+esc(f.name)+'</b><small>출장 '+n+'명 · '+cnt+'건</small><em>바꾸려면 클릭</em>');
+    setDrop('mlTripDrop','done','<b>✅ '+esc(f.name)+'</b>');
     w.innerHTML='<button class="mllink" id="mlTripClr">출장 내역 지우기</button>';
     if(S.all&&S.all.length){ S.cfg=cfgRead(); apply(); }
   }catch(e){

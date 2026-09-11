@@ -604,7 +604,7 @@ probeServer();
 $('#apiKey').oninput=e=>{ S.key=e.target.value.trim(); updPill(); }; $('#model').oninput=e=>{ S.model=e.target.value.trim()||'claude-sonnet-4-5'; updPill(); }; $('#offline').onchange=e=>{ S.offline=e.target.checked; updPill(); };
 
 /* ── 기타 ── */
-$('.brand').onclick=()=>{ setMode('home'); go('home'); }; $('.top-c.slogan').onclick=()=>{ setMode('home'); go('home'); };
+$('.brand').onclick=()=>{ setMode('home'); go('home'); };
 $('#btnNoti').onclick=()=>{ $('#notiN').hidden=true; S.mode='home'; document.body.dataset.mode='home'; go('news'); }; $('#goModel').onclick=()=>{ $('#mSet').hidden=true; setMode('admin'); go('model'); };
 $$('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modal').hidden=true); $$('.modal').forEach(m=>m.onclick=e=>{ if(e.target===m&&m.id!=='mIntro') m.hidden=true; });
 $('#btnTheme').onclick=()=>{ const l=document.body.dataset.theme!=='light'; document.body.dataset.theme=l?'light':'dark'; $('#btnTheme').textContent=l?'🌙':'☀️'; try{localStorage.setItem('dOnTheme',l?'light':'dark');}catch(e){} };
