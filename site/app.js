@@ -166,16 +166,16 @@ async function init(){
    달성On 화면 : 달성On 항목 + 새 대화 + 최근 대화만 (고정)                                                       */
 const HOME_MENU=[
   // ── 핵심
-  {mode:'staff',view:'on',     icon:'✦',  label:'달성On\n사용하기', cls:'on-item'},
+  {mode:'staff',view:'on',     icon:'✦',  label:'달성On\n사용하기', cls:'on-item', ready:1},
   // ── 문서 만들기
   {mode:'staff',view:'draft',  icon:'📝', label:'공문 초안\n작성하기', cls:'sep'},
   {mode:'staff',view:'report', icon:'📄', label:'보고서\n작성하기'},
   {mode:'staff',view:'rule',   icon:'⚖️', label:'조례·지침\n초안 만들기'},
   {mode:'staff',view:'minutes',icon:'🎙', label:'회의록\n정리하기'},
-  {mode:'staff',view:'meal',   icon:'🍚', label:'급량비\n계산하기'},
+  {mode:'staff',view:'meal',   icon:'🍚', label:'급량비\n계산하기', ready:1},
   {mode:'staff',view:'trip',   icon:'🚗', label:'출장비\n계산하기'},
   // ── 알리기 · 홍보물 만들기
-  {mode:'staff',view:'press',  icon:'📰', label:'보도자료\n작성하기', cls:'sep'},
+  {mode:'staff',view:'press',  icon:'📰', label:'보도자료\n작성하기', cls:'sep', ready:1},
   {mode:'staff',view:'banner', icon:'🎏', label:'홍보 현수막\n제작하기'},
   {mode:'staff',view:'info',   icon:'📈', label:'인포그래픽\n제작하기'},
   {mode:'staff',view:'card',   icon:'📱', label:'카드뉴스\n제작하기'},
@@ -198,13 +198,13 @@ function loadRecent(){ try{ return JSON.parse(localStorage.getItem('dOnRecent')|
 function pushRecent(q){ const r=loadRecent().filter(x=>x!==q); r.unshift(q); localStorage.setItem('dOnRecent',JSON.stringify(r.slice(0,12))); }
 function renderNav(){
   const inOn=S.mode==='staff'&&ON_VIEWS.includes(S.view);
-  const item=n=>{ const on=n.mode==='admin'?S.mode==='admin':(S.mode===n.mode&&S.view===n.view); return `<li data-mode="${n.mode}" data-view="${n.view}" class="${n.cls||''} ${on?'on':''}"><i>${n.icon}</i><b>${n.label.replace(/\n/g,'<br>')}</b></li>`; };
+  const item=n=>{ const on=n.mode==='admin'?S.mode==='admin':(S.mode===n.mode&&S.view===n.view); return `<li data-mode="${n.mode}" data-view="${n.view}" class="${n.cls||''} ${n.ready?'rdy':''} ${on?'on':''}"><i>${n.icon}</i><b>${n.label.replace(/\n/g,'<br>')}</b>${n.ready?'<em class="dot" title="지금 쓸 수 있습니다"></em>':''}</li>`; };
   let html='';
   if(inOn){
     const recent=loadRecent();
     html=item(HOME_MENU.find(n=>n.view==='on'))+`<li class="newchat" id="navNew">＋ 새 대화</li>`
       +(recent.length?`<li class="rh"><span>최근 대화</span><button class="rclear" id="navClear" title="전체 삭제">전체 삭제</button></li>`+recent.map(q=>`<li class="rc" data-q="${q.replace(/"/g,'&quot;')}" title="${q.replace(/"/g,'&quot;')}"><span>${q}</span><button class="rx" data-del="${q.replace(/"/g,'&quot;')}" title="삭제">✕</button></li>`).join(''):'');
-  } else html=HOME_MENU.map(item).join('');
+  } else html='<li class="legend"><em class="dot"></em> <b>지금 쓸 수 있는</b> 기능</li>'+HOME_MENU.map(item).join('');
   html+=MINOR.map(item).join('');
   $('#nav').innerHTML=html;
   $$('#nav li[data-view]').forEach(li=>li.onclick=()=>{ if(S.mode!==li.dataset.mode){ S.mode=li.dataset.mode; document.body.dataset.mode=S.mode; } go(li.dataset.view); });
@@ -275,7 +275,7 @@ function renderUsage(){
 const VIDEOS=[
   {title:'달성On 소개',        sub:'무엇을 해 주는지 29초로',   len:'29초',
    file:'assets/intro.mp4',  poster:'assets/intro_poster.jpg'},
-  {title:'급량비 계산하기',     sub:'확인서 PDF 하나로 집행대장까지', len:'37초',
+  {title:'급량비 계산하기',     sub:'확인서 PDF 하나로 집행대장까지', len:'1분 27초',
    file:'assets/meal_guide.mp4', poster:'assets/meal_guide_poster.jpg'}
 ];
 const VIDEO_FILE='assets/intro.mp4';  // (옛 설정 — VIDEOS 를 씁니다)

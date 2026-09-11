@@ -86,7 +86,12 @@ function shopList(){
 }
 
 /* ---------- 파싱 ---------- */
-function norm(s){ for(let i=0;i<6;i++) s=s.replace(/(?<=[0-9:\-])[ ]+(?=[0-9:\-])/g,''); return s; }
+function norm(s){
+  /* PDF 글꼴에 따라 붙임표·쌍점이 다른 글자로 나온다 — 먼저 보통 글자로 바꾼다 */
+  s=s.replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g,'-').replace(/[\uFF1A\u02D0]/g,':');
+  for(let i=0;i<6;i++) s=s.replace(/(?<=[0-9:\-])[ ]+(?=[0-9:\-])/g,'');
+  return s;
+}
 /* 직급 칸은 두 줄로 쪼개지거나 괄호가 섞여 나오므로, 성명은 「출퇴근 시각 바로 앞의 한글」로 잡는다 */
 const ROW=/(\d+?)(20\d\d-\d\d-\d\d)\s+(\S+)\s+([^\d]*?)([가-힣]{2,4})\s+(\d\d:\d\d)(\d\d:\d\d)(\d{1,3})(?!\d)/;
 function parse(text){
@@ -1000,7 +1005,7 @@ function clearMeal(){
 
 /* 드롭존 상태 : 놓는 순간부터 끝날 때까지 큰 영역이 직접 말해 준다 */
 const DROP_IDLE={
-  mlDrop:'<b>초과근무 확인서 PDF</b><small>새올에서 출력한 파일을 끌어다 놓거나 클릭 · 올리면 <b>바로 판정</b></small>',
+  mlDrop:'<b>초과근무 확인서 PDF</b><small>새올에서 출력한 파일을 끌어다 놓거나 클릭</small>',
   mlTripDrop:'<b>출장 내역 PDF</b><small>여비로 식비를 받은 날은 <b>자동 제외</b>됩니다</small>'
 };
 function setDrop(id,state,html){
@@ -1051,9 +1056,11 @@ function build(){
     <h4>① 확인서 올리기 <small>PDF 한 개면 끝납니다</small></h4>
     <div class="mlup solo">
       <div class="mldrop" id="mlDrop"><b>초과근무 확인서 PDF</b>
-        <small>새올에서 출력한 파일을 끌어다 놓거나 클릭 · 올리면 <b>바로 판정</b></small></div>
+        <small>새올에서 출력한 파일을 끌어다 놓거나 클릭</small></div>
       <input type="file" id="mlFile" accept="application/pdf" hidden>
       <p class="mlnote" id="mlPdfMsg">이 파일 하나면 판정·인원·명단이 모두 정해집니다.</p>
+      <p class="mldemo"><a href="assets/demo_overtime.pdf" download="시연_초과근무확인서.pdf">⬇ 시연용 예시 파일 내려받기</a>
+        <small>2026년 8월 · 4명 · 이름은 <b>홍길동·김철수</b> 등 가명입니다</small></p>
     </div>
     <button class="mlmore" id="mlTripToggle">＋ 출장 다녀온 사람이 있나요?</button>
     <div id="mlTripWrap" hidden>
