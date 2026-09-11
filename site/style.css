@@ -646,9 +646,13 @@ table.pay input{width:100%;padding:6px 9px;border:1px solid var(--line);border-r
   font:inherit;font-size:12.8px;background:var(--panel);color:var(--tx)}
 table.pay input.r{text-align:right;font-variant-numeric:tabular-nums}
 table.pay input[readonly]{background:var(--bg);color:var(--mut)}
-.paydel{border:1px solid var(--line);background:var(--bg);color:var(--mut);border-radius:6px;
-  padding:4px 8px;font:inherit;font-size:11px;cursor:pointer}
+.paydel,.payadd{width:26px;height:26px;line-height:1;padding:0;border-radius:6px;
+  border:1px solid var(--line);background:var(--bg);color:var(--mut);
+  font-size:14px;font-weight:700;cursor:pointer;transition:.15s}
 .paydel:hover{background:#b4342a;color:#fff;border-color:#b4342a}
+.payadd{color:var(--acc);border-color:rgba(47,111,237,.35)}
+.payadd:hover{background:var(--acc);color:#fff;border-color:var(--acc)}
+.payadd:disabled{opacity:.35;cursor:not-allowed;background:var(--bg);color:var(--mut);border-color:var(--line)}
 .mlchk{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--mut);cursor:pointer;margin:0}
 .mlchk input{width:auto;margin:0}
 .btn.danger{border-color:#e6c3c0;color:#b4342a}
@@ -831,6 +835,21 @@ table.mlsign tr:last-child td{height:34px}
 .fixamt:hover{background:#b4342a;border-color:#b4342a;color:#fff}
 .paymsg em{font-style:normal;font-size:11.5px;opacity:.7;margin-right:2px}
 /* 가맹업소별 정산 : 화면에서는 아래 입력표와 겹치므로 인쇄물에만 */
+/* 금액 칸 위에 뜨는 추천 금액 */
+.mltbl.pay td.amtcell{position:relative;overflow:visible}
+.mltbl.pay{overflow:visible}
+.amtpop{position:absolute;top:calc(100% + 5px);right:0;z-index:9;white-space:nowrap;
+  display:flex;align-items:center;gap:5px;padding:6px 8px;border-radius:8px;
+  border:1px solid var(--line);background:var(--panel);
+  box-shadow:0 6px 18px rgba(16,32,64,.16)}
+.amtpop .apk{font-size:11px;color:var(--mut);margin-right:2px}
+.apv{padding:4px 9px;border-radius:6px;border:1px solid var(--line);background:var(--bg);
+  font:inherit;font-size:12px;color:var(--tx);cursor:pointer;transition:.12s}
+.apv:hover{background:var(--acc);border-color:var(--acc);color:#fff}
+.apv.fit{border-color:#7fcbaa;background:#e8f7f0;color:#0b7a53;font-weight:700}
+.apv.fit:hover{background:#0b7a53;border-color:#0b7a53;color:#fff}
+@media print{ .amtpop{display:none} }
+
 .shopsum{display:none}
 @media print{ .shopsum{display:block;margin-top:10px} }
 .mlfoot .mlbtns .btn:disabled{opacity:.45;cursor:not-allowed}
