@@ -685,3 +685,39 @@ table.mlgrid th.nm .nmx{font-size:10px;font-weight:400;opacity:.85}
 .mlmore:hover{border-color:var(--accent);color:var(--accent)}
 #mlTripWrap{margin-top:10px}
 .mlbtns.big .btn{padding:11px 20px;font-size:13.5px}
+.mlhead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:8px;flex-wrap:wrap}
+.mlsub2{font-size:13px;color:var(--fg)}
+table.mlsign{border-collapse:collapse;font-size:11.5px;margin-left:auto}
+table.mlsign th,table.mlsign td{border:1px solid var(--fg);padding:3px 10px;text-align:center;min-width:56px}
+table.mlsign th{width:22px;min-width:22px;background:var(--bg);line-height:1.15}
+table.mlsign tr:last-child td{height:34px}
+
+@media print{
+  @page{size:A4 portrait;margin:12mm 11mm}
+  html,body{background:#fff!important}
+  body>*{visibility:hidden}
+  .view[data-view="meal"] #mlLedger,.view[data-view="meal"] #mlLedger *{visibility:visible}
+  .view[data-view="meal"] #mlLedger{position:absolute;left:0;top:0;width:100%}
+  /* A4 한 장에 담는다 : 31행까지 여유 */
+  #mlLedger table{page-break-inside:auto;font-size:9.6pt;width:100%}
+  #mlLedger th,#mlLedger td{padding:2.6px 5px!important;line-height:1.25;
+    border-color:#000!important;color:#000!important;background:#fff!important}
+  #mlLedger thead{display:table-header-group}
+  #mlLedger tr{page-break-inside:avoid}
+  #mlLedger .mltitle{font-size:15pt;margin:0 0 8px;letter-spacing:4px}
+  #mlLedger .mlhead{margin-bottom:6px}
+  #mlLedger .mlsub2{font-size:9.5pt}
+  #mlLedger table.mlsign{font-size:8.5pt}
+  #mlLedger table.mlsign th,#mlLedger table.mlsign td{padding:2px 8px!important;min-width:48px}
+  #mlLedger table.mlsign tr:last-child td{height:26px}
+  #mlLedger .mlh5{font-size:9.5pt;margin:10px 0 4px}
+  #mlLedger .mlnote{font-size:8pt;color:#444!important;margin-top:6px}
+}
+.mlsum{font-size:13.5px;padding:11px 14px;border-radius:8px;background:var(--bg);
+  border:1px solid var(--line);margin-bottom:10px}
+.mlsum b{font-size:16px;font-variant-numeric:tabular-nums}
+.mlsum2{font-size:12.8px;color:var(--muted);margin:0 0 14px;padding-left:2px}
+.mlsum2 b{color:var(--fg);font-size:14px;font-variant-numeric:tabular-nums}
+.paysum .f em{font-style:normal;font-size:11.5px;color:#5b8f77}
+.mlfoot{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.mlfoot .mltbl{font-size:12.4px}
