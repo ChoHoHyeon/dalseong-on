@@ -646,13 +646,30 @@ table.pay input{width:100%;padding:6px 9px;border:1px solid var(--line);border-r
   font:inherit;font-size:12.8px;background:var(--panel);color:var(--tx)}
 table.pay input.r{text-align:right;font-variant-numeric:tabular-nums}
 table.pay input[readonly]{background:var(--bg);color:var(--mut)}
-.paydel,.payadd{width:26px;height:26px;line-height:1;padding:0;border-radius:6px;
+.paydel,.payadd{min-width:46px;height:27px;line-height:1;padding:0 9px;border-radius:6px;
   border:1px solid var(--line);background:var(--bg);color:var(--mut);
-  font-size:14px;font-weight:700;cursor:pointer;transition:.15s}
+  font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;transition:.15s}
 .paydel:hover{background:#b4342a;color:#fff;border-color:#b4342a}
 .payadd{color:var(--acc);border-color:rgba(47,111,237,.35)}
 .payadd:hover{background:var(--acc);color:#fff;border-color:var(--acc)}
 .payadd:disabled{opacity:.35;cursor:not-allowed;background:var(--bg);color:var(--mut);border-color:var(--line)}
+/* 금액 칸 : 좌우 9,000원 증감 단추 */
+.amtwrap{display:flex;align-items:center;gap:4px}
+.amtwrap .payamt{flex:1;min-width:0;text-align:right}
+.amtstep{width:26px;height:28px;flex:none;line-height:1;padding:0;border-radius:6px;
+  border:1px solid var(--line);background:var(--bg);color:var(--acc);
+  font-size:13px;font-weight:700;cursor:pointer;transition:.12s}
+.amtstep:hover{background:var(--acc);color:#fff;border-color:var(--acc)}
+.mltbl.pay input[type=number]{-moz-appearance:textfield;appearance:textfield}
+.mltbl.pay input[type=number]::-webkit-outer-spin-button,
+.mltbl.pay input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.payshop{max-width:280px}
+/* 차액 줄 */
+.mltbl.pay tr.gapr th{background:var(--panel2);font-size:12.4px}
+.mltbl.pay tr.gapr em{font-style:normal;font-size:11px;opacity:.75;margin-left:3px}
+.mltbl.pay tr.gapr.zero th.r{color:#0b7a53}
+.mltbl.pay tr.gapr.less th.r{color:#17418f}
+.mltbl.pay tr.gapr.over th.r{color:#b4342a}
 .mlchk{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--mut);cursor:pointer;margin:0}
 .mlchk input{width:auto;margin:0}
 .btn.danger{border-color:#e6c3c0;color:#b4342a}

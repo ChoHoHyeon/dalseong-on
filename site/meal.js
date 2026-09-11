@@ -386,20 +386,25 @@ function drawPay(){
     '<em>가맹업소는 어디든 무방합니다 — 이 금액만 맞추면 됩니다</em></span></div>';
   $('#mlShopList').innerHTML=shopList().map(x=>'<option value="'+esc(x)+'">').join('');
 
-  let h='<thead><tr><th class="l">결제할 가맹업소</th><th style="width:140px">금액(원)</th>'+
-        '<th style="width:58px">식수</th><th style="width:40px"></th></tr></thead><tbody>';
+  let h='<thead><tr><th class="l">결제할 가맹업소</th><th style="width:190px">금액(원)</th>'+
+        '<th style="width:56px">식수</th><th style="width:74px"></th></tr></thead><tbody>';
   PAY.forEach((r,i)=>{
     h+='<tr data-r="'+i+'">'+
        '<td class="l"><input class="payshop" list="mlShopList" data-i="'+i+'" value="'+esc(r.shop)+'"'+
-         ' placeholder="식당 이름을 적고 엔터"></td>'+
-       '<td class="amtcell"><input class="payamt r" type="number" step="'+c.price+'" min="0" data-i="'+i+'"'+
-         ' value="'+(r.amt==null?'':r.amt)+'" placeholder="0"></td>'+
+         ' placeholder="식당 이름"></td>'+
+       '<td class="amtcell"><div class="amtwrap">'+
+         '<button class="amtstep dn" data-i="'+i+'" title="'+won(c.price)+'원 내리기">−</button>'+
+         '<input class="payamt r" type="number" step="'+c.price+'" min="0" data-i="'+i+'"'+
+           ' value="'+(r.amt==null?'':r.amt)+'" placeholder="0">'+
+         '<button class="amtstep up" data-i="'+i+'" title="'+won(c.price)+'원 올리기">＋</button>'+
+       '</div></td>'+
        '<td class="c" data-n="'+i+'"></td>'+
        '<td>'+(i===0
-           ? '<button class="payadd" title="업소 추가">＋</button>'
-           : '<button class="paydel" data-i="'+i+'" title="이 줄 지우기">−</button>')+'</td></tr>';
+           ? '<button class="payadd" title="줄 추가">추가</button>'
+           : '<button class="paydel" data-i="'+i+'" title="이 줄 지우기">삭제</button>')+'</td></tr>';
   });
-  h+='<tr class="sum"><th class="l">합계</th><th class="r" id="mlPaySum"></th>'+
+  h+='<tr class="gapr" id="mlPayGap"><th class="l">차액</th><th class="r" id="mlPayGapV"></th><th colspan="2"></th></tr>'+
+     '<tr class="sum"><th class="l">합계</th><th class="r" id="mlPaySum"></th>'+
      '<th class="c" id="mlPaySumN"></th><th></th></tr>';
   $('#mlPayTbl').innerHTML=h+'</tbody>';
   hideAmtBar(); drawPayStatus();
@@ -417,6 +422,14 @@ function drawPayStatus(keep){
   const sv=$('#mlPaySum'), sn=$('#mlPaySumN');
   if(sv) sv.textContent=won(sum);
   if(sn) sn.textContent=(sum%c.price?'':Math.round(sum/c.price)+'식');
+
+  const gap=payTotal()-sum, gr=$('#mlPayGap'), gv=$('#mlPayGapV');
+  if(gr&&gv){
+    gr.className = 'gapr '+(gap===0?'zero':(gap>0?'less':'over'));
+    gv.innerHTML = gap===0 ? '0 <em>맞음</em>'
+                 : gap>0   ? '+'+won(gap)+' <em>모자람</em>'
+                           : '−'+won(-gap)+' <em>초과</em>';
+  }
 
   const ab=tbl.querySelector('.payadd');
   if(ab){ ab.disabled = PAY.length>=MAXPAY;
@@ -1027,6 +1040,18 @@ function build(){
     unplace(); drawPayStatus(); showAmtBar(i);
   });
   $('#mlPayTbl').addEventListener('click',e=>{
+    const st=e.target.closest('.amtstep');
+    if(st){
+      const i=+st.dataset.i, p=S.cfg.price; if(!PAY[i]) return;
+      const v=+PAY[i].amt||0;
+      let nv = st.classList.contains('up') ? Math.floor(v/p)*p+p : Math.ceil(v/p)*p-p;
+      if(nv<0) nv=0;
+      PAY[i].amt = nv||null;
+      const el=$('#mlPayTbl').querySelector('.payamt[data-i="'+i+'"]');
+      if(el) el.value = PAY[i].amt==null?'':PAY[i].amt;
+      unplace(); drawPayStatus(); showAmtBar(i);
+      return;
+    }
     if(e.target.closest('.payadd')){ addPay(); return; }
     const b=e.target.closest('.paydel'); if(!b) return;
     PAY.splice(+b.dataset.i,1); if(!PAY.length) PAY=[{shop:'',amt:null}];
