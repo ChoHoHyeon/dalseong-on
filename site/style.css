@@ -825,4 +825,6 @@ table.mlsign tr:last-child td{height:34px}
 .paymsg.hint{color:var(--mut)}
 .paymsg.ok{color:#0b7a53}
 .paymsg.bad{color:#b4342a}
+.mlfoot .mlbtns .btn:disabled{opacity:.45;cursor:not-allowed}
+.mlfoot .mlbtns .btn.pri{padding:9px 18px}
 @media print{ .mlfoot{display:none} }
