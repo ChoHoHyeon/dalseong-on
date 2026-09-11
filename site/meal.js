@@ -377,17 +377,6 @@ function totalCnt(){ let n=0; for(const k in S.cells) if(S.cells[k].on) n++; ret
 function payTotal(){ return totalCnt()*(S.cfg.price||0); }
 function paySum(){ return PAY.reduce((a,r)=>a+(+r.amt||0),0); }
 function payMsg(cls,html){ const m=$('#mlPayMsg'); if(m){ m.className='paymsg '+cls; m.innerHTML=html; } }
-/* 9,000원 단위가 아닌 금액 → 바로 위·아래의 가능한 금액을 추천한다 */
-function badAmtMsg(r){
-  const p=S.cfg.price, v=+r.amt;
-  const up=Math.ceil(v/p)*p, dn=Math.floor(v/p)*p;
-  const pick=[];
-  if(up>0) pick.push('<b>'+won(up)+'원</b>(+'+won(up-v)+')');
-  if(dn>0) pick.push('<b>'+won(dn)+'원</b>(−'+won(v-dn)+')');
-  return '⚠ '+esc(r.shop)+' <b>'+won(v)+'원</b>은 '+won(p)+'원 단위가 아닙니다 — '+
-         pick.join(' 또는 ')+'으로 고쳐 주세요.';
-}
-
 function drawPay(){
   const c=S.cfg, cnt=totalCnt(), tot=cnt*c.price;
   $('#mlPayBox').innerHTML=
@@ -416,7 +405,7 @@ function drawPay(){
 
 /* 입력칸은 건드리지 않고 식수·합계·안내만 새로 쓴다 (타이핑 중 커서가 튀지 않도록) */
 function drawPayStatus(keep){
-  const c=S.cfg, tot=payTotal(), sum=paySum(), gap=tot-sum, tbl=$('#mlPayTbl');
+  const c=S.cfg, sum=paySum(), tbl=$('#mlPayTbl');
   PAY.forEach((r,i)=>{
     const td=tbl.querySelector('[data-n="'+i+'"]');
     const n=(+r.amt||0)/c.price, bad=(+r.amt>0)&&(n!==Math.floor(n));
@@ -432,13 +421,61 @@ function drawPayStatus(keep){
     ab.title = PAY.length>=MAXPAY ? '가맹업소는 '+MAXPAY+'곳까지 적을 수 있습니다' : ''; }
 
   if(keep) return;                                  // 배치 결과 문구는 덮어쓰지 않는다
-  const badR=PAY.find(r=>(+r.amt>0)&&((+r.amt)%c.price));
-  if(badR){ payMsg('bad',badAmtMsg(badR)); return; }
-  if(!PAY.some(r=>(r.shop||'').trim()&&+r.amt>0))
+  if(!PAY.some(r=>(r.shop||'').trim()&&+r.amt>0)){
     payMsg('hint','식당 이름을 적고 <b>엔터</b>를 치면 금액이 자동으로 들어갑니다. 다 적었으면 <b>배치하기</b>를 누르세요.');
-  else if(gap>0) payMsg('hint','<b>'+won(gap)+'원</b>이 남았습니다 — 업소를 더 추가하거나 금액을 늘리세요.');
-  else if(gap<0) payMsg('bad','⚠ 총액보다 <b>'+won(-gap)+'원</b> 많습니다 — 금액을 줄여 주세요.');
+    return;
+  }
+  const L=payProblems();
+  if(L.length) payMsg('bad',L.join('<br>'));
   else payMsg('hint','금액이 맞습니다 — <b>배치하기</b>를 누르세요.');
+}
+
+/* 눌러서 바로 넣는 금액 단추 */
+function fixChip(i,v){ return '<button class="fixamt" data-i="'+i+'" data-v="'+v+'">'+won(v)+'원으로 맞추기</button>'; }
+
+/* 이 줄을 얼마로 적어야 합계가 딱 맞는가 (다른 줄은 그대로 둔 채) */
+function needFor(i){
+  const tot=payTotal();
+  return tot - PAY.reduce((a,r,j)=>a+(j===i?0:(+r.amt||0)),0);
+}
+
+/* 9,000원 단위가 아닌 금액 → 바로 위·아래의 가능한 금액을 추천한다 */
+function badAmtMsg(r,i){
+  const p=S.cfg.price, v=+r.amt;
+  const up=Math.ceil(v/p)*p, dn=Math.floor(v/p)*p, pick=[];
+  if(up>0) pick.push(fixChip(i,up)+'<em>+'+won(up-v)+'</em>');
+  if(dn>0) pick.push(fixChip(i,dn)+'<em>−'+won(v-dn)+'</em>');
+  return '⚠ '+esc(r.shop||'이 줄')+' <b>'+won(v)+'원</b>은 '+won(p)+'원 단위가 아닙니다 — '+pick.join(' 또는 ');
+}
+
+/* 지금 무엇이 잘못됐는지 — 고칠 곳이 한 군데면 그 금액을 딱 집어 준다 */
+function payProblems(){
+  const c=S.cfg, p=c.price, tot=payTotal(), gap=tot-paySum(), L=[];
+  const bad=PAY.map((r,i)=>({r,i})).filter(x=>(+x.r.amt>0)&&((+x.r.amt)%p));
+
+  /* ① 단위가 틀린 줄이 하나뿐이고, 그 줄만 고치면 합계까지 맞는 경우 */
+  if(bad.length===1){
+    const {r,i}=bad[0], need=needFor(i);
+    if(need>0 && need%p===0)
+      return ['⚠ '+esc(r.shop||'이 줄')+' <b>'+won(+r.amt)+'원</b>은 '+won(p)+'원 단위가 아닙니다. '+
+              '합계까지 맞추려면 <b>'+won(need)+'원</b> 하나뿐입니다 — '+fixChip(i,need)];
+  }
+  /* ② 단위는 다 맞는데 합계만 어긋난 경우 → 마지막 줄을 고치면 된다 */
+  if(!bad.length && gap!==0){
+    let i=-1; for(let j=PAY.length-1;j>=0;j--) if(+PAY[j].amt>0){ i=j; break; }
+    const need=(i>=0)?needFor(i):0;
+    const head=gap<0
+      ? '⚠ 합계가 결제할 금액 <b>'+won(tot)+'원</b>보다 <b>'+won(-gap)+'원</b> 많습니다'
+      : '⚠ 합계가 결제할 금액 <b>'+won(tot)+'원</b>에 <b>'+won(gap)+'원</b> 모자랍니다';
+    if(i>=0 && need>0 && need%p===0)
+      return [head+' — 마지막 줄을 '+fixChip(i,need)+' 하면 맞습니다.'];
+    return [head+(gap>0?' — 업소를 추가해 남은 금액을 적으세요.':' — 금액을 줄여 주세요.')];
+  }
+  /* ③ 그 밖에는 문제를 모두 나열한다 (총액이 먼저) */
+  if(gap<0) L.push('⚠ 합계가 결제할 금액 <b>'+won(tot)+'원</b>보다 <b>'+won(-gap)+'원</b> 많습니다 — 금액을 줄여 주세요.');
+  else if(gap>0) L.push('⚠ 합계가 결제할 금액 <b>'+won(tot)+'원</b>에 <b>'+won(gap)+'원</b> 모자랍니다 — 금액을 늘리거나 업소를 추가하세요.');
+  bad.forEach(x=>L.push(badAmtMsg(x.r,x.i)));
+  return L;
 }
 
 /* 업소명을 확정하면(엔터·탭·칸 밖 클릭) 빈 금액에 남은 금액을 넣어 준다 */
@@ -503,12 +540,8 @@ function placeShops(){
   const rows=PAY.filter(r=>(r.shop||'').trim() && +r.amt>0);
   if(!rows.length){ payMsg('bad','⚠ 식당 이름과 금액을 먼저 적어 주세요.'); return; }
 
-  const bad=rows.find(r=>(+r.amt)%price);
-  if(bad){ payMsg('bad',badAmtMsg(bad)); return; }
-
-  const tot=payTotal(), sum=rows.reduce((a,r)=>a+(+r.amt||0),0), gap=tot-sum;
-  if(gap>0){ payMsg('bad','⚠ 적은 금액이 <b>'+won(gap)+'원</b> 모자랍니다 — 총액 '+won(tot)+'원에 맞춰 주세요.'); return; }
-  if(gap<0){ payMsg('bad','⚠ 적은 금액이 총액보다 <b>'+won(-gap)+'원</b> 많습니다 — 총액 '+won(tot)+'원에 맞춰 주세요.'); return; }
+  const probs=payProblems();
+  if(probs.length){ payMsg('bad',probs.join('<br>')); return; }
 
   const days=payDayList(), caps=rows.map(r=>Math.round((+r.amt)/price));
   const res=packDays(days,caps);
@@ -561,9 +594,11 @@ function drawLedger(){
      '<p class="mlnote noprint">이름을 누르면 그 날의 지급 여부를 바꿀 수 있습니다. '+
      '<span class="exdemo">회색 취소선</span>은 제외된 사람이며 <b>인쇄물에는 나오지 않습니다.</b></p>';
   if(Object.keys(by).length>1){                 // 나눠 결제한 경우에만 업소별 정산을 덧붙인다
-    h+='<div class="mlh5">가맹업소별 정산</div><table class="mltbl out"><thead><tr><th>가맹업소</th><th style="width:80px">식수</th><th style="width:140px">금액</th></tr></thead><tbody>';
+    /* 화면에서는 아래 입력표와 겹치므로 인쇄물에만 낸다 */
+    h+='<div class="shopsum"><div class="mlh5">가맹업소별 정산</div>'+
+       '<table class="mltbl out"><thead><tr><th>가맹업소</th><th style="width:80px">식수</th><th style="width:140px">금액</th></tr></thead><tbody>';
     for(const k in by) h+='<tr><td class="l">'+esc(k)+'</td><td>'+by[k].c+'</td><td class="r">'+won(by[k].a)+'원</td></tr>';
-    h+='</tbody></table>';
+    h+='</tbody></table></div>';
   }
   h+='<p class="mlnote">「지방자치단체 회계관리에 관한 훈령」[별표2] 201-01 사무관리비 마. 급량비 · 1인 1식 '+won(c.price)+'원</p>';
   $('#mlLedger').innerHTML=h;
@@ -907,6 +942,14 @@ function build(){
     S.cells[el.dataset.k].on=!S.cells[el.dataset.k].on; draw();
   });
   $('#mlPlace').onclick=()=>placeShops();
+  $('#mlPayMsg').addEventListener('click',e=>{
+    const b=e.target.closest('.fixamt'); if(!b) return;
+    const i=+b.dataset.i; if(!PAY[i]) return;
+    PAY[i].amt=+b.dataset.v;
+    const el=$('#mlPayTbl').querySelector('.payamt[data-i="'+i+'"]');
+    if(el) el.value=PAY[i].amt;
+    unplace(); drawPayStatus();
+  });
   $('#mlPayAdd').onclick=()=>{
     if(PAY.length>=MAXPAY) return;
     PAY.push({shop:'',amt:null});      // 금액은 이름을 적는 순간 채워진다

@@ -825,6 +825,14 @@ table.mlsign tr:last-child td{height:34px}
 .paymsg.hint{color:var(--mut)}
 .paymsg.ok{color:#0b7a53}
 .paymsg.bad{color:#b4342a}
+.fixamt{display:inline-block;margin:0 2px;padding:3px 9px;border-radius:6px;
+  border:1px solid currentColor;background:rgba(255,255,255,.7);
+  font:inherit;font-size:12.2px;font-weight:700;color:inherit;cursor:pointer;transition:.15s}
+.fixamt:hover{background:#b4342a;border-color:#b4342a;color:#fff}
+.paymsg em{font-style:normal;font-size:11.5px;opacity:.7;margin-right:2px}
+/* 가맹업소별 정산 : 화면에서는 아래 입력표와 겹치므로 인쇄물에만 */
+.shopsum{display:none}
+@media print{ .shopsum{display:block;margin-top:10px} }
 .mlfoot .mlbtns .btn:disabled{opacity:.45;cursor:not-allowed}
 .mlfoot .mlbtns .btn.pri{padding:9px 18px}
 @media print{ .mlfoot{display:none} }
