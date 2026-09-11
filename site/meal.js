@@ -32,7 +32,10 @@ function useProfile(name,silent){
   loadCfg();                                  // 그 부서가 쓰던 설정을 불러온다
   return true;
 }
-const CFGF=['mlShift'];   // 사람이 적어야만 알 수 있는 값만 저장한다
+const CFGF=[];   // 사람이 타이핑해야 하는 값은 없다
+const LSS='dsOn.meal.shift.v1';
+const shiftGet=()=>{ try{ return JSON.parse(localStorage.getItem(K(LSS))||'[]'); }catch(e){ return []; } };
+const shiftSet=v=>{ try{ localStorage.setItem(K(LSS),JSON.stringify([...new Set(v)])); }catch(e){} };
 
 /* 우리 팀 명단 — 적는 게 아니라 확인서에서 스스로 배운다 */
 const LST='dsOn.meal.team.v1', LSN='dsOn.meal.notteam.v1';
@@ -111,7 +114,7 @@ function cfgRead(){
     ws:toMin($('#mlWs').value)||540, we:toMin($('#mlWe').value)||1080,
     early:$('#mlEarly').value==='1',
     holi:new Set(list($('#mlHoli').value)),
-    shift:new Set(list($('#mlShift').value)), trip:parseTrip($('#mlTrip').value) };
+    shift:new Set(shiftGet()), trip:parseTrip($('#mlTrip').value) };
 }
 
 /* 출장(여비 식비 수령) 내역 파싱 — 「8/12 조호현」 「조호현 2026-08-12, 8-13」 등 자유 형식 */
@@ -196,7 +199,7 @@ function apply(){
     const k=r.date+'|'+r.name, j=judge(r,c), p=cells[k];
     if(!p||(j.ok&&!p.ok)){
       let auto='';
-      if(c.shift.has(r.name)) auto='교대근무자·야간/휴일근무수당 지급대상자';
+      if(c.shift.has(r.name)) auto='항상 제외 — 교대근무자·야간/휴일근무수당 지급대상자';
       else if(c.trip[r.name]&&c.trip[r.name].has(r.date)) auto='출장 식비 수령(여비 규정)';
       cells[k]={...j, on:j.ok&&!auto, auto:auto};
     }
@@ -241,7 +244,10 @@ function draw(){
     } else dbox.hidden=true;
   }
 
-  let h='<thead><tr><th>일자</th>'+S.names.map(n=>'<th>'+esc(n)+'</th>').join('')+'<th>식수</th></tr></thead><tbody>';
+  const SH=new Set(shiftGet());
+  let h='<thead><tr><th>일자</th>'+S.names.map(n=>
+    '<th class="nm'+(SH.has(n)?' off':'')+'" data-nm="'+esc(n)+'" title="이름을 누르면 이 사람을 빼는 방법을 고를 수 있습니다">'+
+    esc(n)+(SH.has(n)?' <span class="nmx">항상 제외</span>':'')+'</th>').join('')+'<th>식수</th></tr></thead><tbody>';
   for(const d of S.days){
     const w='일월화수목금토'[new Date(d+'T00:00:00').getDay()], H=isHol(d,c);
     let n=0;
@@ -283,14 +289,48 @@ function autoBase(ym){
   if(note) note.innerHTML='⚙ '+msg.join(' · ');
 }
 
-function drawTeamSet(){
-  const box=$('#mlTeamSet'); if(!box) return;
-  const t=teamGet();
-  box.innerHTML = t.length
-    ? t.map(n=>'<span class="mlchip">'+esc(n)+'<button class="mldel" data-n="'+esc(n)+'" title="빼기">✕</button></span>').join('')
-      +'<span class="mlchipnote">확인서를 올리면 새 이름을 자동으로 여쭤봅니다.</span>'
-    : '<span class="mlchipnote">아직 없습니다 — 확인서를 한 번 올리면 그 명단으로 채워집니다.</span>';
+function chips(box,arr,cls,empty){
+  const el=$(box); if(!el) return;
+  el.innerHTML = arr.length
+    ? arr.map(n=>'<span class="mlchip">'+esc(n)+'<button class="'+cls+'" data-n="'+esc(n)+'" title="빼기">✕</button></span>').join('')
+    : '<span class="mlchipnote">'+empty+'</span>';
 }
+function drawTeamSet(){
+  chips('#mlTeamSet', teamGet(), 'mldel', '확인서를 한 번 올리면 그 명단으로 채워집니다.');
+  chips('#mlShiftSet', shiftGet(), 'mlsdel', '없음 — 우리 팀에 해당자가 없으면 비워 두는 것이 정상입니다.');
+  chips('#mlShopSet', shopList(), 'mlhdel', '결제 후 상호를 적으면 여기에 쌓입니다.');
+}
+
+/* 이름을 누르면 「왜 빼는지」를 고르게 한다 — 사유가 다르면 다음 달 동작도 다르다 */
+let POP=null;
+function closePop(){ if(POP){ POP.remove(); POP=null; } }
+document.addEventListener('click',e=>{ if(POP&&!e.target.closest('.mlpop')&&!e.target.closest('th.nm')) closePop(); });
+function nameMenu(anchor,n){
+  closePop();
+  const on=shiftGet().indexOf(n)>=0;
+  const p=document.createElement('div'); p.className='mlpop';
+  p.innerHTML='<div class="mlpoph"><b>'+esc(n)+'</b></div>'+
+    (on
+      ? '<button data-a="unshift">항상 제외 해제 <small>다시 지급 대상으로</small></button>'
+      : '<button data-a="shift">교대근무자 — 항상 제외 <small>야간·휴일근무수당을 상시 받는 직종. 해당자가 없는 부서가 대부분입니다</small></button>')+
+    '<button data-a="notteam">우리 팀이 아님 <small>다른 팀·전출자. 목록에서 빼고 다시 묻지 않습니다</small></button>'+
+    '<button data-a="cancel" class="c">취소</button>';
+  document.body.appendChild(p);
+  const r=anchor.getBoundingClientRect();
+  p.style.top=(window.scrollY+r.bottom+6)+'px';
+  p.style.left=Math.min(window.scrollX+r.left, window.scrollX+document.documentElement.clientWidth-300)+'px';
+  p.addEventListener('click',ev=>{
+    const b=ev.target.closest('button'); if(!b) return;
+    const a=b.dataset.a; closePop();
+    if(a==='shift')   shiftSet([...shiftGet(),n]);
+    if(a==='unshift') shiftSet(shiftGet().filter(x=>x!==n));
+    if(a==='notteam'){ teamSet(teamGet().filter(x=>x!==n)); notSet([...notGet(),n]); }
+    if(a!=='cancel') refresh();
+  });
+  POP=p;
+}
+
+function refresh(){ if(S.all&&S.all.length){ S.cfg=cfgRead(); apply(); } else drawTeamSet(); }
 
 /* ---------- 검산 ---------- */
 function drawChk(){
@@ -558,50 +598,45 @@ function build(){
   </div>
 
   <details class="card mlcard setcard" id="mlSet">
-    <summary><b>⚙ 설정</b> <small>처음 한 번만 — 평소에는 열 일이 없습니다</small></summary>
+    <summary><b>⚙ 기억하는 것 · 적용 중인 기준</b><small>고칠 일은 거의 없습니다</small></summary>
     <div class="setbody">
-      <p class="mlkeep">💾 <b>기억은 필수가 아니라 편의입니다.</b> 아무것도 기억하지 않아도 계산은 똑같이 됩니다 —
-        확인서·출장 내역 두 파일과 군 공통 기준파일만으로 결과가 나옵니다.
-        다만 매달 같은 답을 반복하지 않도록 <b>「우리 팀으로 인정한 사람」·「교대근무자」·「결제했던 상호」</b> 세 가지만 기억하며,
-        그것도 쓰다 보면 스스로 쌓입니다. 공용 PC라면 아래 <b>「이 브라우저 기억 지우기」</b>로 비우시면 됩니다.
-        <span class="mlkeep2">단가·공휴일·근무시간은 <b>군 공통 기준파일에서 매번 새로 적용</b>하므로 저장하지 않습니다 —
-        훈령이 개정됐는데 브라우저에 옛 단가가 남아 집행 오류가 나는 것을 막기 위해서입니다.
-        출장 내역도 달마다 다르므로 저장하지 않습니다.</span></p>
-      <p class="mlkeep b2">같은 자리·같은 브라우저에서 쓰셔야 유지됩니다. PC나 브라우저를 바꾸면 아래 「설정 내보내기」로 옮기세요.
-        <b>2027년 본 구축에서 계정 단위 서버 저장으로 바뀌면</b> 어느 자리에서 열어도 그대로 나옵니다.</p>
+      <p class="mlkeep">💾 <b>타이핑할 칸이 없습니다.</b> 모든 값은 올린 파일과 군 공통 기준파일에서 나오며,
+        아래는 그동안 <b>이 브라우저가 익힌 것</b>을 보여 줍니다. 아무것도 기억하지 않아도 계산은 똑같이 나옵니다.
+        <span class="mlkeep2">같은 자리·같은 브라우저에서만 유지되며, 2027년 본 구축에서 <b>계정 단위 서버 저장</b>으로 바뀝니다.</span></p>
+
+      <div class="mlfull"><span class="mllab">우리 팀으로 익힌 사람 <small class="mlmut">— 확인서에서 자동으로 배웁니다</small></span>
+        <div id="mlTeamSet" class="mlchips"></div></div>
+
+      <div class="mlfull"><span class="mllab">항상 제외 <small class="mlmut">— 교대근무자·야간/휴일근무수당을 <b>상시</b> 받는 직종. 해당자가 없는 부서가 대부분입니다</small></span>
+        <div id="mlShiftSet" class="mlchips"></div></div>
+
+      <div class="mlfull"><span class="mllab">결제했던 상호 <small class="mlmut">— 자동완성으로 쓰입니다</small></span>
+        <div id="mlShopSet" class="mlchips"></div></div>
+
       <p class="mlbase" id="mlBaseNote">⚙ 기준파일을 불러오는 중…</p>
       <p class="mlsaved" id="mlSaved"></p>
 
-      <div class="mlfull"><span class="mllab">우리 팀으로 기억하고 있는 사람 <small class="mlmut">— 적지 않으셔도 됩니다. 확인서에서 자동으로 익힙니다</small></span>
-        <div id="mlTeamSet" class="mlchips"></div></div>
+      <details class="mlfold"><summary>이번 계산에만 기준값 바꾸기 <span class="mlmut">(저장되지 않습니다)</span></summary>
+        <div class="mlgrid">
+          <label><span>대상 연월</span><input id="mlYm" value="2026-08" placeholder="YYYY-MM"></label>
+          <label><span>1인 1식 단가(원)</span><input id="mlPrice" type="number" value="9000" step="500"></label>
+          <label><span>정규근무 시작</span><input id="mlWs" value="09:00"></label>
+          <label><span>정규근무 종료</span><input id="mlWe" value="18:00"></label>
+        </div>
+        <label class="mlfull"><span>조기출근 요건</span>
+          <select id="mlEarly">
+            <option value="1" selected>적용 — 출근 08:00 이전 + 당일 09:00 전 등록</option>
+            <option value="0">미적용 — 퇴근 19:00 기준만</option>
+          </select></label>
+        <label class="mlfull"><span>공휴일·대체공휴일</span><textarea id="mlHoli">${HOLI_2026.join(', ')}</textarea></label>
+      </details>
 
-      <label class="mlfull"><span>교대근무자 · 야간/휴일근무수당 지급대상자 <small class="mlmut">— 규정상 제외 대상</small></span>
-        <textarea id="mlShift" placeholder="홍길동, 김철수   (해당 없으면 비워 두세요)"></textarea></label>
-
-      <p class="mlnote">가맹업소는 등록하지 않습니다 — 결제 후 적은 상호가 자동완성으로 나옵니다.
-        <b>대표자 성명·계좌번호는 입력하지 마세요.</b></p>
-
-      <p class="mlauto">⚙ <b>아래는 군 공통 기준값</b>(<code>data/meal_config.json</code>)입니다.
-        여기서 고치면 <b>이번 계산에만</b> 적용되고 저장되지 않습니다.</p>
-      <div class="mlgrid">
-        <label><span>대상 연월</span><input id="mlYm" value="2026-08" placeholder="YYYY-MM"></label>
-        <label><span>1인 1식 단가(원)</span><input id="mlPrice" type="number" value="9000" step="500"></label>
-        <label><span>정규근무 시작</span><input id="mlWs" value="09:00"></label>
-        <label><span>정규근무 종료</span><input id="mlWe" value="18:00"></label>
-      </div>
-      <label class="mlfull"><span>조기출근 요건</span>
-        <select id="mlEarly">
-          <option value="1" selected>적용 — 출근 08:00 이전 + 당일 09:00 전 등록 시 지급</option>
-          <option value="0">미적용 — 퇴근 19:00 기준만 사용</option>
-        </select></label>
-      <label class="mlfull"><span>공휴일·대체공휴일 <small class="mlmut">— 자동</small></span>
-        <textarea id="mlHoli">${HOLI_2026.join(', ')}</textarea></label>
-
-      <div class="mlbtns"><button class="btn" id="mlExport">설정 내보내기</button>
-        <button class="btn" id="mlImport">설정 가져오기</button>
+      <div class="mlbtns"><button class="btn" id="mlExport">기억 내보내기</button>
+        <button class="btn" id="mlImport">기억 가져오기</button>
         <input type="file" id="mlImportFile" accept="application/json" hidden>
-        <button class="btn danger" id="mlWipe">이 브라우저 기억 지우기</button></div>
-      <p class="mlnote">PC를 바꾸거나 담당자가 바뀔 때 <b>파일 하나로 인수인계</b>할 수 있습니다.</p>
+        <button class="btn danger" id="mlWipe">기억 지우기</button></div>
+      <p class="mlnote">PC를 바꾸거나 담당자가 바뀔 때 <b>파일 하나로 인수인계</b>할 수 있습니다.
+        가맹업소 <b>대표자 성명·계좌번호는 입력하지 마세요.</b></p>
     </div>
   </details>`;
 
@@ -609,18 +644,45 @@ function build(){
   $('#mlTabT').onclick=()=>{$('#mlTabT').classList.add('on');$('#mlTabP').classList.remove('on');$('#mlPaneT').hidden=false;$('#mlPaneP').hidden=true;};
   const dp=$('#mlDrop'), fi=$('#mlFile');
   dp.onclick=()=>fi.click();
-  dp.ondragover=e=>{e.preventDefault();dp.classList.add('on');};
-  dp.ondragleave=()=>dp.classList.remove('on');
-  dp.ondrop=e=>{e.preventDefault();dp.classList.remove('on');if(e.dataTransfer.files[0])readPdf(e.dataTransfer.files[0]);};
   fi.onchange=()=>{if(fi.files[0])readPdf(fi.files[0]);};
+
+  /* ── 드래그앤드롭 : 화면 어디에 놓아도 받는다 ──────────────
+     드롭존을 조금만 벗어나도 브라우저가 PDF를 그냥 열어버리므로,
+     문서 전체에서 기본 동작을 막고 파일 이름으로 용도를 가려낸다. */
+  const isMeal=()=>document.body.dataset.view==='meal';
+  const hasFile=e=>{ const t=e.dataTransfer&&e.dataTransfer.types;
+    return t && (Array.prototype.indexOf.call(t,'Files')>=0); };
+  const ov=document.createElement('div');
+  ov.className='mlover'; ov.innerHTML='<div class="mlovin"><b>여기에 놓으세요</b>'+
+    '<small>초과근무 확인서 · 출장 내역 PDF — 여러 개를 한꺼번에 놓아도 됩니다</small></div>';
+  document.body.appendChild(ov);
+  let dragN=0;
+  const hide=()=>{dragN=0;ov.classList.remove('on');dp.classList.remove('on');$('#mlTripDrop').classList.remove('on');};
+  document.addEventListener('dragenter',e=>{
+    if(!isMeal()||!hasFile(e)) return; e.preventDefault(); dragN++; ov.classList.add('on');
+  });
+  document.addEventListener('dragover',e=>{ if(isMeal()&&hasFile(e)) e.preventDefault(); });
+  document.addEventListener('dragleave',e=>{ if(!isMeal()) return; if(--dragN<=0) hide(); });
+  document.addEventListener('drop',e=>{
+    if(!isMeal()||!hasFile(e)) return;
+    e.preventDefault(); hide();
+    const fs=[...e.dataTransfer.files].filter(f=>/\.pdf$/i.test(f.name)||f.type==='application/pdf');
+    if(!fs.length){ alert('PDF 파일만 올릴 수 있습니다.'); return; }
+    const onTrip = e.target.closest && e.target.closest('#mlTripDrop');
+    const isTrip = f=>/출장|여비|trip/i.test(f.name);
+    if(fs.length===1){ (onTrip||isTrip(fs[0])) ? readTrip(fs[0]) : readPdf(fs[0]); return; }
+    const t=fs.filter(isTrip), o=fs.filter(f=>!isTrip(f));
+    if(o[0]) readPdf(o[0]);
+    if(t[0]) readTrip(t[0]); else if(o[1]) readTrip(o[1]);
+  });
   const td=$('#mlTripDrop'), tf=$('#mlTripFile');
   td.onclick=()=>tf.click();
-  td.ondragover=e=>{e.preventDefault();td.classList.add('on');};
-  td.ondragleave=()=>td.classList.remove('on');
-  td.ondrop=e=>{e.preventDefault();td.classList.remove('on');if(e.dataTransfer.files[0])readTrip(e.dataTransfer.files[0]);};
   tf.onchange=()=>{if(tf.files[0])readTrip(tf.files[0]);};
+  [[dp,'mlDrop'],[td,'mlTripDrop']].forEach(([el])=>{
+    el.addEventListener('dragover',e=>{ e.preventDefault(); el.classList.add('on'); });
+    el.addEventListener('dragleave',()=>el.classList.remove('on'));
+  });
   $('#mlTrip').addEventListener('input',()=>{ if(S.all&&S.all.length){ S.cfg=cfgRead(); apply(); } });
-  $('#mlShift').addEventListener('input',()=>{ if(S.all&&S.all.length){ S.cfg=cfgRead(); apply(); } });
   $('#mlSet').addEventListener('toggle',()=>drawTeamSet());
   $('#mlRun').onclick=()=>{
     const t=$('#mlPaneT').hidden?S.pdfText:$('#mlRaw').value;
@@ -637,10 +699,16 @@ function build(){
     if(y){ teamSet([...teamGet(),y.dataset.n]); apply(); }
     if(n){ notSet([...notGet(),n.dataset.n]); apply(); }
     const d=e.target.closest('.mldel');
-    if(d){ teamSet(teamGet().filter(x=>x!==d.dataset.n)); notSet([...notGet(),d.dataset.n]);
-           if(S.all&&S.all.length) apply(); else drawTeamSet(); }
+    if(d){ teamSet(teamGet().filter(x=>x!==d.dataset.n)); notSet([...notGet(),d.dataset.n]); refresh(); }
+    const sd=e.target.closest('.mlsdel');
+    if(sd){ shiftSet(shiftGet().filter(x=>x!==sd.dataset.n)); refresh(); }
+    const hd=e.target.closest('.mlhdel');
+    if(hd){ try{ const h=histGet(); delete h[hd.dataset.n];
+      localStorage.setItem(K(LSH),JSON.stringify(h)); }catch(e2){} refresh(); }
   });
   $('#mlGrid').addEventListener('click',e=>{
+    const th=e.target.closest('th.nm[data-nm]');
+    if(th){ nameMenu(th, th.dataset.nm); return; }
     const el=e.target.closest('.mlc[data-k]'); if(!el) return;
     S.cells[el.dataset.k].on=!S.cells[el.dataset.k].on; draw();
   });
@@ -658,8 +726,8 @@ function build(){
   });
   $('#mlPrice').addEventListener('input',()=>{priceTouched=true; if(S.cfg.ym) autoBase(S.cfg.ym);});
   $('#mlExport').onclick=()=>{
-    const o={}; CFGF.forEach(k=>{const el=$('#'+k); if(el) o[k]=el.value;});
-    o._hist=histGet(); o._saved=new Date().toISOString().slice(0,10);
+    const o={_team:teamGet(),_not:notGet(),_shift:shiftGet(),_hist:histGet(),
+             _saved:new Date().toISOString().slice(0,10)};
     const a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,2)],{type:'application/json'}));
     a.download='급량비_설정_'+(o._saved)+'.json'; a.click();
@@ -676,10 +744,9 @@ function build(){
   $('#mlVrun').onclick=verify;
   $('#mlVclr').onclick=()=>{$('#mlVin').value='';$('#mlVout').innerHTML='';};
   $('#mlWipe').onclick=()=>{
-    if(!confirm('이 브라우저에 기억된 팀 명단·교대근무자·상호를 모두 지웁니다.\n계산 결과와 규정 기준값에는 영향이 없습니다.\n\n지울까요?')) return;
-    try{ [LS,LSH,LST,LSN].forEach(b=>localStorage.removeItem(K(b))); }catch(e){}
-    $('#mlShift').value=''; drawTeamSet();
-    if(S.all&&S.all.length){ S.cfg=cfgRead(); apply(); }
+    if(!confirm('이 브라우저가 익힌 팀 명단·항상 제외·상호를 모두 지웁니다.\n계산 결과와 규정 기준값에는 영향이 없습니다.\n\n지울까요?')) return;
+    try{ [LS,LSH,LST,LSN,LSS].forEach(b=>localStorage.removeItem(K(b))); }catch(e){}
+    refresh();
     alert('지웠습니다. 다음 판정부터 처음 쓰는 것과 같아집니다.');
   };
   $('#mlPrint').onclick=()=>window.print();
