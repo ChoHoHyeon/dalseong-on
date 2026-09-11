@@ -486,7 +486,7 @@ async function readPdf(f){
     run(txt);
     const o=$('#mlOut'); if(o&&!o.hidden) setTimeout(()=>o.scrollIntoView({behavior:'smooth',block:'start'}),120);
   }catch(e){
-    w.innerHTML='<span class="mlred">PDF를 읽지 못했습니다(폐쇄망일 수 있습니다). <b>텍스트 붙여넣기</b> 탭을 사용하세요.</span>';
+    w.innerHTML='<span class="mlred">PDF를 읽지 못했습니다. 새올에서 다시 내려받아 올려 보세요.</span>';
   }
 }
 
@@ -509,14 +509,14 @@ async function readTrip(f){
       txt+=line+'\n';
     }
     txt=txt.split(/\r?\n/).map(norm).join('\n');
-    const el=$('#mlTrip'); el.value=(el.value.trim()?el.value.trim()+'\n':'')+txt;
-    saveCfg();
-    const map=parseTrip(el.value), n=Object.keys(map).length;
+    $('#mlTrip').value=txt;
+    const map=parseTrip(txt), n=Object.keys(map).length;
     let cnt=0; for(const k in map) cnt+=map[k].size;
-    w.innerHTML='<b>'+esc(f.name)+'</b> — <b>'+n+'명 / '+cnt+'건</b>을 읽었습니다. 다시 판정하면 반영됩니다.';
+    w.innerHTML='<b>'+esc(f.name)+'</b> — <b>'+n+'명 / '+cnt+'건</b> 반영 '+
+      '<button class="mllink" id="mlTripClr">지우기</button>';
     if(S.all&&S.all.length){ S.cfg=cfgRead(); apply(); }
   }catch(e){
-    w.innerHTML='<span class="mlred">PDF를 읽지 못했습니다. 내용을 복사해 위 칸에 붙여넣어 주세요.</span>';
+    w.innerHTML='<span class="mlred">출장 내역 PDF를 읽지 못했습니다.</span>';
   }
 }
 
@@ -540,13 +540,7 @@ function build(){
         <p class="mlnote" id="mlTripMsg">없으면 건너뛰어도 됩니다</p>
       </div>
     </div>
-    <details class="mlfold"><summary>PDF가 열리지 않을 때 — 텍스트로 붙여넣기</summary>
-      <label class="mlfull"><span>초과근무 확인서</span>
-        <textarea id="mlRaw" class="mlraw" placeholder="PDF를 열어 Ctrl+A → Ctrl+C 한 뒤 붙여넣으면 즉시 판정합니다."></textarea></label>
-      <label class="mlfull"><span>출장 식비 수령 내역</span>
-        <textarea id="mlTrip" style="min-height:60px" placeholder="8/12 조호현 &#10;김원규 2026-08-20, 8/21"></textarea></label>
-      <p class="mlnote">날짜와 이름만 있으면 형식은 무관합니다.</p>
-    </details>
+    <textarea id="mlTrip" hidden></textarea>
     <div class="mlbtns"><button class="btn pri" id="mlRun">다시 판정하기</button>
       <button class="btn" id="mlDemo">8월 예시로 시험</button></div>
   </div>
@@ -640,8 +634,6 @@ function build(){
     </div>
   </details>`;
 
-  $('#mlTabP').onclick=()=>{$('#mlTabP').classList.add('on');$('#mlTabT').classList.remove('on');$('#mlPaneP').hidden=false;$('#mlPaneT').hidden=true;};
-  $('#mlTabT').onclick=()=>{$('#mlTabT').classList.add('on');$('#mlTabP').classList.remove('on');$('#mlPaneT').hidden=false;$('#mlPaneP').hidden=true;};
   const dp=$('#mlDrop'), fi=$('#mlFile');
   dp.onclick=()=>fi.click();
   fi.onchange=()=>{if(fi.files[0])readPdf(fi.files[0]);};
@@ -675,6 +667,11 @@ function build(){
     if(o[0]) readPdf(o[0]);
     if(t[0]) readTrip(t[0]); else if(o[1]) readTrip(o[1]);
   });
+  $('#mlTripMsg').addEventListener('click',e=>{
+    if(!e.target.closest('#mlTripClr')) return;
+    $('#mlTrip').value=''; $('#mlTripMsg').textContent='없으면 건너뛰어도 됩니다';
+    if(S.all&&S.all.length){ S.cfg=cfgRead(); apply(); }
+  });
   const td=$('#mlTripDrop'), tf=$('#mlTripFile');
   td.onclick=()=>tf.click();
   tf.onchange=()=>{if(tf.files[0])readTrip(tf.files[0]);};
@@ -682,18 +679,13 @@ function build(){
     el.addEventListener('dragover',e=>{ e.preventDefault(); el.classList.add('on'); });
     el.addEventListener('dragleave',()=>el.classList.remove('on'));
   });
-  $('#mlTrip').addEventListener('input',()=>{ if(S.all&&S.all.length){ S.cfg=cfgRead(); apply(); } });
   $('#mlSet').addEventListener('toggle',()=>drawTeamSet());
   $('#mlRun').onclick=()=>{
-    const t=$('#mlPaneT').hidden?S.pdfText:$('#mlRaw').value;
-    if(!String(t).trim()){alert('먼저 PDF를 불러오거나 텍스트를 붙여넣어 주세요.');return;}
-    run(t);
+    if(!String(S.pdfText||'').trim()){ alert('먼저 초과근무 확인서 PDF를 올려 주세요.'); return; }
+    run(S.pdfText);
   };
-  $('#mlRaw').addEventListener('paste',e=>{
-    setTimeout(()=>{ const v=$('#mlRaw').value; if(v.trim().length>80){ run(v);
-      const o=$('#mlOut'); if(o&&!o.hidden) setTimeout(()=>o.scrollIntoView({behavior:'smooth',block:'start'}),120);} },60);
-  });
-  $('#mlDemo').onclick=()=>{$('#mlTabT').click();$('#mlRaw').value=DEMO;$('#mlYm').value='2026-08';run(DEMO);};
+  $('#mlDemo').onclick=()=>{ S.pdfText=DEMO; $('#mlYm').value='2026-08'; run(DEMO);
+    $('#mlPdfMsg').innerHTML='<b>8월 예시</b>로 계산했습니다. (실제 파일이 아닙니다)'; };
   document.addEventListener('click',e=>{
     const y=e.target.closest('.mladd'), n=e.target.closest('.mlno');
     if(y){ teamSet([...teamGet(),y.dataset.n]); apply(); }
