@@ -644,11 +644,11 @@ table.pay input[readonly]{background:var(--bg);color:var(--mut)}
 /* 업소 이름칸 바로 옆에 추가·삭제 */
 .shopwrap{display:flex;align-items:center;gap:7px;max-width:380px}
 .shopwrap .payshop{flex:1;min-width:0}
-.paydel,.payadd{flex:none;min-width:52px;height:29px;line-height:1;padding:0 10px;border-radius:6px;
-  border:1px solid var(--line);background:var(--bg);color:var(--mut);
-  font:inherit;font-size:11.8px;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap}
+.paydel,.payadd{flex:none;width:54px;height:29px;line-height:1;padding:0;border-radius:6px;
+  border:1px solid var(--line);background:var(--bg);color:var(--mut);text-align:center;
+  font:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap}
 .paydel:hover{background:#b4342a;color:#fff;border-color:#b4342a}
-.payadd{color:var(--acc);border-color:rgba(47,111,237,.45);background:#eef3fd}
+.payadd{color:var(--acc);border-color:rgba(47,111,237,.45)}
 .payadd:hover{background:var(--acc);color:#fff;border-color:var(--acc)}
 .payadd:disabled{opacity:.35;cursor:not-allowed;background:var(--bg);color:var(--mut);border-color:var(--line)}
 /* 금액 칸 : 좌우 9,000원 증감 단추 */
@@ -986,6 +986,12 @@ body[data-theme=dark] .view[data-view="meal"] .paymsg.ok{background:rgba(11,122,
 
 /* ── 버튼 줄 : 위쪽 진한 선으로 구역을 끊는다 ── */
 .view[data-view="meal"] .mlbtns.split{border-top:1.5px solid var(--ln)}
+/* 인쇄 안내 한 줄 */
+.view[data-view="meal"] .prnote{margin:12px 0 0;padding:9px 12px;border-radius:8px;
+  border:1px solid #e3c98a;background:#fdf6e4;color:#6b5115;font-size:12.4px;line-height:1.55}
+body[data-theme=dark] .view[data-view="meal"] .prnote{background:rgba(217,138,0,.14);color:#f0d9a6;border-color:#6b5115}
+.view[data-view="meal"].preview .prnote{display:none}
+@media print{ .prnote{display:none} }
 
 /* ── 통계 한 줄 : 상자가 겹치지 않게 안쪽 것만 또렷하게 ── */
 .view[data-view="meal"] .mlsum2{margin:12px 0 0;padding:0}

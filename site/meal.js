@@ -377,6 +377,15 @@ function totalCnt(){ let n=0; for(const k in S.cells) if(S.cells[k].on) n++; ret
 function payTotal(){ return totalCnt()*(S.cfg.price||0); }
 function paySum(){ return PAY.reduce((a,r)=>a+(+r.amt||0),0); }
 function payMsg(cls,html){ const m=$('#mlPayMsg'); if(m){ m.className='paymsg '+cls; m.innerHTML=html; } }
+
+/* 다음에 눌러야 할 버튼 하나만 파랗게 — 순서대로 따라가게 한다 */
+function setPrimary(){
+  let on='mlAuto';
+  if(S.placed) on='mlPrint';
+  else if(PAY.some(r=>(r.shop||'').trim() && +r.amt>0) && !payProblems().length) on='mlPlace';
+  ['mlAuto','mlPlace','mlPrint'].forEach(id=>{
+    const b=$('#'+id); if(b) b.classList.toggle('pri', id===on); });
+}
 function drawPay(){
   const c=S.cfg, cnt=totalCnt(), tot=cnt*c.price;
   $('#mlPayBox').innerHTML=
@@ -392,7 +401,7 @@ function drawPay(){
     h+='<tr data-r="'+i+'">'+
        '<td class="l"><div class="shopwrap">'+
          '<input class="payshop" list="mlShopList" data-i="'+i+'" value="'+esc(r.shop)+'" placeholder="식당 이름">'+
-         (i===0 ? '<button class="payadd" title="줄 추가">＋ 추가</button>'
+         (i===0 ? '<button class="payadd" title="줄 추가">추가</button>'
                 : '<button class="paydel" data-i="'+i+'" title="이 줄 지우기">삭제</button>')+
        '</div></td>'+
        '<td class="amtcell"><div class="amtwrap">'+
@@ -435,9 +444,11 @@ function drawPayStatus(keep){
 
   if(keep) return;                                  // 배치 결과 문구는 덮어쓰지 않는다
   if(!PAY.some(r=>+r.amt>0)){
+    setPrimary();
     payMsg('hint','식당 이름을 적고 <b>금액 자동계산</b>을 누르면 금액이 나뉩니다. 직접 적어도 됩니다.');
     return;
   }
+  setPrimary();
   const L=payProblems();
   if(L.length){ payMsg('bad',L.join('<br>')); return; }
   if(!PAY.every(r=>(r.shop||'').trim()||!(+r.amt>0)))
@@ -504,7 +515,7 @@ function payProblems(){
 /* 배치 결과를 지운다 — 금액이나 업소명이 바뀌면 다시 눌러야 한다 */
 function unplace(){
   if(!S.placed) return;
-  S.placed=false; S.shop={}; drawLedger();
+  S.placed=false; S.shop={}; setPrimary(); drawLedger();
 }
 
 function packDays(days,caps){
@@ -576,7 +587,7 @@ function placeShops(){
     return;
   }
   S.shop={}; res.forEach((si,i)=>{ S.shop[days[i].d]=rows[si].shop; });
-  S.placed=true;
+  S.placed=true; setPrimary();
   rows.forEach(r=>histAdd(r.shop.trim(),c.ym,1));
   drawLedger();
   payMsg('ok','✓ 배치했습니다 — 위 집행대장의 <b>가맹업소명</b> 칸을 확인하세요.');
@@ -594,6 +605,195 @@ function ledgerRows(){
     const cnt=ns.filter(z=>z.on).length;
     return {d, ns, cnt, shop:S.shop[d]||'', amt:cnt*c.price};
   });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   엑셀(.xlsx) 내려받기
+   HTML 표를 엑셀에 먹이는 방식은 글꼴·글자크기·행높이가 모두 무시되므로,
+   진짜 xlsx(zip + xml)를 브라우저에서 직접 만든다.
+   서식은 원본 「특근매식비집행대장」 시트 값 그대로:
+     HY견명조 제목 28pt·본문 14pt / 행높이 54.95·33·21·45pt
+     열너비 10.50·5.12·7.38·8.62·42.50·19.50·13.12·9.75·15.38·10.88·8.43·8.43
+     A4 가로 · 여백 0.24/0.24/0.39/0.75in · 축소 76%
+   ══════════════════════════════════════════════════════════════ */
+const CRCT=(()=>{ const t=new Uint32Array(256);
+  for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); t[n]=c>>>0; }
+  return t; })();
+function crc32(u8){ let c=0xFFFFFFFF;
+  for(let i=0;i<u8.length;i++) c=CRCT[(c^u8[i])&0xFF]^(c>>>8);
+  return (c^0xFFFFFFFF)>>>0; }
+/* 압축 없이(STORE) 담는 최소 zip — 엑셀이 정상으로 읽는다 */
+function zipStore(files){
+  const enc=new TextEncoder(), body=[], cen=[]; let off=0;
+  for(const f of files){
+    const nb=enc.encode(f.name), d=f.data, crc=crc32(d), n=d.length;
+    const lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true); lh.setUint16(4,20,true);
+    lh.setUint32(14,crc,true); lh.setUint32(18,n,true); lh.setUint32(22,n,true);
+    lh.setUint16(26,nb.length,true);
+    body.push(new Uint8Array(lh.buffer),nb,d);
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true); ch.setUint16(4,20,true); ch.setUint16(6,20,true);
+    ch.setUint32(16,crc,true); ch.setUint32(20,n,true); ch.setUint32(24,n,true);
+    ch.setUint16(28,nb.length,true); ch.setUint32(42,off,true);
+    cen.push(new Uint8Array(ch.buffer),nb);
+    off+=30+nb.length+n;
+  }
+  const cs=cen.reduce((a,x)=>a+x.length,0);
+  const eo=new DataView(new ArrayBuffer(22));
+  eo.setUint32(0,0x06054b50,true);
+  eo.setUint16(8,files.length,true); eo.setUint16(10,files.length,true);
+  eo.setUint32(12,cs,true); eo.setUint32(16,off,true);
+  return new Blob([...body,...cen,new Uint8Array(eo.buffer)],
+    {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+const xe=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+           .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const U8=t=>new TextEncoder().encode(t);
+const COL=n=>{ let s=''; n++; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=(n-m-1)/26; } return s; };
+
+function buildXlsx(){
+  const c=S.cfg, rs=ledgerRows().filter(r=>r.cnt);
+  if(!rs.length){ payMsg('bad','⚠ 내려받을 내용이 없습니다.'); return; }
+  const cnt=rs.reduce((a,r)=>a+r.cnt,0), tot=rs.reduce((a,r)=>a+r.amt,0);
+
+  /* 서식 등록기 — 쓰인 조합만 모은다 */
+  const BD=[], BK={}, XF=[], XK={};
+  const bId=(l,r,t,b)=>{ const k=l+'|'+r+'|'+t+'|'+b;
+    if(BK[k]==null){ BK[k]=BD.length; BD.push([l,r,t,b]); } return BK[k]; };
+  const xId=(f,fl,bd,h)=>{ const k=f+'|'+fl+'|'+bd+'|'+h;
+    if(XK[k]==null){ XK[k]=XF.length; XF.push([f,fl,bd,h]); } return XK[k]; };
+  bId('','','',''); xId(0,0,0,'center');          // 0번은 기본
+
+  const TN='thin', TK='thick', DB='double';
+  /* 칸별 좌·우 테두리 : 「년|월|일」과 「단가|×N명=|금액」 사이에는 선이 없다 */
+  const LR=[[TK,''],['',''],['',TN],[TN,TN],[TN,TN],[TN,TN],[TN,''],['',''],['',TN],[TN,TN],[TN,TN],[TN,TK]];
+  const W=[10.50,5.12,7.38,8.62,42.50,19.50,13.12,9.75,15.38,10.88,8.43,8.43];
+
+  const rows=[], merges=[], brk=[];
+  const cell=(v,st)=>({v:v,s:st});
+  const hFill=2;
+
+  /* 원본과 같이 12건마다 제목·열머리·결재란을 되풀이한다 */
+  const pages=[]; for(let i=0;i<rs.length;i+=PG_ROWS) pages.push(rs.slice(i,i+PG_ROWS));
+
+  pages.forEach((pg,pi)=>{
+    const base=rows.length;                       // 이 쪽의 첫 행 (0-based)
+    if(pi) brk.push(base);                        // 쪽 나눔
+    /* 제목 */
+    rows.push({h:54.95, c:[cell('특 근 매 식 비 집 행 대 장', xId(1,0,bId('','','',''),'center'))]});
+    merges.push('A'+(base+1)+':L'+(base+1));
+    /* 열머리 2줄 */
+    rows.push({h:33, c:[
+      cell('특근일자',      xId(0,hFill,bId(TK,TN,TK,DB),'center')), null, null,
+      cell('인원(명)',      xId(0,hFill,bId(TN,TN,TK,DB),'center')),
+      cell('특 근 자 명 단', xId(0,hFill,bId(TN,TN,TK,DB),'center')),
+      cell('가맹업소명',    xId(0,hFill,bId(TN,TN,TK,DB),'center')),
+      cell('예산집행내역',  xId(0,hFill,bId(TN,TN,TK,DB),'center')), null, null,
+      cell('결 재',        xId(0,hFill,bId(TN,'',TK,TN),'center')),
+      cell('',            xId(0,hFill,bId('','',TK,TN),'center')),
+      cell('',            xId(0,hFill,bId('',TK,TK,TN),'center'))]});
+    rows.push({h:21, c:[null,null,null,null,null,null,null,null,null,
+      cell('담당자', xId(0,hFill,bId(TN,TN,TN,DB),'center')),
+      cell('담 당', xId(0,hFill,bId(TN,TN,TN,DB),'center')),
+      cell('과 장', xId(0,hFill,bId(TN,TK,TN,DB),'center'))]});
+    const h1=base+2, h2=base+3;
+    merges.push('A'+h1+':C'+h2,'D'+h1+':D'+h2,'E'+h1+':E'+h2,'F'+h1+':F'+h2,
+                'G'+h1+':I'+h2,'J'+h1+':L'+h1);
+    /* 본문 */
+    pg.forEach((r,k)=>{
+      const [y,m,d]=r.d.split('-');
+      const tp=(k===0)?DB:TN, bt=(k===pg.length-1 && pi<pages.length-1)?TK:TN;
+      const g=(i,t,al)=>cell(t, xId(0,0,bId(LR[i][0],LR[i][1],tp,bt),al||'center'));
+      rows.push({h:45, c:[ g(0,y+'.'), g(1,m+'.'), g(2,d+'.'), g(3,r.cnt+'명'),
+        g(4,r.ns.filter(z=>z.on).map(z=>z.n).join(', ')), g(5,r.shop||''),
+        g(6,won(c.price)+'원','right'), g(7,'×'+r.cnt+'명=','left'), g(8,won(r.amt)+'원','right'),
+        g(9,''), g(10,'전결'), g(11,'') ]});
+    });
+  });
+  /* 합계 — 마지막 쪽 끝에 */
+  const tg=(i,t,fill,al)=>cell(t, xId(2,fill||0,bId(LR[i][0],LR[i][1],TN,TK),al||'center'));
+  rows.push({h:45, c:[ tg(0,''), tg(1,''), tg(2,''), tg(3,cnt+'명',3), tg(4,'합계'), tg(5,''),
+    tg(6,won(c.price)+'원 x '+cnt+'명 ='+won(tot)+'원'), tg(7,''), tg(8,''),
+    tg(9,''), tg(10,''), tg(11,'') ]});
+  merges.push('G'+rows.length+':I'+rows.length);
+
+  /* ── XML ── */
+  const bx=b=>'<border>'+
+    ['left','right','top','bottom'].map((k,i)=>b[i]
+      ? '<'+k+' style="'+b[i]+'"><color rgb="FF000000"/></'+k+'>' : '<'+k+'/>').join('')+
+    '<diagonal/></border>';
+  const styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+    '<fonts count="3">'+
+      '<font><sz val="14"/><color rgb="FF000000"/><name val="HY견명조"/><charset val="129"/></font>'+
+      '<font><b/><sz val="28"/><color rgb="FF000000"/><name val="HY견명조"/><charset val="129"/></font>'+
+      '<font><b/><sz val="14"/><color rgb="FF000000"/><name val="HY견명조"/><charset val="129"/></font>'+
+    '</fonts>'+
+    '<fills count="4"><fill><patternFill patternType="none"/></fill>'+
+      '<fill><patternFill patternType="gray125"/></fill>'+
+      '<fill><patternFill patternType="solid"><fgColor rgb="FFF7F7F7"/><bgColor indexed="64"/></patternFill></fill>'+
+      '<fill><patternFill patternType="solid"><fgColor rgb="FFFFFF00"/><bgColor indexed="64"/></patternFill></fill>'+
+    '</fills>'+
+    '<borders count="'+BD.length+'">'+BD.map(bx).join('')+'</borders>'+
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'+
+    '<cellXfs count="'+XF.length+'">'+XF.map(x=>
+      '<xf numFmtId="49" fontId="'+x[0]+'" fillId="'+x[1]+'" borderId="'+x[2]+'" xfId="0"'+
+      ' applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">'+
+      '<alignment horizontal="'+x[3]+'" vertical="center"/></xf>').join('')+'</cellXfs>'+
+    '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'+
+    '</styleSheet>';
+
+  let sd='';
+  rows.forEach((row,ri)=>{
+    sd+='<row r="'+(ri+1)+'" ht="'+row.h+'" customHeight="1">';
+    row.c.forEach((cc,ci)=>{ if(!cc) return;
+      sd+='<c r="'+COL(ci)+(ri+1)+'" s="'+cc.s+'" t="inlineStr"><is><t xml:space="preserve">'+
+          xe(cc.v)+'</t></is></c>'; });
+    sd+='</row>';
+  });
+  const sheet='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+    '<sheetPr><pageSetUpPr fitToPage="0"/></sheetPr>'+
+    '<sheetFormatPr defaultRowHeight="45"/>'+
+    '<cols>'+W.map((w,i)=>'<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+w+'" customWidth="1"/>').join('')+'</cols>'+
+    '<sheetData>'+sd+'</sheetData>'+
+    '<mergeCells count="'+merges.length+'">'+merges.map(m=>'<mergeCell ref="'+m+'"/>').join('')+'</mergeCells>'+
+    (brk.length?'<rowBreaks count="'+brk.length+'" manualBreakCount="'+brk.length+'">'+
+      brk.map(r=>'<brk id="'+r+'" max="16383" man="1"/>').join('')+'</rowBreaks>':'')+
+    '<pageMargins left="0.24" right="0.24" top="0.39" bottom="0.75" header="0" footer="0"/>'+
+    '<pageSetup paperSize="9" orientation="landscape" scale="76"/>'+
+    '</worksheet>';
+
+  const files=[
+    {name:'[Content_Types].xml', data:U8('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
+      '<Default Extension="xml" ContentType="application/xml"/>'+
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+
+      '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'+
+      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+
+      '</Types>')},
+    {name:'_rels/.rels', data:U8('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'+
+      '</Relationships>')},
+    {name:'xl/workbook.xml', data:U8('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+      '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'+
+      ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+
+      '<sheets><sheet name="특근매식비집행대장" sheetId="1" r:id="rId1"/></sheets></workbook>')},
+    {name:'xl/_rels/workbook.xml.rels', data:U8('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'+
+      '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'+
+      '</Relationships>')},
+    {name:'xl/styles.xml', data:U8(styles)},
+    {name:'xl/worksheets/sheet1.xml', data:U8(sheet)}
+  ];
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(zipStore(files));
+  a.download='특근매식비 집행대장 '+c.ym.replace('-','.')+'월.xlsx'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -757,7 +957,6 @@ async function readPdf(f){
     if(n){
       setDrop('mlDrop','done','<b>✅ '+esc(f.name)+'</b>'+
         '<button class="mlx" id="mlClr" type="button" title="이 파일 빼기" aria-label="이 파일 빼기">✕</button>');
-      const o=$('#mlOut'); if(o&&!o.hidden) setTimeout(()=>o.scrollIntoView({behavior:'smooth',block:'start'}),150);
     }else if(txt.replace(/\s/g,'').length<80){
       /* 글자가 한 톨도 없다 = 복합기로 스캔한 그림 PDF */
       setDrop('mlDrop','err','<b>⚠ 스캔한 PDF 파일입니다</b>'+
@@ -875,9 +1074,12 @@ function build(){
         <span class="lft"><button class="btn pri" id="mlAuto">금액 자동계산</button>
           <button class="btn" id="mlPlace">가맹업소명 배치하기</button></span>
         <span class="rgt"><button class="btn" id="mlPrev">📄 인쇄 미리보기</button>
-          <button class="btn pri" id="mlPrint">🖨 인쇄하기</button>
+          <button class="btn" id="mlPrint">🖨 인쇄하기</button>
           <button class="btn" id="mlXls">엑셀 내려받기</button></span>
       </div>
+
+      <p class="mlnote prnote">🖨 인쇄 창에서 <b>「머리글 및 바닥글」 체크를 해제</b>하세요 —
+        날짜·주소가 찍히고 위쪽 여백이 넓어집니다. <b>여백은 「기본값」</b>으로 두시면 됩니다.</p>
 
       <div id="mlLedger"></div>
       <div id="mlPrintDoc"></div>
@@ -1111,7 +1313,6 @@ function build(){
     const v=document.querySelector('.view[data-view="meal"]'); if(!v) return;
     v.classList.toggle('preview',on);
     $('#mlPrev').textContent = on ? '✕ 미리보기 닫기' : '📄 인쇄 미리보기';
-    $('#mlPrev').classList.toggle('pri',on);
     (on?$('#mlPrintDoc'):$('#mlLedger')).scrollIntoView({behavior:'smooth',block:'start'});
   };
   $('#mlPrev').onclick=()=>preview(!document.querySelector('.view[data-view="meal"]').classList.contains('preview'));
@@ -1127,54 +1328,10 @@ function build(){
   root.addEventListener('change',e=>{ if(CFGF.indexOf(e.target.id)>=0) saveCfg(); });
   root.addEventListener('input', e=>{ if(CFGF.indexOf(e.target.id)>=0) saveCfg(); });
   /* 엑셀 내려받기 — 엑셀이 읽는 HTML 표로 만든다 (열너비·글꼴·테두리·병합 그대로) */
-  $('#mlXls').onclick=()=>{
-    const c=S.cfg, rs=ledgerRows().filter(r=>r.cnt);
-    if(!rs.length){ payMsg('bad','⚠ 내려받을 내용이 없습니다.'); return; }
-    const cnt=rs.reduce((a,r)=>a+r.cnt,0), tot=rs.reduce((a,r)=>a+r.amt,0);
-    const W=[10.50,5.12,7.38,8.62,42.50,19.50,13.12,9.75,15.38,10.88,8.43,8.43];  // 원본 열너비(문자)
-    const px=w=>Math.round(w*7+5);
-    const F='mso-number-format:"\\@";font-family:HY견명조;font-size:14pt;'+
-            'text-align:center;vertical-align:middle;border:.5pt solid black;';
-    let h='<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8">'+
-      '<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>'+
-      '<x:Name>특근매식비집행대장</x:Name><x:WorksheetOptions><x:Print>'+
-      '<x:ValidPrinterInfo/><x:PaperSizeIndex>9</x:PaperSizeIndex><x:Scale>76</x:Scale>'+
-      '<x:HorizontalResolution>600</x:HorizontalResolution></x:Print>'+
-      '</x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->'+
-      '</head><body><table border="1" style="border-collapse:collapse">'+
-      '<colgroup>'+W.map(w=>'<col width="'+px(w)+'">').join('')+'</colgroup>';
-    h+='<tr height="73"><td colspan="12" style="'+F+'font-size:28pt;font-weight:bold;border:none">'+
-       '특 근 매 식 비 집 행 대 장</td></tr>';
-    h+='<tr height="44">'+
-       '<td colspan="3" rowspan="2" style="'+F+'background:#F7F7F7">특근일자</td>'+
-       '<td rowspan="2" style="'+F+'background:#F7F7F7">인원(명)</td>'+
-       '<td rowspan="2" style="'+F+'background:#F7F7F7">특 근 자 명 단</td>'+
-       '<td rowspan="2" style="'+F+'background:#F7F7F7">가맹업소명</td>'+
-       '<td colspan="3" rowspan="2" style="'+F+'background:#F7F7F7">예산집행내역</td>'+
-       '<td colspan="3" style="'+F+'background:#F7F7F7">결 재</td></tr>'+
-       '<tr height="28"><td style="'+F+'background:#F7F7F7">담당자</td>'+
-       '<td style="'+F+'background:#F7F7F7">담 당</td><td style="'+F+'background:#F7F7F7">과 장</td></tr>';
-    rs.forEach(r=>{
-      const [y,m,d]=r.d.split('-');
-      h+='<tr height="60"><td style="'+F+'">'+y+'</td><td style="'+F+'">'+(+m)+'</td><td style="'+F+'">'+(+d)+'</td>'+
-         '<td style="'+F+'">'+r.cnt+'</td>'+
-         '<td style="'+F+'">'+esc(r.ns.filter(z=>z.on).map(z=>z.n).join(', '))+'</td>'+
-         '<td style="'+F+'">'+esc(r.shop||'')+'</td>'+
-         '<td style="'+F+'text-align:right">'+c.price+'</td>'+
-         '<td style="'+F+'text-align:left">×'+r.cnt+'명=</td>'+
-         '<td style="'+F+'text-align:right">'+r.amt+'</td>'+
-         '<td style="'+F+'"></td><td style="'+F+'">전결</td><td style="'+F+'"></td></tr>';
-    });
-    h+='<tr height="60"><td colspan="3" style="'+F+'"></td>'+
-       '<td style="'+F+'font-weight:bold;background:#FFFF00">'+cnt+'명</td>'+
-       '<td style="'+F+'font-weight:bold">합계</td><td style="'+F+'"></td>'+
-       '<td colspan="3" style="'+F+'font-weight:bold">'+won(c.price)+'원 x '+cnt+'명 ='+won(tot)+'원</td>'+
-       '<td style="'+F+'"></td><td style="'+F+'"></td><td style="'+F+'"></td></tr>';
-    h+='</table></body></html>';
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob(['﻿'+h],{type:'application/vnd.ms-excel'}));
-    a.download='특근매식비 집행대장 '+c.ym.replace('-','.')+'월.xls'; a.click();
-  };
+  /* ── 엑셀 내려받기 ────────────────────────────────────────────
+     엑셀이 자기가 내보내는 HTML 형식(mso- 속성 + windowtext 테두리 + pt 단위)을
+     그대로 흉내 낸다. 그래야 글꼴·글자크기·행높이·열너비가 제대로 들어간다.     */
+  $('#mlXls').onclick=()=>buildXlsx();
 }
 
 const DEMO=`1 2026-08-04 정보통신과 주사보 조호현 09:00 20:04 64
@@ -1235,5 +1392,5 @@ const DEMO=`1 2026-08-04 정보통신과 주사보 조호현 09:00 20:04 64
 window.MEAL={init:build, _demo:()=>{ S.pdfText=DEMO; run(DEMO); },
   _pay:rows=>{ PAY=rows.slice(); drawPay(); placeShops(); },
   _payMsg:()=>$('#mlPayMsg').innerHTML.replace(/<[^>]+>/g,''),
-  _rows:()=>PAY, _live:rows=>{ PAY=rows.slice(); drawPay(); }};
+  _rows:()=>PAY, _live:rows=>{ PAY=rows.slice(); unplace(); drawPay(); }};
 })();
