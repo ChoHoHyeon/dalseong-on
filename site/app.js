@@ -204,7 +204,7 @@ function renderNav(){
     const recent=loadRecent();
     html=item(HOME_MENU.find(n=>n.view==='on'))+`<li class="newchat" id="navNew">＋ 새 대화</li>`
       +(recent.length?`<li class="rh"><span>최근 대화</span><button class="rclear" id="navClear" title="전체 삭제">전체 삭제</button></li>`+recent.map(q=>`<li class="rc" data-q="${q.replace(/"/g,'&quot;')}" title="${q.replace(/"/g,'&quot;')}"><span>${q}</span><button class="rx" data-del="${q.replace(/"/g,'&quot;')}" title="삭제">✕</button></li>`).join(''):'');
-  } else html='<li class="legend"><em class="dot"></em> <b>지금 쓸 수 있는</b> 기능</li>'+HOME_MENU.map(item).join('');
+  } else html=HOME_MENU.map(item).join('');
   html+=MINOR.map(item).join('');
   $('#nav').innerHTML=html;
   $$('#nav li[data-view]').forEach(li=>li.onclick=()=>{ if(S.mode!==li.dataset.mode){ S.mode=li.dataset.mode; document.body.dataset.mode=S.mode; } go(li.dataset.view); });
@@ -275,7 +275,7 @@ function renderUsage(){
 const VIDEOS=[
   {title:'달성On 소개',        sub:'무엇을 해 주는지 29초로',   len:'29초',
    file:'assets/intro.mp4',  poster:'assets/intro_poster.jpg'},
-  {title:'급량비 계산하기',     sub:'확인서 PDF 하나로 집행대장까지', len:'1분 27초',
+  {title:'급량비 계산하기',     sub:'확인서 PDF 하나로 집행대장까지', len:'1분 13초',
    file:'assets/meal_guide.mp4', poster:'assets/meal_guide_poster.jpg'}
 ];
 const VIDEO_FILE='assets/intro.mp4';  // (옛 설정 — VIDEOS 를 씁니다)
