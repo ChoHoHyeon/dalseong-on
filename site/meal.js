@@ -89,15 +89,30 @@ function topShop(){ const l=shopList(); return l[0]||''; }
 
 /* ---------- 파싱 ---------- */
 function norm(s){ for(let i=0;i<6;i++) s=s.replace(/(?<=[0-9:\-])[ ]+(?=[0-9:\-])/g,''); return s; }
-const ROW=/(\d+?)(20\d\d-\d\d-\d\d)\s+(\S+)\s+(?:(\S+)\s+)?([가-힣]{2,4})\s+(\d\d:\d\d)(\d\d:\d\d)(\d{1,3})(?!\d)/;
+/* 직급 칸은 두 줄로 쪼개지거나 괄호가 섞여 나오므로, 성명은 「출퇴근 시각 바로 앞의 한글」로 잡는다 */
+const ROW=/(\d+?)(20\d\d-\d\d-\d\d)\s+(\S+)\s+([^\d]*?)([가-힣]{2,4})\s+(\d\d:\d\d)(\d\d:\d\d)(\d{1,3})(?!\d)/;
 function parse(text){
   const L=text.split(/\r?\n/).map(norm), out=[];
+  const START=/^\s*\d{1,3}\s*20\d\d-\d\d-\d\d/;   // 「순번+근무일자」로 시작하면 한 건의 시작
   for(let i=0;i<L.length;i++){
-    const m=ROW.exec(L[i]); if(!m) continue;
+    let m=ROW.exec(L[i]), used=0;
+    if(!m && START.test(L[i])){
+      // 직급이 두 줄인 경우 성명·출퇴근이 아래 줄로 밀린다 — 최대 4줄까지 이어붙여 본다
+      let buf=L[i];
+      for(let j=1;j<=4 && i+j<L.length; j++){
+        if(START.test(L[i+j])) break;                 // 다음 건이 시작되면 중단
+        buf+=' '+L[i+j];
+        m=ROW.exec(buf);
+        if(m){ used=j; break; }
+      }
+    }
+    if(!m) continue;
     let rd=null, rt=null;
-    for(let j=i-1;j>=Math.max(0,i-3);j--){ const d=L[j].match(/20\d\d-\d\d-\d\d/g); if(d){rd=d[d.length-1];break;} }
-    for(let j=i+1;j<=Math.min(L.length-1,i+3);j++){ const t=L[j].match(/\b\d\d:\d\d\b/); if(t){rt=t[0];break;} }
-    out.push({date:m[2],dept:m[3],rank:m[4]||'',name:m[5],inn:m[6],out:m[7],pay:+m[8],regd:rd,regt:rt});
+    for(let j=i-1;j>=Math.max(0,i-3);j--){ const d=L[j].match(/20\d\d-\d\d-\d\d/g); if(d){ rd=d[d.length-1]; break; } }
+    for(let j=i+used+1;j<=Math.min(L.length-1,i+used+3);j++){ const t=L[j].match(/\b\d\d:\d\d\b/); if(t){ rt=t[0]; break; } }
+    out.push({date:m[2], dept:m[3], rank:(m[4]||'').trim(), name:m[5],
+              inn:m[6], out:m[7], pay:+m[8], regd:rd, regt:rt});
+    i+=used;
   }
   return out;
 }
@@ -537,7 +552,7 @@ function build(){
 
       <div id="mlLedger"></div>
 
-      <div class="mlfoot">
+      <div class="mlfoot" hidden>
         <table class="mltbl pay" id="mlPayTbl"></table>
         <datalist id="mlShopList"></datalist>
         <div class="mlbtns"><button class="btn" id="mlPayAdd">＋ 나눠 결제</button>
@@ -549,7 +564,7 @@ function build(){
       <p class="mlnote">인쇄하면 <b>집행대장만</b> A4 한 장으로 나옵니다. 2부 뽑아 사본에 「원본대조필」을 찍으세요.</p>
     </div>
 
-    <details class="card mlcard foldcard sub">
+    <details class="card mlcard foldcard sub" hidden>
       <summary><b>📅 일자별 판정 내역</b><small>사람·날짜별로 확인하고 고칠 수 있습니다</small></summary>
       <div class="foldbody">
         <p class="mlleg"><b>1</b> 지급 · <b>제</b> 규정상 자동 제외 · <b>–</b> 직접 해제 · <b>·</b> 시간 요건 미달
