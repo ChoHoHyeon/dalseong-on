@@ -182,6 +182,97 @@
     </section>
 
     <!-- 안내방송 만들기 (세부 내역 추후 확정) -->
+
+    <!-- 특근매식비 정산하기 -->
+    <section class="view" data-view="meal">
+      <div class="vh"><h2>급량비 계산하기</h2><p>새올 「초과근무 확인서」를 올리면 급량비(특근매식비) 지급 대상을 규정에 따라 판정하고 집행대장까지 만들어 주는 화면입니다.</p></div>
+
+      <div class="card flowcard">
+        <h4>이렇게 씁니다 <small>PDF 한 장이면 끝납니다</small></h4>
+        <ol class="flow3">
+          <li><span class="fnum">1</span><span class="fico" aria-hidden="true">📄</span>
+            <span class="ftx"><b>초과근무 확인서 올리기</b><small>새올에서 출력한 PDF를 그대로 · 올리면 <b>바로 판정</b>합니다</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">2</span><span class="fico" aria-hidden="true">✅</span>
+            <span class="ftx"><b>제외할 사람만 해제</b><small>규정상 제외 대상만 클릭 · 가맹업소 지정</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">3</span><span class="fico" aria-hidden="true">🧾</span>
+            <span class="ftx"><b>집행대장 인쇄</b><small>기존 서식 그대로 · CSV로도 내려받기</small></span></li>
+        </ol>
+        <p class="flownote">※ <b>마지막 확인은 담당자가</b> 합니다. 판정 결과는 참고용이며, 제외 대상 여부는 반드시 검토 후 집행하세요.</p>
+      </div>
+
+      <div class="card lawcard">
+        <h4>근거 규정 <small>이 화면이 따르는 기준</small></h4>
+        <p class="lawref"><b>「지방자치단체 회계관리에 관한 훈령」</b> (행정안전부훈령 제416호, 2026. 1. 2. 시행)<br>
+          [별표2] 세출예산 성질별 분류에 따른 집행기준 → 201 일반운영비 › 201-01 사무관리비 › <b>마. 급량비</b>
+          <span class="lawdate">규정 확인일 2026. 9. 11.</span></p>
+
+        <blockquote class="lawq"><b>지급 대상</b> — “정규근무시간 개시 <b>최소 1시간 전에 출근</b>하여 근무하거나,
+          <b>근무종료 후 최소 1시간 이상</b> 근무하는 자 또는 <b>휴일에 최소 1시간 이상</b> 근무하는 자”</blockquote>
+        <blockquote class="lawq"><b>제외 대상</b> — “시간외근무수당을 지급받고 있는 자 중에서 <b>교대근무자</b>,
+          <b>야간근무수당·휴일근무수당 지급대상자</b>, 「공무원 여비 규정」에 따라 <b>식비를 지급받은 자</b>는 제외”</blockquote>
+        <blockquote class="lawq"><b>단가·집행</b> — “1인당 1식 급식단가는 <b>9,000원 이내</b>에서 집행한다” ·
+          지방자치단체구매카드 사용 원칙(불가 시 계좌이체, 현금 직접지급 금지) ·
+          “실제 근무를 하였는지 <b>객관적인 사실(초과근무실적, 출퇴근 인증내역, PC접속기록 등)을 확인 후</b> 집행”</blockquote>
+
+        <h5 class="lawh">판정 기준 — 이렇게 계산합니다</h5>
+        <table class="lawtbl">
+          <tr><th>정규근무시간</th><td>09:00 ~ 18:00 <span class="mut">(설정에서 변경 가능)</span></td></tr>
+          <tr><th>평일</th><td><b>퇴근 19:00 이후</b> (근무종료 18:00 + 1시간) <b>또는 출근 08:00 이전</b> (개시 09:00 − 1시간)<br>
+            <span class="mut">규정이 “1시간 <b>이상</b>”이므로 19:00 정각·08:00 정각도 충족으로 봅니다</span></td></tr>
+          <tr><th>휴일</th><td>(퇴근 − 출근) <b>60분 이상</b></td></tr>
+          <tr><th>조기출근</th><td>출근 08:00 이전이면서, 초과근무 등록이 <b>근무일 이전이거나 당일 09:00 이전</b>일 것</td></tr>
+          <tr><th>지급 단위</th><td><b>1인 1일 1식</b> — 같은 사람의 같은 날짜 기록이 여러 건이어도 1식</td></tr>
+          <tr><th>단가</th><td>1인 1식 <b>9,000원</b> <span class="mut">(훈령 제352호, 2024. 6. 1. 개정으로 8,000원 → 9,000원)</span></td></tr>
+        </table>
+
+        <h5 class="lawh">주의 — 이렇게 판정하면 틀립니다</h5>
+        <ul class="lawul">
+          <li><b>「수당시간(분)」으로 판정하지 않습니다.</b> 평일 시간외근무수당은 <b>1시간을 공제</b>하고 산정되므로,
+            수당시간이 60분 미만이어도 실제 근무는 1시간을 넘길 수 있습니다.
+            <span class="mut">예) 09:00~19:56 근무 → 수당시간 56분, 실제 초과근무 116분 → <b>지급 대상</b></span></li>
+          <li><b>요일만 보고 휴일을 판정하지 않습니다.</b> 토·일요일 외에 <b>공휴일·대체공휴일</b>을 함께 봅니다.
+            <span class="mut">예) 2026. 8. 17.(월)은 광복절(8/15 토) 대체공휴일 → 4시간 근무로 지급 대상</span></li>
+          <li><b>확인서에 실린 건만 처리합니다.</b> 초과근무 확인서는 새올에서 신청·승인·정산을 마친 결과이므로,
+            사전신청 여부를 이 화면에서 다시 판단하지 않습니다.</li>
+        </ul>
+
+        <h5 class="lawh">자동 판단이 안 되는 항목 — 담당자가 직접</h5>
+        <ul class="lawul">
+          <li><b>제외 대상 3종</b> — 교대근무자 · 야간/휴일근무수당 지급대상자 · 여비규정에 따라 식비를 지급받은 자(출장).
+            확인서만으로는 알 수 없으므로 <b>격자에서 해당 칸을 눌러 해제</b>하세요.</li>
+          <li><b>가맹업소</b> — 그날 어디에서 식사했는지는 확인서에 없습니다. 일자별로 지정하거나 일괄 지정하세요.</li>
+        </ul>
+
+        <h5 class="lawh">개인정보</h5>
+        <p class="lawp">이 화면은 <b>업소명만</b> 사용합니다. 가맹업소 <b>대표자 성명·계좌번호는 입력하지 마세요.</b>
+          올린 PDF는 이 컴퓨터 안에서만 처리되며 어디로도 전송되지 않습니다.</p>
+
+        <p class="lawwarn">⚠ <b>규정은 개정될 수 있습니다.</b> 위 내용은 2026. 9. 11. 기준으로 확인한 것입니다.
+          집행 전 국가법령정보센터에서 현행 [별표2]를 다시 확인하시고, 바뀐 내용이 있으면 아래 설정값과 이 안내를 함께 고쳐 주세요.</p>
+      </div>
+
+      <div id="mealBody"></div>
+    </section>
+
+
+    <!-- 출장비 계산하기 (세부 내역 추후 확정) -->
+    <section class="view" data-view="trip">
+      <div class="vh"><h2>출장비 계산하기</h2><p>출장 내역을 올리면 여비 규정에 맞춰 지급액을 계산하고 정산 서류까지 만들어 주는 화면입니다.</p></div>
+      <div class="card soon-card"><h4>준비 중 <small>메뉴 자리만 잡아둔 화면입니다</small></h4>
+        <ul class="soon-list">
+          <li><b>출장 내역 불러오기 → 여비 자동 산정</b> (관내·관외 구분, 일비·식비·숙박비·운임)</li>
+          <li><b>공용차량·자가차량·대중교통 구분</b>에 따른 운임 계산</li>
+          <li><b>4시간 미만 관내출장 등 감액·미지급 사유 자동 표시</b></li>
+          <li><b>출장여비 정산 내역서 작성 및 내려받기</b></li>
+          <li><b>급량비와 중복 지급 점검</b> — 「공무원 여비 규정」에 따라 식비를 지급받은 날은 급량비 제외 대상이므로, 「급량비 계산하기」 결과와 자동 대조</li>
+        </ul>
+        <p class="hint" style="margin-top:12px">근거 : 「공무원 여비 규정」 및 「지방공무원 여비 규정」, 달성군 여비 지급 기준.
+          ※ <b>규정·단가는 개정될 수 있으므로 화면에 근거 조항과 기준 일자를 함께 표시</b>하고, 최종 확인은 담당자가 합니다.
+          세부 기능·화면 구성은 협의 후 확정합니다.</p></div>
+    </section>
+
     <section class="view" data-view="voice">
       <div class="vh"><h2>안내방송 만들기</h2><p>알릴 내용만 적으면 마을 안내방송 원고와 음성 파일까지 만들어 주는 화면입니다.</p></div>
       <div class="card soon-card"><h4>준비 중 <small>메뉴 자리만 잡아둔 화면입니다</small></h4>
@@ -361,6 +452,7 @@
 </div></div>
 
 <script src="hwpx.js"></script>
+<script src="meal.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

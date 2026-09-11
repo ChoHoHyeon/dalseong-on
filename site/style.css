@@ -454,3 +454,93 @@ body[data-theme=dark] .soon-card{background:rgba(255,255,255,.04)}
 .pcols .req-box>label.pfull:nth-of-type(2){flex:1;min-height:0}
 .pcols .req-box>label.pfull:nth-of-type(2) textarea{flex:1;min-height:150px}
 .pcols .opt-box>label.pfull:last-of-type{margin-top:auto}
+
+/* ══════════════ 특근매식비 정산 ══════════════ */
+.lawcard .lawref{margin:0 0 14px;font-size:13.5px;line-height:1.7}
+.lawcard .lawdate{display:inline-block;margin-left:8px;font-size:11.5px;padding:2px 9px;border-radius:20px;
+  background:var(--bg);border:1px solid var(--line);color:var(--muted);vertical-align:2px}
+.lawq{margin:0 0 9px;padding:10px 14px;border-left:3px solid var(--accent);
+  background:var(--bg);border-radius:0 6px 6px 0;font-size:13.5px;line-height:1.7}
+.lawq b{color:var(--accent)}
+.lawh{margin:22px 0 9px;font-size:13.5px;font-weight:700;letter-spacing:-.2px;
+  padding-bottom:6px;border-bottom:1px solid var(--line)}
+.lawtbl{width:100%;border-collapse:collapse;font-size:13px}
+.lawtbl th,.lawtbl td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+.lawtbl th{background:var(--bg);width:120px;color:var(--muted);font-weight:600;white-space:nowrap}
+.lawul{margin:0;padding-left:20px;font-size:13.2px;line-height:1.75}
+.lawul li{margin-bottom:7px}
+.lawp{font-size:13.2px;line-height:1.75;margin:0}
+.lawcard .mut{color:var(--muted);font-size:12.5px}
+.lawwarn{margin:20px 0 0;padding:11px 15px;border-radius:7px;font-size:12.8px;line-height:1.7;
+  background:#fdf6e8;border:1px solid #ecd6a6;color:#8a5a00}
+
+.mlcard h4 small{font-weight:400;color:var(--muted)}
+.mlsaved{margin:0 0 10px;font-size:12px;color:var(--ok,#0f7b53);opacity:0;transition:opacity .25s}
+.mlsaved.on{opacity:1}
+.mlgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.mlcard label{display:block;margin-bottom:12px}
+.mlcard label>span{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.mlcard input,.mlcard select,.mlcard textarea{width:100%;padding:8px 10px;border:1px solid var(--line);
+  border-radius:7px;font:inherit;font-size:13px;background:var(--card);color:var(--fg)}
+.mlcard textarea{min-height:62px;resize:vertical;line-height:1.6}
+.mlcard .mlraw{min-height:150px}
+.mlfull{margin-top:4px}
+.mlnote{font-size:12.2px;color:var(--muted);line-height:1.65;margin:6px 0 0}
+.mlred{color:#b4342a}
+.mlbig{font-size:12.5px}
+
+.mltabs{display:flex;gap:6px;margin-bottom:12px}
+.mltabs button{border:1px solid var(--line);background:var(--card);color:var(--fg);
+  border-radius:20px;padding:6px 15px;font:inherit;font-size:12.5px;cursor:pointer}
+.mltabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.mldrop{border:2px dashed var(--line);border-radius:9px;padding:28px 16px;text-align:center;
+  color:var(--muted);background:var(--bg);cursor:pointer;line-height:1.8;transition:.15s}
+.mldrop:hover,.mldrop.on{border-color:var(--accent);background:var(--bg2,var(--bg));color:var(--accent)}
+.mlbtns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px}
+.mlbtns select{width:auto;min-width:150px;padding:8px 10px;border:1px solid var(--line);
+  border-radius:7px;font:inherit;font-size:13px;background:var(--card);color:var(--fg)}
+
+.mlstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-bottom:12px}
+.mlstat{border:1px solid var(--line);border-radius:8px;padding:11px 13px;background:var(--bg)}
+.mlstat .k{font-size:11.5px;color:var(--muted)}
+.mlstat .v{font-size:20px;font-weight:700;letter-spacing:-.5px;margin-top:2px}
+.mlstat .v small{font-size:12px;font-weight:500;color:var(--muted);margin-left:2px}
+.mldept{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;
+  padding:9px 13px;border-radius:7px;background:#fdf6e8;border:1px solid #ecd6a6;font-size:12.5px;color:#8a5a00}
+.mldept select{width:auto;min-width:150px;padding:5px 9px;border:1px solid #ecd6a6;border-radius:6px;font:inherit;font-size:12.5px}
+
+.mlscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.mlgrid{border-collapse:collapse;font-size:12.5px;white-space:nowrap}
+table.mlgrid th,table.mlgrid td{border:1px solid var(--line);padding:4px 7px;text-align:center}
+table.mlgrid thead th{background:var(--bg);font-weight:600}
+table.mlgrid td.day{background:var(--bg);text-align:left;font-variant-numeric:tabular-nums}
+table.mlgrid tr.hol td.day{background:#fdf6e8;color:#8a5a00}
+.mlc{display:inline-flex;width:26px;height:24px;align-items:center;justify-content:center;
+  border-radius:5px;font-size:12px;cursor:pointer;user-select:none}
+.mlc.y{background:#e6f4ee;color:#0f7b53;font-weight:700;border:1px solid #b9e0ce}
+.mlc.n{background:var(--bg);color:var(--muted);border:1px solid var(--line);text-decoration:line-through}
+.mlc.x{background:transparent;color:var(--line);border:1px dashed var(--line);cursor:not-allowed}
+
+table.mltbl{width:100%;border-collapse:collapse;font-size:12.8px}
+table.mltbl th,table.mltbl td{border:1px solid var(--line);padding:7px 9px;text-align:center}
+table.mltbl th{background:var(--bg);font-weight:600}
+table.mltbl td.l{text-align:left}
+table.mltbl td.r,table.mltbl th.r{text-align:right;font-variant-numeric:tabular-nums}
+table.mltbl tr.bad td{background:#fdecea}
+table.mltbl tr.sum th{background:var(--bg)}
+table.mltbl select{width:100%;padding:4px 7px;border:1px solid var(--line);border-radius:6px;
+  font:inherit;font-size:12.5px;background:var(--card);color:var(--fg)}
+.mlmut{color:var(--muted)}
+.mlok{padding:11px 15px;border-radius:7px;background:#e6f4ee;border:1px solid #b9e0ce;
+  color:#0f7b53;font-size:12.8px}
+.mlwarn{padding:11px 15px;border-radius:7px;background:#fdf6e8;border:1px solid #ecd6a6;
+  color:#8a5a00;font-size:12.8px;margin-bottom:10px}
+.mltitle{text-align:center;font-size:19px;font-weight:700;letter-spacing:5px;margin:8px 0 12px}
+.mlsub{text-align:right;font-size:12.2px;color:var(--muted);margin-bottom:8px}
+.mlh5{margin:22px 0 7px;font-size:13px;font-weight:700}
+
+@media print{
+  body>*{visibility:hidden}
+  .view[data-view="meal"] #mlLedger,.view[data-view="meal"] #mlLedger *{visibility:visible}
+  .view[data-view="meal"] #mlLedger{position:absolute;left:0;top:0;width:100%}
+}
