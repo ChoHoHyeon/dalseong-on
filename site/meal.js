@@ -500,13 +500,18 @@ function loadPdfJs(){
   });
 }
 async function readPdf(f){
-  const w=$('#mlPdfMsg'); w.textContent='읽는 중…';
+  const w=$('#mlPdfMsg'); w.textContent='';
+  setDrop('mlDrop','busy','<b>⏳ '+esc(f.name)+'</b><small>파일을 여는 중…</small>'+bar(8));
   try{
     const lib=await loadPdfJs();
     lib.GlobalWorkerOptions.workerSrc=PDFJS_WORKER;
+    setDrop('mlDrop','busy','<b>⏳ '+esc(f.name)+'</b><small>내용을 읽는 중…</small>'+bar(20));
     const pdf=await lib.getDocument({data:await f.arrayBuffer()}).promise;
     let txt='';
     for(let p=1;p<=pdf.numPages;p++){
+      setDrop('mlDrop','busy','<b>⏳ '+esc(f.name)+'</b><small>읽는 중 &nbsp;'+p+' / '+pdf.numPages+' 쪽</small>'
+        +bar(20+Math.round(70*p/pdf.numPages)));
+      await new Promise(r=>setTimeout(r,0));              // 화면이 갱신될 틈을 준다
       const ct=await (await pdf.getPage(p)).getTextContent();
       let y=null,line='';
       for(const it of ct.items){
@@ -516,23 +521,44 @@ async function readPdf(f){
       }
       txt+=line+'\n';
     }
+    setDrop('mlDrop','busy','<b>⏳ '+esc(f.name)+'</b><small>지급 대상을 판정하는 중…</small>'+bar(96));
+    await new Promise(r=>setTimeout(r,0));
     S.pdfText=txt;
-    w.innerHTML='<b>'+esc(f.name)+'</b> · '+pdf.numPages+'쪽 읽기 완료 — 바로 판정했습니다.';
     run(txt);
-    const o=$('#mlOut'); if(o&&!o.hidden) setTimeout(()=>o.scrollIntoView({behavior:'smooth',block:'start'}),120);
+    const n=(S.rows||[]).length, p2=(S.names||[]).length;
+    if(n){
+      setDrop('mlDrop','done','<b>✅ '+esc(f.name)+'</b>'+
+        '<small>'+pdf.numPages+'쪽 · 근무기록 <b>'+n+'건</b> · <b>'+p2+'명</b> — 계산을 마쳤습니다</small>'+
+        '<em>다른 파일로 바꾸려면 다시 놓거나 클릭하세요</em>');
+      const o=$('#mlOut'); if(o&&!o.hidden) setTimeout(()=>o.scrollIntoView({behavior:'smooth',block:'start'}),150);
+    } else setDrop('mlDrop','err','<b>⚠ '+esc(f.name)+'</b><small>읽기는 했지만 근무기록을 찾지 못했습니다</small>');
   }catch(e){
-    const why = e && e.message==='LOAD' ? 'PDF 읽기 모듈(vendor/pdf.min.js)을 불러오지 못했습니다'
-              : e && e.message==='LIB'  ? 'PDF 읽기 모듈이 올바르게 실행되지 않았습니다'
+    const why = e && e.message==='LOAD' ? 'PDF 읽기 모듈을 불러오지 못했습니다'
+              : e && e.message==='LIB'  ? 'PDF 읽기 모듈이 실행되지 않았습니다'
               : e && /password|encrypt/i.test(e.message||'') ? '암호가 걸린 PDF입니다'
               : 'PDF 내용을 읽지 못했습니다';
-    w.innerHTML='<span class="mlred"><b>'+why+'.</b> '+
-      '<small>'+esc(String((e&&e.message)||e||'')).slice(0,120)+'</small></span>';
+    setDrop('mlDrop','err','<b>⚠ '+esc(why)+'</b><small>'+esc(String((e&&e.message)||e||'')).slice(0,90)+
+      '</small><em>다시 시도하려면 클릭하세요</em>');
   }
 }
 
+/* 드롭존 상태 : 놓는 순간부터 끝날 때까지 큰 영역이 직접 말해 준다 */
+const DROP_IDLE={
+  mlDrop:'<b>초과근무 확인서 PDF</b><small>새올에서 출력한 파일을 끌어다 놓거나 클릭 · 올리면 <b>바로 판정</b></small>',
+  mlTripDrop:'<b>출장 내역 PDF</b><small>여비로 식비를 받은 날은 <b>자동 제외</b>됩니다</small>'
+};
+function setDrop(id,state,html){
+  const el=$('#'+id); if(!el) return;
+  el.classList.remove('busy','done','err');
+  if(state) el.classList.add(state);
+  el.innerHTML = state ? html : DROP_IDLE[id];
+}
+const bar=pct=>'<div class="dbar"><i style="width:'+pct+'%"></i></div>';
+
 /* 출장 내역 PDF → 이름·날짜만 뽑아 설정란 채우기 */
 async function readTrip(f){
-  const w=$('#mlTripMsg'); w.textContent='읽는 중…';
+  const w=$('#mlTripMsg'); w.textContent='';
+  setDrop('mlTripDrop','busy','<b>⏳ '+esc(f.name)+'</b><small>읽는 중…</small>'+bar(30));
   try{
     const lib=await loadPdfJs();
     lib.GlobalWorkerOptions.workerSrc=PDFJS_WORKER;
@@ -552,12 +578,12 @@ async function readTrip(f){
     $('#mlTrip').value=txt;
     const map=parseTrip(txt), n=Object.keys(map).length;
     let cnt=0; for(const k in map) cnt+=map[k].size;
-    w.innerHTML='<b>'+esc(f.name)+'</b> — <b>'+n+'명 / '+cnt+'건</b> 반영 '+
-      '<button class="mllink" id="mlTripClr">지우기</button>';
+    setDrop('mlTripDrop','done','<b>✅ '+esc(f.name)+'</b><small>출장 <b>'+n+'명 / '+cnt+'건</b> 반영</small>');
+    w.innerHTML='<button class="mllink" id="mlTripClr">출장 내역 지우기</button>';
     if(S.all&&S.all.length){ S.cfg=cfgRead(); apply(); }
   }catch(e){
-    w.innerHTML='<span class="mlred">출장 내역 PDF를 읽지 못했습니다. <small>'+
-      esc(String((e&&e.message)||e||'')).slice(0,120)+'</small></span>';
+    setDrop('mlTripDrop','err','<b>⚠ 출장 내역을 읽지 못했습니다</b><small>'+
+      esc(String((e&&e.message)||e||'')).slice(0,90)+'</small>');
   }
 }
 
