@@ -253,6 +253,8 @@ function draw(){
   }
   $('#mlGrid').innerHTML=h+'</tbody>';
   drawChk(); drawPay(); drawLedger(); drawTeamSet();
+  const fc=document.querySelector('.view[data-view="meal"] .flowcard'); if(fc) fc.hidden=true;
+  const up=document.querySelector('.view[data-view="meal"] .mlcard');   if(up) up.classList.add('slim');
   $('#mlOut').hidden=false;
 }
 const st=(k,v,u)=>'<div class="mlstat"><div class="k">'+k+'</div><div class="v">'+v+'<small>'+u+'</small></div></div>';
@@ -431,7 +433,7 @@ function drawLedger(){
   const dept=PROF||'달성군 행정국';
   let h='<div class="mltitle">특 근 매 식 비 집 행 대 장</div>'+
     '<div class="mlhead"><div class="mlsub2">'+y+'년 '+(+m)+'월 &nbsp;·&nbsp; '+esc(dept)+'</div></div>'+
-    '<table class="mltbl out"><thead><tr><th style="width:100px">특근일자</th><th style="width:56px">인원</th><th>특 근 자 명 단</th><th style="width:140px">가맹업소명</th><th style="width:150px">예산집행내역</th></tr></thead><tbody>';
+    '<div class="ldwrap"><table class="mltbl out"><thead><tr><th style="width:100px">특근일자</th><th style="width:56px">인원</th><th>특 근 자 명 단</th><th style="width:140px">가맹업소명</th><th style="width:150px">예산집행내역</th></tr></thead><tbody>';
   for(const r of rs){
     const names=r.ns.map(z=>'<span class="lname'+(z.on?'':' ex')+'" data-k="'+r.d+'|'+z.n+'"'+
       ' title="'+esc(z.on?('지급 대상'+(z.why?' — '+z.why:'')):('제외 — '+z.why))+'">'+esc(z.n)+'</span>').join('<i>,</i> ');
@@ -442,7 +444,7 @@ function drawLedger(){
        '<td>'+(r.shop?esc(r.shop):'')+'</td>'+
        '<td class="r">'+(r.cnt?won(c.price)+'×'+r.cnt+' = '+won(r.amt):'')+'</td></tr>';
   }
-  h+='<tr class="sum"><th>합 계</th><th>'+cnt+'</th><th colspan="2"></th><th class="r">'+won(tot)+'원</th></tr></tbody></table>'+
+  h+='<tr class="sum"><th>합 계</th><th>'+cnt+'</th><th colspan="2"></th><th class="r">'+won(tot)+'원</th></tr></tbody></table></div>'+
      '<p class="mlnote noprint">이름을 누르면 그 날의 지급 여부를 바꿀 수 있습니다. '+
      '<span class="exdemo">회색 취소선</span>은 제외된 사람이며 <b>인쇄물에는 나오지 않습니다.</b></p>';
   if(Object.keys(by).length>1){                 // 나눠 결제한 경우에만 업소별 정산을 덧붙인다

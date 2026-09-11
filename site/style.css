@@ -775,3 +775,26 @@ table.mlsign tr:last-child td{height:34px}
 .mldrop.err{border-style:solid;border-color:#e6b5b0;background:#fdeeec;color:#a8342a}
 .dbar{margin:10px auto 0;width:min(340px,80%);height:6px;border-radius:99px;background:rgba(47,111,237,.16);overflow:hidden}
 .dbar i{display:block;height:100%;border-radius:99px;background:var(--acc);transition:width .35s ease}
+/* 화면 길이 줄이기 */
+.ldwrap{max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.ldwrap table{border:0}
+.ldwrap thead th{position:sticky;top:0;z-index:2;background:var(--bg);box-shadow:0 1px 0 var(--line)}
+.ldwrap tr.sum th{position:sticky;bottom:0;z-index:2;background:var(--panel2);box-shadow:0 -1px 0 var(--line)}
+
+.mlcard.slim{padding-top:12px;padding-bottom:12px}
+.mlcard.slim>h4{margin-bottom:8px}
+.mlcard.slim .mlup.solo .mldrop{min-height:0;padding:12px 14px;flex-direction:row;gap:10px;flex-wrap:wrap}
+.mlcard.slim .mldrop b{font-size:13px}
+.mlcard.slim .mldrop small{margin-top:0;font-size:12px}
+.mlcard.slim .mldrop em{display:none}
+.mlcard.slim .mlnote{margin-top:4px}
+.mlcard.slim .mlmore{margin-top:8px;padding:7px}
+
+.mlcard{padding:14px 18px}
+.mlcard>h4{margin-bottom:10px}
+.paysum{padding:13px 16px;margin-bottom:10px}
+.mlsum2{margin-bottom:10px}
+.mltitle{margin:6px 0 8px}
+
+@media print{ .ldwrap{max-height:none!important;overflow:visible!important;border:0!important}
+  .ldwrap thead th,.ldwrap tr.sum th{position:static!important;box-shadow:none!important} }
