@@ -239,15 +239,13 @@ function drawVideo(i){
     : `<iframe src="https://www.youtube-nocookie.com/embed/${v.yt}?rel=0" title="${v.title}" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
   P.innerHTML = media + (n>1 ? `
     <button class="vnav prev" aria-label="이전 영상">‹</button>
-    <button class="vnav next" aria-label="다음 영상">›</button>
-    <div class="vdots">${VIDEOS.map((x,k)=>`<button class="${k===VIDX?'on':''}" data-k="${k}" title="${x.title}"></button>`).join('')}</div>` : '');
+    <button class="vnav next" aria-label="다음 영상">›</button>` : '');
   const note=$('#videoNote'); if(note) note.textContent=v.len+(v.yt?' · 유튜브':'');
   const cap=$('#videoCap');
   if(cap) cap.innerHTML=`<b>${v.title}</b> — ${v.sub}` + (n>1?` <span class="vidx">${VIDX+1} / ${n}</span>`:'');
   if(n>1){
     P.querySelector('.prev').onclick=()=>drawVideo(VIDX-1);
     P.querySelector('.next').onclick=()=>drawVideo(VIDX+1);
-    P.querySelectorAll('.vdots button').forEach(b=>b.onclick=()=>drawVideo(+b.dataset.k));
   }
 }
 
