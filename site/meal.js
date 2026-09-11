@@ -292,7 +292,36 @@ function drawTeamSet(){
 /* 이름을 누르면 「왜 빼는지」를 고르게 한다 — 사유가 다르면 다음 달 동작도 다르다 */
 let POP=null;
 function closePop(){ if(POP){ POP.remove(); POP=null; } }
-document.addEventListener('click',e=>{ if(POP&&!e.target.closest('.mlpop')&&!e.target.closest('th.nm')) closePop(); });
+document.addEventListener('click',e=>{ if(POP&&!e.target.closest('.mlpop')&&!e.target.closest('th.nm')&&!e.target.closest('.lname')) closePop(); });
+function cellMenu(anchor,d,n){
+  closePop();
+  const x=S.cells[d+'|'+n]; if(!x) return;
+  const shift=shiftGet().indexOf(n)>=0;
+  const p=document.createElement('div'); p.className='mlpop';
+  p.innerHTML='<div class="mlpoph"><b>'+esc(n)+'</b> · '+(+d.slice(5,7))+'월 '+(+d.slice(8))+'일'+
+      '<small>'+esc(x.why||'')+'</small></div>'+
+    (x.ok
+      ? (x.on ? '<button data-a="off">이 날 제외 <small>이 날짜만 빼기</small></button>'
+              : '<button data-a="on">이 날 지급 <small>다시 포함</small></button>')
+      : '<button data-a="on">이 날 지급 <small class="w">시간 요건에 못 미치지만 강제로 포함합니다</small></button>')+
+    (shift ? '<button data-a="unshift">「항상 제외」 해제</button>'
+           : '<button data-a="shift">'+esc(n)+'님 항상 제외 <small>교대근무자·야간/휴일근무수당 지급대상자</small></button>')+
+    '<button data-a="cancel" class="c">취소</button>';
+  document.body.appendChild(p);
+  const r=anchor.getBoundingClientRect();
+  p.style.top=(window.scrollY+r.bottom+6)+'px';
+  p.style.left=Math.min(window.scrollX+r.left, window.scrollX+document.documentElement.clientWidth-300)+'px';
+  p.addEventListener('click',ev=>{
+    const b2=ev.target.closest('button'); if(!b2) return;
+    const a2=b2.dataset.a; closePop();
+    if(a2==='on')  { x.on=true;  draw(); }
+    if(a2==='off') { x.on=false; draw(); }
+    if(a2==='shift')   { shiftSet([...shiftGet(),n]); refresh(); }
+    if(a2==='unshift') { shiftSet(shiftGet().filter(z=>z!==n)); refresh(); }
+  });
+  POP=p;
+}
+
 function nameMenu(anchor,n){
   closePop();
   const on=shiftGet().indexOf(n)>=0;
@@ -385,11 +414,16 @@ function allocate(){
 const payDays=()=>S.days.filter(d=>S.names.some(n=>{const x=S.cells[d+'|'+n];return x&&x.on;}));
 function ledgerRows(){
   const c=S.cfg;
-  return payDays().map(d=>{
-    const ns=S.names.filter(n=>{const x=S.cells[d+'|'+n];return x&&x.on;});
-    return {d,ns,cnt:ns.length,shop:S.shop[d]||'',amt:ns.length*c.price};
+  return S.days.filter(d=>S.names.some(n=>S.cells[d+'|'+n])).map(d=>{
+    const ns=[];
+    S.names.forEach(n=>{ const x=S.cells[d+'|'+n]; if(!x) return;
+      ns.push({n, on:!!x.on, why: x.on ? (x.hol?'휴일 근무':'') + (x.why?' · '+x.why:'')
+                                       : (x.auto || (x.ok ? '담당자가 직접 해제' : x.why)) }); });
+    const cnt=ns.filter(z=>z.on).length;
+    return {d, ns, cnt, shop:S.shop[d]||'', amt:cnt*c.price};
   });
 }
+
 function drawLedger(){
   const c=S.cfg, rs=ledgerRows(), [y,m]=c.ym.split('-');
   const tot=rs.reduce((a,r)=>a+r.amt,0), cnt=rs.reduce((a,r)=>a+r.cnt,0);
@@ -398,11 +432,19 @@ function drawLedger(){
   let h='<div class="mltitle">특 근 매 식 비 집 행 대 장</div>'+
     '<div class="mlhead"><div class="mlsub2">'+y+'년 '+(+m)+'월 &nbsp;·&nbsp; '+esc(dept)+'</div></div>'+
     '<table class="mltbl out"><thead><tr><th style="width:100px">특근일자</th><th style="width:56px">인원</th><th>특 근 자 명 단</th><th style="width:140px">가맹업소명</th><th style="width:150px">예산집행내역</th></tr></thead><tbody>';
-  for(const r of rs)
-    h+='<tr><td>'+(+m)+'. '+(+r.d.slice(8))+'.</td><td>'+r.cnt+'</td><td class="l">'+esc(r.ns.join(', '))+'</td>'+
-       '<td>'+(r.shop?esc(r.shop):'<span class="mlmut">미지정</span>')+'</td>'+
-       '<td class="r">'+won(c.price)+'×'+r.cnt+' = '+won(r.amt)+'</td></tr>';
-  h+='<tr class="sum"><th>합 계</th><th>'+cnt+'</th><th colspan="2"></th><th class="r">'+won(tot)+'원</th></tr></tbody></table>';
+  for(const r of rs){
+    const names=r.ns.map(z=>'<span class="lname'+(z.on?'':' ex')+'" data-k="'+r.d+'|'+z.n+'"'+
+      ' title="'+esc(z.on?('지급 대상'+(z.why?' — '+z.why:'')):('제외 — '+z.why))+'">'+esc(z.n)+'</span>').join('<i>,</i> ');
+    const dt=new Date(r.d+'T00:00:00'), w='일월화수목금토'[dt.getDay()], H=isHol(r.d,c);
+    const cls=[r.cnt?'':'zero', H?'hol':''].filter(Boolean).join(' ');
+    h+='<tr'+(cls?' class="'+cls+'"':'')+'><td class="dt">'+(+m)+'. '+(+r.d.slice(8))+'.<em>('+w+')</em></td><td>'+(r.cnt||'')+'</td>'+
+       '<td class="l nm">'+names+'</td>'+
+       '<td>'+(r.shop?esc(r.shop):'')+'</td>'+
+       '<td class="r">'+(r.cnt?won(c.price)+'×'+r.cnt+' = '+won(r.amt):'')+'</td></tr>';
+  }
+  h+='<tr class="sum"><th>합 계</th><th>'+cnt+'</th><th colspan="2"></th><th class="r">'+won(tot)+'원</th></tr></tbody></table>'+
+     '<p class="mlnote noprint">이름을 누르면 그 날의 지급 여부를 바꿀 수 있습니다. '+
+     '<span class="exdemo">회색 취소선</span>은 제외된 사람이며 <b>인쇄물에는 나오지 않습니다.</b></p>';
   if(Object.keys(by).length>1){                 // 나눠 결제한 경우에만 업소별 정산을 덧붙인다
     h+='<div class="mlh5">가맹업소별 정산</div><table class="mltbl out"><thead><tr><th>가맹업소</th><th style="width:80px">식수</th><th style="width:140px">금액</th></tr></thead><tbody>';
     for(const k in by) h+='<tr><td class="l">'+esc(k)+'</td><td>'+by[k].c+'</td><td class="r">'+won(by[k].a)+'원</td></tr>';
@@ -696,6 +738,10 @@ function build(){
     if(hd){ try{ const h=histGet(); delete h[hd.dataset.n];
       localStorage.setItem(K(LSH),JSON.stringify(h)); }catch(e2){} refresh(); }
   });
+  $('#mlLedger').addEventListener('click',e=>{
+    const el=e.target.closest('.lname[data-k]'); if(!el) return;
+    const [d,n]=el.dataset.k.split('|'); cellMenu(el,d,n);
+  });
   $('#mlGrid').addEventListener('click',e=>{
     const th=e.target.closest('th.nm[data-nm]');
     if(th){ nameMenu(th, th.dataset.nm); return; }
@@ -748,7 +794,7 @@ function build(){
   root.addEventListener('input', e=>{ if(CFGF.indexOf(e.target.id)>=0) saveCfg(); });
   $('#mlCsv').onclick=()=>{
     const c=S.cfg, L=[['특근일자','인원','특근자명단','가맹업소명','단가','금액']];
-    ledgerRows().forEach(r=>L.push([r.d,r.cnt,r.ns.join(' '),r.shop,c.price,r.amt]));
+    ledgerRows().filter(r=>r.cnt).forEach(r=>L.push([r.d,r.cnt,r.ns.filter(z=>z.on).map(z=>z.n).join(' '),r.shop,c.price,r.amt]));
     const csv='\uFEFF'+L.map(a=>a.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
     const a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
