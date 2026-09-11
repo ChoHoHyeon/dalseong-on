@@ -1,0 +1,8 @@
+{
+  "name": "dalseong-on-proto",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@netlify/blobs": "^11.0.3"
+  }
+}

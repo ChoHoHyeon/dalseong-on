@@ -139,6 +139,7 @@ const NAV={
     {id:'stats', icon:'📈', label:'이용 통계', sub:'질의 · 인용 · 문서'},
     {id:'update',icon:'🔄', label:'자료 갱신', sub:'한 번 등록 → 전 직원'},
     {id:'model', icon:'🤖', label:'모델 설정', sub:'API 키 · 온AI 전환'},
+    {id:'bugs',  icon:'🐞', label:'오류 신고함', sub:'접수된 신고 · 건의'},
   ],
 };
 const CHIPS={staff:['거리공연 지원사업 내용과 조례 근거는?','다사읍 경로당은 몇 개소야?','체육시설 사용료 감면 대상과 감면율은?','연가 2일 신청하면 결재선이 어떻게 돼?','수의계약 1인 견적 가능 한도는?','급식시설 환경개선 지원 대상과 내용은?','악성민원 조례에서 민원상담 권장 시간 규정은?','국민체육센터 위치와 주요 시설은?','소파 카우치 대형폐기물 수수료는?','생성형 AI에 개인정보 넣어도 돼?']};
@@ -190,8 +191,8 @@ const MINOR=[
   {mode:'admin',view:'stats',icon:'🛠', label:'관리자', cls:'minor admin'},
 ];
 const ON_VIEWS=['on','doc'];   // 이 화면들에서는 달성On 전용 메뉴
-const ALIAS={qa:'on',flow:'guide',news:'guide',contact:'guide',update:'stats',model:'stats'};
-const COMPOSITE={guide:['guide','flow','news','contact'],stats:['stats','update','model']};
+const ALIAS={qa:'on',flow:'guide',news:'guide',contact:'guide',update:'stats',model:'stats',bugs:'stats'};
+const COMPOSITE={guide:['guide','flow','news','contact'],stats:['stats','update','model','bugs']};
 function renderTabs(){}
 function loadRecent(){ try{ return JSON.parse(localStorage.getItem('dOnRecent')||'[]'); }catch(e){ return []; } }
 function pushRecent(q){ const r=loadRecent().filter(x=>x!==q); r.unshift(q); localStorage.setItem('dOnRecent',JSON.stringify(r.slice(0,12))); }
@@ -213,7 +214,7 @@ function renderNav(){
   const nc=$('#navClear'); if(nc) nc.onclick=()=>{ localStorage.removeItem('dOnRecent'); renderNav(); };
 }
 function setMode(m){ S.mode=m; document.body.dataset.mode=m; go(NAV[m][0].id); }
-function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); } if(top==='stats'){ renderStats(); updPill(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
+function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); } if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
 
 /* ── 홈 대시보드 ── */
 document.addEventListener('click',e=>{ const g=e.target.closest('[data-go]'); if(!g) return; const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });
@@ -279,7 +280,7 @@ const VIDEOS=[
 ];
 const VIDEO_FILE='assets/intro.mp4';  // (옛 설정 — VIDEOS 를 씁니다)
 const VIDEO_ID='OVZoYQeUFIQ';  // 유튜브 영상 ID를 넣으면 안내 영상이 재생됨, 비우면 포스터 표시
-const NEWS=[['2026.09.11','기능','🍚 <b>급량비 계산하기</b> — 오늘부터 사용할 수 있습니다','좌측 메뉴 「급량비 계산하기」에서 <b>새올 초과근무 확인서 PDF 하나만 올리면</b> 됩니다.<br><br>· 「지방자치단체 회계관리에 관한 훈령」(제416호) <b>급량비 기준에 따라 지급 대상을 판정</b>합니다 — 휴일·대체공휴일, 조기출근 사전신청까지 대조합니다<br>· 식당 이름만 적고 <b>「금액 자동계산」 → 「가맹업소명 배치하기」</b>를 누르면 일자별로 나뉘어 들어갑니다. 금액은 <b>9,000원 단위로 딱 떨어지게</b> 맞춰 줍니다<br>· <b>기존 집행대장 서식 그대로</b> 인쇄됩니다 (A4 가로 · 한 쪽 12건 · 결재란 포함). 엑셀 파일로도 내려받을 수 있습니다<br>· 2026년 8월 정보통신과 <b>54식 486,000원</b>으로 검증했고 기존 수기 집계와 일치했습니다<br><br><b>※ 확인서는 스캔하지 마시고</b> 새올 화면에서 「인쇄 → PDF로 저장」한 파일을 올려 주세요. 스캔본은 그림이라 내용을 읽을 수 없습니다.<br>※ 올린 파일은 <b>브라우저 안에서만 처리</b>되며 외부로 전송되지 않습니다.<br>※ 제외 대상은 자동 판단되지만 <b>결재 전 최종 확인은 담당자</b>가 합니다 — 규정상 「실제 근무 여부를 객관적 사실로 확인한 후 집행」해야 합니다.<br><br>시범 단계입니다. <b>처음 쓰실 때는 이미 지급이 끝난 지난 달로 한 번 돌려보시고</b> 기존 집계와 맞는지 확인해 주세요. 문의: 정보통신과 053-668-2454'],['2026.09.10','기능','📰 <b>보도자료 작성하기</b> — 오늘부터 사용할 수 있습니다','좌측 메뉴 「보도자료 작성하기」에서 <b>바로 쓰실 수 있습니다.</b><br><br>· <b>행사·사업명</b>과 <b>주요 내용</b>만 적으면 보도자료 초안이 만들어집니다 (계획서·기안문을 그대로 붙여넣거나 파일로 올려도 됩니다)<br>· 달성군이 실제로 발행한 <b>보도자료 600건</b>의 문체·구성을 따라 씁니다<br>· <b>홍보협력과 제출 서식 그대로</b> 한글 파일로 내려받습니다 — 표·글꼴·여백까지 동일<br>· 일시·장소·담당자를 비워 두면 <b>○○월 ○○일</b>처럼 빨간색으로 표시되니 나중에 채워 넣으시면 됩니다<br><br>※ 초안은 참고용입니다. <b>사실관계·수치·인용문은 반드시 확인 후</b> 배포해 주세요.'],['2026.09.10','자료','달성군 자치법규 <b>전량 색인</b> — 조례·규칙·훈령·예규 644건','법제처 「국가법령정보 공동활용」 API와 자치법규정보시스템(ELIS)을 통해 <b>대구광역시 달성군 자치법규 644건(9,739개 조문)</b>을 전부 색인했습니다.<br>· 조례 479건 · 규칙 95건 · <b>훈령 52건</b> · <b>예규 18건</b><br>· 이전: 7건 24개 조문(예시) → 현재: <b>644건 9,739개 조문(전량)</b><br>· 법규별 <b>소관부서</b>(60개 부서)와 시행일자를 함께 저장하여 「담당 부서 찾기」 근거로 사용합니다<br>· 위임전결 규정, 계약심사 업무처리 규정 등 <b>내부 훈령·예규까지 조문 단위로 검색</b>됩니다<br>· 모두 공개 자료이며, 조문 원문을 근거로 인용합니다'],['2026.09.10','공지','부군수 보고 결과 — 직원용 우선 도입 확정','① 우선 <b>직원용</b>으로 도입하여 전 직원이 자유롭게 사용할 수 있도록 구축<br>② 2027년 사업비 <b>20백만원</b> 범위에서 추진<br>③ 도입 후 <b>이용 활성화 상황을 지켜본 뒤</b>, 향후 <b>군민 대상(민원 안내) 서비스로 확장</b>할 수 있는 구조로 설계<br>※ 군민용 챗봇은 이번 단계에서 제외하되, 확장 가능한 구조는 유지합니다.'],['2026.09.10','공지','부군수 보고 일정 안내','2026. 9. 10.(목) 17:00 부군수님께 <b>달성On 시연판을 보고</b>드렸습니다.<br>시연 순서는 ① 달성On 홈 → ② 직원용 질의응답·한글 파일 생성 → ③ 관리자 통계 순으로 진행했습니다.<br>보고 결과는 위 <b>「부군수 보고 결과 — 직원용 우선 도입 확정」</b> 공지를 봐 주세요.'],['2026.09.09','공지','달성On 시연판 이용 안내','시연판은 달성군 자치법규 전량과 공공데이터 6종, 예시 자료(민원안내 10건·내부지침 5건)를 포함합니다. 답변은 참고용이며 최종 판단은 담당자가 합니다. 문의: 정보통신과 053-668-2454'],['2026.09.09','기능','「달성군」 홈 대시보드 · 이용 안내 · 공지 화면 추가'],['2026.09.09','기능','달성On/직원용/관리자 3개 탭 구조로 개편, 우측 AI 대화 패널'],['2026.09.09','기능','한글 문서 생성 화면(문서 종류 · 서식 미리보기) 신설'],['2026.09.09','자료','민원안내 10건(예시) · 내부지침 5건(예시) 등록'],['2026.09.08','자료','2026.7.10 공포 조례·규칙 7건 색인(24개 조문·별표)'],['2026.09.08','자료','공공데이터 6종 1,107행 연결 (경로당·판매소·도서관·대형폐기물·봉투가격·무료급식소)'],['2026.09.08','기능','달성On 시연판 최초 공개']];
+const NEWS=[['2026.09.11','기능','🍚 <b>급량비 계산하기</b> — 오늘부터 사용할 수 있습니다','좌측 메뉴 「급량비 계산하기」에서 <b>새올 초과근무 확인서 PDF 하나만 올리면</b> 됩니다.<br><br>· 「지방자치단체 회계관리에 관한 훈령」(제416호) <b>급량비 기준에 따라 지급 대상을 판정</b>합니다 — 휴일·대체공휴일, 조기출근 사전신청까지 대조합니다<br>· 식당 이름만 적고 <b>「금액 자동계산」 → 「가맹업소명 배치하기」</b>를 누르면 일자별로 나뉘어 들어갑니다. 금액은 <b>9,000원 단위로 딱 떨어지게</b> 맞춰 줍니다<br>· <b>기존 집행대장 서식 그대로</b> 인쇄됩니다 (A4 가로 · 한 쪽 12건 · 결재란 포함). 엑셀 파일로도 내려받을 수 있습니다<br>· 2026년 8월 정보통신과 <b>54식 486,000원</b>으로 검증했고 기존 수기 집계와 일치했습니다<br><br><b>※ 확인서는 스캔하지 마시고</b> 새올 화면에서 「인쇄 → PDF로 저장」한 파일을 올려 주세요. 스캔본은 그림이라 내용을 읽을 수 없습니다.<br>※ 올린 파일은 <b>브라우저 안에서만 처리</b>되며 외부로 전송되지 않습니다.<br>※ 제외 대상은 자동 판단되지만 <b>결재 전 최종 확인은 담당자</b>가 합니다 — 규정상 「실제 근무 여부를 객관적 사실로 확인한 후 집행」해야 합니다.<br><br>시범 단계입니다. <b>처음 쓰실 때는 이미 지급이 끝난 지난 달로 한 번 돌려보시고</b> 기존 집계와 맞는지 확인해 주세요. 문의: 정보통신과 053-668-2454'],['2026.09.10','기능','📰 <b>보도자료 작성하기</b> — 오늘부터 사용할 수 있습니다','좌측 메뉴 「보도자료 작성하기」에서 <b>바로 쓰실 수 있습니다.</b><br><br>· <b>행사·사업명</b>과 <b>주요 내용</b>만 적으면 보도자료 초안이 만들어집니다 (계획서·기안문을 그대로 붙여넣거나 파일로 올려도 됩니다)<br>· 달성군이 실제로 발행한 <b>보도자료 600건</b>의 문체·구성을 따라 씁니다<br>· <b>홍보협력과 제출 서식 그대로</b> 한글 파일로 내려받습니다 — 표·글꼴·여백까지 동일<br>· 일시·장소·담당자를 비워 두면 <b>○○월 ○○일</b>처럼 빨간색으로 표시되니 나중에 채워 넣으시면 됩니다<br><br>※ 초안은 참고용입니다. <b>사실관계·수치·인용문은 반드시 확인 후</b> 배포해 주세요.'],['2026.09.10','자료','달성군 자치법규 <b>전량 색인</b> — 조례·규칙·훈령·예규 644건','법제처 「국가법령정보 공동활용」 API와 자치법규정보시스템(ELIS)을 통해 <b>대구광역시 달성군 자치법규 644건(9,739개 조문)</b>을 전부 색인했습니다.<br>· 조례 479건 · 규칙 95건 · <b>훈령 52건</b> · <b>예규 18건</b><br>· 이전: 7건 24개 조문(예시) → 현재: <b>644건 9,739개 조문(전량)</b><br>· 법규별 <b>소관부서</b>(60개 부서)와 시행일자를 함께 저장하여 「담당 부서 찾기」 근거로 사용합니다<br>· 위임전결 규정, 계약심사 업무처리 규정 등 <b>내부 훈령·예규까지 조문 단위로 검색</b>됩니다<br>· 모두 공개 자료이며, 조문 원문을 근거로 인용합니다'],['2026.09.10','공지','부군수 보고 결과 — 직원용 우선 도입 확정','① 우선 <b>직원용</b>으로 도입하여 전 직원이 자유롭게 사용할 수 있도록 구축<br>② 2027년 사업비 <b>20백만원</b> 범위에서 추진<br>③ 도입 후 <b>이용 활성화 상황을 지켜본 뒤</b>, 향후 <b>군민 대상(민원 안내) 서비스로 확장</b>할 수 있는 구조로 설계<br>※ 군민용 챗봇은 이번 단계에서 제외하되, 확장 가능한 구조는 유지합니다.'],['2026.09.10','공지','부군수 보고 일정 안내','2026. 9. 9.(수) 부군수님께서 <b>행정용 생성형 AI 도입에 관한 검토</b>를 지시하셨습니다.<br>하루 뒤인 <b>2026. 9. 10.(목) 17:00</b> 부군수님께 검토 결과를 보고하는 일정이 잡혔습니다.<br>보고 결과는 위 <b>「부군수 보고 결과 — 직원용 우선 도입 확정」</b> 공지를 봐 주세요.'],['2026.09.09','공지','달성On 시연판 이용 안내','시연판은 달성군 자치법규 전량과 공공데이터 6종, 예시 자료(민원안내 10건·내부지침 5건)를 포함합니다. 답변은 참고용이며 최종 판단은 담당자가 합니다. 문의: 정보통신과 053-668-2454'],['2026.09.09','기능','「달성군」 홈 대시보드 · 이용 안내 · 공지 화면 추가'],['2026.09.09','기능','달성On/직원용/관리자 3개 탭 구조로 개편, 우측 AI 대화 패널'],['2026.09.09','기능','한글 문서 생성 화면(문서 종류 · 서식 미리보기) 신설'],['2026.09.09','자료','민원안내 10건(예시) · 내부지침 5건(예시) 등록'],['2026.09.08','자료','2026.7.10 공포 조례·규칙 7건 색인(24개 조문·별표)'],['2026.09.08','자료','공공데이터 6종 1,107행 연결 (경로당·판매소·도서관·대형폐기물·봉투가격·무료급식소)'],['2026.09.08','기능','달성On 시연판 최초 공개']];
 function renderNews(){ $('#newsList').innerHTML=NEWS.map(([d,t,s])=>`<li><span class="d">${d}</span><span class="t">${t}</span>${s}</li>`).join(''); }
 
 /* ── 우측 AI 대화 ── */
@@ -650,35 +651,94 @@ $('.brand').onclick=()=>{ setMode('home'); go('home'); };
     '<option>화면과 상관없는 이야기</option>';
   $('#btnBug').onclick=()=>{
     const c=cur(); if(c) $('#bugWhere').value=c;     // 보고 있던 화면을 미리 골라 둔다
-    $('#bugOk').hidden=true; box.hidden=false;
+    $('#bugOk').hidden=true; $('#bugCopy').hidden=true;
+    $('#bugSend').disabled=false; $('#bugSend').textContent='📮 제출하기';
+    box.hidden=false;
     setTimeout(()=>$('#bugText').focus(),80);
   };
   box.addEventListener('click',e=>{
     const k=e.target.closest('.bk');
     if(k){ box.querySelectorAll('.bk').forEach(b=>b.classList.remove('on')); k.classList.add('on'); return; }
   });
-  $('#bugCopy').onclick=async()=>{
-    const t=($('#bugText').value||'').trim();
-    if(!t){ $('#bugText').focus(); return; }
-    const kind=(box.querySelector('.bk.on')||{}).dataset||{};
-    const now=new Date();
-    const pad=n=>String(n).padStart(2,'0');
-    const txt=
-      '[달성On 오류신고·건의]\n'+
-      '화면 : '+($('#bugWhere').value||'—')+'\n'+
-      '종류 : '+(kind.k||'—')+'\n'+
-      '내용 : '+t+'\n'+
-      '연락처 : '+(($('#bugWho').value||'').trim()||'—')+'\n'+
-      '— 보낸 때 '+now.getFullYear()+'.'+pad(now.getMonth()+1)+'.'+pad(now.getDate())+' '+
-        pad(now.getHours())+':'+pad(now.getMinutes())+
-        ' · 화면폭 '+window.innerWidth+'px\n'+
+
+  const gather=()=>({
+    where : $('#bugWhere').value||'',
+    kind  : (((box.querySelector('.bk.on')||{}).dataset)||{}).k||'',
+    text  : ($('#bugText').value||'').trim(),
+    who   : ($('#bugWho').value||'').trim(),
+    w     : window.innerWidth
+  });
+  const asText=b=>{
+    const n=new Date(), p=x=>String(x).padStart(2,'0');
+    return '[달성On 오류신고·건의]\n'+
+      '화면 : '+(b.where||'—')+'\n'+
+      '종류 : '+(b.kind||'—')+'\n'+
+      '내용 : '+b.text+'\n'+
+      '연락처 : '+(b.who||'—')+'\n'+
+      '— 보낸 때 '+n.getFullYear()+'.'+p(n.getMonth()+1)+'.'+p(n.getDate())+' '+
+        p(n.getHours())+':'+p(n.getMinutes())+' · 화면폭 '+b.w+'px\n'+
       '— 받는 곳 정보통신과 053-668-2454';
+  };
+  const say=(m,bad)=>{ const el=$('#bugOk'); el.textContent=m; el.classList.toggle('bad',!!bad); el.hidden=false; };
+
+  // 제출 — 서버(/api/bugs)에 접수한다. 실패하면 복사하기로 물러난다.
+  $('#bugSend').onclick=async()=>{
+    const b=gather();
+    if(!b.text){ $('#bugText').focus(); say('내용을 적어 주세요',true); return; }
+    const btn=$('#bugSend'); btn.disabled=true; btn.textContent='보내는 중…';
+    try{
+      const r=await fetch('/api/bugs',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)});
+      if(!r.ok) throw new Error(await r.text());
+      say('✓ 접수되었습니다 — 관리자 › 오류 신고함에서 볼 수 있습니다');
+      $('#bugText').value=''; btn.textContent='📮 제출하기';
+      if(S.view==='stats') loadBugs();
+      setTimeout(()=>{ box.hidden=true; },1600);
+    }catch(e){
+      say('접수가 안 됩니다 — 복사해서 보내 주세요',true);
+      btn.disabled=false; btn.textContent='📮 다시 보내기';
+      $('#bugCopy').hidden=false;
+    }
+  };
+  // 물러날 자리 — 서버가 막혔을 때 메신저·메일로 보내도록
+  $('#bugCopy').onclick=async()=>{
+    const txt=asText(gather());
     try{ await navigator.clipboard.writeText(txt); }
     catch(e){ const ta=$('#bugText'); ta.value=txt; ta.select(); document.execCommand('copy'); }
-    $('#bugOk').hidden=false;
-    setTimeout(()=>{ $('#bugOk').hidden=true; },3000);
+    say('✓ 복사했습니다 — 053-668-2454 로 보내 주세요');
   };
 })();
+
+/* ── 관리자 · 오류 신고함 ── */
+const BUGKIND={'오류':'오류','결과이상':'결과 이상','불편':'불편','건의':'건의'};
+function bugWhen(iso){
+  const d=new Date(iso), p=x=>String(x).padStart(2,'0');
+  return d.getFullYear()+'.'+p(d.getMonth()+1)+'.'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
+async function loadBugs(){
+  const wrap=$('#bugList'), meta=$('#bugMeta'); if(!wrap) return;
+  wrap.innerHTML='<p class="hint">불러오는 중…</p>'; meta.textContent='';
+  try{
+    const r=await fetch('/api/bugs',{cache:'no-store'});
+    if(!r.ok) throw new Error(r.status);
+    const {list=[]}=await r.json();
+    if(!list.length){ wrap.innerHTML='<p class="hint">아직 접수된 내용이 없습니다.</p>'; meta.textContent='0건'; return; }
+    meta.textContent=list.length+'건 · 최근 '+bugWhen(list[0].at);
+    wrap.innerHTML=list.map(b=>
+      '<div class="bugitem">'+
+        '<div class="bh">'+
+          '<span class="kd k'+(b.kind||'')+'">'+(BUGKIND[b.kind]||'기타')+'</span>'+
+          '<b>'+esc(b.where||'화면 미지정')+'</b>'+
+          '<span class="at">'+bugWhen(b.at)+'</span>'+
+        '</div>'+
+        '<p class="bt">'+esc(b.text).replace(/\n/g,'<br>')+'</p>'+
+        (b.who?'<p class="bw">보낸 사람 · '+esc(b.who)+'</p>':'')+
+      '</div>').join('');
+  }catch(e){
+    wrap.innerHTML='<p class="hint">목록을 불러오지 못했습니다. 잠시 뒤 다시 눌러 주세요.</p>';
+    meta.textContent='';
+  }
+}
+if($('#bugReload')) $('#bugReload').onclick=loadBugs;
 
 $('#btnNoti').onclick=()=>{ $('#notiN').hidden=true; S.mode='home'; document.body.dataset.mode='home'; go('news'); }; $('#goModel').onclick=()=>{ $('#mSet').hidden=true; setMode('admin'); go('model'); };
 $$('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modal').hidden=true); $$('.modal').forEach(m=>m.onclick=e=>{ if(e.target===m&&m.id!=='mIntro') m.hidden=true; });
