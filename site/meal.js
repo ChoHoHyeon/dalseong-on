@@ -530,10 +530,9 @@ async function readPdf(f){
     const n=(S.rows||[]).length, p2=(S.names||[]).length;
     if(n){
       setDrop('mlDrop','done','<b>✅ '+esc(f.name)+'</b>'+
-        '<small>'+pdf.numPages+'쪽 · 근무기록 <b>'+n+'건</b> · <b>'+p2+'명</b> — 계산을 마쳤습니다</small>'+
-        '<em>다른 파일로 바꾸려면 다시 놓거나 클릭하세요</em>');
+        '<small>'+n+'건 · '+p2+'명</small><em>바꾸려면 클릭</em>');
       const o=$('#mlOut'); if(o&&!o.hidden) setTimeout(()=>o.scrollIntoView({behavior:'smooth',block:'start'}),150);
-    } else setDrop('mlDrop','err','<b>⚠ '+esc(f.name)+'</b><small>읽기는 했지만 근무기록을 찾지 못했습니다</small>');
+    } else setDrop('mlDrop','err','<b>⚠ '+esc(f.name)+'</b><small>근무기록을 찾지 못했습니다</small>');
   }catch(e){
     const why = e && e.message==='LOAD' ? 'PDF 읽기 모듈을 불러오지 못했습니다'
               : e && e.message==='LIB'  ? 'PDF 읽기 모듈이 실행되지 않았습니다'
@@ -580,7 +579,7 @@ async function readTrip(f){
     $('#mlTrip').value=txt;
     const map=parseTrip(txt), n=Object.keys(map).length;
     let cnt=0; for(const k in map) cnt+=map[k].size;
-    setDrop('mlTripDrop','done','<b>✅ '+esc(f.name)+'</b><small>출장 <b>'+n+'명 / '+cnt+'건</b> 반영</small>');
+    setDrop('mlTripDrop','done','<b>✅ '+esc(f.name)+'</b><small>출장 '+n+'명 · '+cnt+'건</small><em>바꾸려면 클릭</em>');
     w.innerHTML='<button class="mllink" id="mlTripClr">출장 내역 지우기</button>';
     if(S.all&&S.all.length){ S.cfg=cfgRead(); apply(); }
   }catch(e){

@@ -776,10 +776,8 @@ table.mlsign tr:last-child td{height:34px}
 .dbar{margin:10px auto 0;width:min(340px,80%);height:6px;border-radius:99px;background:rgba(47,111,237,.16);overflow:hidden}
 .dbar i{display:block;height:100%;border-radius:99px;background:var(--acc);transition:width .35s ease}
 /* 화면 길이 줄이기 */
-.ldwrap{max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:8px}
-.ldwrap table{border:0}
-.ldwrap thead th{position:sticky;top:0;z-index:2;background:var(--bg);box-shadow:0 1px 0 var(--line)}
-.ldwrap tr.sum th{position:sticky;bottom:0;z-index:2;background:var(--panel2);box-shadow:0 -1px 0 var(--line)}
+/* 집행대장 표는 잘리지 않게 전부 펼쳐 둔다 (내부 스크롤 없음) */
+.ldwrap{max-height:none;overflow:visible}
 
 .mlcard.slim{padding-top:12px;padding-bottom:12px}
 .mlcard.slim>h4{margin-bottom:8px}
@@ -798,3 +796,13 @@ table.mlsign tr:last-child td{height:34px}
 
 @media print{ .ldwrap{max-height:none!important;overflow:visible!important;border:0!important}
   .ldwrap thead th,.ldwrap tr.sum th{position:static!important;box-shadow:none!important} }
+/* 읽기가 끝나면 한 줄로 접힌다 (부모 클래스에 의존하지 않음) */
+.mlup .mldrop.done,.mlup.solo .mldrop.done{
+  min-height:0!important;padding:10px 16px!important;
+  flex-direction:row!important;flex-wrap:wrap;gap:4px 10px;justify-content:center;align-items:baseline}
+.mldrop.done b{font-size:13px!important;display:inline!important}
+.mldrop.done small{font-size:12px!important;margin-top:0!important;display:inline!important;opacity:.9}
+.mldrop.done small::before{content:'· '}
+.mldrop.done em{display:inline!important;font-size:11px!important;margin-top:0!important;opacity:.6}
+.mldrop.done em::before{content:'· '}
+.mlup .mldrop.err{min-height:0!important;padding:12px 16px!important}
