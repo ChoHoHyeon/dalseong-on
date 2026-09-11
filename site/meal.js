@@ -680,20 +680,17 @@ function buildXlsx(){
     /* 제목 */
     rows.push({h:54.95, c:[cell('특 근 매 식 비 집 행 대 장', xId(1,0,bId('','','',''),'center'))]});
     merges.push('A'+(base+1)+':L'+(base+1));
-    /* 열머리 2줄 */
-    rows.push({h:33, c:[
-      cell('특근일자',      xId(0,hFill,bId(TK,TN,TK,DB),'center')), null, null,
-      cell('인원(명)',      xId(0,hFill,bId(TN,TN,TK,DB),'center')),
-      cell('특 근 자 명 단', xId(0,hFill,bId(TN,TN,TK,DB),'center')),
-      cell('가맹업소명',    xId(0,hFill,bId(TN,TN,TK,DB),'center')),
-      cell('예산집행내역',  xId(0,hFill,bId(TN,TN,TK,DB),'center')), null, null,
-      cell('결 재',        xId(0,hFill,bId(TN,'',TK,TN),'center')),
-      cell('',            xId(0,hFill,bId('','',TK,TN),'center')),
-      cell('',            xId(0,hFill,bId('',TK,TK,TN),'center'))]});
-    rows.push({h:21, c:[null,null,null,null,null,null,null,null,null,
-      cell('담당자', xId(0,hFill,bId(TN,TN,TN,DB),'center')),
-      cell('담 당', xId(0,hFill,bId(TN,TN,TN,DB),'center')),
-      cell('과 장', xId(0,hFill,bId(TN,TK,TN,DB),'center'))]});
+    /* 열머리 2줄
+       ※ 병합된 칸이라도 안쪽 셀에 테두리를 넣어야 한다. 엑셀은 병합 영역의 테두리를
+          각 셀의 테두리를 이어 붙여 그리므로, 빈 셀을 두면 그 자리만 선이 끊긴다. */
+    const H2=[[TK,''],['',''],['',TN],[TN,TN],[TN,TN],[TN,TN],[TN,''],['',''],['',TN],[TN,''],['',''],['',TK]];
+    const H3=[[TK,''],['',''],['',TN],[TN,TN],[TN,TN],[TN,TN],[TN,''],['',''],['',TN],[TN,TN],[TN,TN],[TN,TK]];
+    const T2=['특근일자','','','인원(명)','특 근 자 명 단','가맹업소명','예산집행내역','','','결 재','',''];
+    const T3=['','','','','','','','','','담당자','담 당','과 장'];
+    rows.push({h:33, c:T2.map((t,i)=>
+      cell(t, xId(0,hFill,bId(H2[i][0],H2[i][1],TK, i>=9?TN:''),'center')))});
+    rows.push({h:21, c:T3.map((t,i)=>
+      cell(t, xId(0,hFill,bId(H3[i][0],H3[i][1], i>=9?TN:'', DB),'center')))});
     const h1=base+2, h2=base+3;
     merges.push('A'+h1+':C'+h2,'D'+h1+':D'+h2,'E'+h1+':E'+h2,'F'+h1+':F'+h2,
                 'G'+h1+':I'+h2,'J'+h1+':L'+h1);
