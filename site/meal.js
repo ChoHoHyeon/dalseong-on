@@ -456,19 +456,23 @@ function verify(){
 }
 
 /* ---------- PDF ---------- */
+/* pdf.js 는 사이트에 내장한다 — 폐쇄망·차단 환경에서도 동작해야 하므로 외부 CDN에 의존하지 않는다 */
+const PDFJS_SRC='vendor/pdf.min.js', PDFJS_WORKER='vendor/pdf.worker.min.js';
 function loadPdfJs(){
   return new Promise((ok,ng)=>{
     if(window.pdfjsLib) return ok(window.pdfjsLib);
-    const s=document.createElement('script');
-    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-    s.onload=()=>ok(window.pdfjsLib); s.onerror=ng; document.head.appendChild(s);
+    const el=document.createElement('script');
+    el.src=PDFJS_SRC;
+    el.onload=()=>window.pdfjsLib?ok(window.pdfjsLib):ng(new Error('LIB'));
+    el.onerror=()=>ng(new Error('LOAD'));
+    document.head.appendChild(el);
   });
 }
 async function readPdf(f){
   const w=$('#mlPdfMsg'); w.textContent='읽는 중…';
   try{
     const lib=await loadPdfJs();
-    lib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    lib.GlobalWorkerOptions.workerSrc=PDFJS_WORKER;
     const pdf=await lib.getDocument({data:await f.arrayBuffer()}).promise;
     let txt='';
     for(let p=1;p<=pdf.numPages;p++){
@@ -486,7 +490,12 @@ async function readPdf(f){
     run(txt);
     const o=$('#mlOut'); if(o&&!o.hidden) setTimeout(()=>o.scrollIntoView({behavior:'smooth',block:'start'}),120);
   }catch(e){
-    w.innerHTML='<span class="mlred">PDF를 읽지 못했습니다. 새올에서 다시 내려받아 올려 보세요.</span>';
+    const why = e && e.message==='LOAD' ? 'PDF 읽기 모듈(vendor/pdf.min.js)을 불러오지 못했습니다'
+              : e && e.message==='LIB'  ? 'PDF 읽기 모듈이 올바르게 실행되지 않았습니다'
+              : e && /password|encrypt/i.test(e.message||'') ? '암호가 걸린 PDF입니다'
+              : 'PDF 내용을 읽지 못했습니다';
+    w.innerHTML='<span class="mlred"><b>'+why+'.</b> '+
+      '<small>'+esc(String((e&&e.message)||e||'')).slice(0,120)+'</small></span>';
   }
 }
 
@@ -495,7 +504,7 @@ async function readTrip(f){
   const w=$('#mlTripMsg'); w.textContent='읽는 중…';
   try{
     const lib=await loadPdfJs();
-    lib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    lib.GlobalWorkerOptions.workerSrc=PDFJS_WORKER;
     const pdf=await lib.getDocument({data:await f.arrayBuffer()}).promise;
     let txt='';
     for(let p=1;p<=pdf.numPages;p++){
@@ -516,7 +525,8 @@ async function readTrip(f){
       '<button class="mllink" id="mlTripClr">지우기</button>';
     if(S.all&&S.all.length){ S.cfg=cfgRead(); apply(); }
   }catch(e){
-    w.innerHTML='<span class="mlred">출장 내역 PDF를 읽지 못했습니다.</span>';
+    w.innerHTML='<span class="mlred">출장 내역 PDF를 읽지 못했습니다. <small>'+
+      esc(String((e&&e.message)||e||'')).slice(0,120)+'</small></span>';
   }
 }
 
@@ -526,19 +536,18 @@ function build(){
   root.innerHTML=`
   <div class="card mlcard">
     <h4>① 파일 올리기 <small>두 개면 끝납니다</small></h4>
-    <div class="mlups">
-      <div class="mlup">
-        <div class="mldrop" id="mlDrop"><b>초과근무 확인서 PDF</b>
-          <small>새올에서 출력한 파일 · 올리면 <b>바로 판정</b></small></div>
-        <input type="file" id="mlFile" accept="application/pdf" hidden>
-        <p class="mlnote" id="mlPdfMsg">필수</p>
-      </div>
-      <div class="mlup">
-        <div class="mldrop alt" id="mlTripDrop"><b>출장 내역 PDF</b>
-          <small>식비 받은 날은 <b>자동 제외</b></small></div>
-        <input type="file" id="mlTripFile" accept="application/pdf" hidden>
-        <p class="mlnote" id="mlTripMsg">없으면 건너뛰어도 됩니다</p>
-      </div>
+    <div class="mlup solo">
+      <div class="mldrop" id="mlDrop"><b>초과근무 확인서 PDF</b>
+        <small>새올에서 출력한 파일을 끌어다 놓거나 클릭 · 올리면 <b>바로 판정</b></small></div>
+      <input type="file" id="mlFile" accept="application/pdf" hidden>
+      <p class="mlnote" id="mlPdfMsg">이 파일 하나면 판정·인원·명단이 모두 정해집니다.</p>
+    </div>
+    <button class="mlmore" id="mlTripToggle">＋ 출장 다녀온 사람이 있나요?</button>
+    <div id="mlTripWrap" hidden>
+      <div class="mldrop alt" id="mlTripDrop"><b>출장 내역 PDF</b>
+        <small>여비로 식비를 받은 날은 <b>자동 제외</b>됩니다</small></div>
+      <input type="file" id="mlTripFile" accept="application/pdf" hidden>
+      <p class="mlnote" id="mlTripMsg">없으면 넣지 않으셔도 됩니다.</p>
     </div>
     <textarea id="mlTrip" hidden></textarea>
     <div class="mlbtns"><button class="btn pri" id="mlRun">다시 판정하기</button>
@@ -567,11 +576,14 @@ function build(){
     </div>
 
     <div class="card mlcard">
-      <h4>④ 집행대장</h4>
+      <h4>④ 집행대장 <small>결재·지출결의에 붙이는 서식</small></h4>
       <div id="mlLedger"></div>
-      <div class="mlbtns"><button class="btn pri" id="mlPrint">인쇄 / PDF 저장</button>
+      <div class="mlbtns big"><button class="btn pri" id="mlPrint">🖨 집행대장 인쇄 · PDF로 저장</button>
         <button class="btn" id="mlCsv">CSV 내려받기</button></div>
-      <p class="mlnote">지출결의 첨부 : 영수증 · 초과근무 정산결과 · 집행대장(사본 「원본대조필」) · 공문</p>
+      <p class="mlnote"><b>인쇄를 누르면 위 집행대장만</b> 출력됩니다(화면의 다른 부분은 나오지 않습니다).
+        인쇄 창에서 <b>대상을 「PDF로 저장」</b>으로 바꾸면 파일로 받을 수 있습니다.
+        사본에는 「원본대조필」을 찍어 팀에 철하고 원본은 과 서무에게 제출합니다.</p>
+      <p class="mlnote">지출결의 첨부 : 영수증 · 초과근무 정산결과(새올) · 집행대장 · 관련 공문</p>
     </div>
 
     <details class="card mlcard foldcard sub">
@@ -662,7 +674,10 @@ function build(){
     if(!fs.length){ alert('PDF 파일만 올릴 수 있습니다.'); return; }
     const onTrip = e.target.closest && e.target.closest('#mlTripDrop');
     const isTrip = f=>/출장|여비|trip/i.test(f.name);
-    if(fs.length===1){ (onTrip||isTrip(fs[0])) ? readTrip(fs[0]) : readPdf(fs[0]); return; }
+    const openTrip=()=>{ const w=$('#mlTripWrap'); if(w&&w.hidden){ w.hidden=false;
+      $('#mlTripToggle').textContent='－ 출장 내역 닫기'; } };
+    if(fs.length===1){ if(onTrip||isTrip(fs[0])){ openTrip(); readTrip(fs[0]); } else readPdf(fs[0]); return; }
+    openTrip();
     const t=fs.filter(isTrip), o=fs.filter(f=>!isTrip(f));
     if(o[0]) readPdf(o[0]);
     if(t[0]) readTrip(t[0]); else if(o[1]) readTrip(o[1]);
@@ -672,6 +687,10 @@ function build(){
     $('#mlTrip').value=''; $('#mlTripMsg').textContent='없으면 건너뛰어도 됩니다';
     if(S.all&&S.all.length){ S.cfg=cfgRead(); apply(); }
   });
+  $('#mlTripToggle').onclick=()=>{
+    const w=$('#mlTripWrap'), on=w.hidden;
+    w.hidden=!on; $('#mlTripToggle').textContent = on ? '－ 출장 내역 닫기' : '＋ 출장 다녀온 사람이 있나요?';
+  };
   const td=$('#mlTripDrop'), tf=$('#mlTripFile');
   td.onclick=()=>tf.click();
   tf.onchange=()=>{if(tf.files[0])readTrip(tf.files[0]);};
