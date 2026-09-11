@@ -1007,3 +1007,42 @@ body[data-theme=dark] .view[data-view="meal"] .prnote{background:rgba(217,138,0,
 
 /* ── 드롭존 : 점선을 또렷하게 ── */
 .view[data-view="meal"] .mldrop{border:2px dashed var(--ln2)}
+
+/* ══════════════════════════════════════════════════════════════
+   오류 신고 · 건의
+   ══════════════════════════════════════════════════════════════ */
+#btnBug{font-size:15px}
+#btnBug:hover{background:rgba(217,138,0,.14)}
+.bugbox{max-width:520px}
+.bughint{margin:0 0 16px;line-height:1.6}
+.buglab{display:block;margin-bottom:13px}
+.buglab>span{display:block;font-size:12.5px;font-weight:700;color:var(--tx);margin-bottom:6px}
+.buglab>span small{font-weight:400;color:var(--mut)}
+.buglab textarea{min-height:92px;resize:vertical;line-height:1.6}
+.bugkind{display:flex;flex-wrap:wrap;gap:7px}
+.bk{padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:var(--panel);
+  font:inherit;font-size:12.5px;color:var(--mut);cursor:pointer;transition:.15s}
+.bk:hover{border-color:var(--acc);color:var(--acc)}
+.bk.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}
+.bugnote{margin:2px 0 0;padding:10px 12px;border-radius:8px;font-size:12.2px;line-height:1.6;
+  border:1px solid #e3c98a;background:#fdf6e4;color:#6b5115}
+body[data-theme=dark] .bugnote{background:rgba(217,138,0,.14);color:#f0d9a6;border-color:#6b5115}
+.bugrow{margin-top:14px;align-items:center;gap:9px}
+.bugok{font-size:12.5px;font-weight:700;color:#0b7a53;margin-right:auto}
+
+/* ── 안내 영상 넘기기 ──────────────────────────────────────── */
+.vnav{position:absolute;top:50%;transform:translateY(-50%);z-index:4;
+  width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.5);
+  background:rgba(0,0,0,.42);color:#fff;font-size:22px;line-height:1;cursor:pointer;
+  backdrop-filter:blur(4px);transition:.15s;opacity:.55}
+.player:hover .vnav{opacity:1}
+.vnav:hover{background:rgba(0,0,0,.72);transform:translateY(-50%) scale(1.07)}
+.vnav.prev{left:10px} .vnav.next{right:10px}
+.vdots{position:absolute;left:0;right:0;bottom:9px;z-index:4;display:flex;justify-content:center;gap:7px}
+.vdots button{width:9px;height:9px;padding:0;border-radius:50%;cursor:pointer;
+  border:1px solid rgba(255,255,255,.75);background:rgba(255,255,255,.28);transition:.15s}
+.vdots button.on{background:#fff;width:22px;border-radius:999px}
+.vcap b{color:var(--tx)}
+.vcap .vidx{margin-left:6px;font-size:11.5px;color:var(--mut);
+  border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+@media(max-width:700px){ .vnav{width:34px;height:34px;font-size:19px;opacity:1} }

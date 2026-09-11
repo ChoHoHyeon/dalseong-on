@@ -16,6 +16,7 @@
   <div class="top-c slogan"><img src="assets/slogan.png" alt="군민이 빛나는 달성"></div>
   <div class="top-r">
     <button class="ghost ic" id="btnNoti" title="공지·업데이트">🔔<span class="badge" id="notiN">3</span></button>
+    <button class="ghost ic" id="btnBug" title="오류 신고 · 건의">🐞</button>
     <button class="ghost ic" id="btnTheme" title="밝게/어둡게">🌙</button>
     <div class="user" id="userChip" title="접속 IP (실제 구축 시 새올 인증 사용자 정보로 대체)"><span class="uav">🖥</span><div><b id="userIp">–</b><small>접속 IP</small></div></div>
   </div>
@@ -41,7 +42,7 @@
       </div>
       <div class="portal-grid">
         <div class="card board"><h4>공지사항 <small>최근 5건</small><button class="ghost sm more" data-go="home:news">전체 보기 ›</button></h4><ul class="board-list" id="boardList"></ul></div>
-        <div class="card video"><h4>달성On 안내 영상 <small id="videoNote">소개 · 이용 방법</small></h4><div class="player" id="player"></div><p class="hint" style="margin-top:10px">달성On이 무엇을 해 주는지 29초로 보여주는 소개 영상입니다. (시우가 안내합니다)</p></div>
+        <div class="card video"><h4>달성On 안내 영상 <small id="videoNote">소개 · 이용 방법</small></h4><div class="player" id="player"></div><p class="hint vcap" id="videoCap" style="margin-top:10px"></p></div>
       </div>
       <div class="home-usage">
       <div class="kpis five" id="homeKpis"></div>
@@ -506,6 +507,33 @@
 
 <!-- 설정(빠른 접근) -->
 <div class="modal" id="mSet" hidden><div class="box"><div class="box-h"><b>⚙ 설정</b><button class="x" data-close>✕</button></div><p class="hint">모델·API 키 설정은 <b>관리자 › 모델 설정</b>에 있습니다.</p><div class="row end"><button class="primary" id="goModel">모델 설정으로</button></div></div></div>
+
+<!-- 오류 신고 · 건의 -->
+<div class="modal" id="mBug" hidden><div class="box bugbox">
+  <div class="box-h"><b>🐞 오류 신고 · 건의</b><button class="x" data-close>✕</button></div>
+  <p class="hint bughint">쓰시다 이상한 점이나 불편한 점을 <b>짧게 적어 주시면</b> 됩니다.
+    길게 안 쓰셔도 됩니다 — 어느 화면에서 무엇이 이상했는지만 있으면 충분합니다.</p>
+  <label class="buglab"><span>어느 화면인가요?</span>
+    <select id="bugWhere"></select></label>
+  <label class="buglab"><span>어떤 내용인가요?</span>
+    <div class="bugkind">
+      <button type="button" class="bk on" data-k="오류">오류가 났어요</button>
+      <button type="button" class="bk" data-k="결과이상">결과가 이상해요</button>
+      <button type="button" class="bk" data-k="불편">쓰기 불편해요</button>
+      <button type="button" class="bk" data-k="건의">이런 게 있으면</button>
+    </div></label>
+  <label class="buglab"><span>내용</span>
+    <textarea id="bugText" rows="5" placeholder="예) 8월 확인서를 올렸는데 30일이 빠져서 나옵니다.&#10;예) 인쇄하면 표가 두 장으로 나뉩니다."></textarea></label>
+  <label class="buglab"><span>연락처 <small>(선택 — 답을 드려야 할 때만)</small></span>
+    <input id="bugWho" placeholder="예) 정보통신과 홍길동 · 2454"></label>
+  <p class="bugnote">📋 <b>복사하기</b>를 누르면 아래 내용이 복사됩니다.
+    <b>정보통신과 053-668-2454</b> 로 메신저·메일에 붙여넣어 보내 주세요.</p>
+  <div class="row end bugrow">
+    <span class="bugok" id="bugOk" hidden>✓ 복사했습니다</span>
+    <button class="ghost" data-close>닫기</button>
+    <button class="primary" id="bugCopy">📋 복사하기</button>
+  </div>
+</div></div>
 
 <!-- 첫 안내 -->
 <div class="modal" id="mIntro" hidden><div class="box intro">

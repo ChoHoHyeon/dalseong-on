@@ -223,12 +223,33 @@ function renderHome(){
   const cls={'공지':'notice','자료':'data','기능':''};
   $('#boardList').innerHTML=NEWS.slice(0,5).map(([d,t,s,body],i)=>`<li class="${i<2?'new':''}"><span class="t ${cls[t]||''}">${t}</span><b>${s}</b><span class="d">${d}</span><div class="body">${body||s}</div></li>`).join('');
   $$('#boardList li').forEach(li=>li.onclick=()=>li.classList.toggle('open'));
-  const P=$('#player');
-  if(VIDEO_FILE){ P.innerHTML=`<video src="${VIDEO_FILE}" poster="assets/intro_poster.jpg" controls playsinline preload="metadata" controlsList="nodownload noplaybackrate" disablePictureInPicture></video>`; $('#videoNote').textContent='29초'; }
-  else if(VIDEO_ID){ P.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${VIDEO_ID}?rel=0" title="달성On 안내 영상" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`; $('#videoNote').textContent='29초 · 유튜브'; }
+  drawVideo(0);
   renderUsage();
   $('#diffGrid').innerHTML=[['① 문서 산출','답변을 달성군 서식 한글(hwpx)로 즉시 생성 — 타 도구는 텍스트만'],['② 운영 환경','업무망 자체 서버 · 내부자료 활용 (구글 개인 도구·인터넷망 ✗)'],['③ 지속성','개인 계정이 아닌 군 정보시스템 — 인사이동에도 유지'],['④ 자료 규모','제한 없음 (NotebookLM 50개 · Gem 10개 ✗) · 창구 하나'],['⑤ 범용 AI','자료 밖 질문도 일반 생성형 AI처럼 답변 · 개인 유료 구독 불필요']].map(([b,s])=>`<div class="dg"><b>${b}</b><small>${s}</small></div>`).join('');
 }
+/* 안내 영상 재생기 — 여러 편을 넘겨 본다 */
+let VIDX=0;
+function drawVideo(i){
+  const P=$('#player'); if(!P||!VIDEOS.length) return;
+  VIDX=(i+VIDEOS.length)%VIDEOS.length;
+  const v=VIDEOS[VIDX], n=VIDEOS.length;
+  const media = v.file
+    ? `<video src="${v.file}"${v.poster?` poster="${v.poster}"`:''} controls playsinline preload="metadata" controlsList="nodownload noplaybackrate" disablePictureInPicture></video>`
+    : `<iframe src="https://www.youtube-nocookie.com/embed/${v.yt}?rel=0" title="${v.title}" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+  P.innerHTML = media + (n>1 ? `
+    <button class="vnav prev" aria-label="이전 영상">‹</button>
+    <button class="vnav next" aria-label="다음 영상">›</button>
+    <div class="vdots">${VIDEOS.map((x,k)=>`<button class="${k===VIDX?'on':''}" data-k="${k}" title="${x.title}"></button>`).join('')}</div>` : '');
+  const note=$('#videoNote'); if(note) note.textContent=v.len+(v.yt?' · 유튜브':'');
+  const cap=$('#videoCap');
+  if(cap) cap.innerHTML=`<b>${v.title}</b> — ${v.sub}` + (n>1?` <span class="vidx">${VIDX+1} / ${n}</span>`:'');
+  if(n>1){
+    P.querySelector('.prev').onclick=()=>drawVideo(VIDX-1);
+    P.querySelector('.next').onclick=()=>drawVideo(VIDX+1);
+    P.querySelectorAll('.vdots button').forEach(b=>b.onclick=()=>drawVideo(+b.dataset.k));
+  }
+}
+
 /* 관리자 › 이용 통계·자료 현황 (KPI · 참조 순위 · 자료 구성 · 자치법규) */
 function renderUsage(){
   const c=S.meta.counts, total=c.law+c.minwon+c.data+c.internal;
@@ -247,7 +268,16 @@ function renderUsage(){
   $('#lawList').innerHTML=(S.meta.law_recent||[]).map(L=>`<li><i></i><div>${shortNm(L.n)}<small>${L.d?L.d+' · ':''}${L.c}개 조문 색인 · 시행 ${dstr(L.e)}</small></div></li>`).join('');
 }
 
-const VIDEO_FILE='assets/intro.mp4';  // 사이트에 직접 넣은 영상(유튜브 오버레이 없음). 비우면 VIDEO_ID 유튜브 사용
+/* ── 안내 영상 목록 ──────────────────────────────────────────
+   영상이 늘어나면 이 배열에 한 줄만 더하면 된다. 넘김 단추는 개수에 맞춰 저절로 생긴다.
+   file 대신 yt(유튜브 ID)를 적어도 된다. */
+const VIDEOS=[
+  {title:'달성On 소개',        sub:'무엇을 해 주는지 29초로',   len:'29초',
+   file:'assets/intro.mp4',  poster:'assets/intro_poster.jpg'},
+  {title:'급량비 계산하기',     sub:'확인서 PDF 하나로 집행대장까지', len:'37초',
+   file:'assets/meal_guide.mp4', poster:'assets/meal_guide_poster.jpg'}
+];
+const VIDEO_FILE='assets/intro.mp4';  // (옛 설정 — VIDEOS 를 씁니다)
 const VIDEO_ID='OVZoYQeUFIQ';  // 유튜브 영상 ID를 넣으면 안내 영상이 재생됨, 비우면 포스터 표시
 const NEWS=[['2026.09.11','기능','🍚 <b>급량비 계산하기</b> — 오늘부터 사용할 수 있습니다','좌측 메뉴 「급량비 계산하기」에서 <b>새올 초과근무 확인서 PDF 하나만 올리면</b> 됩니다.<br><br>· 「지방자치단체 회계관리에 관한 훈령」(제416호) <b>급량비 기준에 따라 지급 대상을 판정</b>합니다 — 휴일·대체공휴일, 조기출근 사전신청까지 대조합니다<br>· 식당 이름만 적고 <b>「금액 자동계산」 → 「가맹업소명 배치하기」</b>를 누르면 일자별로 나뉘어 들어갑니다. 금액은 <b>9,000원 단위로 딱 떨어지게</b> 맞춰 줍니다<br>· <b>기존 집행대장 서식 그대로</b> 인쇄됩니다 (A4 가로 · 한 쪽 12건 · 결재란 포함). 엑셀 파일로도 내려받을 수 있습니다<br>· 2026년 8월 정보통신과 <b>54식 486,000원</b>으로 검증했고 기존 수기 집계와 일치했습니다<br><br><b>※ 확인서는 스캔하지 마시고</b> 새올 화면에서 「인쇄 → PDF로 저장」한 파일을 올려 주세요. 스캔본은 그림이라 내용을 읽을 수 없습니다.<br>※ 올린 파일은 <b>브라우저 안에서만 처리</b>되며 외부로 전송되지 않습니다.<br>※ 제외 대상은 자동 판단되지만 <b>결재 전 최종 확인은 담당자</b>가 합니다 — 규정상 「실제 근무 여부를 객관적 사실로 확인한 후 집행」해야 합니다.<br><br>시범 단계입니다. <b>처음 쓰실 때는 이미 지급이 끝난 지난 달로 한 번 돌려보시고</b> 기존 집계와 맞는지 확인해 주세요. 문의: 정보통신과 053-668-2454'],['2026.09.10','기능','📰 <b>보도자료 작성하기</b> — 오늘부터 사용할 수 있습니다','좌측 메뉴 「보도자료 작성하기」에서 <b>바로 쓰실 수 있습니다.</b><br><br>· <b>행사·사업명</b>과 <b>주요 내용</b>만 적으면 보도자료 초안이 만들어집니다 (계획서·기안문을 그대로 붙여넣거나 파일로 올려도 됩니다)<br>· 달성군이 실제로 발행한 <b>보도자료 600건</b>의 문체·구성을 따라 씁니다<br>· <b>홍보협력과 제출 서식 그대로</b> 한글 파일로 내려받습니다 — 표·글꼴·여백까지 동일<br>· 일시·장소·담당자를 비워 두면 <b>○○월 ○○일</b>처럼 빨간색으로 표시되니 나중에 채워 넣으시면 됩니다<br><br>※ 초안은 참고용입니다. <b>사실관계·수치·인용문은 반드시 확인 후</b> 배포해 주세요.'],['2026.09.10','자료','달성군 자치법규 <b>전량 색인</b> — 조례·규칙·훈령·예규 644건','법제처 「국가법령정보 공동활용」 API와 자치법규정보시스템(ELIS)을 통해 <b>대구광역시 달성군 자치법규 644건(9,739개 조문)</b>을 전부 색인했습니다.<br>· 조례 479건 · 규칙 95건 · <b>훈령 52건</b> · <b>예규 18건</b><br>· 이전: 7건 24개 조문(예시) → 현재: <b>644건 9,739개 조문(전량)</b><br>· 법규별 <b>소관부서</b>(60개 부서)와 시행일자를 함께 저장하여 「담당 부서 찾기」 근거로 사용합니다<br>· 위임전결 규정, 계약심사 업무처리 규정 등 <b>내부 훈령·예규까지 조문 단위로 검색</b>됩니다<br>· 모두 공개 자료이며, 조문 원문을 근거로 인용합니다'],['2026.09.10','공지','부군수 보고 결과 — 직원용 우선 도입 확정','① 우선 <b>직원용</b>으로 도입하여 전 직원이 자유롭게 사용할 수 있도록 구축<br>② 2027년 사업비 <b>20백만원</b> 범위에서 추진<br>③ 도입 후 <b>이용 활성화 상황을 지켜본 뒤</b>, 향후 <b>군민 대상(민원 안내) 서비스로 확장</b>할 수 있는 구조로 설계<br>※ 군민용 챗봇은 이번 단계에서 제외하되, 확장 가능한 구조는 유지합니다.'],['2026.09.10','공지','부군수 보고 시연 안내','시연 순서: ① 달성On 홈 → ② 직원용 질의응답·한글 파일 생성 → ③ 관리자 통계. 시연 중 질문은 예시 질문 버튼을 우선 사용해 주세요.'],['2026.09.09','공지','달성On 시연판 이용 안내','시연판은 달성군 자치법규 전량과 공공데이터 6종, 예시 자료(민원안내 10건·내부지침 5건)를 포함합니다. 답변은 참고용이며 최종 판단은 담당자가 합니다. 문의: 정보통신과 053-668-2454'],['2026.09.09','기능','「달성군」 홈 대시보드 · 이용 안내 · 공지 화면 추가'],['2026.09.09','기능','달성On/직원용/관리자 3개 탭 구조로 개편, 우측 AI 대화 패널'],['2026.09.09','기능','한글 문서 생성 화면(문서 종류 · 서식 미리보기) 신설'],['2026.09.09','자료','민원안내 10건(예시) · 내부지침 5건(예시) 등록'],['2026.09.08','자료','2026.7.10 공포 조례·규칙 7건 색인(24개 조문·별표)'],['2026.09.08','자료','공공데이터 6종 1,107행 연결 (경로당·판매소·도서관·대형폐기물·봉투가격·무료급식소)'],['2026.09.08','기능','달성On 시연판 최초 공개']];
 function renderNews(){ $('#newsList').innerHTML=NEWS.map(([d,t,s])=>`<li><span class="d">${d}</span><span class="t">${t}</span>${s}</li>`).join(''); }
@@ -605,6 +635,51 @@ $('#apiKey').oninput=e=>{ S.key=e.target.value.trim(); updPill(); }; $('#model')
 
 /* ── 기타 ── */
 $('.brand').onclick=()=>{ setMode('home'); go('home'); };
+/* ── 오류 신고 · 건의 ─────────────────────────────────────────
+   서버가 없는 시범 화면이라 「복사해서 보내기」 방식이 가장 확실하다.
+   2027년 본 구축에서는 이 자리에서 바로 접수되도록 바꾼다. */
+(function bugReport(){
+  const box=$('#mBug'); if(!box) return;
+  const cur=()=>{
+    const v=document.body.dataset.view||'';
+    const m=HOME_MENU.find(x=>x.view===v);
+    return m ? m.label.replace(/\n/g,' ') : '';
+  };
+  $('#bugWhere').innerHTML='<option value="">— 고르지 않아도 됩니다 —</option>'+
+    HOME_MENU.filter(m=>m.view).map(m=>'<option>'+m.label.replace(/\n/g,' ')+'</option>').join('')+
+    '<option>화면과 상관없는 이야기</option>';
+  $('#btnBug').onclick=()=>{
+    const c=cur(); if(c) $('#bugWhere').value=c;     // 보고 있던 화면을 미리 골라 둔다
+    $('#bugOk').hidden=true; box.hidden=false;
+    setTimeout(()=>$('#bugText').focus(),80);
+  };
+  box.addEventListener('click',e=>{
+    const k=e.target.closest('.bk');
+    if(k){ box.querySelectorAll('.bk').forEach(b=>b.classList.remove('on')); k.classList.add('on'); return; }
+  });
+  $('#bugCopy').onclick=async()=>{
+    const t=($('#bugText').value||'').trim();
+    if(!t){ $('#bugText').focus(); return; }
+    const kind=(box.querySelector('.bk.on')||{}).dataset||{};
+    const now=new Date();
+    const pad=n=>String(n).padStart(2,'0');
+    const txt=
+      '[달성On 오류신고·건의]\n'+
+      '화면 : '+($('#bugWhere').value||'—')+'\n'+
+      '종류 : '+(kind.k||'—')+'\n'+
+      '내용 : '+t+'\n'+
+      '연락처 : '+(($('#bugWho').value||'').trim()||'—')+'\n'+
+      '— 보낸 때 '+now.getFullYear()+'.'+pad(now.getMonth()+1)+'.'+pad(now.getDate())+' '+
+        pad(now.getHours())+':'+pad(now.getMinutes())+
+        ' · 화면폭 '+window.innerWidth+'px\n'+
+      '— 받는 곳 정보통신과 053-668-2454';
+    try{ await navigator.clipboard.writeText(txt); }
+    catch(e){ const ta=$('#bugText'); ta.value=txt; ta.select(); document.execCommand('copy'); }
+    $('#bugOk').hidden=false;
+    setTimeout(()=>{ $('#bugOk').hidden=true; },3000);
+  };
+})();
+
 $('#btnNoti').onclick=()=>{ $('#notiN').hidden=true; S.mode='home'; document.body.dataset.mode='home'; go('news'); }; $('#goModel').onclick=()=>{ $('#mSet').hidden=true; setMode('admin'); go('model'); };
 $$('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modal').hidden=true); $$('.modal').forEach(m=>m.onclick=e=>{ if(e.target===m&&m.id!=='mIntro') m.hidden=true; });
 $('#btnTheme').onclick=()=>{ const l=document.body.dataset.theme!=='light'; document.body.dataset.theme=l?'light':'dark'; $('#btnTheme').textContent=l?'🌙':'☀️'; try{localStorage.setItem('dOnTheme',l?'light':'dark');}catch(e){} };
