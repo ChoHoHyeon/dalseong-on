@@ -539,11 +539,6 @@ table.mltbl select{width:100%;padding:4px 7px;border:1px solid var(--line);borde
 .mlsub{text-align:right;font-size:12.2px;color:var(--mut);margin-bottom:8px}
 .mlh5{margin:22px 0 7px;font-size:13px;font-weight:700}
 
-@media print{
-  body>*{visibility:hidden}
-  .view[data-view="meal"] #mlLedger,.view[data-view="meal"] #mlLedger *{visibility:visible}
-  .view[data-view="meal"] #mlLedger{position:absolute;left:0;top:0;width:100%}
-}
 .mlcard.verify{border-color:#c9d6ee;background:linear-gradient(180deg,rgba(23,65,143,.03),transparent 60px)}
 .mlcard.verify h4{color:var(--acc)}
 
@@ -713,27 +708,6 @@ table.mlsign th,table.mlsign td{border:1px solid var(--tx);padding:3px 10px;text
 table.mlsign th{width:22px;min-width:22px;background:var(--bg);line-height:1.15}
 table.mlsign tr:last-child td{height:34px}
 
-@media print{
-  @page{size:A4 portrait;margin:12mm 11mm}
-  html,body{background:#fff!important}
-  body>*{visibility:hidden}
-  .view[data-view="meal"] #mlLedger,.view[data-view="meal"] #mlLedger *{visibility:visible}
-  .view[data-view="meal"] #mlLedger{position:absolute;left:0;top:0;width:100%}
-  /* A4 한 장에 담는다 : 31행까지 여유 */
-  #mlLedger table{page-break-inside:auto;font-size:9.6pt;width:100%}
-  #mlLedger th,#mlLedger td{padding:2.6px 5px!important;line-height:1.25;
-    border-color:#000!important;color:#000!important;background:#fff!important}
-  #mlLedger thead{display:table-header-group}
-  #mlLedger tr{page-break-inside:avoid}
-  #mlLedger .mltitle{font-size:15pt;margin:0 0 8px;letter-spacing:4px}
-  #mlLedger .mlhead{margin-bottom:6px}
-  #mlLedger .mlsub2{font-size:9.5pt}
-  #mlLedger table.mlsign{font-size:8.5pt}
-  #mlLedger table.mlsign th,#mlLedger table.mlsign td{padding:2px 8px!important;min-width:48px}
-  #mlLedger table.mlsign tr:last-child td{height:26px}
-  #mlLedger .mlh5{font-size:9.5pt;margin:10px 0 4px}
-  #mlLedger .mlnote{font-size:8pt;color:#444!important;margin-top:6px}
-}
 .mlsum{font-size:13.5px;padding:11px 14px;border-radius:8px;background:var(--bg);
   border:1px solid var(--line);margin-bottom:10px}
 .mlsum b{font-size:16px;font-variant-numeric:tabular-nums}
@@ -742,7 +716,9 @@ table.mlsign tr:last-child td{height:34px}
 .paysum .f em{font-style:normal;font-size:11.5px;color:#5b8f77}
 .mlfoot{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
 .mlfoot .mltbl{font-size:12.4px}
-#mlLedger td.nm{line-height:1.8}
+/* 집행대장 화면 : 행 높이를 2/3로 (스크롤을 덜 내리게) */
+#mlLedger table.mltbl th,#mlLedger table.mltbl td{padding:3px 8px;line-height:1.35}
+#mlLedger td.nm{line-height:1.35}
 .lname{cursor:pointer;border-radius:4px;padding:1px 3px}
 .lname:hover{background:#eef3fb;color:var(--acc)}
 .lname.ex{color:var(--mut);text-decoration:line-through;opacity:.65}
@@ -751,12 +727,6 @@ table.mlsign tr:last-child td{height:34px}
 .exdemo{color:var(--mut);text-decoration:line-through}
 .mlpop .mlpoph small{display:block;font-size:11px;color:var(--mut);font-weight:400;margin-top:3px}
 .mlpop button small.w{color:#a15c00}
-@media print{
-  #mlLedger .lname.ex{display:none!important}
-  #mlLedger td.nm i{display:none}
-  #mlLedger tr.zero{display:none!important}
-  #mlLedger .noprint{display:none!important}
-}
 
 /* ── 급량비 화면 버튼 (사이트 .btn 과 무관하게 자체 스타일) ── */
 .mlcard .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;
@@ -780,11 +750,6 @@ table.mlsign tr:last-child td{height:34px}
 #mlLedger tr.hol td{background:#fdf6e8}
 #mlLedger tr.hol td.dt{color:#a1500a;font-weight:600}
 #mlLedger tr.hol td.dt em{color:#b5741f}
-@media print{
-  #mlLedger tr.hol td{background:#f1f1f1!important}
-  #mlLedger tr.hol td.dt{font-weight:700}
-  #mlLedger td.dt em{color:#333!important}
-}
 /* 드롭존 상태 */
 .mldrop b{display:block;font-size:14px}
 .mldrop small{display:block;font-size:12.2px;margin-top:4px}
@@ -815,8 +780,6 @@ table.mlsign tr:last-child td{height:34px}
 .mlsum2{margin-bottom:10px}
 .mltitle{margin:6px 0 8px}
 
-@media print{ .ldwrap{max-height:none!important;overflow:visible!important;border:0!important}
-  .ldwrap thead th,.ldwrap tr.sum th{position:static!important;box-shadow:none!important} }
 /* 읽기가 끝나면 파일명 한 줄로 접힌다 (부모 클래스에 의존하지 않음) */
 .mlup .mldrop.done,.mlup.solo .mldrop.done{
   min-height:0!important;padding:9px 16px!important;
@@ -830,7 +793,6 @@ table.mlsign tr:last-child td{height:34px}
   border:1px solid rgba(11,122,83,.3);background:rgba(255,255,255,.75);
   color:#0b7a53;font-size:12px;cursor:pointer;transition:.15s}
 .mlx:hover{background:#0b7a53;border-color:#0b7a53;color:#fff}
-@media print{ .mlx{display:none} }
 
 /* ── 결제한 가맹업소 적기 ───────────────────────────── */
 .mlfh{margin:0 0 8px;font-size:13.5px;font-weight:700;color:var(--tx)}
@@ -853,7 +815,6 @@ table.mlsign tr:last-child td{height:34px}
 .paymsg em{font-style:normal;font-size:11.5px;opacity:.7;margin-right:2px}
 /* 가맹업소별 정산 : 화면에서는 아래 입력표와 겹치므로 인쇄물에만 */
 .shopsum{display:none}
-@media print{ .shopsum{display:block;margin-top:10px} }
 .mlbtns.split{justify-content:space-between;align-items:center;gap:10px;margin-top:14px;
   padding-top:14px;border-top:1px solid var(--line)}
 .mlbtns.split .lft,.mlbtns.split .rgt{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -862,4 +823,78 @@ table.mlsign tr:last-child td{height:34px}
   .mlbtns.split .lft,.mlbtns.split .rgt{justify-content:center} }
 .mlfoot .mlbtns .btn:disabled{opacity:.45;cursor:not-allowed}
 .mlfoot .mlbtns .btn.pri{padding:9px 18px}
-@media print{ .mlfoot{display:none} }
+
+
+/* ══════════════════════════════════════════════════════════════
+   결재용 집행대장 — 엑셀 「특근매식비집행대장」 시트 서식 그대로
+   원본 : HY견명조 제목 28pt·본문 14pt / 행높이 55·33·21·45pt
+          A4 가로 · 여백 10/6/19/6mm · 축소 76% · 한 쪽 12건
+   아래 수치는 76%를 곱한 실제 인쇄 치수(mm·pt)
+   ══════════════════════════════════════════════════════════════ */
+#mlPrintDoc{display:none}
+#mlPrintDoc .pg{
+  width:236.7mm; margin:0 auto;
+  font-family:"HY견명조","HYMyeongJo","HY신명조",Batang,"바탕",serif;
+  color:#000; background:#fff}
+#mlPrintDoc .pgt{height:14.75mm;line-height:14.75mm;text-align:center;
+  font-size:21.3pt;font-weight:700;letter-spacing:.06em}
+#mlPrintDoc table.pgt2{width:236.7mm;border-collapse:collapse;table-layout:fixed;
+  font-size:10.6pt;border:2.4px solid #000}
+#mlPrintDoc col.c-y {width:15.79mm} #mlPrintDoc col.c-m {width:8.22mm}
+#mlPrintDoc col.c-d {width:11.38mm} #mlPrintDoc col.c-n {width:13.15mm}
+#mlPrintDoc col.c-nm{width:60.83mm} #mlPrintDoc col.c-sh{width:28.45mm}
+#mlPrintDoc col.c-p {width:19.48mm} #mlPrintDoc col.c-x {width:14.73mm}
+#mlPrintDoc col.c-a {width:22.65mm} #mlPrintDoc col.c-k1{width:16.31mm}
+#mlPrintDoc col.c-k2{width:12.87mm} #mlPrintDoc col.c-k3{width:12.87mm}
+#mlPrintDoc .pgt2 th,#mlPrintDoc .pgt2 td{
+  border:.75px solid #000; padding:0 1.5mm; text-align:center; vertical-align:middle;
+  color:#000; overflow:hidden; white-space:nowrap; text-overflow:ellipsis}
+/* 바깥은 굵은 선 (엑셀 thick) */
+#mlPrintDoc .pgt2 tr>:first-child{border-left:2.25px solid #000}
+#mlPrintDoc .pgt2 tr>:last-child{border-right:2.25px solid #000}
+#mlPrintDoc .pgt2 thead tr:first-child>*{border-top:2.25px solid #000}
+#mlPrintDoc .pgt2 tbody tr:last-child>*{border-bottom:2.25px solid #000}
+#mlPrintDoc .pgt2 tr.hd1 th{height:8.85mm;background:#f7f7f7;font-weight:400}
+#mlPrintDoc .pgt2 tr.hd2 th{height:5.63mm;background:#f7f7f7;font-weight:400}
+#mlPrintDoc .pgt2 tr.hd1 th[rowspan],
+#mlPrintDoc .pgt2 tr.hd2 th{border-bottom:3px double #000}
+#mlPrintDoc .pgt2 tbody td{height:12.07mm}
+#mlPrintDoc .pgt2 td.nm{text-align:center}
+#mlPrintDoc .pgt2 td.p{text-align:right;padding-right:1mm}
+#mlPrintDoc .pgt2 td.x{text-align:left;padding-left:.5mm}
+#mlPrintDoc .pgt2 td.a{text-align:right;padding-right:1mm}
+#mlPrintDoc .pgt2 tr.tot td{font-weight:700;border-top:.75px solid #000}
+#mlPrintDoc .pgt2 tr.tot td.n{background:#ff0}
+#mlPrintDoc .pgt2 tr.tot td.a{text-align:center}
+
+/* 화면에서 미리보기 : 종이 느낌으로 */
+.view[data-view="meal"].preview #mlPrintDoc{display:block}
+.view[data-view="meal"].preview .vh,
+.view[data-view="meal"].preview .flowcard,
+.view[data-view="meal"].preview #mlPayBox,
+.view[data-view="meal"].preview #mlStats,
+.view[data-view="meal"].preview #mlDeptBox,
+.view[data-view="meal"].preview #mlLedger,
+.view[data-view="meal"].preview .mlfoot,
+.view[data-view="meal"].preview .mlcard.slim,
+.view[data-view="meal"].preview .mlnote{display:none}
+.view[data-view="meal"].preview .paycard{background:#8a9099;border-color:#8a9099}
+.view[data-view="meal"].preview .paycard h4{color:#fff}
+.view[data-view="meal"].preview #mlPrintDoc .pg{
+  background:#fff;padding:10mm 6mm 19mm;margin:0 auto 14px;
+  box-shadow:0 4px 18px rgba(0,0,0,.28);width:297mm;box-sizing:border-box}
+.view[data-view="meal"].preview #mlPrintDoc{overflow-x:auto}
+
+@media print{
+  @page{size:A4 landscape;margin:10mm 6mm 19mm}
+  html,body{background:#fff!important}
+  body>*{visibility:hidden}
+  #mlPrintDoc,#mlPrintDoc *{visibility:visible}
+  #mlPrintDoc{display:block!important;position:absolute;left:0;top:0;width:100%}
+  #mlPrintDoc .pg{box-shadow:none!important;padding:0!important;margin:0 auto!important;
+    width:236.7mm!important;background:#fff!important;
+    break-after:page;page-break-after:always}
+  .view[data-view="meal"].preview #mlPrintDoc{overflow:visible!important}
+  #mlPrintDoc .pg:last-child{break-after:auto;page-break-after:auto}
+  #mlPrintDoc .pgt2 tr{break-inside:avoid;page-break-inside:avoid}
+}

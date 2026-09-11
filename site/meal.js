@@ -434,14 +434,18 @@ function drawPayStatus(keep){
     ab.title = PAY.length>=MAXPAY ? '가맹업소는 '+MAXPAY+'곳까지 적을 수 있습니다' : '업소 추가'; }
 
   if(keep) return;                                  // 배치 결과 문구는 덮어쓰지 않는다
-  if(!PAY.some(r=>(r.shop||'').trim()&&+r.amt>0)){
-    payMsg('hint','식당 이름을 적고 <b>엔터</b>를 치면 금액이 자동으로 들어갑니다. 다 적었으면 <b>배치하기</b>를 누르세요.');
+  if(!PAY.some(r=>+r.amt>0)){
+    payMsg('hint','식당 이름을 적고 <b>금액 자동계산</b>을 누르면 금액이 나뉩니다. 직접 적어도 됩니다.');
     return;
   }
   const L=payProblems();
-  if(L.length) payMsg('bad',L.join('<br>'));
-  else payMsg('hint','금액이 맞습니다 — <b>배치하기</b>를 누르세요.');
+  if(L.length){ payMsg('bad',L.join('<br>')); return; }
+  if(!PAY.every(r=>(r.shop||'').trim()||!(+r.amt>0)))
+    payMsg('hint','금액은 맞습니다 — 식당 이름을 적고 <b>가맹업소명 배치하기</b>를 누르세요.');
+  else payMsg('hint','금액이 맞습니다 — <b>가맹업소명 배치하기</b>를 누르세요.');
 }
+
+const rowName=(r,i)=>(r.shop||'').trim()?esc(r.shop.trim()):(i+1)+'번째 줄';
 
 /* 눌러서 바로 넣는 금액 단추 */
 function fixChip(i,v){ return '<button class="fixamt" data-i="'+i+'" data-v="'+v+'">'+won(v)+'원으로 맞추기</button>'; }
@@ -470,7 +474,7 @@ function payProblems(){
   if(bad.length===1){
     const {r,i}=bad[0], need=needFor(i);
     if(need>0 && need%p===0)
-      return ['⚠ '+esc(r.shop||'이 줄')+' <b>'+won(+r.amt)+'원</b>은 '+won(p)+'원 단위가 아닙니다. '+
+      return ['⚠ '+rowName(r,i)+' <b>'+won(+r.amt)+'원</b>은 '+won(p)+'원 단위가 아닙니다. '+
               '합계까지 맞추려면 <b>'+won(need)+'원</b> 하나뿐입니다 — '+fixChip(i,need)];
   }
   /* ② 단위는 다 맞는데 합계만 어긋난 경우 → 마지막 줄을 고치면 된다 */
@@ -586,6 +590,59 @@ function ledgerRows(){
   });
 }
 
+/* ─────────────────────────────────────────────────────────────
+   결재용 집행대장 — 엑셀 「특근매식비집행대장」 시트를 그대로 옮긴 인쇄물
+   원본 치수 : HY견명조 제목 28pt·본문 14pt / 행높이 55·33·21·45pt
+               열너비 B~M 20.8·10.8·15.0·17.3·80.0·37.4·25.6·19.4·29.8·21.5·16.9·16.9mm
+               A4 가로 · 여백 10/6/19/6mm · 축소 76% · 한 쪽 12건
+   → 아래 CSS 는 76% 를 미리 곱한 실제 인쇄 치수(mm)로 적어 둔다
+   ───────────────────────────────────────────────────────────── */
+const PG_ROWS=12;                                   // 한 쪽에 들어가는 건수
+function drawPrintDoc(){
+  const box=$('#mlPrintDoc'); if(!box) return;
+  const c=S.cfg, rs=ledgerRows().filter(r=>r.cnt);  // 지급분만 (제외자·0명 제외)
+  if(!rs.length){ box.innerHTML=''; return; }
+  const tot=rs.reduce((a,r)=>a+r.amt,0), cnt=rs.reduce((a,r)=>a+r.cnt,0);
+  const pages=[]; for(let i=0;i<rs.length;i+=PG_ROWS) pages.push(rs.slice(i,i+PG_ROWS));
+
+  const head =
+    '<thead>'+
+      '<tr class="hd1">'+
+        '<th colspan="3" rowspan="2">특근일자</th>'+
+        '<th rowspan="2">인원<br>(명)</th>'+
+        '<th rowspan="2">특 근 자 명 단</th>'+
+        '<th rowspan="2">가맹업소명</th>'+
+        '<th colspan="3" rowspan="2">예산집행내역</th>'+
+        '<th colspan="3">결 재</th></tr>'+
+      '<tr class="hd2"><th>담당자</th><th>담 당</th><th>과 장</th></tr>'+
+    '</thead>';
+  const cols='<colgroup>'+['c-y','c-m','c-d','c-n','c-nm','c-sh','c-p','c-x','c-a','c-k1','c-k2','c-k3']
+             .map(k=>'<col class="'+k+'">').join('')+'</colgroup>';
+
+  let h='';
+  pages.forEach((pg,pi)=>{
+    h+='<section class="pg"><div class="pgt">특 근 매 식 비 집 행 대 장</div>'+
+       '<table class="pgt2">'+cols+head+'<tbody>';
+    pg.forEach(r=>{
+      const [y,m,d]=r.d.split('-');
+      h+='<tr>'+
+         '<td class="y">'+y+'.</td><td class="m">'+m+'.</td><td class="d">'+d+'.</td>'+
+         '<td class="n">'+r.cnt+'명</td>'+
+         '<td class="nm">'+esc(r.ns.filter(z=>z.on).map(z=>z.n).join(', '))+'</td>'+
+         '<td class="sh">'+esc(r.shop||'')+'</td>'+
+         '<td class="p">'+won(c.price)+'원</td><td class="x">×'+r.cnt+'명=</td>'+
+         '<td class="a">'+won(r.amt)+'원</td>'+
+         '<td></td><td class="jg">전결</td><td></td></tr>';
+    });
+    if(pi===pages.length-1)
+      h+='<tr class="tot"><td colspan="3"></td><td class="n">'+cnt+'명</td><td class="nm">합계</td>'+
+         '<td></td><td colspan="3" class="a">'+won(c.price)+'원 x '+cnt+'명 ='+won(tot)+'원</td>'+
+         '<td></td><td></td><td></td></tr>';
+    h+='</tbody></table></section>';
+  });
+  box.innerHTML=h;
+}
+
 function drawLedger(){
   const c=S.cfg, rs=ledgerRows(), [y,m]=c.ym.split('-');
   const tot=rs.reduce((a,r)=>a+r.amt,0), cnt=rs.reduce((a,r)=>a+r.cnt,0);
@@ -616,6 +673,7 @@ function drawLedger(){
   }
   h+='<p class="mlnote">「지방자치단체 회계관리에 관한 훈령」[별표2] 201-01 사무관리비 마. 급량비 · 1인 1식 '+won(c.price)+'원</p>';
   $('#mlLedger').innerHTML=h;
+  drawPrintDoc();
 }
 
 /* ---------- 과거 실적 대조 (검증) ---------- */
@@ -801,6 +859,7 @@ function build(){
       <div class="mlteam" id="mlDeptBox" hidden></div>
 
       <div id="mlLedger"></div>
+      <div id="mlPrintDoc"></div>
 
       <div class="mlfoot">
         <h5 class="mlfh">결제할 가맹업소 적기</h5>
@@ -810,12 +869,13 @@ function build(){
         <div class="mlbtns split">
           <span class="lft"><button class="btn pri" id="mlAuto">금액 자동계산</button>
             <button class="btn" id="mlPlace">가맹업소명 배치하기</button></span>
-          <span class="rgt"><button class="btn pri" id="mlPrint">🖨 인쇄 · PDF로 저장</button>
-            <button class="btn" id="mlCsv">CSV 내려받기</button></span>
+          <span class="rgt"><button class="btn" id="mlPrev">📄 인쇄 미리보기</button>
+            <button class="btn pri" id="mlPrint">🖨 인쇄하기</button>
+            <button class="btn" id="mlXls">엑셀 내려받기</button></span>
         </div>
       </div>
 
-      <p class="mlnote">인쇄하면 <b>집행대장만</b> A4 한 장으로 나옵니다. 2부 뽑아 사본에 「원본대조필」을 찍으세요.</p>
+
     </div>
 
     <details class="card mlcard foldcard sub" hidden>
@@ -1040,19 +1100,68 @@ function build(){
     alert('지웠습니다. 다음 판정부터 처음 쓰는 것과 같아집니다.');
   };
   $('#mlPrint').onclick=()=>window.print();
+  $('#mlPrev').onclick=()=>{
+    const v=document.querySelector('.view[data-view="meal"]'); if(!v) return;
+    const on=!v.classList.contains('preview');
+    v.classList.toggle('preview',on);
+    $('#mlPrev').textContent = on ? '✕ 미리보기 닫기' : '📄 인쇄 미리보기';
+    $('#mlPrev').classList.toggle('pri',on);
+    (on?$('#mlPrintDoc'):$('#mlLedger')).scrollIntoView({behavior:'smooth',block:'start'});
+  };
   try{ PROF=localStorage.getItem(LSP)||''; }catch(e){ PROF=''; }
   loadCfg(); drawTeamSet();
   loadBase().then(()=>autoBase($('#mlYm').value.trim()||'2026-08'));
   $('#mlYm').addEventListener('change',()=>autoBase($('#mlYm').value.trim()));
   root.addEventListener('change',e=>{ if(CFGF.indexOf(e.target.id)>=0) saveCfg(); });
   root.addEventListener('input', e=>{ if(CFGF.indexOf(e.target.id)>=0) saveCfg(); });
-  $('#mlCsv').onclick=()=>{
-    const c=S.cfg, L=[['특근일자','인원','특근자명단','가맹업소명','단가','금액']];
-    ledgerRows().filter(r=>r.cnt).forEach(r=>L.push([r.d,r.cnt,r.ns.filter(z=>z.on).map(z=>z.n).join(' '),r.shop,c.price,r.amt]));
-    const csv='\uFEFF'+L.map(a=>a.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  /* 엑셀 내려받기 — 엑셀이 읽는 HTML 표로 만든다 (열너비·글꼴·테두리·병합 그대로) */
+  $('#mlXls').onclick=()=>{
+    const c=S.cfg, rs=ledgerRows().filter(r=>r.cnt);
+    if(!rs.length){ payMsg('bad','⚠ 내려받을 내용이 없습니다.'); return; }
+    const cnt=rs.reduce((a,r)=>a+r.cnt,0), tot=rs.reduce((a,r)=>a+r.amt,0);
+    const W=[10.50,5.12,7.38,8.62,42.50,19.50,13.12,9.75,15.38,10.88,8.43,8.43];  // 원본 열너비(문자)
+    const px=w=>Math.round(w*7+5);
+    const F='mso-number-format:"\\@";font-family:HY견명조;font-size:14pt;'+
+            'text-align:center;vertical-align:middle;border:.5pt solid black;';
+    let h='<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8">'+
+      '<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>'+
+      '<x:Name>특근매식비집행대장</x:Name><x:WorksheetOptions><x:Print>'+
+      '<x:ValidPrinterInfo/><x:PaperSizeIndex>9</x:PaperSizeIndex><x:Scale>76</x:Scale>'+
+      '<x:HorizontalResolution>600</x:HorizontalResolution></x:Print>'+
+      '</x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->'+
+      '</head><body><table border="1" style="border-collapse:collapse">'+
+      '<colgroup>'+W.map(w=>'<col width="'+px(w)+'">').join('')+'</colgroup>';
+    h+='<tr height="73"><td colspan="12" style="'+F+'font-size:28pt;font-weight:bold;border:none">'+
+       '특 근 매 식 비 집 행 대 장</td></tr>';
+    h+='<tr height="44">'+
+       '<td colspan="3" rowspan="2" style="'+F+'background:#F7F7F7">특근일자</td>'+
+       '<td rowspan="2" style="'+F+'background:#F7F7F7">인원(명)</td>'+
+       '<td rowspan="2" style="'+F+'background:#F7F7F7">특 근 자 명 단</td>'+
+       '<td rowspan="2" style="'+F+'background:#F7F7F7">가맹업소명</td>'+
+       '<td colspan="3" rowspan="2" style="'+F+'background:#F7F7F7">예산집행내역</td>'+
+       '<td colspan="3" style="'+F+'background:#F7F7F7">결 재</td></tr>'+
+       '<tr height="28"><td style="'+F+'background:#F7F7F7">담당자</td>'+
+       '<td style="'+F+'background:#F7F7F7">담 당</td><td style="'+F+'background:#F7F7F7">과 장</td></tr>';
+    rs.forEach(r=>{
+      const [y,m,d]=r.d.split('-');
+      h+='<tr height="60"><td style="'+F+'">'+y+'</td><td style="'+F+'">'+(+m)+'</td><td style="'+F+'">'+(+d)+'</td>'+
+         '<td style="'+F+'">'+r.cnt+'</td>'+
+         '<td style="'+F+'">'+esc(r.ns.filter(z=>z.on).map(z=>z.n).join(', '))+'</td>'+
+         '<td style="'+F+'">'+esc(r.shop||'')+'</td>'+
+         '<td style="'+F+'text-align:right">'+c.price+'</td>'+
+         '<td style="'+F+'text-align:left">×'+r.cnt+'명=</td>'+
+         '<td style="'+F+'text-align:right">'+r.amt+'</td>'+
+         '<td style="'+F+'"></td><td style="'+F+'">전결</td><td style="'+F+'"></td></tr>';
+    });
+    h+='<tr height="60"><td colspan="3" style="'+F+'"></td>'+
+       '<td style="'+F+'font-weight:bold;background:#FFFF00">'+cnt+'명</td>'+
+       '<td style="'+F+'font-weight:bold">합계</td><td style="'+F+'"></td>'+
+       '<td colspan="3" style="'+F+'font-weight:bold">'+won(c.price)+'원 x '+cnt+'명 ='+won(tot)+'원</td>'+
+       '<td style="'+F+'"></td><td style="'+F+'"></td><td style="'+F+'"></td></tr>';
+    h+='</table></body></html>';
     const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-    a.download='특근매식비_집행대장_'+c.ym+'.csv'; a.click();
+    a.href=URL.createObjectURL(new Blob(['﻿'+h],{type:'application/vnd.ms-excel'}));
+    a.download='특근매식비 집행대장 '+c.ym.replace('-','.')+'월.xls'; a.click();
   };
 }
 
@@ -1114,5 +1223,5 @@ const DEMO=`1 2026-08-04 정보통신과 주사보 조호현 09:00 20:04 64
 window.MEAL={init:build, _demo:()=>{ S.pdfText=DEMO; run(DEMO); },
   _pay:rows=>{ PAY=rows.slice(); drawPay(); placeShops(); },
   _payMsg:()=>$('#mlPayMsg').innerHTML.replace(/<[^>]+>/g,''),
-  _rows:()=>PAY};
+  _rows:()=>PAY, _live:rows=>{ PAY=rows.slice(); drawPay(); }};
 })();
