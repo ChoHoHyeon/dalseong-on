@@ -12,3 +12,15 @@
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+
+# 고친 내용이 곧바로 반영되도록 js·css 는 캐시하지 않는다
+# (서무들이 Ctrl+F5 를 누르지 않아도 항상 최신 파일을 받는다)
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

@@ -1337,7 +1337,10 @@ function build(){
     const v=document.querySelector('.view[data-view="meal"]'); if(!v) return;
     v.classList.toggle('preview',on);
     $('#mlPrev').textContent = on ? '✕ 미리보기 닫기' : '📄 인쇄 미리보기';
-    (on?$('#mlPrintDoc'):$('#mlLedger')).scrollIntoView({behavior:'smooth',block:'start'});
+    /* 닫으면 버튼 줄로 돌아온다 — 집행대장으로 내려가면 인쇄 버튼이 화면 위로 사라진다 */
+    (on ? $('#mlPrintDoc').scrollIntoView({behavior:'smooth',block:'start'})
+        : document.querySelector('.view[data-view="meal"] .mlbtns.split')
+            .scrollIntoView({behavior:'smooth',block:'center'}));
   };
   $('#mlPrev').onclick=()=>preview(!document.querySelector('.view[data-view="meal"]').classList.contains('preview'));
   document.addEventListener('keydown',e=>{        // Esc 로도 닫힌다
