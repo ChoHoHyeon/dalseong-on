@@ -736,7 +736,7 @@ function buildXlsx(){
     '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'+
     '<cellXfs count="'+XF.length+'">'+XF.map(x=>
       '<xf numFmtId="49" fontId="'+x[0]+'" fillId="'+x[1]+'" borderId="'+x[2]+'" xfId="0"'+
-      ' applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">'+
+      ' applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">'+
       '<alignment horizontal="'+x[3]+'" vertical="center"/></xf>').join('')+'</cellXfs>'+
     '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'+
     '</styleSheet>';
@@ -749,17 +749,22 @@ function buildXlsx(){
           xe(cc.v)+'</t></is></c>'; });
     sd+='</row>';
   });
-  const sheet='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
-    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
-    '<sheetPr><pageSetUpPr fitToPage="0"/></sheetPr>'+
+  /* 요소 순서를 엑셀 규격대로 지킨다 — 순서가 틀리면 엑셀이 「내용에 문제가 있습니다」로 거부한다
+     dimension → sheetViews → sheetFormatPr → cols → sheetData → mergeCells
+     → pageMargins → pageSetup → rowBreaks  */
+  const sheet='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n'+
+    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'+
+    ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+
+    '<dimension ref="A1:L'+rows.length+'"/>'+
+    '<sheetViews><sheetView tabSelected="1" workbookViewId="0"/></sheetViews>'+
     '<sheetFormatPr defaultRowHeight="45"/>'+
     '<cols>'+W.map((w,i)=>'<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+w+'" customWidth="1"/>').join('')+'</cols>'+
     '<sheetData>'+sd+'</sheetData>'+
     '<mergeCells count="'+merges.length+'">'+merges.map(m=>'<mergeCell ref="'+m+'"/>').join('')+'</mergeCells>'+
-    (brk.length?'<rowBreaks count="'+brk.length+'" manualBreakCount="'+brk.length+'">'+
-      brk.map(r=>'<brk id="'+r+'" max="16383" man="1"/>').join('')+'</rowBreaks>':'')+
     '<pageMargins left="0.24" right="0.24" top="0.39" bottom="0.75" header="0" footer="0"/>'+
     '<pageSetup paperSize="9" orientation="landscape" scale="76"/>'+
+    (brk.length?'<rowBreaks count="'+brk.length+'" manualBreakCount="'+brk.length+'">'+
+      brk.map(r=>'<brk id="'+r+'" max="16383" man="1"/>').join('')+'</rowBreaks>':'')+
     '</worksheet>';
 
   const files=[
@@ -778,6 +783,7 @@ function buildXlsx(){
     {name:'xl/workbook.xml', data:U8('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
       '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'+
       ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+
+      '<workbookPr/><bookViews><workbookView/></bookViews>'+
       '<sheets><sheet name="특근매식비집행대장" sheetId="1" r:id="rId1"/></sheets></workbook>')},
     {name:'xl/_rels/workbook.xml.rels', data:U8('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
       '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
