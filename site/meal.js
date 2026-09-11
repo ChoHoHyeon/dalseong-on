@@ -377,6 +377,16 @@ function totalCnt(){ let n=0; for(const k in S.cells) if(S.cells[k].on) n++; ret
 function payTotal(){ return totalCnt()*(S.cfg.price||0); }
 function paySum(){ return PAY.reduce((a,r)=>a+(+r.amt||0),0); }
 function payMsg(cls,html){ const m=$('#mlPayMsg'); if(m){ m.className='paymsg '+cls; m.innerHTML=html; } }
+/* 9,000원 단위가 아닌 금액 → 바로 위·아래의 가능한 금액을 추천한다 */
+function badAmtMsg(r){
+  const p=S.cfg.price, v=+r.amt;
+  const up=Math.ceil(v/p)*p, dn=Math.floor(v/p)*p;
+  const pick=[];
+  if(up>0) pick.push('<b>'+won(up)+'원</b>(+'+won(up-v)+')');
+  if(dn>0) pick.push('<b>'+won(dn)+'원</b>(−'+won(v-dn)+')');
+  return '⚠ '+esc(r.shop)+' <b>'+won(v)+'원</b>은 '+won(p)+'원 단위가 아닙니다 — '+
+         pick.join(' 또는 ')+'으로 고쳐 주세요.';
+}
 
 function drawPay(){
   const c=S.cfg, cnt=totalCnt(), tot=cnt*c.price;
@@ -422,6 +432,8 @@ function drawPayStatus(keep){
     ab.title = PAY.length>=MAXPAY ? '가맹업소는 '+MAXPAY+'곳까지 적을 수 있습니다' : ''; }
 
   if(keep) return;                                  // 배치 결과 문구는 덮어쓰지 않는다
+  const badR=PAY.find(r=>(+r.amt>0)&&((+r.amt)%c.price));
+  if(badR){ payMsg('bad',badAmtMsg(badR)); return; }
   if(!PAY.some(r=>(r.shop||'').trim()&&+r.amt>0))
     payMsg('hint','식당 이름을 적고 <b>엔터</b>를 치면 금액이 자동으로 들어갑니다. 다 적었으면 <b>배치하기</b>를 누르세요.');
   else if(gap>0) payMsg('hint','<b>'+won(gap)+'원</b>이 남았습니다 — 업소를 더 추가하거나 금액을 늘리세요.');
@@ -492,7 +504,7 @@ function placeShops(){
   if(!rows.length){ payMsg('bad','⚠ 식당 이름과 금액을 먼저 적어 주세요.'); return; }
 
   const bad=rows.find(r=>(+r.amt)%price);
-  if(bad){ payMsg('bad','⚠ <b>'+esc(bad.shop)+' '+won(+bad.amt)+'원</b>은 '+won(price)+'원 단위가 아닙니다 — 금액을 고쳐 주세요.'); return; }
+  if(bad){ payMsg('bad',badAmtMsg(bad)); return; }
 
   const tot=payTotal(), sum=rows.reduce((a,r)=>a+(+r.amt||0),0), gap=tot-sum;
   if(gap>0){ payMsg('bad','⚠ 적은 금액이 <b>'+won(gap)+'원</b> 모자랍니다 — 총액 '+won(tot)+'원에 맞춰 주세요.'); return; }
@@ -715,7 +727,7 @@ function build(){
   const root=$('#mealBody'); if(!root||S.built) return; S.built=true;
   root.innerHTML=`
   <div class="card mlcard">
-    <h4>① 파일 올리기 <small>두 개면 끝납니다</small></h4>
+    <h4>① 확인서 올리기 <small>PDF 한 개면 끝납니다</small></h4>
     <div class="mlup solo">
       <div class="mldrop" id="mlDrop"><b>초과근무 확인서 PDF</b>
         <small>새올에서 출력한 파일을 끌어다 놓거나 클릭 · 올리면 <b>바로 판정</b></small></div>
