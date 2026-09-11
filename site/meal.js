@@ -215,11 +215,7 @@ function draw(){
   let cnt=0,hol=0,off=0,aut=0;
   for(const k in S.cells){const x=S.cells[k];
     if(x.on){cnt++; if(x.hol)hol++;} else if(x.ok){ if(x.auto) aut++; else off++; }}
-  $('#mlStats').innerHTML='<div class="mlsum">'+
-    '<b>'+S.names.length+'</b>명 · 지급 <b>'+cnt+'</b>식'+
-    (hol?' <span class="mlmut">(휴일 '+hol+'식)</span>':'')+
-    (aut?' · 자동 제외 <b>'+aut+'</b>식':'')+(off?' · 직접 해제 <b>'+off+'</b>식':'')+
-    '</div>';
+  S.stat={hol:hol, aut:aut, off:off};     // 「결제할 금액」 상자 안에서 함께 보여 준다
   const dbox=$('#mlDeptBox');
   if(dbox){
     if(S.depts.length>1){
@@ -386,11 +382,14 @@ function setPrimary(){
 }
 function drawPay(){
   const c=S.cfg, cnt=totalCnt(), tot=cnt*c.price;
+  const st=S.stat||{};
   $('#mlPayBox').innerHTML=
     '<div class="paysum"><span class="k">결제할 금액</span>'+
     '<span class="v">'+won(tot)+'<small>원</small></span>'+
-    '<span class="f">1인 1식 '+won(c.price)+'원 × '+cnt+'식<br>'+
-    '<em>가맹업소는 어디든 무방합니다 — 이 금액만 맞추면 됩니다</em></span></div>';
+    '<span class="f"><b>'+(S.names||[]).length+'</b>명 · 지급 <b>'+cnt+'</b>식'+
+      (st.hol?' <em>(휴일 '+st.hol+'식)</em>':'')+
+      (st.aut?' · 자동 제외 '+st.aut+'식':'')+(st.off?' · 직접 해제 '+st.off+'식':'')+
+    '<br>1인 1식 '+won(c.price)+'원 × '+cnt+'식</span></div>';
   $('#mlShopList').innerHTML=shopList().map(x=>'<option value="'+esc(x)+'">').join('');
 
   let h='<thead><tr><th class="l">결제할 가맹업소</th><th style="width:190px">금액(원)</th>'+
@@ -1067,7 +1066,6 @@ function build(){
     <div class="card mlcard paycard">
       <h4>② 계산 결과</h4>
       <div class="mlpay" id="mlPayBox"></div>
-      <div class="mlsum2" id="mlStats"></div>
       <div class="mlteam" id="mlDeptBox" hidden></div>
 
       <div class="mlfoot">

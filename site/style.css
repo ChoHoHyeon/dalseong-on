@@ -987,9 +987,9 @@ body[data-theme=dark] .view[data-view="meal"] .paymsg.ok{background:rgba(11,122,
 
 /* ── 버튼 줄 : 위쪽 진한 선으로 구역을 끊는다 ── */
 .view[data-view="meal"] .mlbtns.split{border-top:1.5px solid var(--ln)}
-/* 집행대장은 굵은 선으로 위쪽 작업 영역과 끊는다 */
+/* 집행대장은 굵은 선과 넉넉한 여백으로 위쪽 작업 영역과 확실히 끊는다 */
 .view[data-view="meal"] #mlLedger{
-  margin-top:26px; padding-top:22px; border-top:3px solid var(--ln2)}
+  margin-top:44px; padding-top:40px; border-top:3px solid var(--ln2)}
 .view[data-view="meal"] #mlLedger .mltitle{margin-top:0}
 @media print{ #mlLedger{border-top:0!important;margin-top:0!important;padding-top:0!important} }
 
@@ -1000,11 +1000,10 @@ body[data-theme=dark] .view[data-view="meal"] .prnote{background:rgba(217,138,0,
 .view[data-view="meal"].preview .prnote{display:none}
 @media print{ .prnote{display:none} }
 
-/* ── 통계 한 줄 : 상자가 겹치지 않게 안쪽 것만 또렷하게 ── */
-.view[data-view="meal"] .mlsum2{margin:12px 0 0;padding:0}
-.view[data-view="meal"] .mlsum{
-  display:inline-block; padding:8px 14px; border-radius:8px;
-  border:1px solid var(--ln); background:var(--panel2); font-size:13.2px; color:var(--tx)}
+/* ── 「결제할 금액」 상자 오른쪽 요약 ── */
+.view[data-view="meal"] .paysum .f{font-size:13px;line-height:1.7;text-align:right;color:#2f7a5c}
+.view[data-view="meal"] .paysum .f b{color:#0f7b53;font-size:14.5px;font-variant-numeric:tabular-nums}
+.view[data-view="meal"] .paysum .f em{font-style:normal;opacity:.85}
 
 /* ── 드롭존 : 점선을 또렷하게 ── */
 .view[data-view="meal"] .mldrop{border:2px dashed var(--ln2)}
