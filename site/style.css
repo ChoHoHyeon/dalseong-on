@@ -909,10 +909,11 @@ table.mlsign tr:last-child td{height:34px}
 
 @media print{
   @page{size:A4 landscape;margin:10mm 6mm 19mm}
-  html,body{background:#fff!important}
-  body>*{visibility:hidden}
-  #mlPrintDoc,#mlPrintDoc *{visibility:visible}
-  #mlPrintDoc{display:block!important;position:absolute;left:0;top:0;width:100%}
+  html,body{background:#fff!important;margin:0!important;padding:0!important}
+  /* 결재용 문서만 남기고 나머지는 레이아웃에서 제거 (빈 페이지 방지) */
+  body.mlprint>*{display:none!important}
+  body.mlprint>#mlPrintDoc{display:block!important;width:auto;margin:0;padding:0}
+  #mlPrintDoc{display:block!important}
   #mlPrintDoc .pg{box-shadow:none!important;padding:0!important;margin:0 auto!important;
     width:236.7mm!important;background:#fff!important;
     break-after:page;page-break-after:always}
@@ -986,8 +987,14 @@ body[data-theme=dark] .view[data-view="meal"] .paymsg.ok{background:rgba(11,122,
 
 /* ── 버튼 줄 : 위쪽 진한 선으로 구역을 끊는다 ── */
 .view[data-view="meal"] .mlbtns.split{border-top:1.5px solid var(--ln)}
+/* 집행대장은 굵은 선으로 위쪽 작업 영역과 끊는다 */
+.view[data-view="meal"] #mlLedger{
+  margin-top:26px; padding-top:22px; border-top:3px solid var(--ln2)}
+.view[data-view="meal"] #mlLedger .mltitle{margin-top:0}
+@media print{ #mlLedger{border-top:0!important;margin-top:0!important;padding-top:0!important} }
+
 /* 인쇄 안내 한 줄 */
-.view[data-view="meal"] .prnote{margin:12px 0 0;padding:9px 12px;border-radius:8px;
+.view[data-view="meal"] .prnote{margin:14px 0 0;padding:9px 12px;border-radius:8px;
   border:1px solid #e3c98a;background:#fdf6e4;color:#6b5115;font-size:12.4px;line-height:1.55}
 body[data-theme=dark] .view[data-view="meal"] .prnote{background:rgba(217,138,0,.14);color:#f0d9a6;border-color:#6b5115}
 .view[data-view="meal"].preview .prnote{display:none}

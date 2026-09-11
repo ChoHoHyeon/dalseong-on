@@ -15,7 +15,6 @@ const hhmm=m=>pad(Math.floor(m/60)%24)+':'+pad(m%60);
 const HOLI_2026=['2026-01-01','2026-02-16','2026-02-17','2026-02-18','2026-03-01','2026-03-02',
  '2026-05-05','2026-05-24','2026-05-25','2026-06-03','2026-06-06','2026-08-15','2026-08-17',
  '2026-09-24','2026-09-25','2026-09-26','2026-09-28','2026-10-03','2026-10-05','2026-10-09','2026-12-25'];
-const SHOPS=['이삭토스트','맘스터치','한솥','대복성','부산진국밥','왕손','오늘도통통','돈구이','한옥집','강림추어탕'];
 
 let S={all:[],rows:[],days:[],names:[],depts:[],dept:'',cells:{},shop:{},cfg:{},chk:[],pdfText:'',built:false,placed:false};
 
@@ -85,7 +84,6 @@ function shopList(){
   const h=histGet();
   return Object.keys(h).sort((a,b)=>(h[b].n||0)-(h[a].n||0)||a.localeCompare(b,'ko'));
 }
-function topShop(){ const l=shopList(); return l[0]||''; }
 
 /* ---------- 파싱 ---------- */
 function norm(s){ for(let i=0;i<6;i++) s=s.replace(/(?<=[0-9:\-])[ ]+(?=[0-9:\-])/g,''); return s; }
@@ -675,7 +673,7 @@ function buildXlsx(){
   const hFill=2;
 
   /* 원본과 같이 12건마다 제목·열머리·결재란을 되풀이한다 */
-  const pages=[]; for(let i=0;i<rs.length;i+=PG_ROWS) pages.push(rs.slice(i,i+PG_ROWS));
+  const pages=pagesOf(rs);
 
   pages.forEach((pg,pi)=>{
     const base=rows.length;                       // 이 쪽의 첫 행 (0-based)
@@ -803,13 +801,22 @@ function buildXlsx(){
                A4 가로 · 여백 10/6/19/6mm · 축소 76% · 한 쪽 12건
    → 아래 CSS 는 76% 를 미리 곱한 실제 인쇄 치수(mm)로 적어 둔다
    ───────────────────────────────────────────────────────────── */
-const PG_ROWS=12;                                   // 한 쪽에 들어가는 건수
+const PG_ROWS=12;   // 한 쪽에 들어가는 줄 수 (합계 줄도 한 줄을 차지한다)
+/* 쪽 나누기 — 마지막 쪽에는 「합계」 줄 자리를 한 줄 남겨 둔다.
+   그러지 않으면 합계만 다음 장으로 밀려 빈 장이 한 쪽 생긴다. */
+function pagesOf(rs){
+  const pages=[];
+  for(let i=0;i<rs.length;i+=PG_ROWS) pages.push(rs.slice(i,i+PG_ROWS));
+  const last=pages[pages.length-1];
+  if(last && last.length===PG_ROWS) pages.push([last.pop()]);
+  return pages;
+}
 function drawPrintDoc(){
   const box=$('#mlPrintDoc'); if(!box) return;
   const c=S.cfg, rs=ledgerRows().filter(r=>r.cnt);  // 지급분만 (제외자·0명 제외)
   if(!rs.length){ box.innerHTML=''; return; }
   const tot=rs.reduce((a,r)=>a+r.amt,0), cnt=rs.reduce((a,r)=>a+r.cnt,0);
-  const pages=[]; for(let i=0;i<rs.length;i+=PG_ROWS) pages.push(rs.slice(i,i+PG_ROWS));
+  const pages=pagesOf(rs);
 
   const head =
     '<thead>'+
@@ -1078,8 +1085,8 @@ function build(){
           <button class="btn" id="mlXls">엑셀 내려받기</button></span>
       </div>
 
-      <p class="mlnote prnote">🖨 인쇄 창에서 <b>「머리글 및 바닥글」 체크를 해제</b>하세요 —
-        날짜·주소가 찍히고 위쪽 여백이 넓어집니다. <b>여백은 「기본값」</b>으로 두시면 됩니다.</p>
+      <p class="mlnote prnote">🖨 인쇄 창에서 <b>「머리글 및 바닥글」 체크를 해제</b>하세요
+        (<b>「설정 더보기」 → 옵션 → 「머리글과 바닥글」</b>)</p>
 
       <div id="mlLedger"></div>
       <div id="mlPrintDoc"></div>
@@ -1309,6 +1316,19 @@ function build(){
     alert('지웠습니다. 다음 판정부터 처음 쓰는 것과 같아집니다.');
   };
   $('#mlPrint').onclick=()=>window.print();
+  /* 인쇄할 때는 결재용 문서만 남기고 나머지는 아예 레이아웃에서 빼낸다.
+     숨기기만 하면 빈 자리가 남아 빈 페이지가 끼고 줄이 밀린다. */
+  let prHome=null;
+  window.addEventListener('beforeprint',()=>{
+    const pd=$('#mlPrintDoc'); if(!pd) return;
+    prHome=pd.parentNode; document.body.appendChild(pd);
+    document.body.classList.add('mlprint');
+  });
+  window.addEventListener('afterprint',()=>{
+    const pd=$('#mlPrintDoc');
+    if(pd&&prHome){ prHome.appendChild(pd); prHome=null; }
+    document.body.classList.remove('mlprint');
+  });
   const preview=on=>{
     const v=document.querySelector('.view[data-view="meal"]'); if(!v) return;
     v.classList.toggle('preview',on);
@@ -1392,5 +1412,7 @@ const DEMO=`1 2026-08-04 정보통신과 주사보 조호현 09:00 20:04 64
 window.MEAL={init:build, _demo:()=>{ S.pdfText=DEMO; run(DEMO); },
   _pay:rows=>{ PAY=rows.slice(); drawPay(); placeShops(); },
   _payMsg:()=>$('#mlPayMsg').innerHTML.replace(/<[^>]+>/g,''),
-  _rows:()=>PAY, _live:rows=>{ PAY=rows.slice(); unplace(); drawPay(); }};
+  _rows:()=>PAY, _live:rows=>{ PAY=rows.slice(); unplace(); drawPay(); },
+  _off:()=>{ const k=Object.keys(S.cells).find(x=>S.cells[x].on); S.cells[k].on=false; draw(); return k; },
+  _S:()=>S, _redraw:()=>draw()};
 })();
