@@ -852,6 +852,12 @@ table.mlsign tr:last-child td{height:34px}
 
 .shopsum{display:none}
 @media print{ .shopsum{display:block;margin-top:10px} }
+.mlbtns.split{justify-content:space-between;align-items:center;gap:10px;margin-top:14px;
+  padding-top:14px;border-top:1px solid var(--line)}
+.mlbtns.split .lft,.mlbtns.split .rgt{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mlbtns.split .btn{padding:11px 20px;font-size:13.5px;border-radius:9px}
+@media(max-width:760px){ .mlbtns.split{flex-direction:column;align-items:stretch}
+  .mlbtns.split .lft,.mlbtns.split .rgt{justify-content:center} }
 .mlfoot .mlbtns .btn:disabled{opacity:.45;cursor:not-allowed}
 .mlfoot .mlbtns .btn.pri{padding:9px 18px}
 @media print{ .mlfoot{display:none} }

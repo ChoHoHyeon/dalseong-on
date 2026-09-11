@@ -835,12 +835,14 @@ function build(){
         <table class="mltbl pay" id="mlPayTbl"></table>
         <datalist id="mlShopList"></datalist>
         <p class="paymsg hint" id="mlPayMsg"></p>
-        <div class="mlbtns"><button class="btn pri" id="mlAuto">금액 자동계산</button>
-          <button class="btn" id="mlPlace">가맹업소명 배치하기</button></div>
+        <div class="mlbtns split">
+          <span class="lft"><button class="btn pri" id="mlAuto">금액 자동계산</button>
+            <button class="btn" id="mlPlace">가맹업소명 배치하기</button></span>
+          <span class="rgt"><button class="btn pri" id="mlPrint">🖨 인쇄 · PDF로 저장</button>
+            <button class="btn" id="mlCsv">CSV 내려받기</button></span>
+        </div>
       </div>
 
-      <div class="mlbtns big"><button class="btn pri" id="mlPrint">🖨 집행대장 인쇄 · PDF로 저장</button>
-        <button class="btn" id="mlCsv">CSV 내려받기</button></div>
       <p class="mlnote">인쇄하면 <b>집행대장만</b> A4 한 장으로 나옵니다. 2부 뽑아 사본에 「원본대조필」을 찍으세요.</p>
     </div>
 
