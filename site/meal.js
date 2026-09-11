@@ -636,7 +636,7 @@ function drawPrintDoc(){
     });
     if(pi===pages.length-1)
       h+='<tr class="tot"><td colspan="3"></td><td class="n">'+cnt+'명</td><td class="nm">합계</td>'+
-         '<td></td><td colspan="3" class="a">'+won(c.price)+'원 x '+cnt+'명 ='+won(tot)+'원</td>'+
+         '<td></td><td colspan="3" class="tota">'+won(c.price)+'원 x '+cnt+'명 ='+won(tot)+'원</td>'+
          '<td></td><td></td><td></td></tr>';
     h+='</tbody></table></section>';
   });
@@ -858,22 +858,23 @@ function build(){
       <div class="mlsum2" id="mlStats"></div>
       <div class="mlteam" id="mlDeptBox" hidden></div>
 
-      <div id="mlLedger"></div>
-      <div id="mlPrintDoc"></div>
-
       <div class="mlfoot">
         <h5 class="mlfh">결제할 가맹업소 적기</h5>
         <table class="mltbl pay" id="mlPayTbl"></table>
         <datalist id="mlShopList"></datalist>
         <p class="paymsg hint" id="mlPayMsg"></p>
-        <div class="mlbtns split">
-          <span class="lft"><button class="btn pri" id="mlAuto">금액 자동계산</button>
-            <button class="btn" id="mlPlace">가맹업소명 배치하기</button></span>
-          <span class="rgt"><button class="btn" id="mlPrev">📄 인쇄 미리보기</button>
-            <button class="btn pri" id="mlPrint">🖨 인쇄하기</button>
-            <button class="btn" id="mlXls">엑셀 내려받기</button></span>
-        </div>
       </div>
+
+      <div class="mlbtns split">
+        <span class="lft"><button class="btn pri" id="mlAuto">금액 자동계산</button>
+          <button class="btn" id="mlPlace">가맹업소명 배치하기</button></span>
+        <span class="rgt"><button class="btn" id="mlPrev">📄 인쇄 미리보기</button>
+          <button class="btn pri" id="mlPrint">🖨 인쇄하기</button>
+          <button class="btn" id="mlXls">엑셀 내려받기</button></span>
+      </div>
+
+      <div id="mlLedger"></div>
+      <div id="mlPrintDoc"></div>
 
 
     </div>
@@ -1100,14 +1101,19 @@ function build(){
     alert('지웠습니다. 다음 판정부터 처음 쓰는 것과 같아집니다.');
   };
   $('#mlPrint').onclick=()=>window.print();
-  $('#mlPrev').onclick=()=>{
+  const preview=on=>{
     const v=document.querySelector('.view[data-view="meal"]'); if(!v) return;
-    const on=!v.classList.contains('preview');
     v.classList.toggle('preview',on);
     $('#mlPrev').textContent = on ? '✕ 미리보기 닫기' : '📄 인쇄 미리보기';
     $('#mlPrev').classList.toggle('pri',on);
     (on?$('#mlPrintDoc'):$('#mlLedger')).scrollIntoView({behavior:'smooth',block:'start'});
   };
+  $('#mlPrev').onclick=()=>preview(!document.querySelector('.view[data-view="meal"]').classList.contains('preview'));
+  document.addEventListener('keydown',e=>{        // Esc 로도 닫힌다
+    if(e.key!=='Escape') return;
+    const v=document.querySelector('.view[data-view="meal"]');
+    if(v&&v.classList.contains('preview')) preview(false);
+  });
   try{ PROF=localStorage.getItem(LSP)||''; }catch(e){ PROF=''; }
   loadCfg(); drawTeamSet();
   loadBase().then(()=>autoBase($('#mlYm').value.trim()||'2026-08'));

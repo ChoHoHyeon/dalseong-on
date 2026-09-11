@@ -821,8 +821,8 @@ table.mlsign tr:last-child td{height:34px}
 .mlbtns.split .btn{padding:11px 20px;font-size:13.5px;border-radius:9px}
 @media(max-width:760px){ .mlbtns.split{flex-direction:column;align-items:stretch}
   .mlbtns.split .lft,.mlbtns.split .rgt{justify-content:center} }
-.mlfoot .mlbtns .btn:disabled{opacity:.45;cursor:not-allowed}
-.mlfoot .mlbtns .btn.pri{padding:9px 18px}
+.mlfoot .payadd:disabled{opacity:.35;cursor:not-allowed}
+.paycard>.mlbtns.split .btn.pri{padding:11px 20px}
 
 
 /* ══════════════════════════════════════════════════════════════
@@ -847,8 +847,9 @@ table.mlsign tr:last-child td{height:34px}
 #mlPrintDoc col.c-a {width:22.65mm} #mlPrintDoc col.c-k1{width:16.31mm}
 #mlPrintDoc col.c-k2{width:12.87mm} #mlPrintDoc col.c-k3{width:12.87mm}
 #mlPrintDoc .pgt2 th,#mlPrintDoc .pgt2 td{
-  border:.75px solid #000; padding:0 1.5mm; text-align:center; vertical-align:middle;
+  border:.75px solid #000; padding:0 .5mm; text-align:center; vertical-align:middle;
   color:#000; overflow:hidden; white-space:nowrap; text-overflow:ellipsis}
+#mlPrintDoc .pgt2 td.nm{padding:0 2mm}
 /* 바깥은 굵은 선 (엑셀 thick) */
 #mlPrintDoc .pgt2 tr>:first-child{border-left:2.25px solid #000}
 #mlPrintDoc .pgt2 tr>:last-child{border-right:2.25px solid #000}
@@ -860,12 +861,24 @@ table.mlsign tr:last-child td{height:34px}
 #mlPrintDoc .pgt2 tr.hd2 th{border-bottom:3px double #000}
 #mlPrintDoc .pgt2 tbody td{height:12.07mm}
 #mlPrintDoc .pgt2 td.nm{text-align:center}
-#mlPrintDoc .pgt2 td.p{text-align:right;padding-right:1mm}
-#mlPrintDoc .pgt2 td.x{text-align:left;padding-left:.5mm}
-#mlPrintDoc .pgt2 td.a{text-align:right;padding-right:1mm}
+#mlPrintDoc .pgt2 td.p{text-align:right;padding-right:1.2mm}
+#mlPrintDoc .pgt2 td.x{text-align:left;padding:0 .3mm}
+/* 글꼴 폭이 넓은 PC(HY견명조 설치)에서도 안 잘리도록 좁은 칸은 여백을 더 줄인다 */
+#mlPrintDoc .pgt2 td.y,#mlPrintDoc .pgt2 td.m,#mlPrintDoc .pgt2 td.d{padding:0 .3mm}
+#mlPrintDoc .pgt2 td.a{text-align:right;padding-right:1.2mm}
 #mlPrintDoc .pgt2 tr.tot td{font-weight:700;border-top:.75px solid #000}
 #mlPrintDoc .pgt2 tr.tot td.n{background:#ff0}
-#mlPrintDoc .pgt2 tr.tot td.a{text-align:center}
+#mlPrintDoc .pgt2 tr.tot td.tota{text-align:center}
+
+/* ── 선 굵기 : 엑셀 원본 그대로 ────────────────────────────────
+   thin=0.75px · thick=2.25px · double=3px 이중선
+   원본에는 「년|월|일」 사이와 「단가|×N명=|금액」 사이에 세로선이 없다  */
+#mlPrintDoc .pgt2 td.y{border-right:0}
+#mlPrintDoc .pgt2 td.m{border-left:0;border-right:0}
+#mlPrintDoc .pgt2 td.d{border-left:0}
+#mlPrintDoc .pgt2 td.p{border-right:0}
+#mlPrintDoc .pgt2 td.x{border-left:0;border-right:0}
+#mlPrintDoc .pgt2 td.a{border-left:0}
 
 /* 화면에서 미리보기 : 종이 느낌으로 */
 .view[data-view="meal"].preview #mlPrintDoc{display:block}
@@ -884,6 +897,11 @@ table.mlsign tr:last-child td{height:34px}
   background:#fff;padding:10mm 6mm 19mm;margin:0 auto 14px;
   box-shadow:0 4px 18px rgba(0,0,0,.28);width:297mm;box-sizing:border-box}
 .view[data-view="meal"].preview #mlPrintDoc{overflow-x:auto}
+.view[data-view="meal"].preview .mlbtns.split{
+  position:fixed;top:14px;right:18px;left:auto;width:auto;z-index:60;margin:0;
+  padding:9px 12px;border:1px solid var(--line);border-top:1px solid var(--line);
+  border-radius:12px;background:var(--panel);box-shadow:0 8px 24px rgba(16,32,64,.22)}
+.view[data-view="meal"].preview .mlbtns.split .lft{display:none}
 
 @media print{
   @page{size:A4 landscape;margin:10mm 6mm 19mm}
