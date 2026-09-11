@@ -419,102 +419,149 @@ async function readPdf(f){
   }
 }
 
+/* 출장 내역 PDF → 이름·날짜만 뽑아 설정란 채우기 */
+async function readTrip(f){
+  const w=$('#mlTripMsg'); w.textContent='읽는 중…';
+  try{
+    const lib=await loadPdfJs();
+    lib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const pdf=await lib.getDocument({data:await f.arrayBuffer()}).promise;
+    let txt='';
+    for(let p=1;p<=pdf.numPages;p++){
+      const ct=await (await pdf.getPage(p)).getTextContent();
+      let y=null,line='';
+      for(const it of ct.items){
+        const ny=Math.round(it.transform[5]);
+        if(y!==null&&Math.abs(ny-y)>3){ txt+=line+'\n'; line=''; }
+        y=ny; line+=it.str+' ';
+      }
+      txt+=line+'\n';
+    }
+    txt=txt.split(/\r?\n/).map(norm).join('\n');
+    const el=$('#mlTrip'); el.value=(el.value.trim()?el.value.trim()+'\n':'')+txt;
+    saveCfg();
+    const map=parseTrip(el.value), n=Object.keys(map).length;
+    let cnt=0; for(const k in map) cnt+=map[k].size;
+    w.innerHTML='<b>'+esc(f.name)+'</b> — <b>'+n+'명 / '+cnt+'건</b>을 읽었습니다. 다시 판정하면 반영됩니다.';
+    if(S.all&&S.all.length){ S.cfg=cfgRead(); apply(); }
+  }catch(e){
+    w.innerHTML='<span class="mlred">PDF를 읽지 못했습니다. 내용을 복사해 위 칸에 붙여넣어 주세요.</span>';
+  }
+}
+
 /* ---------- 화면 ---------- */
 function build(){
   const root=$('#mealBody'); if(!root||S.built) return; S.built=true;
   root.innerHTML=`
   <div class="card mlcard">
-    <h4>① 설정 <small>한 번만 맞춰 두면 다음 달부터는 PDF만 올리면 됩니다</small></h4>
-    <label class="mlfull"><span>우리 과·팀 <small class="mlmut">— 설정과 업소 목록이 이 이름으로 따로 저장됩니다</small></span>
-      <input id="mlProf" placeholder="예) 정보통신과 정보통계팀"></label>
-    <p class="mlnote" id="mlProfNote">과 이름은 확인서에서 자동으로 채워집니다. <b>뒤에 팀 이름을 붙여 주세요</b> —
-      같은 과의 다른 팀 서무와 설정이 섞이지 않습니다.</p>
-    <label class="mlfull"><span>우리 팀 직원 명단 <small class="mlmut">— 확인서에 팀 구분이 없어 이름으로 가려냅니다</small></span>
-      <textarea id="mlTeam" placeholder="예) 김화연, 김원규, 배지현, 조호현, 김규태, 김경민"></textarea></label>
-    <p class="mlnote">비워 두면 <b>확인서에 있는 전원</b>을 처리합니다. 확인서를 과 단위로 뽑으신다면 반드시 적어 주세요.
-      초과근무가 없던 팀원은 적어 두어도 아무 영향이 없습니다.</p>
-    <p class="mlbase" id="mlBaseNote">⚙ 기준파일을 불러오는 중…</p>
-    <p class="mlsaved" id="mlSaved"></p>
-    <div class="mlgrid">
-      <label><span>대상 연월</span><input id="mlYm" value="2026-08" placeholder="YYYY-MM"></label>
-      <label><span>1인 1식 단가(원)</span><input id="mlPrice" type="number" value="9000" step="500"></label>
-      <label><span>정규근무 시작</span><input id="mlWs" value="09:00"></label>
-      <label><span>정규근무 종료</span><input id="mlWe" value="18:00"></label>
+    <h4>① 파일 올리기 <small>이 두 개면 끝납니다</small></h4>
+    <div class="mlups">
+      <div class="mlup">
+        <div class="mldrop" id="mlDrop"><b>초과근무 확인서 PDF</b>
+          <small>새올에서 출력한 파일 · 올리면 <b>바로 판정</b>합니다</small></div>
+        <input type="file" id="mlFile" accept="application/pdf" hidden>
+        <p class="mlnote" id="mlPdfMsg">필수 · 이 파일 하나로 판정·인원·명단이 모두 정해집니다.</p>
+      </div>
+      <div class="mlup">
+        <div class="mldrop alt" id="mlTripDrop"><b>출장 내역 PDF</b>
+          <small>여비로 식비 받은 날은 <b>자동 제외</b>됩니다</small></div>
+        <input type="file" id="mlTripFile" accept="application/pdf" hidden>
+        <p class="mlnote" id="mlTripMsg">없으면 건너뛰어도 됩니다.</p>
+      </div>
     </div>
-    <label class="mlfull"><span>조기출근 요건</span>
-      <select id="mlEarly">
-        <option value="1" selected>적용 — 출근 08:00 이전 + 당일 09:00 전 등록 시 지급</option>
-        <option value="0">미적용 — 퇴근 19:00 기준만 사용</option>
-      </select></label>
-    <label class="mlfull"><span>공휴일·대체공휴일</span>
-      <textarea id="mlHoli">${HOLI_2026.join(', ')}</textarea></label>
-    <p class="mlnote">2026년 관공서 공휴일(대체공휴일 포함)입니다. <b>해마다 갱신하세요.</b> 6/3은 제9회 전국동시지방선거일입니다.</p>
-    <label class="mlfull"><span>교대근무자 · 야간/휴일근무수당 지급대상자 <small class="mlmut">— 규정상 제외 대상. 한 번 적어두면 계속 자동 제외됩니다</small></span>
-      <textarea id="mlShift" placeholder="예) 홍길동, 김철수   (해당 없으면 비워 두세요)"></textarea></label>
-    <label class="mlfull"><span>출장 식비 수령 내역 <small class="mlmut">— 「공무원 여비 규정」에 따라 식비를 받은 날. 새올 출장 내역을 붙여넣으면 됩니다</small></span>
-      <textarea id="mlTrip" placeholder="예)  8/12 조호현&#10;      김원규 2026-08-20, 8/21"></textarea></label>
-    <p class="mlnote">날짜와 이름만 있으면 형식은 상관없습니다. 해당 날짜는 <b>자동으로 제외</b>되고 격자에 「제」로 표시됩니다.</p>
-    <label class="mlfull"><span>가맹업소 목록</span><textarea id="mlShops">${SHOPS.join(', ')}</textarea></label>
-    <p class="mlnote">업소명만 사용합니다. <b>대표자 성명·계좌번호는 입력하지 마세요.</b></p>
-    <div class="mlbtns"><button class="btn" id="mlExport">설정 내보내기</button>
-      <button class="btn" id="mlImport">설정 가져오기</button>
-      <input type="file" id="mlImportFile" accept="application/json" hidden></div>
-    <p class="mlnote">PC를 바꾸거나 담당자가 바뀔 때 <b>설정 파일 하나로 인수인계</b>할 수 있습니다.
-      단가·공휴일은 <code>data/meal_config.json</code>(군 공통 기준)에서 자동으로 적용됩니다.</p>
-  </div>
-
-  <div class="card mlcard">
-    <h4>② 초과근무 확인서 불러오기 <small>새올에서 출력한 파일</small></h4>
-    <div class="mltabs"><button id="mlTabP" class="on">PDF 파일</button><button id="mlTabT">텍스트 붙여넣기</button></div>
-    <div id="mlPaneP">
-      <div class="mldrop" id="mlDrop"><b>초과근무 확인서 PDF</b>를 끌어다 놓거나 클릭<br><small class="mlbig">올리면 <b>바로 판정</b>합니다 — 버튼을 누르지 않아도 됩니다</small><br>
-        <small>파일은 이 컴퓨터 안에서만 처리되며 어디로도 전송되지 않습니다.</small></div>
-      <input type="file" id="mlFile" accept="application/pdf" hidden>
-      <p class="mlnote" id="mlPdfMsg"></p>
-    </div>
-    <div id="mlPaneT" hidden>
-      <textarea id="mlRaw" class="mlraw" placeholder="확인서 PDF를 열어 Ctrl+A → Ctrl+C 한 뒤 여기에 붙여넣으세요."></textarea>
-    </div>
+    <details class="mlfold"><summary>PDF가 열리지 않을 때 — 텍스트로 붙여넣기</summary>
+      <label class="mlfull"><span>초과근무 확인서</span>
+        <textarea id="mlRaw" class="mlraw" placeholder="확인서 PDF를 열어 Ctrl+A → Ctrl+C 한 뒤 붙여넣으세요. 붙이는 즉시 판정합니다."></textarea></label>
+      <label class="mlfull"><span>출장 식비 수령 내역</span>
+        <textarea id="mlTrip" style="min-height:64px" placeholder="예)  8/12 조호현 &#10;      김원규 2026-08-20, 8/21"></textarea></label>
+      <p class="mlnote">날짜와 이름만 있으면 형식은 상관없습니다.</p>
+    </details>
     <div class="mlbtns"><button class="btn pri" id="mlRun">다시 판정하기</button>
       <button class="btn" id="mlDemo">8월 예시로 시험</button></div>
   </div>
 
   <div id="mlOut" hidden>
     <div class="card mlcard">
-      <h4>③ 판정 결과 <small>초록 칸을 누르면 제외됩니다</small></h4>
+      <h4>② 판정 결과 <small>칸을 누르면 켜고 끌 수 있습니다</small></h4>
       <div class="mlstats" id="mlStats"></div>
       <div class="mlteam" id="mlTeamBox" hidden></div>
       <div class="mldept" id="mlDeptBox" hidden></div>
-      <p class="mlnote"><b>1</b> 지급 대상 · <b>제</b> 규정상 자동 제외(설정에 등록된 교대근무자·출장 식비 수령일) ·
-        <b>–</b> 담당자가 직접 해제 · <b>·</b> 근무기록은 있으나 시간 요건 미달.
-        칸을 누르면 켜고 끌 수 있으며, 마우스를 올리면 판정 사유가 나옵니다.</p>
+      <p class="mlnote"><b>1</b> 지급 대상 · <b>제</b> 규정상 자동 제외(교대근무자·출장 식비 수령일) ·
+        <b>–</b> 직접 해제 · <b>·</b> 근무기록은 있으나 시간 요건 미달.
+        마우스를 올리면 판정 사유가 나옵니다.</p>
       <div class="mlscroll"><table class="mlgrid" id="mlGrid"></table></div>
     </div>
-    <div class="card mlcard"><h4>④ 검산 <small>확인서 수당시간 ↔ 출퇴근 시각 대조</small></h4>
+    <div class="card mlcard"><h4>③ 검산 <small>확인서 수당시간 ↔ 출퇴근 시각 대조</small></h4>
       <div id="mlChk"></div></div>
-    <div class="card mlcard"><h4>⑤ 가맹업소 지정</h4>
+    <div class="card mlcard"><h4>④ 가맹업소 지정</h4>
       <div class="mlbtns" style="margin:0 0 10px">
         <button class="btn pri" id="mlTop">자주 쓰는 곳으로 전부 채우기</button>
         <select id="mlBulk"></select>
         <button class="btn" id="mlBulkAll">선택한 곳으로 전부</button>
         <button class="btn" id="mlBulkEmpty">빈 날만</button></div>
-      <p class="mlnote">드롭다운은 <b>많이 쓰신 순서</b>로 정렬되며, 지정할 때마다 이 브라우저에 기억됩니다.
+      <p class="mlnote">드롭다운은 <b>많이 쓰신 순서</b>로 정렬되며, 지정할 때마다 기억됩니다.
         다음 달부터는 버튼 한 번이면 채워집니다.</p>
       <div class="mlscroll"><table class="mltbl" id="mlShopTbl"></table></div></div>
-    <div class="card mlcard verify"><h4>⑥ 과거 실적과 대조 <small>검증용 — 이미 지급된 달로 확인해 보세요</small></h4>
-      <p class="mlnote">기존 「특근매식비 입력」 시트 맨 아래 <b>「계」 행</b>을 그대로 긁어 붙여넣거나,
-        <code>조호현 17, 김원규 18</code> 처럼 <b>이름과 식수</b>를 적어 주세요. 순서·구분자는 상관없습니다.</p>
-      <textarea id="mlVin" class="mlraw" style="min-height:76px"
+    <div class="card mlcard verify"><h4>⑤ 과거 실적과 대조 <small>검증용 — 이미 지급된 달로 확인해 보세요</small></h4>
+      <p class="mlnote">기존 「특근매식비 입력」 시트 맨 아래 <b>「계」 행</b>을 긁어 붙여넣거나,
+        <code>조호현 17, 김원규 18</code> 처럼 <b>이름과 식수</b>를 적어 주세요.</p>
+      <textarea id="mlVin" class="mlraw" style="min-height:70px"
         placeholder="예)  조호현 17  김원규 18  김경민 18  김규태 1"></textarea>
       <div class="mlbtns"><button class="btn pri" id="mlVrun">대조하기</button>
         <button class="btn" id="mlVclr">지우기</button></div>
       <div id="mlVout"></div></div>
-    <div class="card mlcard"><h4>⑦ 집행대장</h4>
+    <div class="card mlcard"><h4>⑥ 집행대장</h4>
       <div id="mlLedger"></div>
       <div class="mlbtns"><button class="btn pri" id="mlPrint">인쇄 / PDF 저장</button>
         <button class="btn" id="mlCsv">CSV 내려받기</button></div>
       <p class="mlnote">지출결의 첨부 : 영수증 · 초과근무 정산결과(새올) · 집행대장(사본에 「원본대조필」) · 관련 공문</p></div>
-  </div>`;
+  </div>
+
+  <details class="card mlcard setcard" id="mlSet">
+    <summary><b>⚙ 설정</b> <small>처음 한 번만 — 평소에는 열 일이 없습니다</small></summary>
+    <div class="setbody">
+      <p class="mlkeep">💾 여기서 고친 값은 <b>이 브라우저에 저장</b>되어 다음에 열 때 그대로 나옵니다.
+        다만 <b>같은 자리·같은 브라우저</b>에서 쓰셔야 유지됩니다 — PC나 브라우저를 바꾸면 아래 「설정 내보내기」 파일로 옮기세요.
+        <span class="mlkeep2">2027년 본 구축에서 <b>계정 단위 서버 저장</b>으로 바뀌면 어느 자리에서 열어도 그대로 나옵니다.</span></p>
+      <p class="mlbase" id="mlBaseNote">⚙ 기준파일을 불러오는 중…</p>
+      <p class="mlsaved" id="mlSaved"></p>
+
+      <label class="mlfull"><span>우리 과·팀 <small class="mlmut">— 설정이 이 이름으로 따로 저장됩니다</small></span>
+        <input id="mlProf" placeholder="예) 정보통신과 정보통계팀"></label>
+      <p class="mlnote" id="mlProfNote">과 이름은 확인서에서 자동으로 채워집니다. 뒤에 <b>팀 이름</b>만 붙여 주세요.</p>
+
+      <label class="mlfull"><span>우리 팀 직원 명단 <small class="mlmut">— 확인서에 팀 구분이 없어 이름으로 가려냅니다</small></span>
+        <textarea id="mlTeam" placeholder="예) 김화연, 김원규, 배지현, 조호현, 김규태, 김경민"></textarea></label>
+      <p class="mlnote">비워 두면 확인서에 있는 <b>전원</b>을 처리합니다. 판정 결과 화면에서 이름을 눌러 바로 추가할 수도 있습니다.</p>
+
+      <label class="mlfull"><span>교대근무자 · 야간/휴일근무수당 지급대상자 <small class="mlmut">— 규정상 제외 대상</small></span>
+        <textarea id="mlShift" placeholder="예) 홍길동, 김철수   (해당 없으면 비워 두세요)"></textarea></label>
+
+      <label class="mlfull"><span>가맹업소 목록 <small class="mlmut">— 쓰다 보면 알아서 쌓입니다</small></span>
+        <textarea id="mlShops">${SHOPS.join(', ')}</textarea></label>
+      <p class="mlnote">업소명만 사용합니다. <b>대표자 성명·계좌번호는 입력하지 마세요.</b></p>
+
+      <div class="mlgrid">
+        <label><span>대상 연월</span><input id="mlYm" value="2026-08" placeholder="YYYY-MM"></label>
+        <label><span>1인 1식 단가(원)</span><input id="mlPrice" type="number" value="9000" step="500"></label>
+        <label><span>정규근무 시작</span><input id="mlWs" value="09:00"></label>
+        <label><span>정규근무 종료</span><input id="mlWe" value="18:00"></label>
+      </div>
+      <label class="mlfull"><span>조기출근 요건</span>
+        <select id="mlEarly">
+          <option value="1" selected>적용 — 출근 08:00 이전 + 당일 09:00 전 등록 시 지급</option>
+          <option value="0">미적용 — 퇴근 19:00 기준만 사용</option>
+        </select></label>
+      <label class="mlfull"><span>공휴일·대체공휴일 <small class="mlmut">— 기준파일에서 자동으로 채워집니다</small></span>
+        <textarea id="mlHoli">${HOLI_2026.join(', ')}</textarea></label>
+
+      <div class="mlbtns"><button class="btn" id="mlExport">설정 내보내기</button>
+        <button class="btn" id="mlImport">설정 가져오기</button>
+        <input type="file" id="mlImportFile" accept="application/json" hidden></div>
+      <p class="mlnote">PC를 바꾸거나 담당자가 바뀔 때 <b>파일 하나로 인수인계</b>할 수 있습니다.
+        단가·공휴일은 <code>data/meal_config.json</code>(군 공통 기준)에서 자동 적용됩니다.</p>
+    </div>
+  </details>`;
 
   $('#mlTabP').onclick=()=>{$('#mlTabP').classList.add('on');$('#mlTabT').classList.remove('on');$('#mlPaneP').hidden=false;$('#mlPaneT').hidden=true;};
   $('#mlTabT').onclick=()=>{$('#mlTabT').classList.add('on');$('#mlTabP').classList.remove('on');$('#mlPaneT').hidden=false;$('#mlPaneP').hidden=true;};
@@ -524,6 +571,14 @@ function build(){
   dp.ondragleave=()=>dp.classList.remove('on');
   dp.ondrop=e=>{e.preventDefault();dp.classList.remove('on');if(e.dataTransfer.files[0])readPdf(e.dataTransfer.files[0]);};
   fi.onchange=()=>{if(fi.files[0])readPdf(fi.files[0]);};
+  const td=$('#mlTripDrop'), tf=$('#mlTripFile');
+  td.onclick=()=>tf.click();
+  td.ondragover=e=>{e.preventDefault();td.classList.add('on');};
+  td.ondragleave=()=>td.classList.remove('on');
+  td.ondrop=e=>{e.preventDefault();td.classList.remove('on');if(e.dataTransfer.files[0])readTrip(e.dataTransfer.files[0]);};
+  tf.onchange=()=>{if(tf.files[0])readTrip(tf.files[0]);};
+  $('#mlTrip').addEventListener('input',()=>{ if(S.all&&S.all.length){ S.cfg=cfgRead(); apply(); } });
+  $('#mlShift').addEventListener('input',()=>{ if(S.all&&S.all.length){ S.cfg=cfgRead(); apply(); } });
   $('#mlRun').onclick=()=>{
     const t=$('#mlPaneT').hidden?S.pdfText:$('#mlRaw').value;
     if(!String(t).trim()){alert('먼저 PDF를 불러오거나 텍스트를 붙여넣어 주세요.');return;}

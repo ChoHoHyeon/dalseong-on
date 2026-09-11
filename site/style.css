@@ -576,3 +576,45 @@ table.mltbl select{width:100%;padding:4px 7px;border:1px solid var(--line);borde
 .mladd{border:1px solid #ecd6a6;background:#fff;color:#8a5a00;border-radius:20px;
   padding:2px 9px;font:inherit;font-size:12px;cursor:pointer;margin:0 2px}
 .mladd:hover{background:#8a5a00;color:#fff;border-color:#8a5a00}
+.mldrop.sm{padding:14px 12px;font-size:12.5px;margin-top:2px}
+
+/* 급량비 — 업로드 우선 레이아웃 */
+.mlups{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){.mlups{grid-template-columns:1fr}}
+.mlup .mldrop{min-height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.mlup .mldrop b{font-size:14px}
+.mlup .mldrop small{font-size:12px;display:block}
+.mldrop.alt{border-style:dashed;opacity:.92}
+.mlfold{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+.mlfold>summary{cursor:pointer;font-size:12.5px;color:var(--muted);list-style:none;user-select:none}
+.mlfold>summary::before{content:'▸ ';color:var(--accent)}
+.mlfold[open]>summary::before{content:'▾ '}
+.mlfold>summary:hover{color:var(--accent)}
+
+.setcard{padding:0}
+.setcard>summary{cursor:pointer;padding:14px 18px;font-size:14px;list-style:none;user-select:none;
+  display:flex;align-items:center;gap:8px}
+.setcard>summary::-webkit-details-marker{display:none}
+.setcard>summary::before{content:'▸';color:var(--accent);font-size:12px}
+.setcard[open]>summary::before{content:'▾'}
+.setcard[open]>summary{border-bottom:1px solid var(--line)}
+.setcard>summary small{font-weight:400;color:var(--muted)}
+.setcard .setbody{padding:16px 18px 18px}
+.mlkeep{margin:0 0 12px;padding:11px 14px;border-radius:7px;background:#eef3fb;border:1px solid #cddbf0;
+  font-size:12.5px;line-height:1.75;color:#2b4a7d}
+.mlkeep2{display:block;margin-top:5px;color:#5b7099}
+
+/* 접히는 안내 카드 (근거 규정 · 이 화면의 범위) */
+.foldcard{padding:0}
+.foldcard>summary{cursor:pointer;padding:14px 18px;font-size:14px;list-style:none;user-select:none;
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.foldcard>summary::-webkit-details-marker{display:none}
+.foldcard>summary::before{content:'▸';font-size:12px;opacity:.7}
+.foldcard[open]>summary::before{content:'▾'}
+.foldcard[open]>summary{border-bottom:1px solid var(--line)}
+.foldcard>summary small{font-weight:400;color:var(--muted);font-size:12.5px}
+.foldcard .foldbody{padding:16px 18px 18px}
+.lawcard.foldcard>summary{background:rgba(23,65,143,.04)}
+.lawcard.foldcard>summary::before{color:var(--accent)}
+.scopecard.foldcard>summary{background:rgba(196,148,42,.07)}
+.scopecard.foldcard>summary::before{color:#8a5a00}

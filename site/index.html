@@ -188,22 +188,27 @@
       <div class="vh"><h2>급량비 계산하기</h2><p>새올 「초과근무 확인서」를 올리면 급량비(특근매식비) 지급 대상을 규정에 따라 판정하고 집행대장까지 만들어 주는 화면입니다.</p></div>
 
       <div class="card flowcard">
-        <h4>이렇게 씁니다 <small>PDF 한 장이면 끝납니다</small></h4>
+        <h4>이렇게 씁니다 <small>파일 두 개를 올리면 끝납니다</small></h4>
         <ol class="flow3">
           <li><span class="fnum">1</span><span class="fico" aria-hidden="true">📄</span>
-            <span class="ftx"><b>초과근무 확인서 올리기</b><small>새올에서 출력한 PDF를 그대로 · 올리면 <b>바로 판정</b>합니다</small></span></li>
+            <span class="ftx"><b>초과근무 확인서 올리기</b><small>새올 PDF 그대로 · 규정에 따라 <b>바로 판정</b>됩니다</small></span></li>
           <li class="farr" aria-hidden="true">→</li>
-          <li><span class="fnum">2</span><span class="fico" aria-hidden="true">✅</span>
-            <span class="ftx"><b>제외할 사람만 해제</b><small>규정상 제외 대상만 클릭 · 가맹업소 지정</small></span></li>
+          <li><span class="fnum">2</span><span class="fico" aria-hidden="true">🚗</span>
+            <span class="ftx"><b>출장 내역 올리기</b><small>여비로 식비 받은 날은 <b>자동으로 빠집니다</b> · 교대근무자도 자동</small></span></li>
           <li class="farr" aria-hidden="true">→</li>
           <li><span class="fnum">3</span><span class="fico" aria-hidden="true">🧾</span>
-            <span class="ftx"><b>집행대장 인쇄</b><small>기존 서식 그대로 · CSV로도 내려받기</small></span></li>
+            <span class="ftx"><b>업소 버튼 한 번 → 인쇄</b><small>자주 쓰는 곳으로 일괄 지정 · 기존 서식 그대로</small></span></li>
         </ol>
-        <p class="flownote">※ <b>마지막 확인은 담당자가</b> 합니다. 판정 결과는 참고용이며, 제외 대상 여부는 반드시 검토 후 집행하세요.</p>
+        <p class="flownote">※ 제외 대상(교대근무자 · 야간/휴일근무수당 지급대상자 · 출장 식비 수령자)은 <b>설정과 출장 내역으로 자동 판단</b>합니다. 다만 <b>결재 전 최종 확인은 담당자가</b> 합니다 — 규정상 「실제 근무 여부를 객관적 사실로 확인한 후 집행」해야 합니다.</p>
       </div>
 
-      <div class="card lawcard">
-        <h4>근거 규정 <small>이 화면이 따르는 기준</small></h4>
+
+
+      <div id="mealBody"></div>
+
+      <details class="card lawcard foldcard">
+        <summary><b>📖 근거 규정</b><small>이 화면이 따르는 기준 · 훈령 제416호</small></summary>
+        <div class="foldbody">
         <p class="lawref"><b>「지방자치단체 회계관리에 관한 훈령」</b> (행정안전부훈령 제416호, 2026. 1. 2. 시행)<br>
           [별표2] 세출예산 성질별 분류에 따른 집행기준 → 201 일반운영비 › 201-01 사무관리비 › <b>마. 급량비</b>
           <span class="lawdate">규정 확인일 2026. 9. 11.</span></p>
@@ -260,11 +265,11 @@
         <p class="lawwarn">⚠ <b>규정은 개정될 수 있습니다.</b> 위 내용은 2026. 9. 11. 기준으로 확인한 것입니다.
           집행 전 국가법령정보센터에서 현행 [별표2]를 다시 확인하시고, 바뀐 내용이 있으면 아래 설정값과 이 안내를 함께 고쳐 주세요.</p>
       </div>
+      </details>
 
-      <div id="mealBody"></div>
-
-      <div class="card scopecard">
-        <h4>이 화면의 범위 <small>지금은 시범 화면입니다</small></h4>
+      <details class="card scopecard foldcard">
+        <summary><b>ℹ 이 화면의 범위</b><small>지금은 시범 화면입니다 · 2027년 본 구축과 비교</small></summary>
+        <div class="foldbody">
         <p class="scopelead">아래 표의 <b>왼쪽</b>이 지금 보고 계신 화면입니다. 판정 로직과 서식은 실제와 같지만,
           <b>혼자 돌아가는 웹페이지</b>라 업무시스템과 연결되어 있지 않습니다.
           오른쪽이 2027년 본 구축에서 달라지는 부분입니다.</p>
@@ -314,6 +319,10 @@
           본 구축에 필요한 <b>판정 조건과 예외 사항을 미리 확정</b>하는 데 있습니다.
           2026년 8월 실적 54건으로 검증한 결과 기존 수기 집계와 <b>100% 일치</b>했습니다.</p>
       </div>
+      </details>
+
+
+
     </section>
 
 
