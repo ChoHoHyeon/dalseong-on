@@ -167,7 +167,7 @@ function judge(r,c){
 /* ---------- 실행 ---------- */
 function run(text){
   const all=parse(text);
-  if(!all.length){ alert('초과근무 확인서 형식을 읽지 못했습니다.\n[텍스트 붙여넣기]로 다시 시도해 보세요.'); return; }
+  if(!all.length){ alert('초과근무 확인서 형식을 읽지 못했습니다.\n새올에서 다시 출력한 PDF인지 확인해 주세요.'); return; }
   const ym0=($('#mlYm').value||'').trim()||all[0].date.slice(0,7);
   const d0=[...new Set(all.filter(r=>r.date.startsWith(ym0)).map(r=>r.dept))];
   if(d0.length===1) useProfile(d0[0]);   // 확인서의 과로 저장 칸을 나눈다
@@ -192,7 +192,7 @@ function apply(){
   S.newNames=inDoc.filter(n=>!T.has(n)&&!N.has(n));                          // 처음 보는 이름만 물어본다
   S.team=team;
   S.names=[...new Set(S.rows.map(r=>r.name))];
-  const [y,mm]=ym.split('-').map(Number), last=new Date(y,mm,0).getDate();
+  const ym=c.ym, [y,mm]=ym.split('-').map(Number), last=new Date(y,mm,0).getDate();
   S.days=[]; for(let d=1;d<=last;d++) S.days.push(ym+'-'+pad(d));
   const cells={}, chk=[];
   for(const r of S.rows){
