@@ -641,11 +641,14 @@ table.pay input{width:100%;padding:6px 9px;border:1px solid var(--line);border-r
   font:inherit;font-size:12.8px;background:var(--panel);color:var(--tx)}
 table.pay input.r{text-align:right;font-variant-numeric:tabular-nums}
 table.pay input[readonly]{background:var(--bg);color:var(--mut)}
-.paydel,.payadd{min-width:46px;height:27px;line-height:1;padding:0 9px;border-radius:6px;
+/* 업소 이름칸 바로 옆에 추가·삭제 */
+.shopwrap{display:flex;align-items:center;gap:7px;max-width:380px}
+.shopwrap .payshop{flex:1;min-width:0}
+.paydel,.payadd{flex:none;min-width:52px;height:29px;line-height:1;padding:0 10px;border-radius:6px;
   border:1px solid var(--line);background:var(--bg);color:var(--mut);
-  font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;transition:.15s}
+  font:inherit;font-size:11.8px;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap}
 .paydel:hover{background:#b4342a;color:#fff;border-color:#b4342a}
-.payadd{color:var(--acc);border-color:rgba(47,111,237,.35)}
+.payadd{color:var(--acc);border-color:rgba(47,111,237,.45);background:#eef3fd}
 .payadd:hover{background:var(--acc);color:#fff;border-color:var(--acc)}
 .payadd:disabled{opacity:.35;cursor:not-allowed;background:var(--bg);color:var(--mut);border-color:var(--line)}
 /* 금액 칸 : 좌우 9,000원 증감 단추 */
@@ -658,7 +661,7 @@ table.pay input[readonly]{background:var(--bg);color:var(--mut)}
 .mltbl.pay input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .mltbl.pay input[type=number]::-webkit-outer-spin-button,
 .mltbl.pay input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.payshop{max-width:280px}
+
 /* 차액 줄 */
 .mltbl.pay tr.gapr th{background:var(--panel2);font-size:12.4px}
 .mltbl.pay tr.gapr em{font-style:normal;font-size:11px;opacity:.75;margin-left:3px}
@@ -836,7 +839,7 @@ table.mlsign tr:last-child td{height:34px}
   color:#000; background:#fff}
 #mlPrintDoc .pgt{height:14.75mm;line-height:14.75mm;text-align:center;
   font-size:21.3pt;font-weight:700;letter-spacing:.06em}
-#mlPrintDoc table.pgt2{width:236.7mm;border-collapse:collapse;table-layout:fixed;
+#mlPrintDoc table.pgt2{width:236.7mm;margin:0 auto;border-collapse:collapse;table-layout:fixed;
   font-size:10.6pt;border:2.4px solid #000}
 #mlPrintDoc col.c-y {width:15.79mm} #mlPrintDoc col.c-m {width:8.22mm}
 #mlPrintDoc col.c-d {width:11.38mm} #mlPrintDoc col.c-n {width:13.15mm}
@@ -860,9 +863,12 @@ table.mlsign tr:last-child td{height:34px}
 #mlPrintDoc .pgt2 tbody td{height:12.07mm}
 #mlPrintDoc .pgt2 td.nm{text-align:center}
 #mlPrintDoc .pgt2 td.p{text-align:right;padding-right:1.2mm}
-#mlPrintDoc .pgt2 td.x{text-align:left;padding:0 .3mm}
+/* 「단가 ×N명= 금액」 세 칸은 사이에 선이 없는 한 덩어리이므로,
+   글꼴이 넓은 PC에서 잘리지 않게 넘치는 것을 허용한다 (선이 없어 티가 안 난다) */
+#mlPrintDoc .pgt2 td.x{text-align:left;padding:0;overflow:visible;text-overflow:clip}
+#mlPrintDoc .pgt2 td.y,#mlPrintDoc .pgt2 td.m,#mlPrintDoc .pgt2 td.d{overflow:visible;text-overflow:clip}
 /* 글꼴 폭이 넓은 PC(HY견명조 설치)에서도 안 잘리도록 좁은 칸은 여백을 더 줄인다 */
-#mlPrintDoc .pgt2 td.y,#mlPrintDoc .pgt2 td.m,#mlPrintDoc .pgt2 td.d{padding:0 .3mm}
+#mlPrintDoc .pgt2 td.y,#mlPrintDoc .pgt2 td.m,#mlPrintDoc .pgt2 td.d{padding:0 .2mm}
 #mlPrintDoc .pgt2 td.a{text-align:right;padding-right:1.2mm}
 #mlPrintDoc .pgt2 tr.tot td{font-weight:700;border-top:.75px solid #000}
 #mlPrintDoc .pgt2 tr.tot td.n{background:#ff0}
@@ -914,3 +920,78 @@ table.mlsign tr:last-child td{height:34px}
   #mlPrintDoc .pg:last-child{break-after:auto;page-break-after:auto}
   #mlPrintDoc .pgt2 tr{break-inside:avoid;page-break-inside:avoid}
 }
+
+/* ══════════════════════════════════════════════════════════════
+   급량비 화면 읽기 쉽게 — 경계를 진하게, 덩어리를 확실하게
+   (이 화면에만 적용. 다른 메뉴는 건드리지 않는다)
+   ══════════════════════════════════════════════════════════════ */
+.view[data-view="meal"]{ --ln:#b9c6dd; --ln2:#8fa3c4; }
+body[data-theme=dark] .view[data-view="meal"]{ --ln:#38496b; --ln2:#5a6e94; }
+
+/* ── 카드 : 테두리를 또렷하게, 사이를 벌린다 ── */
+.view[data-view="meal"] .mlcard{
+  border:1.5px solid var(--ln); border-radius:12px; margin-bottom:18px;
+  box-shadow:0 1px 3px rgba(23,44,90,.06)}
+
+/* ── 카드 제목 : 왼쪽 굵은 띠 + 아래 진한 구분선 ── */
+.view[data-view="meal"] .mlcard>h4{
+  font-size:15px; font-weight:800; color:var(--tx);
+  margin:-2px -18px 14px; padding:0 18px 11px 14px;
+  border-bottom:1.5px solid var(--ln); position:relative}
+.view[data-view="meal"] .mlcard>h4::before{
+  content:''; position:absolute; left:0; top:1px; bottom:12px; width:4px;
+  border-radius:0 3px 3px 0; background:var(--acc)}
+.view[data-view="meal"] .mlcard>h4 small{font-size:12px}
+
+/* ── 소제목 「결제할 가맹업소 적기」 ── */
+.view[data-view="meal"] .mlfh{
+  font-size:14px; font-weight:800; margin:0 0 9px; padding-left:10px;
+  border-left:4px solid var(--acc); line-height:1.2}
+.view[data-view="meal"] .mlfoot{
+  margin-top:18px; padding-top:16px; border-top:1.5px solid var(--ln)}
+
+/* ── 표 : 테두리·머리행을 확실히 ── */
+.view[data-view="meal"] table.mltbl{border:1.5px solid var(--ln2)}
+.view[data-view="meal"] table.mltbl th,
+.view[data-view="meal"] table.mltbl td{border:1px solid var(--ln)}
+.view[data-view="meal"] table.mltbl thead th{
+  background:#e6edf9; color:#15305e; font-weight:800; border-bottom:1.5px solid var(--ln2)}
+body[data-theme=dark] .view[data-view="meal"] table.mltbl thead th{background:#1d2c4c;color:#dce6fb}
+.view[data-view="meal"] table.mltbl tr.sum th{
+  background:#e6edf9; font-weight:800; border-top:1.5px solid var(--ln2)}
+body[data-theme=dark] .view[data-view="meal"] table.mltbl tr.sum th{background:#1d2c4c}
+
+/* ── 집행대장 : 줄이 눈으로 따라가지도록 한 줄 걸러 옅은 바탕 ── */
+#mlLedger table.mltbl tbody tr:nth-child(even):not(.hol):not(.sum) td{background:#fafbfe}
+body[data-theme=dark] #mlLedger table.mltbl tbody tr:nth-child(even):not(.hol):not(.sum) td{background:rgba(255,255,255,.03)}
+#mlLedger table.mltbl tbody tr:hover td{background:#eaf1fd}
+body[data-theme=dark] #mlLedger table.mltbl tbody tr:hover td{background:rgba(79,140,255,.14)}
+#mlLedger .mltitle{font-size:19px;font-weight:800;letter-spacing:.12em;margin:4px 0 10px}
+
+/* ── 결제 입력표 : 차액·합계 줄을 눈에 띄게 ── */
+.view[data-view="meal"] .mltbl.pay tr.gapr th{
+  background:#f0f3fa; font-weight:800; border-top:1.5px solid var(--ln2)}
+body[data-theme=dark] .view[data-view="meal"] .mltbl.pay tr.gapr th{background:#1a2740}
+.view[data-view="meal"] .mltbl.pay tr.gapr.less th.r,
+.view[data-view="meal"] .mltbl.pay tr.gapr.over th.r,
+.view[data-view="meal"] .mltbl.pay tr.gapr.zero th.r{font-size:13.5px}
+
+/* ── 안내 문구 : 배경을 줘서 표와 분리 ── */
+.view[data-view="meal"] .paymsg{
+  padding:9px 12px; border-radius:8px; border:1px solid var(--ln); background:var(--panel2)}
+.view[data-view="meal"] .paymsg.bad{border-color:#e6b5b0; background:#fdeeec}
+.view[data-view="meal"] .paymsg.ok{border-color:#9ad8bd; background:#eaf8f1}
+body[data-theme=dark] .view[data-view="meal"] .paymsg.bad{background:rgba(180,52,42,.16)}
+body[data-theme=dark] .view[data-view="meal"] .paymsg.ok{background:rgba(11,122,83,.18)}
+
+/* ── 버튼 줄 : 위쪽 진한 선으로 구역을 끊는다 ── */
+.view[data-view="meal"] .mlbtns.split{border-top:1.5px solid var(--ln)}
+
+/* ── 통계 한 줄 : 상자가 겹치지 않게 안쪽 것만 또렷하게 ── */
+.view[data-view="meal"] .mlsum2{margin:12px 0 0;padding:0}
+.view[data-view="meal"] .mlsum{
+  display:inline-block; padding:8px 14px; border-radius:8px;
+  border:1px solid var(--ln); background:var(--panel2); font-size:13.2px; color:var(--tx)}
+
+/* ── 드롭존 : 점선을 또렷하게 ── */
+.view[data-view="meal"] .mldrop{border:2px dashed var(--ln2)}

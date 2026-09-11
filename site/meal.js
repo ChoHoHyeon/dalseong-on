@@ -387,25 +387,25 @@ function drawPay(){
   $('#mlShopList').innerHTML=shopList().map(x=>'<option value="'+esc(x)+'">').join('');
 
   let h='<thead><tr><th class="l">결제할 가맹업소</th><th style="width:190px">금액(원)</th>'+
-        '<th style="width:56px">식수</th><th style="width:74px"></th></tr></thead><tbody>';
+        '<th style="width:56px">식수</th></tr></thead><tbody>';
   PAY.forEach((r,i)=>{
     h+='<tr data-r="'+i+'">'+
-       '<td class="l"><input class="payshop" list="mlShopList" data-i="'+i+'" value="'+esc(r.shop)+'"'+
-         ' placeholder="식당 이름"></td>'+
+       '<td class="l"><div class="shopwrap">'+
+         '<input class="payshop" list="mlShopList" data-i="'+i+'" value="'+esc(r.shop)+'" placeholder="식당 이름">'+
+         (i===0 ? '<button class="payadd" title="줄 추가">＋ 추가</button>'
+                : '<button class="paydel" data-i="'+i+'" title="이 줄 지우기">삭제</button>')+
+       '</div></td>'+
        '<td class="amtcell"><div class="amtwrap">'+
          '<button class="amtstep dn" data-i="'+i+'" title="'+won(c.price)+'원 내리기">−</button>'+
          '<input class="payamt r" type="number" step="'+c.price+'" min="0" data-i="'+i+'"'+
            ' value="'+(r.amt==null?'':r.amt)+'" placeholder="0">'+
          '<button class="amtstep up" data-i="'+i+'" title="'+won(c.price)+'원 올리기">＋</button>'+
        '</div></td>'+
-       '<td class="c" data-n="'+i+'"></td>'+
-       '<td>'+(i===0
-           ? '<button class="payadd" title="줄 추가">추가</button>'
-           : '<button class="paydel" data-i="'+i+'" title="이 줄 지우기">삭제</button>')+'</td></tr>';
+       '<td class="c" data-n="'+i+'"></td></tr>';
   });
-  h+='<tr class="gapr" id="mlPayGap"><th class="l">차액</th><th class="r" id="mlPayGapV"></th><th colspan="2"></th></tr>'+
+  h+='<tr class="gapr" id="mlPayGap"><th class="l">차액</th><th class="r" id="mlPayGapV"></th><th></th></tr>'+
      '<tr class="sum"><th class="l">합계</th><th class="r" id="mlPaySum"></th>'+
-     '<th class="c" id="mlPaySumN"></th><th></th></tr>';
+     '<th class="c" id="mlPaySumN"></th></tr>';
   $('#mlPayTbl').innerHTML=h+'</tbody>';
   drawPayStatus();
 }
