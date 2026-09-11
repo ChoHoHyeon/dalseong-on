@@ -802,3 +802,27 @@ table.mlsign tr:last-child td{height:34px}
   flex-direction:row!important;justify-content:center;align-items:center}
 .mldrop.done b{font-size:13px!important;display:inline!important}
 .mlup .mldrop.err{min-height:0!important;padding:12px 16px!important}
+/* 올린 파일 옆의 작은 빼기 단추 */
+.mldrop.done{position:relative}
+.mlx{position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  width:22px;height:22px;line-height:1;padding:0;border-radius:50%;
+  border:1px solid rgba(11,122,83,.3);background:rgba(255,255,255,.75);
+  color:#0b7a53;font-size:12px;cursor:pointer;transition:.15s}
+.mlx:hover{background:#0b7a53;border-color:#0b7a53;color:#fff}
+@media print{ .mlx{display:none} }
+
+/* ── 결제한 가맹업소 적기 ───────────────────────────── */
+.mlfh{margin:0 0 8px;font-size:13.5px;font-weight:700;color:var(--tx)}
+.mltbl.pay input{width:100%;border:1px solid var(--line);border-radius:6px;padding:6px 8px;
+  font:inherit;font-size:12.6px;background:var(--panel);color:var(--tx);outline:none}
+.mltbl.pay input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(47,111,237,.14)}
+.mltbl.pay input.r{text-align:right}
+.mltbl.pay td.c,.mltbl.pay th.c{text-align:center;color:var(--mut)}
+.mltbl.pay tr.bad input.payamt{border-color:#d9534f;background:#fdeeec}
+.mltbl.pay .warn{color:#b4342a;font-weight:700}
+.mltbl.pay tr.sum th{background:var(--panel2)}
+.paymsg{margin:9px 0 0;font-size:12.4px;line-height:1.5}
+.paymsg.hint{color:var(--mut)}
+.paymsg.ok{color:#0b7a53}
+.paymsg.bad{color:#b4342a}
+@media print{ .mlfoot{display:none} }

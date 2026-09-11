@@ -252,7 +252,7 @@ function draw(){
     h+='<tr'+(H?' class="hol"':'')+'><td class="day">'+(+d.slice(8))+'일 ('+w+')'+(H?' 휴':'')+'</td>'+tds+'<td>'+(n||'')+'</td></tr>';
   }
   $('#mlGrid').innerHTML=h+'</tbody>';
-  drawChk(); drawPay(); drawLedger(); drawTeamSet();
+  drawChk(); allocate(); drawPay(); drawLedger(); drawTeamSet();
   const fc=document.querySelector('.view[data-view="meal"] .flowcard'); if(fc) fc.hidden=true;
   const up=document.querySelector('.view[data-view="meal"] .mlcard');   if(up) up.classList.add('slim');
   $('#mlOut').hidden=false;
@@ -380,38 +380,95 @@ function drawPay(){
     '<span class="f">1인 1식 '+won(c.price)+'원 × '+cnt+'식<br>'+
     '<em>가맹업소는 어디든 무방합니다 — 이 금액만 맞추면 됩니다</em></span></div>';
   $('#mlShopList').innerHTML=shopList().map(x=>'<option value="'+esc(x)+'">').join('');
-  const multi=PAY.length>1;
-  let h='<thead><tr><th>결제한 가맹업소</th><th style="width:150px">금액(원)</th>'+
-        (multi?'<th style="width:70px">식수</th><th style="width:44px"></th>':'<th style="width:70px">식수</th>')+'</tr></thead><tbody>';
+
+  let h='<thead><tr><th class="l">결제한 가맹업소</th><th style="width:140px">금액(원)</th>'+
+        '<th style="width:58px">식수</th><th style="width:40px"></th></tr></thead><tbody>';
   PAY.forEach((r,i)=>{
-    const amt=(i===0&&PAY.length===1)?tot:(r.amt==null?'':r.amt);
-    const n=Math.round((amt||0)/c.price);
-    h+='<tr><td class="l"><input class="payshop" list="mlShopList" data-i="'+i+'" value="'+esc(r.shop)+'" placeholder="결제 후 상호를 적으세요"></td>'+
-       '<td><input class="payamt r" type="number" step="1000" data-i="'+i+'" value="'+amt+'"'+(PAY.length===1?' readonly':'')+'></td>'+
-       '<td>'+(n?n+'식':'')+'</td>'+(multi?'<td><button class="paydel" data-i="'+i+'">✕</button></td>':'')+'</tr>';
+    h+='<tr data-r="'+i+'">'+
+       '<td class="l"><input class="payshop" list="mlShopList" data-i="'+i+'" value="'+esc(r.shop)+'"'+
+         ' placeholder="식당 이름을 적으세요"></td>'+
+       '<td><input class="payamt r" type="number" step="'+c.price+'" min="0" data-i="'+i+'"'+
+         ' value="'+(r.amt==null?'':r.amt)+'" placeholder="0"></td>'+
+       '<td class="c" data-n="'+i+'"></td>'+
+       '<td>'+(PAY.length>1?'<button class="paydel" data-i="'+i+'" title="이 줄 지우기">✕</button>':'')+'</td></tr>';
   });
-  if(multi){
-    const sum=PAY.reduce((a,r)=>a+(+r.amt||0),0), gap=tot-sum;
-    h+='<tr class="sum"><th class="l">합계</th><th class="r">'+won(sum)+'</th><th>'+Math.round(sum/c.price)+'식</th><th></th></tr>';
-    h+='<tr class="'+(gap?'bad':'')+'"><td colspan="4" class="l">'+
-       (gap===0?'✓ 총액과 일치합니다.':'⚠ 총액과 <b>'+won(Math.abs(gap))+'원</b> '+(gap>0?'모자랍니다':'초과합니다')+' — 맞추어 주세요.')+'</td></tr>';
-  }
+  h+='<tr class="sum"><th class="l">합계</th><th class="r" id="mlPaySum"></th>'+
+     '<th class="c" id="mlPaySumN"></th><th></th></tr>';
   $('#mlPayTbl').innerHTML=h+'</tbody>';
-  allocate();
+  drawPayStatus();
 }
-/* 결제 내역을 일자에 순서대로 배분 — 어느 날을 어느 업소로 묶든 무방하므로 */
-function allocate(){
-  const c=S.cfg, ds=payDays(); S.shop={};
-  const bl=$('#mlBlank'); if(bl&&bl.checked) return;
-  const q=PAY.filter(r=>r.shop).map(r=>({shop:r.shop,
-    left:(PAY.length===1)?1e9:Math.round((+r.amt||0)/c.price)}));
-  if(!q.length) return;
-  let qi=0;
-  for(const d of ds){
-    const n=S.names.filter(x=>{const y=S.cells[d+'|'+x];return y&&y.on;}).length;
-    while(qi<q.length-1 && q[qi].left<n) qi++;
-    S.shop[d]=q[qi].shop; q[qi].left-=n;
+
+/* 입력칸은 건드리지 않고 식수·합계·안내만 새로 쓴다 (타이핑 중 커서가 튀지 않도록) */
+function drawPayStatus(){
+  const c=S.cfg, tot=totalCnt()*c.price;
+  const sum=PAY.reduce((a,r)=>a+(+r.amt||0),0), gap=tot-sum;
+  const tbl=$('#mlPayTbl');
+  PAY.forEach((r,i)=>{
+    const td=tbl.querySelector('[data-n="'+i+'"]'); if(!td) return;
+    const n=(+r.amt||0)/c.price, bad=(+r.amt>0)&&(n!==Math.floor(n));
+    td.innerHTML = bad ? '<span class="warn">?</span>' : (n?n+'식':'');
+    const tr=tbl.querySelector('[data-r="'+i+'"]');
+    if(tr) tr.className = bad?'bad':'';
+  });
+  const sv=$('#mlPaySum'), sn=$('#mlPaySumN');
+  if(sv) sv.textContent=won(sum);
+  if(sn) sn.textContent=(sum%c.price?'':Math.round(sum/c.price)+'식');
+
+  const badRow=PAY.some(r=>(+r.amt>0)&&((+r.amt)%c.price));
+  let msg='', cls='ok';
+  if(!PAY.some(r=>r.shop&&+r.amt>0)){
+    msg='식당 이름과 결제 금액을 적으면 위 <b>가맹업소명</b> 칸이 자동으로 채워집니다.'; cls='hint';
+  }else if(badRow){
+    msg='⚠ 금액은 <b>'+won(c.price)+'원 단위</b>로 적어 주세요 — 하루치가 '+won(c.price)+'원 · '+won(c.price*2)+'원처럼 떨어집니다.'; cls='bad';
+  }else if(gap>0){
+    msg='⚠ <b>'+won(gap)+'원</b> 모자랍니다 — 아래 <b>업소 추가</b>를 눌러 남은 금액을 적으세요.'; cls='bad';
+  }else if(gap<0){
+    msg='⚠ 총액보다 <b>'+won(-gap)+'원</b> 많습니다 — 금액을 줄여 주세요.'; cls='bad';
+  }else if(S.fit==='nofit'){
+    msg='⚠ 합계는 맞지만 이 금액으로는 <b>날짜가 나뉘지 않습니다.</b> 위 집행대장의 하루치 금액에 맞게 조정해 주세요.'; cls='bad';
+  }else{
+    msg='✓ 총액과 일치합니다 — 가맹업소명이 모두 채워졌습니다.'; cls='ok';
   }
+  const m=$('#mlPayMsg'); if(m){ m.className='paymsg '+cls; m.innerHTML=msg; }
+  const ab=$('#mlPayAdd'); if(ab) ab.textContent = gap>0 ? '＋ 업소 추가 ('+won(gap)+'원 남음)' : '＋ 업소 추가';
+}
+
+/* 결제 입력이 바뀌면 배분 → 입력표 → 집행대장 순으로 다시 그린다 */
+function repay(){ allocate(); drawPay(); drawLedger(); }
+
+/* 결제 내역을 일자에 배분 — 업소별 금액이 딱 떨어지게 날짜를 묶는다 */
+function packDays(days,caps){
+  const left=caps.slice(), out=new Array(days.length);
+  let steps=0;
+  function go(i,prev){
+    if(++steps>300000) return false;
+    if(i===days.length) return left.every(x=>x===0);
+    const n=days[i].n;
+    const order=[]; if(prev>=0) order.push(prev);          // 같은 업소를 이어 쓰면 대장이 깔끔하다
+    for(let s=0;s<left.length;s++) if(s!==prev) order.push(s);
+    for(const s of order){
+      if(left[s]<n) continue;
+      left[s]-=n; out[i]=s;
+      if(go(i+1,s)) return true;
+      left[s]+=n;
+    }
+    return false;
+  }
+  return go(0,-1)?out.slice():null;
+}
+function allocate(){
+  const c=S.cfg, ds=payDays(); S.shop={}; S.fit='';
+  const rows=PAY.filter(r=>r.shop&&+r.amt>0);
+  if(!rows.length) return;
+  const days=ds.map(d=>({d, n:S.names.filter(x=>{const y=S.cells[d+'|'+x];return y&&y.on;}).length}))
+               .filter(x=>x.n>0);
+  const caps=rows.map(r=>Math.round((+r.amt||0)/c.price));
+  const need=days.reduce((a,x)=>a+x.n,0), have=caps.reduce((a,x)=>a+x,0);
+  if(rows.some(r=>(+r.amt)%c.price) || have!==need){ S.fit='gap'; return; }
+  const res=packDays(days,caps);
+  if(!res){ S.fit='nofit'; return; }
+  S.fit='ok';
+  res.forEach((si,i)=>{ S.shop[days[i].d]=rows[si].shop; });
 }
 const payDays=()=>S.days.filter(d=>S.names.some(n=>{const x=S.cells[d+'|'+n];return x&&x.on;}));
 function ledgerRows(){
@@ -441,7 +498,7 @@ function drawLedger(){
     const cls=[r.cnt?'':'zero', H?'hol':''].filter(Boolean).join(' ');
     h+='<tr'+(cls?' class="'+cls+'"':'')+'><td class="dt">'+(+m)+'. '+(+r.d.slice(8))+'.<em>('+w+')</em></td><td>'+(r.cnt||'')+'</td>'+
        '<td class="l nm">'+names+'</td>'+
-       '<td>'+(r.shop?esc(r.shop):'')+'</td>'+
+       '<td class="sh">'+(r.shop?esc(r.shop):'')+'</td>'+
        '<td class="r">'+(r.cnt?won(c.price)+'×'+r.cnt+' = '+won(r.amt):'')+'</td></tr>';
   }
   h+='<tr class="sum"><th>합 계</th><th>'+cnt+'</th><th colspan="2"></th><th class="r">'+won(tot)+'원</th></tr></tbody></table></div>'+
@@ -529,7 +586,8 @@ async function readPdf(f){
     run(txt);
     const n=(S.rows||[]).length;
     if(n){
-      setDrop('mlDrop','done','<b>✅ '+esc(f.name)+'</b>');
+      setDrop('mlDrop','done','<b>✅ '+esc(f.name)+'</b>'+
+        '<button class="mlx" id="mlClr" type="button" title="이 파일 빼기" aria-label="이 파일 빼기">✕</button>');
       const o=$('#mlOut'); if(o&&!o.hidden) setTimeout(()=>o.scrollIntoView({behavior:'smooth',block:'start'}),150);
     }else if(txt.replace(/\s/g,'').length<80){
       /* 글자가 한 톨도 없다 = 복합기로 스캔한 그림 PDF */
@@ -548,6 +606,19 @@ async function readPdf(f){
     setDrop('mlDrop','err','<b>⚠ '+esc(why)+'</b><small>'+esc(String((e&&e.message)||e||'')).slice(0,90)+
       '</small><em>다시 시도하려면 클릭하세요</em>');
   }
+}
+
+/* 올린 확인서를 빼고 계산 결과까지 처음 상태로 되돌린다 */
+function clearMeal(){
+  S.all=[]; S.rows=[]; S.days=[]; S.names=[]; S.depts=[]; S.dept='';
+  S.cells={}; S.shop={}; S.chk=[]; S.pdfText=''; S.fit='';
+  PAY=[{shop:'',amt:null}];                 // 적어 둔 가맹업소도 함께 지운다
+  const o=$('#mlOut'); if(o) o.hidden=true;
+  const fi=$('#mlFile'); if(fi) fi.value='';
+  const db=$('#mlDeptBox'); if(db){ db.hidden=true; db.innerHTML=''; }
+  setDrop('mlDrop','');                     // 드롭존을 처음 문구로
+  const card=$('#mlDrop').closest('.card'); // 파일 올리기 칸이 보이게
+  if(card) card.scrollIntoView({behavior:'smooth',block:'center'});
 }
 
 /* 드롭존 상태 : 놓는 순간부터 끝날 때까지 큰 영역이 직접 말해 준다 */
@@ -626,11 +697,12 @@ function build(){
 
       <div id="mlLedger"></div>
 
-      <div class="mlfoot" hidden>
+      <div class="mlfoot">
+        <h5 class="mlfh">결제한 가맹업소 적기</h5>
         <table class="mltbl pay" id="mlPayTbl"></table>
         <datalist id="mlShopList"></datalist>
-        <div class="mlbtns"><button class="btn" id="mlPayAdd">＋ 나눠 결제</button>
-          <label class="mlchk"><input type="checkbox" id="mlBlank"> 업소명 비우기</label></div>
+        <p class="paymsg hint" id="mlPayMsg"></p>
+        <div class="mlbtns"><button class="btn" id="mlPayAdd">＋ 업소 추가</button></div>
       </div>
 
       <div class="mlbtns big"><button class="btn pri" id="mlPrint">🖨 집행대장 인쇄 · PDF로 저장</button>
@@ -705,7 +777,10 @@ function build(){
   </details>`;
 
   const dp=$('#mlDrop'), fi=$('#mlFile');
-  dp.onclick=()=>fi.click();
+  dp.onclick=e=>{
+    if(e.target.closest('#mlClr')){ e.stopPropagation(); clearMeal(); return; }
+    fi.click();
+  };
   fi.onchange=()=>{if(fi.files[0])readPdf(fi.files[0]);};
 
   /* ── 드래그앤드롭 : 화면 어디에 놓아도 받는다 ──────────────
@@ -774,17 +849,28 @@ function build(){
     const el=e.target.closest('.mlc[data-k]'); if(!el) return;
     S.cells[el.dataset.k].on=!S.cells[el.dataset.k].on; draw();
   });
-  $('#mlBlank').addEventListener('change',()=>{ allocate(); drawLedger(); });
-  $('#mlPayAdd').onclick=()=>{ if(PAY.length===1) PAY[0].amt=null; PAY.push({shop:'',amt:null}); drawPay(); drawLedger(); };
+  $('#mlPayAdd').onclick=()=>{
+    const tot=totalCnt()*S.cfg.price, sum=PAY.reduce((a,r)=>a+(+r.amt||0),0);
+    PAY.push({shop:'', amt:(tot-sum>0)?(tot-sum):null});   // 남은 금액을 미리 채워 준다
+    repay();
+    const ins=$('#mlPayTbl').querySelectorAll('.payshop');
+    if(ins.length) ins[ins.length-1].focus();
+  };
   $('#mlPayTbl').addEventListener('input',e=>{
-    const i=+e.target.dataset.i;
-    if(e.target.classList.contains('payshop')){ PAY[i].shop=e.target.value; allocate(); drawLedger();
-      if(e.target.value) histAdd(e.target.value,S.cfg.ym,1); }
-    if(e.target.classList.contains('payamt')){ PAY[i].amt=+e.target.value||0; drawPay(); drawLedger(); }
+    const i=+e.target.dataset.i; if(!PAY[i]) return;
+    if(e.target.classList.contains('payshop')) PAY[i].shop=e.target.value;
+    else if(e.target.classList.contains('payamt')) PAY[i].amt=(e.target.value===''?null:+e.target.value);
+    else return;
+    allocate(); drawPayStatus(); drawLedger();   // 입력칸은 그대로 둔다
+  });
+  $('#mlPayTbl').addEventListener('change',e=>{   // 다 적고 칸을 빠져나갈 때만 이력에 쌓는다
+    if(!e.target.classList.contains('payshop')) return;
+    const v=(e.target.value||'').trim(); if(v) histAdd(v,S.cfg.ym,1);
   });
   $('#mlPayTbl').addEventListener('click',e=>{
     const b=e.target.closest('.paydel'); if(!b) return;
-    PAY.splice(+b.dataset.i,1); if(!PAY.length) PAY=[{shop:'',amt:null}]; drawPay(); drawLedger();
+    PAY.splice(+b.dataset.i,1); if(!PAY.length) PAY=[{shop:'',amt:null}];
+    repay();
   });
   $('#mlPrice').addEventListener('input',()=>{priceTouched=true; if(S.cfg.ym) autoBase(S.cfg.ym);});
   $('#mlExport').onclick=()=>{
@@ -883,5 +969,6 @@ const DEMO=`1 2026-08-04 정보통신과 주사보 조호현 09:00 20:04 64
 53 2026-08-30 정보통신과 전산서기 김경민 19:16 22:45 209
 54 2026-08-30 정보통신과 전산서기 김규태 11:18 15:30 240`;
 
-window.MEAL={init:build, _demo:()=>{ S.pdfText=DEMO; run(DEMO); }};
+window.MEAL={init:build, _demo:()=>{ S.pdfText=DEMO; run(DEMO); },
+  _pay:rows=>{ PAY=rows.slice(); repay(); }};
 })();
