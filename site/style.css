@@ -653,3 +653,8 @@ table.pay input[readonly]{background:var(--bg);color:var(--muted)}
 .mlchk input{width:auto;margin:0}
 .btn.danger{border-color:#e6c3c0;color:#b4342a}
 .btn.danger:hover{background:#b4342a;color:#fff;border-color:#b4342a}
+.mlleg{font-size:12.2px;color:var(--muted);margin:2px 0 10px;line-height:1.6}
+.mlleg b{color:var(--fg)}
+.foldcard.sub>summary{padding:12px 16px;font-size:13.2px}
+.foldcard.sub>summary small{font-size:12px}
+.foldcard.sub .foldbody{padding:14px 16px 16px}

@@ -307,17 +307,12 @@ function drawChk(){
        '<td>'+x.r.inn+'~'+x.r.out+'</td><td>'+x.r.pay+'분</td><td>'+x.j.calc+'분</td>'+
        '<td>'+(x.diff>0?'+':'')+x.diff+'분</td><td>'+hhmm(x.j.est)+'</td><td class="l">'+why+'</td></tr>';
   }
-  h+='</tbody></table><p class="mlnote">※ 검산은 <b>지급 판정에 영향을 주지 않습니다.</b> '+
-     '판정은 출퇴근 시각으로만 하며, 수당시간은 참고값입니다. '+
-     (cap.length?'신청시간 초과 근무 '+cap.length+'건, ':'')+(bad.length?'확인 필요 '+bad.length+'건':'확인 필요 0건')+'</p>';
+  h+='</tbody></table><p class="mlnote">'+(cap.length?'신청시간 초과 근무 '+cap.length+'건 · ':'')+
+     '확인 필요 '+bad.length+'건</p>';
   box.innerHTML=h;
 }
 
 /* ---------- 업체 · 집행대장 ---------- */
-function commitHist(){
-  const seen={}; ledgerRows().forEach(r=>{ if(r.shop) seen[r.shop]=(seen[r.shop]||0)+1; });
-  for(const k in seen) histAdd(k,S.cfg.ym,seen[k]);
-}
 let PAY=[{shop:'',amt:null}];
 function totalCnt(){ let n=0; for(const k in S.cells) if(S.cells[k].on) n++; return n; }
 function drawPay(){
@@ -361,21 +356,6 @@ function allocate(){
   }
 }
 const payDays=()=>S.days.filter(d=>S.names.some(n=>{const x=S.cells[d+'|'+n];return x&&x.on;}));
-function drawShops(){
-  const c=S.cfg, ds=payDays(), L=shopList(), hist=histGet();
-  $('#mlBulk').innerHTML=L.map(s=>'<option>'+esc(s)+(hist[s]&&hist[s].n?' ('+hist[s].n+'회)':'')+'</option>').join('');
-  const t=topShop(), tb=$('#mlTop');
-  if(tb) tb.textContent=t?('자주 쓰는 '+t+'로 전부 채우기'):'자주 쓰는 곳으로 전부 채우기';
-  let h='<thead><tr><th style="width:110px">특근일자</th><th style="width:60px">인원</th><th>특근자 명단</th><th style="width:170px">가맹업소명</th><th style="width:110px">금액</th></tr></thead><tbody>';
-  for(const d of ds){
-    const ns=S.names.filter(n=>{const x=S.cells[d+'|'+n];return x&&x.on;});
-    h+='<tr><td>'+d.slice(5).replace('-','. ')+'.</td><td>'+ns.length+'</td><td class="l">'+esc(ns.join(', '))+'</td>'+
-       '<td><select data-d="'+d+'" class="mlsel"><option value=""> — 선택 — </option>'+
-       L.map(s=>'<option'+(S.shop[d]===s?' selected':'')+'>'+esc(s)+'</option>').join('')+'</select></td>'+
-       '<td class="r">'+won(ns.length*c.price)+'</td></tr>';
-  }
-  $('#mlShopTbl').innerHTML=h+'</tbody>';
-}
 function ledgerRows(){
   const c=S.cfg;
   return payDays().map(d=>{
@@ -505,27 +485,27 @@ function build(){
   const root=$('#mealBody'); if(!root||S.built) return; S.built=true;
   root.innerHTML=`
   <div class="card mlcard">
-    <h4>① 파일 올리기 <small>이 두 개면 끝납니다</small></h4>
+    <h4>① 파일 올리기 <small>두 개면 끝납니다</small></h4>
     <div class="mlups">
       <div class="mlup">
         <div class="mldrop" id="mlDrop"><b>초과근무 확인서 PDF</b>
-          <small>새올에서 출력한 파일 · 올리면 <b>바로 판정</b>합니다</small></div>
+          <small>새올에서 출력한 파일 · 올리면 <b>바로 판정</b></small></div>
         <input type="file" id="mlFile" accept="application/pdf" hidden>
-        <p class="mlnote" id="mlPdfMsg">필수 · 이 파일 하나로 판정·인원·명단이 모두 정해집니다.</p>
+        <p class="mlnote" id="mlPdfMsg">필수</p>
       </div>
       <div class="mlup">
         <div class="mldrop alt" id="mlTripDrop"><b>출장 내역 PDF</b>
-          <small>여비로 식비 받은 날은 <b>자동 제외</b>됩니다</small></div>
+          <small>식비 받은 날은 <b>자동 제외</b></small></div>
         <input type="file" id="mlTripFile" accept="application/pdf" hidden>
-        <p class="mlnote" id="mlTripMsg">없으면 건너뛰어도 됩니다.</p>
+        <p class="mlnote" id="mlTripMsg">없으면 건너뛰어도 됩니다</p>
       </div>
     </div>
     <details class="mlfold"><summary>PDF가 열리지 않을 때 — 텍스트로 붙여넣기</summary>
       <label class="mlfull"><span>초과근무 확인서</span>
-        <textarea id="mlRaw" class="mlraw" placeholder="확인서 PDF를 열어 Ctrl+A → Ctrl+C 한 뒤 붙여넣으세요. 붙이는 즉시 판정합니다."></textarea></label>
+        <textarea id="mlRaw" class="mlraw" placeholder="PDF를 열어 Ctrl+A → Ctrl+C 한 뒤 붙여넣으면 즉시 판정합니다."></textarea></label>
       <label class="mlfull"><span>출장 식비 수령 내역</span>
-        <textarea id="mlTrip" style="min-height:64px" placeholder="예)  8/12 조호현 &#10;      김원규 2026-08-20, 8/21"></textarea></label>
-      <p class="mlnote">날짜와 이름만 있으면 형식은 상관없습니다.</p>
+        <textarea id="mlTrip" style="min-height:60px" placeholder="8/12 조호현 &#10;김원규 2026-08-20, 8/21"></textarea></label>
+      <p class="mlnote">날짜와 이름만 있으면 형식은 무관합니다.</p>
     </details>
     <div class="mlbtns"><button class="btn pri" id="mlRun">다시 판정하기</button>
       <button class="btn" id="mlDemo">8월 예시로 시험</button></div>
@@ -533,39 +513,48 @@ function build(){
 
   <div id="mlOut" hidden>
     <div class="card mlcard">
-      <h4>② 판정 결과 <small>칸을 누르면 켜고 끌 수 있습니다</small></h4>
+      <h4>② 판정 결과</h4>
       <div class="mlstats" id="mlStats"></div>
       <div class="mlteam" id="mlTeamBox" hidden></div>
       <div class="mldept" id="mlDeptBox" hidden></div>
-      <p class="mlnote"><b>1</b> 지급 대상 · <b>제</b> 규정상 자동 제외(교대근무자·출장 식비 수령일) ·
-        <b>–</b> 직접 해제 · <b>·</b> 근무기록은 있으나 시간 요건 미달.
-        마우스를 올리면 판정 사유가 나옵니다.</p>
+      <p class="mlleg"><b>1</b> 지급 · <b>제</b> 규정상 자동 제외 · <b>–</b> 직접 해제 · <b>·</b> 시간 요건 미달
+        <span class="mlmut">— 칸을 누르면 바뀌고, 마우스를 올리면 사유가 나옵니다</span></p>
       <div class="mlscroll"><table class="mlgrid" id="mlGrid"></table></div>
     </div>
-    <div class="card mlcard"><h4>③ 검산 <small>확인서 수당시간 ↔ 출퇴근 시각 대조</small></h4>
-      <div id="mlChk"></div></div>
-    <div class="card mlcard paycard"><h4>④ 결제하기 <small>이 금액만 맞추면 됩니다</small></h4>
+
+    <div class="card mlcard paycard">
+      <h4>③ 결제하기</h4>
       <div class="mlpay" id="mlPayBox"></div>
-      <p class="mlnote">가맹업소는 <b>어디든 상관없습니다.</b> 1인 1식 단가 × 인원으로 계산되므로
-        총액만 맞추어 과카드로 결제하시면 됩니다. 결제한 곳을 아래에 적으면 집행대장의 「가맹업소명」 칸이 채워집니다.</p>
       <table class="mltbl pay" id="mlPayTbl"></table>
       <datalist id="mlShopList"></datalist>
-      <div class="mlbtns"><button class="btn" id="mlPayAdd">＋ 나눠 결제한 곳 추가</button>
-        <label class="mlchk"><input type="checkbox" id="mlBlank"> 가맹업소명을 <b>비워서 인쇄</b>하고 손으로 적기</label></div>
+      <div class="mlbtns"><button class="btn" id="mlPayAdd">＋ 나눠 결제한 곳</button>
+        <label class="mlchk"><input type="checkbox" id="mlBlank"> 업소명 비워서 인쇄</label></div>
+      <p class="mlnote">가맹업소는 어디든 무방합니다. <b>총액만 맞추어</b> 과카드로 결제하시면 됩니다.</p>
     </div>
-    <div class="card mlcard verify"><h4>⑤ 과거 실적과 대조 <small>검증용 — 이미 지급된 달로 확인해 보세요</small></h4>
-      <p class="mlnote">기존 「특근매식비 입력」 시트 맨 아래 <b>「계」 행</b>을 긁어 붙여넣거나,
-        <code>조호현 17, 김원규 18</code> 처럼 <b>이름과 식수</b>를 적어 주세요.</p>
-      <textarea id="mlVin" class="mlraw" style="min-height:70px"
-        placeholder="예)  조호현 17  김원규 18  김경민 18  김규태 1"></textarea>
-      <div class="mlbtns"><button class="btn pri" id="mlVrun">대조하기</button>
-        <button class="btn" id="mlVclr">지우기</button></div>
-      <div id="mlVout"></div></div>
-    <div class="card mlcard"><h4>⑥ 집행대장</h4>
+
+    <div class="card mlcard">
+      <h4>④ 집행대장</h4>
       <div id="mlLedger"></div>
       <div class="mlbtns"><button class="btn pri" id="mlPrint">인쇄 / PDF 저장</button>
         <button class="btn" id="mlCsv">CSV 내려받기</button></div>
-      <p class="mlnote">지출결의 첨부 : 영수증 · 초과근무 정산결과(새올) · 집행대장(사본에 「원본대조필」) · 관련 공문</p></div>
+      <p class="mlnote">지출결의 첨부 : 영수증 · 초과근무 정산결과 · 집행대장(사본 「원본대조필」) · 공문</p>
+    </div>
+
+    <details class="card mlcard foldcard sub">
+      <summary><b>🔍 검산</b><small>확인서의 수당시간과 출퇴근 시각 대조 · 지급 판정에는 영향 없음</small></summary>
+      <div class="foldbody" id="mlChk"></div>
+    </details>
+
+    <details class="card mlcard foldcard sub">
+      <summary><b>📋 과거 실적과 대조</b><small>검증용 — 이미 지급된 달로 확인</small></summary>
+      <div class="foldbody">
+        <p class="mlnote">기존 시트 맨 아래 <b>「계」 행</b>을 붙여넣거나 <code>조호현 17, 김원규 18</code>처럼 적으세요.</p>
+        <textarea id="mlVin" class="mlraw" style="min-height:64px" placeholder="조호현 17  김원규 18  김경민 18  김규태 1"></textarea>
+        <div class="mlbtns"><button class="btn pri" id="mlVrun">대조하기</button>
+          <button class="btn" id="mlVclr">지우기</button></div>
+        <div id="mlVout"></div>
+      </div>
+    </details>
   </div>
 
   <details class="card mlcard setcard" id="mlSet">
@@ -587,13 +576,13 @@ function build(){
         <div id="mlTeamSet" class="mlchips"></div></div>
 
       <label class="mlfull"><span>교대근무자 · 야간/휴일근무수당 지급대상자 <small class="mlmut">— 규정상 제외 대상</small></span>
-        <textarea id="mlShift" placeholder="예) 홍길동, 김철수   (해당 없으면 비워 두세요)"></textarea></label>
+        <textarea id="mlShift" placeholder="홍길동, 김철수   (해당 없으면 비워 두세요)"></textarea></label>
 
-      <p class="mlnote">가맹업소는 따로 등록하지 않습니다 — 결제 후 적으신 상호가 다음부터 자동완성으로 나옵니다.
-        <b>업소명만 사용하며, 대표자 성명·계좌번호는 입력하지 마세요.</b></p>
+      <p class="mlnote">가맹업소는 등록하지 않습니다 — 결제 후 적은 상호가 자동완성으로 나옵니다.
+        <b>대표자 성명·계좌번호는 입력하지 마세요.</b></p>
 
-      <p class="mlauto">⚙ <b>아래는 군 공통 기준값</b>입니다. <code>data/meal_config.json</code>에서 자동으로 채워지며,
-        여기서 고치면 <b>이번 계산에만</b> 적용되고 저장되지 않습니다(새로 고치면 기준값으로 돌아갑니다).</p>
+      <p class="mlauto">⚙ <b>아래는 군 공통 기준값</b>(<code>data/meal_config.json</code>)입니다.
+        여기서 고치면 <b>이번 계산에만</b> 적용되고 저장되지 않습니다.</p>
       <div class="mlgrid">
         <label><span>대상 연월</span><input id="mlYm" value="2026-08" placeholder="YYYY-MM"></label>
         <label><span>1인 1식 단가(원)</span><input id="mlPrice" type="number" value="9000" step="500"></label>
@@ -605,15 +594,14 @@ function build(){
           <option value="1" selected>적용 — 출근 08:00 이전 + 당일 09:00 전 등록 시 지급</option>
           <option value="0">미적용 — 퇴근 19:00 기준만 사용</option>
         </select></label>
-      <label class="mlfull"><span>공휴일·대체공휴일 <small class="mlmut">— 기준파일에서 자동으로 채워집니다</small></span>
+      <label class="mlfull"><span>공휴일·대체공휴일 <small class="mlmut">— 자동</small></span>
         <textarea id="mlHoli">${HOLI_2026.join(', ')}</textarea></label>
 
       <div class="mlbtns"><button class="btn" id="mlExport">설정 내보내기</button>
         <button class="btn" id="mlImport">설정 가져오기</button>
         <input type="file" id="mlImportFile" accept="application/json" hidden>
         <button class="btn danger" id="mlWipe">이 브라우저 기억 지우기</button></div>
-      <p class="mlnote">PC를 바꾸거나 담당자가 바뀔 때 <b>파일 하나로 인수인계</b>할 수 있습니다.
-        단가·공휴일은 <code>data/meal_config.json</code>(군 공통 기준)에서 자동 적용됩니다.</p>
+      <p class="mlnote">PC를 바꾸거나 담당자가 바뀔 때 <b>파일 하나로 인수인계</b>할 수 있습니다.</p>
     </div>
   </details>`;
 
@@ -656,10 +644,6 @@ function build(){
     const el=e.target.closest('.mlc[data-k]'); if(!el) return;
     S.cells[el.dataset.k].on=!S.cells[el.dataset.k].on; draw();
   });
-  $('#mlShopTbl').addEventListener('change',e=>{
-    if(!e.target.classList.contains('mlsel')) return;
-    S.shop[e.target.dataset.d]=e.target.value; drawLedger();
-  });
   $('#mlBlank').addEventListener('change',()=>{ allocate(); drawLedger(); });
   $('#mlPayAdd').onclick=()=>{ if(PAY.length===1) PAY[0].amt=null; PAY.push({shop:'',amt:null}); drawPay(); drawLedger(); };
   $('#mlPayTbl').addEventListener('input',e=>{
@@ -672,10 +656,6 @@ function build(){
     const b=e.target.closest('.paydel'); if(!b) return;
     PAY.splice(+b.dataset.i,1); if(!PAY.length) PAY=[{shop:'',amt:null}]; drawPay(); drawLedger();
   });
-  $('#mlTop').onclick=()=>{const v=topShop(); if(!v){alert('아직 사용 이력이 없습니다. 업소를 한 번 지정해 주세요.');return;}
-    payDays().forEach(d=>S.shop[d]=v); commitHist(); drawShops(); drawLedger();};
-  $('#mlBulkAll').onclick=()=>{const v=$('#mlBulk').value;payDays().forEach(d=>S.shop[d]=v);drawShops();drawLedger();};
-  $('#mlBulkEmpty').onclick=()=>{const v=$('#mlBulk').value;payDays().forEach(d=>{if(!S.shop[d])S.shop[d]=v;});drawShops();drawLedger();};
   $('#mlPrice').addEventListener('input',()=>{priceTouched=true; if(S.cfg.ym) autoBase(S.cfg.ym);});
   $('#mlExport').onclick=()=>{
     const o={}; CFGF.forEach(k=>{const el=$('#'+k); if(el) o[k]=el.value;});
