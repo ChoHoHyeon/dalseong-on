@@ -407,7 +407,7 @@ function drawPay(){
      '<tr class="sum"><th class="l">합계</th><th class="r" id="mlPaySum"></th>'+
      '<th class="c" id="mlPaySumN"></th><th></th></tr>';
   $('#mlPayTbl').innerHTML=h+'</tbody>';
-  hideAmtBar(); drawPayStatus();
+  drawPayStatus();
 }
 
 /* 입력칸은 건드리지 않고 식수·합계·안내만 새로 쓴다 (타이핑 중 커서가 튀지 않도록) */
@@ -426,9 +426,7 @@ function drawPayStatus(keep){
   const gap=payTotal()-sum, gr=$('#mlPayGap'), gv=$('#mlPayGapV');
   if(gr&&gv){
     gr.className = 'gapr '+(gap===0?'zero':(gap>0?'less':'over'));
-    gv.innerHTML = gap===0 ? '0 <em>맞음</em>'
-                 : gap>0   ? '+'+won(gap)+' <em>모자람</em>'
-                           : '−'+won(-gap)+' <em>초과</em>';
+    gv.textContent = gap===0 ? '0' : (gap>0 ? '+'+won(gap) : '−'+won(-gap));
   }
 
   const ab=tbl.querySelector('.payadd');
@@ -549,30 +547,6 @@ function autoSplit(){
   PAY.forEach((r,i)=>{ r.amt=caps[i]*c.price; });
   return true;
 }
-
-/* 금액 칸에 마우스를 올리면 고를 수 있는 금액을 한 줄로 보여 준다 */
-function amtOptions(i){
-  const p=S.cfg.price, tot=payTotal();
-  const need=needFor(i);                         // 이 줄을 이 금액으로 하면 합계가 딱 맞는다
-  const cur=+PAY[i].amt||0;
-  const mid=cur>0 ? Math.round(cur/p) : Math.max(1,Math.round(need/p));
-  const maxN=Math.floor(tot/p), needN=(need>0&&need%p===0)?need/p:null;
-  const set=new Set();
-  for(let k=mid-2;k<=mid+2;k++) if(k>=1&&k<=maxN) set.add(k);
-  if(needN) set.add(needN);
-  return [...set].sort((a,b)=>a-b).slice(0,6)
-    .map(k=>({v:k*p, n:k, fit:k===needN}));
-}
-function showAmtBar(i){
-  const bar=$('#mlAmtBar'); if(!bar||!PAY[i]) return;
-  const opts=amtOptions(i);
-  if(!opts.length){ bar.hidden=true; return; }
-  bar.innerHTML='<span class="apk">'+(PAY[i].shop?esc(PAY[i].shop):(i+1)+'번째 줄')+'에 넣을 수 있는 금액</span>'+
-    opts.map(o=>'<button class="apv'+(o.fit?' fit':'')+'" data-i="'+i+'" data-v="'+o.v+'"'+
-      (o.fit?' title="합계가 딱 맞습니다"':'')+'>'+won(o.v)+(o.fit?' ✓':'')+'</button>').join('');
-  bar.hidden=false;
-}
-function hideAmtBar(){ const bar=$('#mlAmtBar'); if(bar) bar.hidden=true; }
 
 /* 「배치하기」 — 여기서만 집행대장의 가맹업소명 칸이 채워진다 */
 function placeShops(){
@@ -832,7 +806,6 @@ function build(){
         <h5 class="mlfh">결제할 가맹업소 적기</h5>
         <table class="mltbl pay" id="mlPayTbl"></table>
         <datalist id="mlShopList"></datalist>
-        <div class="amtbar" id="mlAmtBar" hidden></div>
         <p class="paymsg hint" id="mlPayMsg"></p>
         <div class="mlbtns split">
           <span class="lft"><button class="btn pri" id="mlAuto">금액 자동계산</button>
@@ -989,14 +962,6 @@ function build(){
     if(!autoSplit()) return;
     unplace(); drawPay();                    // 금액만 채운다 — 배치는 옆 버튼으로
   };
-  /* 금액 칸에 마우스를 올리거나 커서를 넣으면, 표 아래에 고를 수 있는 금액이 뜬다 */
-  const amtHover=e=>{ const inp=e.target.closest('.payamt'); if(inp) showAmtBar(+inp.dataset.i); };
-  $('#mlPayTbl').addEventListener('mouseover',amtHover);
-  $('#mlPayTbl').addEventListener('focusin',amtHover);
-  $('#mlPayTbl').addEventListener('mouseleave',()=>{
-    const a=document.activeElement;
-    if(!(a&&a.classList&&a.classList.contains('payamt'))) hideAmtBar();
-  });
   $('#mlPayMsg').addEventListener('click',e=>{
     const b=e.target.closest('.fixamt'); if(!b) return;
     const i=+b.dataset.i; if(!PAY[i]) return;
@@ -1031,14 +996,6 @@ function build(){
     PAY[i].shop=e.target.value;
     drawPayStatus();
   });
-  $('#mlAmtBar').addEventListener('click',e=>{
-    const av=e.target.closest('.apv'); if(!av) return;
-    const i=+av.dataset.i; if(!PAY[i]) return;
-    PAY[i].amt=+av.dataset.v;
-    const el=$('#mlPayTbl').querySelector('.payamt[data-i="'+i+'"]');
-    if(el) el.value=PAY[i].amt;
-    unplace(); drawPayStatus(); showAmtBar(i);
-  });
   $('#mlPayTbl').addEventListener('click',e=>{
     const st=e.target.closest('.amtstep');
     if(st){
@@ -1049,7 +1006,7 @@ function build(){
       PAY[i].amt = nv||null;
       const el=$('#mlPayTbl').querySelector('.payamt[data-i="'+i+'"]');
       if(el) el.value = PAY[i].amt==null?'':PAY[i].amt;
-      unplace(); drawPayStatus(); showAmtBar(i);
+      unplace(); drawPayStatus();
       return;
     }
     if(e.target.closest('.payadd')){ addPay(); return; }
@@ -1157,5 +1114,5 @@ const DEMO=`1 2026-08-04 정보통신과 주사보 조호현 09:00 20:04 64
 window.MEAL={init:build, _demo:()=>{ S.pdfText=DEMO; run(DEMO); },
   _pay:rows=>{ PAY=rows.slice(); drawPay(); placeShops(); },
   _payMsg:()=>$('#mlPayMsg').innerHTML.replace(/<[^>]+>/g,''),
-  _rows:()=>PAY, _opts:i=>amtOptions(i)};
+  _rows:()=>PAY};
 })();

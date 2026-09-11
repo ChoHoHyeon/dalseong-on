@@ -852,18 +852,6 @@ table.mlsign tr:last-child td{height:34px}
 .fixamt:hover{background:#b4342a;border-color:#b4342a;color:#fff}
 .paymsg em{font-style:normal;font-size:11.5px;opacity:.7;margin-right:2px}
 /* 가맹업소별 정산 : 화면에서는 아래 입력표와 겹치므로 인쇄물에만 */
-/* 표 아래에 뜨는 추천 금액 */
-.amtbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;
-  padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2)}
-.amtbar[hidden]{display:none}
-.amtbar .apk{font-size:11.5px;color:var(--mut);margin-right:3px}
-.apv{padding:4px 10px;border-radius:6px;border:1px solid var(--line);background:var(--panel);
-  font:inherit;font-size:12px;color:var(--tx);cursor:pointer;transition:.12s}
-.apv:hover{background:var(--acc);border-color:var(--acc);color:#fff}
-.apv.fit{border-color:#7fcbaa;background:#e8f7f0;color:#0b7a53;font-weight:700}
-.apv.fit:hover{background:#0b7a53;border-color:#0b7a53;color:#fff}
-@media print{ .amtbar{display:none} }
-
 .shopsum{display:none}
 @media print{ .shopsum{display:block;margin-top:10px} }
 .mlbtns.split{justify-content:space-between;align-items:center;gap:10px;margin-top:14px;
