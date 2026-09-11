@@ -401,8 +401,8 @@ function drawPay(){
   });
   h+='<tr class="sum"><th class="l">합계</th><th class="r" id="mlPaySum"></th>'+
      '<th class="c" id="mlPaySumN"></th><th></th></tr>';
-  $('#mlPayTbl').innerHTML=h+'</tbody>';   // 다시 그리면 팝업도 함께 사라진다
-  drawPayStatus();
+  $('#mlPayTbl').innerHTML=h+'</tbody>';
+  hideAmtBar(); drawPayStatus();
 }
 
 /* 입력칸은 건드리지 않고 식수·합계·안내만 새로 쓴다 (타이핑 중 커서가 튀지 않도록) */
@@ -480,18 +480,6 @@ function payProblems(){
   return L;
 }
 
-/* 업소명을 확정하면(엔터·탭·칸 밖 클릭) 빈 금액에 남은 금액을 넣어 준다 */
-function fillAmt(i){
-  if(!PAY[i] || !(PAY[i].shop||'').trim()) return false;
-  if(PAY[i].amt!=null && +PAY[i].amt>0) return false;      // 이미 적은 금액은 건드리지 않는다
-  const rest=payTotal()-PAY.reduce((a,r,j)=>a+(j===i?0:(+r.amt||0)),0);
-  if(rest<=0) return false;
-  PAY[i].amt=rest;
-  const el=$('#mlPayTbl').querySelector('.payamt[data-i="'+i+'"]');
-  if(el) el.value=rest;
-  return true;
-}
-
 /* 배치 결과를 지운다 — 금액이나 업소명이 바뀌면 다시 눌러야 한다 */
 function unplace(){
   if(!S.placed) return;
@@ -562,19 +550,16 @@ function amtOptions(i){
   return [...set].sort((a,b)=>a-b).slice(0,6)
     .map(k=>({v:k*p, n:k, fit:k===needN}));
 }
-function showAmtPop(inp){
-  const td=inp.parentNode; if(!td) return;
-  const i=+inp.dataset.i; if(!PAY[i]) return;
-  hideAmtPop();
-  const opts=amtOptions(i); if(!opts.length) return;
-  const d=document.createElement('div');
-  d.className='amtpop';
-  d.innerHTML='<span class="apk">고를 수 있는 금액</span>'+opts.map(o=>
-    '<button class="apv'+(o.fit?' fit':'')+'" data-i="'+i+'" data-v="'+o.v+'"'+
-    (o.fit?' title="합계가 딱 맞습니다"':'')+'>'+won(o.v)+(o.fit?' ✓':'')+'</button>').join('');
-  td.appendChild(d);
+function showAmtBar(i){
+  const bar=$('#mlAmtBar'); if(!bar||!PAY[i]) return;
+  const opts=amtOptions(i);
+  if(!opts.length){ bar.hidden=true; return; }
+  bar.innerHTML='<span class="apk">'+(PAY[i].shop?esc(PAY[i].shop):(i+1)+'번째 줄')+'에 넣을 수 있는 금액</span>'+
+    opts.map(o=>'<button class="apv'+(o.fit?' fit':'')+'" data-i="'+i+'" data-v="'+o.v+'"'+
+      (o.fit?' title="합계가 딱 맞습니다"':'')+'>'+won(o.v)+(o.fit?' ✓':'')+'</button>').join('');
+  bar.hidden=false;
 }
-function hideAmtPop(){ const o=document.querySelector('.amtpop'); if(o) o.remove(); }
+function hideAmtBar(){ const bar=$('#mlAmtBar'); if(bar) bar.hidden=true; }
 
 /* 「배치하기」 — 여기서만 집행대장의 가맹업소명 칸이 채워진다 */
 function placeShops(){
@@ -834,6 +819,7 @@ function build(){
         <h5 class="mlfh">결제할 가맹업소 적기</h5>
         <table class="mltbl pay" id="mlPayTbl"></table>
         <datalist id="mlShopList"></datalist>
+        <div class="amtbar" id="mlAmtBar" hidden></div>
         <p class="paymsg hint" id="mlPayMsg"></p>
         <div class="mlbtns split">
           <span class="lft"><button class="btn pri" id="mlAuto">금액 자동계산</button>
@@ -987,21 +973,16 @@ function build(){
   });
   $('#mlPlace').onclick=()=>placeShops();
   $('#mlAuto').onclick=()=>{
-    hideAmtPop();
     if(!autoSplit()) return;
-    unplace(); drawPay(); placeShops();      // 나눈 뒤 곧바로 집행대장에 배치한다
+    unplace(); drawPay();                    // 금액만 채운다 — 배치는 옆 버튼으로
   };
-  /* 금액 칸 : 마우스를 올리거나 커서를 넣으면 고를 수 있는 금액이 뜬다 */
-  $('#mlPayTbl').addEventListener('mouseover',e=>{
-    const inp=e.target.closest('.payamt'); if(inp) showAmtPop(inp);
-  });
-  $('#mlPayTbl').addEventListener('mouseout',e=>{
-    const to=e.relatedTarget;
-    if(to && to.closest && to.closest('.amtcell')) return;   // 팝업 위로 옮겨가는 중
-    if(e.target.closest && e.target.closest('.amtcell')) hideAmtPop();
-  });
-  $('#mlPayTbl').addEventListener('focusin',e=>{
-    const inp=e.target.closest('.payamt'); if(inp) showAmtPop(inp);
+  /* 금액 칸에 마우스를 올리거나 커서를 넣으면, 표 아래에 고를 수 있는 금액이 뜬다 */
+  const amtHover=e=>{ const inp=e.target.closest('.payamt'); if(inp) showAmtBar(+inp.dataset.i); };
+  $('#mlPayTbl').addEventListener('mouseover',amtHover);
+  $('#mlPayTbl').addEventListener('focusin',amtHover);
+  $('#mlPayTbl').addEventListener('mouseleave',()=>{
+    const a=document.activeElement;
+    if(!(a&&a.classList&&a.classList.contains('payamt'))) hideAmtBar();
   });
   $('#mlPayMsg').addEventListener('click',e=>{
     const b=e.target.closest('.fixamt'); if(!b) return;
@@ -1030,21 +1011,22 @@ function build(){
     if(e.key!=='Enter'||!e.target.classList.contains('payshop')) return;
     e.preventDefault(); e.target.blur();
   });
-  /* 이름을 확정하면(엔터·탭·칸 밖 클릭) 남은 금액을 그 줄에 넣는다 */
+  /* 이름만 확정한다 — 금액은 「금액 자동계산」이 넣는다 */
   $('#mlPayTbl').addEventListener('change',e=>{
     if(!e.target.classList.contains('payshop')) return;
     const i=+e.target.dataset.i; if(!PAY[i]) return;
     PAY[i].shop=e.target.value;
-    if(fillAmt(i)) unplace();
     drawPayStatus();
-    const am=$('#mlPayTbl').querySelector('.payamt[data-i="'+i+'"]');
-    if(am) am.focus();                 // 고칠 수 있게 금액 칸으로 넘겨 준다
+  });
+  $('#mlAmtBar').addEventListener('click',e=>{
+    const av=e.target.closest('.apv'); if(!av) return;
+    const i=+av.dataset.i; if(!PAY[i]) return;
+    PAY[i].amt=+av.dataset.v;
+    const el=$('#mlPayTbl').querySelector('.payamt[data-i="'+i+'"]');
+    if(el) el.value=PAY[i].amt;
+    unplace(); drawPayStatus(); showAmtBar(i);
   });
   $('#mlPayTbl').addEventListener('click',e=>{
-    const av=e.target.closest('.apv');
-    if(av){ const i=+av.dataset.i; if(PAY[i]){ PAY[i].amt=+av.dataset.v;
-        const el=$('#mlPayTbl').querySelector('.payamt[data-i="'+i+'"]'); if(el) el.value=PAY[i].amt;
-        unplace(); drawPayStatus(); hideAmtPop(); } return; }
     if(e.target.closest('.payadd')){ addPay(); return; }
     const b=e.target.closest('.paydel'); if(!b) return;
     PAY.splice(+b.dataset.i,1); if(!PAY.length) PAY=[{shop:'',amt:null}];
