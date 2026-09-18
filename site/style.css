@@ -1212,3 +1212,7 @@ body[data-theme=dark] .bugnote{background:rgba(217,138,0,.14);color:#f0d9a6;bord
 .fam3-main .row>label.filebtn{line-height:34px;gap:0;padding:0 14px} .fam3-main .row>label.filebtn input{display:none}
 .hint.warn{color:#c0392b;font-weight:600}
 .fam3-empty.shake{animation:famshake .5s} @keyframes famshake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* 새올 게시글(제목·본문) 묶음 */
+.fam-post{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);font-size:14px}
+#famTextWrap .fam-copy input{font-size:14px}
