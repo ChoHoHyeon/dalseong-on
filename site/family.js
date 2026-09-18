@@ -200,9 +200,10 @@ function build(){
    <span class="hint">사진 올리고 내용만 적으면 됩니다 · AI 틀은 뒤에서 자동으로 · <a href="#" id="famFill">샘플 채우기</a> · <a href="#" id="famEmpty">비우기</a></span></div>
   <div class="fam3-steps" id="famSteps"></div>
   <div class="fam3-cols">
-   <div class="card fam3-main" id="famMain"></div>
-   <div class="fam3-side">
+   <div class="fam3-left">
     <div class="card fam2-title"><span class="hint">게시글 제목</span><input id="famTitle" readonly><button class="ghost sm" data-copy="famTitle">복사</button></div>
+    <div class="card fam3-main" id="famMain"></div></div>
+   <div class="fam3-side">
     <div class="card fam2-card"><div class="fam-pvwrap"><div class="fam-preview" id="famPreview"></div><div class="fam-load" id="famLoad" hidden><div class="spin"></div><b id="famLoadT">AI가 그리는 중…</b><small id="famLoadS">기다리는 동안 내용을 입력해 주세요</small></div></div>
      <div id="famTextWrap" hidden><div class="fam-copy col"><textarea id="famBody" rows="16" readonly></textarea><button class="ghost sm" data-copy="famBody">복사</button></div></div>
      <div class="row rw fam2-bar"><button class="primary" id="famDl">⬇ 카드 내려받기</button><button class="ghost" id="famMore" hidden>🎲 다르게 <small>AI 한 장 더</small></button><button class="ghost" id="famPickTgl" hidden>🗂 틀 바꾸기</button><span style="flex:1"></span><span class="hint" id="famNote"></span><a href="#" class="hint" id="famShowTxt" hidden>「글로 올릴 본문」 보기</a></div>
@@ -239,7 +240,7 @@ function panelPhoto(){
     <div id="f_picBox" ${F.photo?'':'hidden'}>
      <div class="fam-ai" style="margin-top:12px"><div class="row rw"><b>🎨 사진을 일러스트로 바꾸기</b><span class="hint">AI · 30~40초 · 선택</span></div>
       <div class="row rw" style="margin-top:8px"><button class="ghost" data-ill="water">수채 일러스트</button><button class="ghost" data-ill="chic">화보풍 (길고 날씬하게)</button><button class="ghost" data-ill="line">라인 드로잉</button><span class="hint" id="famAiNote"></span></div></div></div></div>
-   <div class="row rw" id="f_nextRow" style="margin-top:14px;justify-content:flex-end" ${F.photo?'':'hidden'}><button class="ghost" id="f_nextPlain">AI 없이 내용 입력 ›</button><button class="primary big" id="f_next">🤖 AI 틀 만들기 · 내용 입력 ›</button></div>`;
+   <div class="row rw fam3-foot" id="f_nextRow" style="justify-content:flex-end" ${F.photo?'':'hidden'}><button class="ghost" id="f_nextPlain">AI 없이 내용 입력 ›</button><button class="primary big" id="f_next">🤖 AI 틀 만들기 · 내용 입력 ›</button></div>`;
   const onFile=f=>{ if(!f||!f.type.startsWith('image/')) return; const r=new FileReader(); r.onload=()=>setPhoto(r.result,f.name); r.readAsDataURL(f); };
   $('#f_photo').onchange=e=>onFile(e.target.files[0]);
   const t2=$('#f_picTools label'); if(t2) t2.onclick=()=>$('#f_photo').click();
@@ -355,7 +356,7 @@ function panelText(){
     ${wed&&F.pic?`<span class="hint">방향</span><div class="seg2" id="f_orient"><button data-v="auto" class="${F.orient==='auto'?'on':''}">자동</button><button data-v="portrait" class="${F.orient==='portrait'?'on':''}">세로</button><button data-v="landscape" class="${F.orient==='landscape'?'on':''}">가로</button></div>`:''}
     <span class="hint" id="famAiStatus" hidden></span></div>
    <div id="famForm"></div>
-   <div class="row" style="margin-top:14px;justify-content:space-between">${wed?'<button class="ghost" id="f_prev">‹ 사진</button>':'<span></span>'}<button class="primary big" id="f_done">완료 · 카드 내려받기 ⬇</button></div>`;
+   <div class="row fam3-foot" style="justify-content:space-between">${wed?'<button class="ghost" id="f_prev">‹ 사진</button>':'<span></span>'}<button class="primary big" id="f_done">완료 · 카드 내려받기 ⬇</button></div>`;
   const tk=$('#f_tkind'); if(tk) $$('#f_tkind button').forEach(b=>b.onclick=()=>{ F.tkind=b.dataset.v; F.frame=null; F.frames=F.frames.filter(f=>f.kind!=='ai'); $$('#f_tkind button').forEach(x=>x.classList.toggle('on',x===b)); ensureFrames(); refresh(); });
   const ob=$('#f_obitImg'); if(ob) ob.onchange=()=>{ F.frame=ob.checked?1:0; ensureFrames(); refresh(); };
   const ori=$('#f_orient'); if(ori) $$('#f_orient button').forEach(b=>b.onclick=()=>{ F.orient=b.dataset.v; F.frame=null; F.frames=F.frames.filter(f=>f.kind!=='ai'); $$('#f_orient button').forEach(x=>x.classList.toggle('on',x===b)); ensureFrames(); refresh(); });

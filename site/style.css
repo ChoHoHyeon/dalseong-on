@@ -1197,3 +1197,13 @@ body[data-theme=dark] .bugnote{background:rgba(217,138,0,.14);color:#f0d9a6;bord
 .fam3-empty{flex:1;display:grid;place-items:center;align-content:center;gap:6px;color:var(--mut);border:1px dashed var(--line);border-radius:12px;margin-top:12px;min-height:300px} .fam3-empty .fam3-drop-ico{font-size:36px;opacity:.6}
 .fam3-body.over .fam3-empty{border-color:var(--acc);background:rgba(47,111,237,.06)}
 .fam3-drop{min-height:0;border:0;background:none;padding:0}
+/* 사진 단계 버튼 줄 높이 맞춤: filebtn(label)이 폼 label 규칙(그리드·아래여백)을 물려받던 것 해제 */
+.fam3-main label.filebtn,.fam2-form label.filebtn{display:inline-flex;align-items:center;gap:6px;margin:0;padding:0 14px;height:36px;line-height:1;font-size:13px}
+.fam3-main .row .ghost{height:36px;display:inline-flex;align-items:center;padding:0 12px}
+.fam3-main .row .primary{display:inline-flex;align-items:center}
+/* 좌 열: 제목 + 단계 패널, 우 열 높이에 맞춰 늘어남 */
+.fam3-cols{align-items:stretch}
+.fam3-left{display:flex;flex-direction:column;gap:12px;min-width:0}
+.fam3-main{flex:1;display:flex;flex-direction:column} .fam3-main #famForm{flex:0 0 auto} .fam3-main .fam3-body{flex:1}
+.fam3-foot{margin-top:auto;padding-top:14px}
+.fam3-side{position:static}
