@@ -1185,3 +1185,7 @@ body[data-theme=dark] .bugnote{background:rgba(217,138,0,.14);color:#f0d9a6;bord
 .fam3-main .primary.big{padding:12px 20px;font-size:15px} .fam3-main .primary small{font-weight:500;opacity:.85;margin-left:4px}
 @media(max-width:1100px){.fam3-cols{grid-template-columns:1fr} .fam3-side{position:static}}
 .fam3-frames.strip{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+.fam3-drop{min-height:360px;border:2px dashed rgba(47,111,237,.35);border-radius:14px;background:rgba(47,111,237,.03);padding:16px;display:flex;flex-direction:column;justify-content:center;transition:.15s} .fam3-drop.over{background:rgba(47,111,237,.10);border-color:var(--acc)}
+.fam3-drop-empty{text-align:center;color:var(--tx);display:grid;justify-items:center;gap:4px} .fam3-drop-ico{font-size:40px;margin-bottom:4px}
+.fam3-drop .fam3-pics{justify-content:center;margin-top:0}
+.fam3-side .fam-preview{min-height:420px}

@@ -30,8 +30,8 @@ export default async (req) => {
       fd.append("prompt", job.prompt);
       fd.append("size", job.size);
       fd.append("quality", job.quality || "medium");
-      fd.append("input_fidelity", "high");
       fd.append("output_format", "jpeg");
+      if (/^gpt-image-1/.test(model)) fd.append("input_fidelity", "high");   // gpt-image-2 계열은 이 파라미터를 받지 않는다
       fd.append("image", new Blob([bin], { type: m[1] }), "photo." + (m[1].split("/")[1] || "jpg"));
       r = await fetch("https://api.openai.com/v1/images/edits", { method: "POST", headers: { authorization: "Bearer " + key }, body: fd });
     } else {

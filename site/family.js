@@ -230,14 +230,20 @@ function maxStep(){ if(F.kind==='wed') return (F.pic||F.noPhoto)?1:0; return 0; 
 function panelPhoto(){
   const m=$('#famMain');
   m.innerHTML=`<h4>① 사진 <small>없어도 됩니다 — 없으면 꽃 프레임 틀로 갑니다</small></h4>
-   <div class="row rw"><label class="filebtn">📷 사진 올리기<input type="file" id="f_photo" accept="image/*"></label><button class="ghost" id="f_sample" type="button">샘플 사진</button><button class="ghost" id="f_nophoto" type="button">사진 없이 진행 ›</button><span class="hint" id="f_photoNote">${F.photo?'올려졌습니다 (전송 안 함)':'브라우저 안에서만 처리됩니다'}</span></div>
-   <div id="f_picBox" ${F.photo?'':'hidden'}>
+   <div class="fam3-drop" id="f_drop">
+    <div class="fam3-drop-empty" ${F.photo?'hidden':''}><div class="fam3-drop-ico">📷</div><b>사진을 여기에 끌어다 놓거나</b><div class="row" style="justify-content:center;margin-top:10px"><label class="filebtn">사진 올리기<input type="file" id="f_photo" accept="image/*"></label><button class="ghost" id="f_sample" type="button">샘플 사진</button></div><span class="hint" style="margin-top:8px">브라우저 안에서만 처리됩니다 · 결혼 스냅·스튜디오 사진 아무거나</span></div>
     <div class="fam3-pics" id="f_pics"></div>
+    <div class="row rw" id="f_picTools" ${F.photo?'':'hidden'} style="margin-top:10px"><label class="filebtn">📷 다른 사진</label><span class="hint" id="f_photoNote">${F.photo?'올려졌습니다 (전송 안 함)':''}</span></div></div>
+   <div class="row rw" style="margin-top:10px;justify-content:flex-end"><button class="ghost" id="f_nophoto" type="button">사진 없이 진행 ›</button></div>
+   <div id="f_picBox" ${F.photo?'':'hidden'}>
     <div class="fam-ai" style="margin-top:12px"><div class="row rw"><b>🎨 사진을 일러스트로 바꾸기</b><span class="hint">AI · 30~40초</span></div>
      <div class="row rw" style="margin-top:8px"><button class="ghost" data-ill="water">수채 일러스트</button><button class="ghost" data-ill="chic">화보풍 (길고 날씬하게)</button><button class="ghost" data-ill="line">라인 드로잉</button><span class="hint" id="famAiNote"></span></div>
      </div>
     <div class="row" style="margin-top:14px;justify-content:flex-end"><button class="primary big" id="f_next">다음 · 내용 입력 ›</button></div></div>`;
-  $('#f_photo').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>setPhoto(r.result,f.name); r.readAsDataURL(f); };
+  const onFile=f=>{ if(!f||!f.type.startsWith('image/')) return; const r=new FileReader(); r.onload=()=>setPhoto(r.result,f.name); r.readAsDataURL(f); };
+  $('#f_photo').onchange=e=>onFile(e.target.files[0]);
+  const t2=$('#f_picTools label'); if(t2) t2.onclick=()=>$('#f_photo').click();
+  const dz=$('#f_drop'); dz.ondragover=e=>{ e.preventDefault(); dz.classList.add('over'); }; dz.ondragleave=()=>dz.classList.remove('over'); dz.ondrop=e=>{ e.preventDefault(); dz.classList.remove('over'); onFile(e.dataTransfer.files[0]); };
   $('#f_sample').onclick=loadSamplePhoto; $('#f_nophoto').onclick=()=>{ F.noPhoto=true; F.pic=null; F.frames=[]; F.frame=null; goStep(1); };
   $('#f_next').onclick=()=>{ goStep(1); };
   $$('#famMain [data-ill]').forEach(b=>b.onclick=()=>makeIllust(b.dataset.ill));
@@ -245,7 +251,7 @@ function panelPhoto(){
   renderPics(); probeAI();
 }
 function loadSamplePhoto(){ fetch('assets/family_sample.jpg').then(r=>r.blob()).then(b=>{ const r=new FileReader(); r.onload=()=>setPhoto(r.result,'샘플 사진'); r.readAsDataURL(b); }); }
-function setPhoto(dataUrl,name){ F.photo=dataUrl; F.pic=dataUrl; F.picKind='photo'; F.noPhoto=false; F.illusts=[]; F.frames=[]; F.frame=null; photoTone(dataUrl); const n=$('#f_photoNote'); if(n) n.textContent=`${name} — 올려졌습니다 (전송 안 함)`; const b=$('#f_picBox'); if(b) b.hidden=false; renderPics(); setTimeout(refresh,250); }
+function setPhoto(dataUrl,name){ F.photo=dataUrl; F.pic=dataUrl; F.picKind='photo'; F.noPhoto=false; F.illusts=[]; F.frames=[]; F.frame=null; F.aiStarted=null; photoTone(dataUrl); const n=$('#f_photoNote'); if(n) n.textContent=`${name} — 올려졌습니다 (전송 안 함)`; const b=$('#f_picBox'); if(b) b.hidden=false; const e=$('#f_drop .fam3-drop-empty'); if(e) e.hidden=true; const t=$('#f_picTools'); if(t) t.hidden=false; renderPics(); setTimeout(refresh,250); }
 function renderPics(){
   const box=$('#f_pics'); if(!box) return;
   const items=[{src:F.photo,label:'원본 사진',key:'photo'}].concat(F.illusts.map((u,i)=>({src:u.src,label:u.label,key:'ill'+i,pending:u.pending})));
