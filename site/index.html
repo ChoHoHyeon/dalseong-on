@@ -42,7 +42,7 @@
       </div>
       <div class="portal-grid">
         <div class="card board"><h4>공지사항 <small>최근 5건</small><button class="ghost sm more" data-go="home:news">전체 보기 ›</button></h4><ul class="board-list" id="boardList"></ul></div>
-        <div class="card video"><h4>달성On 안내 영상 <small id="videoNote">소개 · 이용 방법</small></h4><div class="player" id="player"></div><p class="hint vcap" id="videoCap" style="margin-top:10px"></p></div>
+        <div class="card video"><h4>달성On 소개 영상 <small id="videoNote">29초</small></h4><div class="player" id="player"></div><p class="hint vcap" id="videoCap" style="margin-top:10px"></p></div>
       </div>
       <div class="home-usage">
       <div class="kpis five" id="homeKpis"></div>
@@ -61,6 +61,7 @@
         <div class="card"><h4>직원 (업무망)</h4><ol class="steps"><li><b>새올 배너 클릭</b><small>별도 설치·가입 없이 업무망 PC에서 접속</small></li><li><b>업무 질문 입력</b><small>"체육시설 사용료 감면 대상은?" 처럼 평소 말로</small></li><li><b>근거 확인 → 한글 파일</b><small>조문 번호를 눌러 원문 확인, [한글 파일로]를 누르면 군 서식 hwpx 다운로드</small></li></ol></div>
         <div class="card"><h4>한글 문서 만들기</h4><ol class="steps"><li><b>질문하고 답변 확인</b><small>근거 조문이 붙은 답변을 먼저 검토</small></li><li><b>[한글 파일로] 클릭</b><small>품의서·검토보고·업무연락 중 서식 선택, 제목·근거 포함 여부 지정</small></li><li><b>hwpx 다운로드 → 한글에서 마무리</b><small>담당자 검토 문구가 자동으로 붙어 나옵니다</small></li></ol></div>
         <div class="card"><h4>이런 질문에 답합니다</h4><div class="chips" id="guideChips"></div><p class="hint" style="margin-top:10px">자료에 없는 질문은 <b>AI 일반 답변</b>으로 표시되어 근거 인용 답변과 구분됩니다. 답변은 참고용이며 최종 판단은 담당자가 합니다.</p></div>
+        <div class="card vlist-card"><h4>안내 영상 모음 <small>기능별 사용법 · 누르면 재생</small></h4><div class="vlist" id="videoList"></div><p class="hint" style="margin-top:8px">각 기능 화면 제목 옆 <b>▶ 이용 안내</b> 단추로도 같은 영상을 볼 수 있습니다.</p></div>
         <div class="card"><h4>자료 범위</h4><table class="tbl"><tr><th>층</th><th>자료</th><th>대상</th></tr><tr><td>1층</td><td>자치법규 · 민원안내 · 공공데이터</td><td>전 직원</td></tr><tr><td>2층</td><td>복무 · 회계 · 계약 · 개인정보 · 보안 지침</td><td>전 직원</td></tr><tr><td>3층</td><td>온나라 문서 · 사업계획 (2단계)</td><td>권한별</td></tr></table></div>
       </div>
     </section>
@@ -530,6 +531,7 @@
 </div>
 
 <!-- 설정(빠른 접근) -->
+<div class="modal" id="mVideo" hidden><div class="box vbox"><div class="box-h"><b id="mVideoTitle">이용 안내</b><small id="mVideoSub" class="hint"></small><button class="x" data-close>✕</button></div><div class="player vmodal" id="mVideoBody"></div></div></div>
 <div class="modal" id="mSet" hidden><div class="box"><div class="box-h"><b>⚙ 설정</b><button class="x" data-close>✕</button></div><p class="hint">모델·API 키 설정은 <b>관리자 › 모델 설정</b>에 있습니다.</p><div class="row end"><button class="primary" id="goModel">모델 설정으로</button></div></div></div>
 
 <!-- 오류 신고 · 건의 -->
