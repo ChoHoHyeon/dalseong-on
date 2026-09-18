@@ -356,13 +356,17 @@ function aiDay(){ try{ const k=new Date().toISOString().slice(0,10); const o=JSO
 function aiDayInc(){ try{ const k=new Date().toISOString().slice(0,10); localStorage.setItem('dOnAiDay',JSON.stringify({d:k,n:aiDay()+1})); }catch(e){} }
 function aiLeft(){ return Math.max(0,AI_MAX_DAY-aiDay()); }
 function updateMore(){ const mo=$('#famMore'); if(mo) mo.innerHTML=`✨ 다른 분위기로 한 장 더 <small style="font-weight:500;opacity:.75">(${aiLeft()}장 남음)</small>`; }
+/* 하단 버튼 상태: AI가 그리는 동안엔 「완료」·「한 장 더」를 잠근다 (기본 디자인이 내려받아지는 사고 방지) */
+function syncButtons(txtMode){ const done=$('#f_done'), mo=$('#famMore'); const busy=F.frames.some(f=>f.pending);
+  if(done){ done.dataset.mode=txtMode?'copy':'dl'; done.disabled=!!busy&&!txtMode; done.style.opacity=done.disabled?'.55':''; done.textContent=txtMode?'본문 복사':(busy?'🤖 AI 디자인 완성 후 내려받기':'완료 카드 내려받기 ⬇'); }
+  if(mo){ mo.disabled=!!busy; mo.style.opacity=busy?'.55':''; if(!busy) updateMore(); } }
 async function makeFrame(auto){
   if(F.ai==null&&F.aiProbe){ try{ await F.aiProbe; }catch(e){} }
   if(!F.ai){ showFail('AI 생성 서버에 연결되지 않았습니다'); return; }
   if(AI_LIMIT_ENFORCE&&aiLeft()<=0){ toastF(`오늘 만들 수 있는 AI 디자인 ${AI_MAX_DAY}장을 모두 사용했습니다 — 내일 다시 이용해 주세요`); return; }
   aiDayInc(); updateMore();
   const o=orient(); const size=o==='landscape'?'1536x1024':'1024x1536'; const n=F.frames.filter(f=>f.kind==='ai').length+1;
-  const slot={id:'ai'+Date.now(),kind:'ai',label:'AI 디자인 '+n,pending:true}; F.frames.push(slot); renderFrames(); { const cur=F.frames[F.frame]; if(cur&&cur.kind!=='ai') $('#famNote').textContent=''; }
+  const slot={id:'ai'+Date.now(),kind:'ai',label:'AI 디자인 '+n,pending:true}; F.frames.push(slot); renderFrames(); { const cur=F.frames[F.frame]; if(cur&&cur.kind!=='ai') $('#famNote').textContent=''; } syncButtons(false);
   const idx=F.frames.indexOf(slot); const t0=Date.now(); const st=$('#famAiStatus'); const tick=setInterval(()=>{ const sec=Math.round((Date.now()-t0)/1000); const e=document.getElementById('fw'+idx); if(e) e.textContent=sec+'초 · 보통 30~60초'; },1000);
   if(st) st.hidden=true; loading(true,'🤖 AI 디자인을 그리는 중…','보통 30~60초 · 기다리는 동안 내용을 입력해 주세요 — 완성되면 카드가 바뀝니다');
   try{
@@ -374,8 +378,8 @@ async function makeFrame(auto){
     slot.img=img; slot.W=W; slot.H=H; slot.area=area; slot.ink=ink; slot.pending=false; slot.render=dd=>overlayCard(slot,dd);
     F.frame=idx; renderFrames(); await refresh();
     if(st) st.hidden=true;
-  }catch(e){ F.frames=F.frames.filter(x=>x!==slot); renderFrames(); clearInterval(tick); showFail(e.message); return; }
-  finally{ clearInterval(tick); loading(false); }
+  }catch(e){ F.frames=F.frames.filter(x=>x!==slot); renderFrames(); clearInterval(tick); showFail(e.message); syncButtons(false); return; }
+  finally{ clearInterval(tick); loading(false); syncButtons(F.frames[F.frame]&&F.frames[F.frame].kind==='txt'); }
 }
 function regionInk(src,W,H,a){ return new Promise(res=>{ const im=new Image(); im.onload=()=>{ try{ const c=document.createElement('canvas'); c.width=24;c.height=24; const g=c.getContext('2d'); g.drawImage(im, a.x*im.naturalWidth, a.y*im.naturalHeight, a.w*im.naturalWidth, a.h*im.naturalHeight, 0,0,24,24); const px=g.getImageData(0,0,24,24).data; let l=0,n=0; for(let i=0;i<px.length;i+=4){ l+=(px[i]*.3+px[i+1]*.59+px[i+2]*.11); n++; } res(l/n<120?'light':'dark'); }catch(e){ res('dark'); } }; im.onerror=()=>res('dark'); im.src=src; }); }
 /* AI 틀 위에 글자 얹기 */
@@ -474,7 +478,7 @@ async function refresh(){
   const fr=F.frames[F.frame]; 
   const txtMode=fr&&fr.kind==='txt';
   const pw=$('.fam-pvwrap'); if(pw) pw.hidden=!!txtMode;                       // 텍스트 모드는 빈 미리보기 상자를 숨기고 본문만
-  const done=$('#f_done'); if(done){ done.textContent=txtMode?'본문 복사':'완료 카드 내려받기 ⬇'; done.dataset.mode=txtMode?'copy':'dl'; }
+  syncButtons(txtMode);
   if(!fr||fr.kind==='txt'||fr.pending){ F.img=''; $('#famTextWrap').hidden=false; $('#famShowTxt').hidden=true; pv.innerHTML=''; $('#famNote').textContent=txtMode?'텍스트로 올립니다 — 아래 본문을 복사해 새올에 붙여넣으세요':'';  const mo=$('#famMore'); if(mo) mo.hidden=true; $('#famAiChips').innerHTML=''; return; }
   $('#famTextWrap').hidden=true;  const waiting=F.frames.some(f=>f.pending); $('#famNote').textContent=(waiting&&fr.kind!=='ai')?'':((fr.kind==='ai'?'🤖 ':'')+fr.label);  const mo=$('#famMore'); if(mo){ mo.hidden=!(F.ai&&F.consent); updateMore(); } renderAiChips();
   const card=fr.render(d);
