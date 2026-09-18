@@ -1231,3 +1231,7 @@ body[data-theme=dark] .bugnote{background:rgba(217,138,0,.14);color:#f0d9a6;bord
 /* 사진·일러스트 썸네일의 작은 삭제 × (마우스 올릴 때만 보임) */
 .fam3-pic{position:relative} .fam3-x{position:absolute;top:2px;right:2px;width:22px;height:22px;line-height:20px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-style:normal;font-size:15px;text-align:center;opacity:0;transition:opacity .15s;cursor:pointer}
 .fam3-pic:hover .fam3-x{opacity:1} .fam3-x:hover{background:#c0392b}
+
+/* 경조사 입력칸: 예시(placeholder)는 더 옅게, 실제 입력값은 진하게 — 값이 있는 것처럼 보이지 않도록 */
+#famForm input::placeholder{color:#c3c9d3;font-weight:400}
+#famForm input:not(:placeholder-shown){color:var(--tx);font-weight:600;background:#fbfcff}

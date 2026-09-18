@@ -779,4 +779,4 @@ init().catch(e=>{ addMsg('ai','자료 색인을 불러오지 못했습니다: '+
 })();
 
 // 사이트를 열 때 AI 생성 함수를 미리 깨워 둔다 (Netlify 콜드스타트 → 경조사 카드에서 바로 눌러도 지연 없이)
-try{ fetch("/api/card",{method:"POST",headers:{"content-type":"application/json"},body:"{\"ping\":1}"}).catch(()=>{}); }catch(e){}
+try{ fetch("/api/card",{method:"POST",headers:{"content-type":"application/json"},body:"{\"ping\":1}"}).catch(()=>{}); fetch("/api/card-run",{method:"POST",headers:{"content-type":"application/json"},body:"{\"id\":\"warm\"}"}).catch(()=>{}); }catch(e){}

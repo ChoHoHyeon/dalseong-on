@@ -488,11 +488,14 @@ function download(){ if(!F.img){ toastF('먼저 틀을 고르고 내용을 적�
 /* ═══ AI 서버 ═══ */
 const code=()=>{ try{ return localStorage.getItem('dOnCode')||''; }catch(e){ return ''; } };
 function probeAI(){ F.aiProbe=fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':code()},body:'{"ping":1}'}).then(r=>r.json()).then(j=>{ F.ai=!!(j&&j.ok&&j.hasKey&&j.codeOk); F.aiModel=j&&j.model; const n=$('#famAiNote'); if(!n) return; if(!F.ai){ n.textContent = j&&j.ok&&!j.hasKey ? 'AI 생성은 서버에 키를 넣으면 켜집니다 (관리자)' : j&&j.ok&&!j.codeOk ? '접속 코드가 맞지 않습니다 (관리자 › 모델 설정)' : 'AI 생성 서버가 없습니다'; $$('#famMain [data-ill]').forEach(b=>b.disabled=true); } else n.textContent='모델 '+F.aiModel; }).catch(()=>{ F.ai=false; const n=$('#famAiNote'); if(n) n.textContent='AI 생성 서버에 연결되지 않습니다'; $$('#famMain [data-ill]').forEach(b=>b.disabled=true); }); }
+/* AI로 보낼 때는 긴 변 1280px JPEG로 줄여서 보낸다 (원본 5~10MB 사진도 0.3MB 수준 → 업로드·처리 시간 단축) */
+function shrinkForAI(dataUrl,max=1280){ return new Promise(res=>{ if(!dataUrl) return res(null); const im=new Image(); im.onload=()=>{ try{ const r=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)); if(r>=1&&dataUrl.length<900000) return res(dataUrl); const c=document.createElement('canvas'); c.width=Math.round(im.naturalWidth*r); c.height=Math.round(im.naturalHeight*r); c.getContext('2d').drawImage(im,0,0,c.width,c.height); res(c.toDataURL('image/jpeg',0.88)); }catch(e){ res(dataUrl); } }; im.onerror=()=>res(dataUrl); im.src=dataUrl; }); }
 async function aiJob({prompt,photo,size}){
+  photo=await shrinkForAI(photo);
   const r=await fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':code()},body:JSON.stringify({action:'start',prompt,photo:photo||null,size,expect:[]})});
   const j=await r.json(); if(!r.ok||!j.id) throw new Error(j.error||('오류 '+r.status));
   const t0=Date.now(); let job=null;
-  while(Date.now()-t0<180000){ await new Promise(res=>setTimeout(res,3000)); const q=await fetch('/api/card?id='+j.id,{headers:{'x-access-code':code()}}); job=await q.json(); if(job.status==='done'||job.status==='error') break; }
+  while(Date.now()-t0<180000){ await new Promise(res=>setTimeout(res,1500)); const q=await fetch('/api/card?id='+j.id,{headers:{'x-access-code':code()}}); job=await q.json(); if(job.status==='done'||job.status==='error') break; }
   if(!job||job.status!=='done') throw new Error((job&&job.error)||'시간 초과 — 다시 시도해 주세요');
   return job.image;
 }
