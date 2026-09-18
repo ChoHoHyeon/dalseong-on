@@ -1118,3 +1118,22 @@ body[data-theme=dark] .bugnote{background:rgba(217,138,0,.14);color:#f0d9a6;bord
 .fam-thumb:hover{border-color:var(--acc);transform:translateY(-1px)} .fam-thumb small{font-size:11.5px;color:var(--mut)}
 .fam-th{display:grid;place-items:center;min-height:90px;background:var(--panel2);border-radius:7px;overflow:hidden} .fam-th img{width:100%;height:auto;display:block}
 @media(max-width:1100px){.fam-out{grid-template-columns:1fr} .fam-kinds{grid-template-columns:1fr} .pgrid3{grid-template-columns:1fr 1fr}}
+#famBodyWrap{display:none} #famBodyWrap.open{display:flex}
+#famBodyWrap textarea{font-size:13.5px}
+.optnote a{color:var(--acc);text-decoration:underline}
+/* 경조사 카드 v2: 좌 입력 · 우 게시판에 올릴 것(제목 + 카드 또는 본문) */
+.fam-cols{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,1fr);gap:14px;align-items:start}
+.fam-sticky{position:sticky;top:8px}
+.fam-right .fam-copy input,.fam-right .fam-copy textarea{font-family:'Batang','바탕',serif;font-size:13.5px;line-height:1.7}
+.fam-img{display:grid;gap:10px} .fam-preview{width:100%}
+.fam-out{display:block} #famBodyWrap{display:flex}
+.fam-alt{margin:6px 0} .fam-alt a{color:var(--acc);text-decoration:underline}
+@media(max-width:1100px){.fam-cols{grid-template-columns:1fr} .fam-sticky{position:static}}
+/* 경조사 카드 v3: AI 생성 UI · 대기 · 검증 · 확대 보기 */
+.fam-ai{margin-top:12px;padding:10px 12px;border:1px solid rgba(47,111,237,.25);border-radius:12px;background:rgba(47,111,237,.05)}
+.fam-ai .primary small{font-weight:500;opacity:.85;margin-left:4px}
+.fam-wait{display:grid;place-items:center;gap:8px;padding:50px 20px;text-align:center;color:var(--mut)} .fam-wait b{color:var(--tx)}
+.fam-wait .spin{width:34px;height:34px;border-radius:50%;border:3px solid rgba(47,111,237,.2);border-top-color:var(--acc);animation:famspin .9s linear infinite} @keyframes famspin{to{transform:rotate(360deg)}}
+.fam-verify{margin-top:8px;padding:10px 12px;border-radius:10px;background:#fff7e6;border:1px solid #f1d9a6;font-size:12.5px} .fam-verify ul{margin:6px 0 6px 18px} .fam-verify .ok{color:#2f7d4a}
+.fam-preview img{cursor:zoom-in}
+.box.cardbox{width:min(1100px,96vw);padding:14px} .box.cardbox img{width:100%;height:auto;display:block;border-radius:8px}

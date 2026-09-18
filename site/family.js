@@ -23,61 +23,49 @@ function today(){ const d=new Date(); return `${d.getFullYear()}. ${d.getMonth()
 const REL_WED=['장녀','장남','차녀','차남','딸','아들','본인'];
 const REL_OBIT=['부친','모친','시부','시모','장인','장모','빙부','빙모','조부','조모','배우자','본인'];
 function formHtml(kind){
-  const common=`<div class="pgrid pgrid3">
-    <label>소속 <b class="req">*</b><input id="f_dept" placeholder="예) 정보통신과"></label>
-    <label>이름 <b class="req">*</b><input id="f_name" placeholder="예) 김달성"></label>
-    <label>직위<input id="f_title" placeholder="예) 주무관 · 팀장 · 前 ○○과장"></label></div>`;
-  if(kind==='wed') return `
-   <fieldset class="pbox req-box"><legend>누구의 결혼인가요</legend>${common}
-    <div class="pgrid pgrid3">
-     <label>관계<select id="f_rel">${REL_WED.map(r=>`<option>${r}</option>`).join('')}</select></label>
-     <label>신부 이름 <b class="req">*</b><input id="f_bride" placeholder="예) 김하늘"></label>
-     <label>신랑 이름 <b class="req">*</b><input id="f_groom" placeholder="예) 박비슬"></label></div></fieldset>
-   <fieldset class="pbox"><legend>일시 · 장소</legend>
-    <div class="pgrid pgrid2">
-     <label>일시 <b class="req">*</b><input id="f_when" type="datetime-local"></label>
-     <label>예식장 <b class="req">*</b><input id="f_place" placeholder="예) 노비아갈라 동촌 포레야홀"></label>
-     <label>주소<input id="f_addr" placeholder="예) 대구광역시 동구 동촌로 87"></label>
-     <label>연락처<input id="f_tel" placeholder="예) 010-0000-0000"></label>
-     <label>마음 전하실 곳<input id="f_bank" placeholder="예) iM뱅크 000-00-000000 (김달성)"></label>
-     <label class="chk" style="align-self:end"><input type="checkbox" id="f_bankImg" checked> 계좌를 카드 이미지에도 넣기</label></div></fieldset>
-   <fieldset class="pbox"><legend>발신 명의</legend>
-    <div class="pgrid pgrid2"><label>부서장 직위·이름<input id="f_sender" placeholder="예) 정보통신과장 김정보"></label>
-    <label>게시일<input id="f_wdate" type="date"></label></div></fieldset>
-   <fieldset class="pbox"><legend>사진 <span class="optnote">없어도 됩니다 — 사진이 없으면 꽃 프레임 카드로 만듭니다</span></legend>
+  const I=(id,ph,w,extra='')=>`<input id="${id}" placeholder="${ph}" style="width:${w}px" ${extra}>`;
+  const who=`${I('f_dept','소속(과)',120)} ${I('f_name','이름',90)} ${I('f_title','직위',100)}`;
+  const foot=`<div class="fam-line fam-foot"><input id="f_wdate" type="date" style="width:150px"> <span class="hint">게시일</span></div>
+    <div class="fam-line fam-foot">${I('f_sender','부서장 직위·이름 (예: 정보통신과장 김정보)',300)} <span class="hint">발신 명의</span></div>
+    <p class="hint" style="margin-top:6px">소속·이름·직위·부서장은 이 PC에 기억해 두었다가 다음에 채워 줍니다 · <a href="#" id="f_forget">기억 지우기</a></p>`;
+  if(kind==='wed') return `<div class="fam-sent">
+    <div class="fam-line">${who}의 <select id="f_rel" style="width:auto">${REL_WED.map(r=>`<option>${r}</option>`).join('')}</select>
+      <span class="wchild">${I('f_bride','신부 이름',100)} 양과 ${I('f_groom','신랑 이름',100)} 군의</span>
+      <span class="wself" hidden>${I('f_spouseDept','배우자 소속·직위 (선택)',200)} ${I('f_spouse','배우자 이름',100)} 님과의</span> 결혼식을 아래와 같이 알려드리오니</div>
+    <div class="fam-line fixed">두 사람의 앞날을 축복해 주시면 감사하겠습니다.</div>
+    <div class="fam-line">○ 일 시 : <input id="f_when" type="datetime-local" style="width:230px"></div>
+    <div class="fam-line">○ 장 소 : ${I('f_place','예식장 (예: 노비아갈라 동촌 포레야홀)',250)} (${I('f_addr','주소',215)})</div>
+    <div class="fam-line">○ 연락처 : ${I('f_tel','010-0000-0000',170)}</div>
+    <div class="fam-line">○ 마음 전하실 곳 : ${I('f_bank','은행 계좌번호 (예금주)',300)} <label class="chk inl"><input type="checkbox" id="f_bankImg" checked> 카드 이미지에도 넣기</label></div>
+    ${foot}</div>
+   <fieldset class="pbox fam-opt"><legend>사진 · 카드 방향 <span class="optnote">사진은 없어도 됩니다 · 브라우저 안에서만 처리</span></legend>
     <div class="fam-photo"><label class="filebtn">📷 사진 올리기<input type="file" id="f_photo" accept="image/*"></label>
      <button class="ghost sm" id="f_sample" type="button">샘플 사진으로 해보기</button>
      <button class="ghost sm" id="f_clear" type="button" hidden>사진 빼기</button>
-     <span class="hint" id="f_photoNote">브라우저 안에서만 처리되고 어디로도 전송되지 않습니다</span></div>
-    <label class="chk" style="margin-top:8px"><input type="checkbox" id="f_illust"> 사진 대신 <b>일러스트로 바꿔서</b> 넣기 <span class="hint">(시연판은 샘플 일러스트로 대체 · 본 구축 시 사진→일러스트 변환)</span></label></fieldset>`;
-  if(kind==='obit') return `
-   <fieldset class="pbox req-box"><legend>누구의 부고인가요</legend>${common}
-    <div class="pgrid pgrid3">
-     <label>관계<select id="f_rel">${REL_OBIT.map(r=>`<option>${r}</option>`).join('')}</select></label>
-     <label>별세일 <b class="req">*</b><input id="f_ddate" type="date"></label>
-     <label class="chk" style="align-self:end"><input type="checkbox" id="f_noVisit"> 가족장 — 조문·조의 정중히 사양</label></div></fieldset>
-   <fieldset class="pbox"><legend>빈소 · 발인 · 장지</legend>
-    <div class="pgrid pgrid2">
-     <label>빈소 <b class="req">*</b><input id="f_place" placeholder="예) 대구전문장례식장 특1호실"></label>
-     <label>주소<input id="f_addr" placeholder="예) 대구 동구 금호강변로 71"></label>
-     <label>발인<input id="f_balin" type="datetime-local"></label>
-     <label>장지<input id="f_jangji" placeholder="예) 대구명복공원"></label>
-     <label>연락처<input id="f_tel" placeholder="예) 김달성 (010-0000-0000)"></label>
-     <label>마음 전하실 곳<input id="f_bank" placeholder="예) iM뱅크 000-00-000000 (김달성)"></label></div></fieldset>
-   <fieldset class="pbox"><legend>발신 명의</legend>
-    <div class="pgrid pgrid2"><label>부서장 직위·이름<input id="f_sender" placeholder="예) 정보통신과장 김정보"></label>
-    <label>게시일<input id="f_wdate" type="date"></label></div>
-    <label class="chk"><input type="checkbox" id="f_obitImg"> 텍스트에 더해 <b>이미지 카드도</b> 만들기 <span class="hint">(부고는 게시판 관행대로 텍스트가 기본입니다)</span></label></fieldset>`;
-  return `
-   <fieldset class="pbox req-box"><legend>어떤 감사 인사인가요</legend>
-    <div class="seg2" id="f_tkind" style="margin-bottom:10px"><button class="on" data-v="wed" type="button">결혼 감사</button><button data-v="fun" type="button">조문 감사</button></div>
-    ${common}
-    <div class="pgrid pgrid3">
-     <label>행사일 <b class="req">*</b><input id="f_edate" type="date"></label>
-     <label id="f_relWrap">관계 (예: 딸 하늘이 / 부친상)<input id="f_rel2" placeholder="예) 딸 하늘이"></label>
-     <label>맺음말<select id="f_close"><option>올림</option><option>배상</option><option>드림</option></select></label></div></fieldset>
-   <fieldset class="pbox"><legend>게시일</legend><div class="pgrid pgrid2"><label>게시일<input id="f_wdate" type="date"></label></div></fieldset>`;
+     <span class="hint" id="f_photoNote">어디로도 전송되지 않습니다 (AI 생성 선택 시에만 동의 후 전송)</span></div>
+    <div class="row rw" style="margin-top:8px;align-items:center"><span class="hint" style="margin-right:4px">카드 방향</span><div class="seg2" id="f_orient"><button type="button" data-v="any" class="on">상관없음</button><button type="button" data-v="portrait">세로형</button><button type="button" data-v="landscape">가로형</button></div>
+     <label class="chk inl" style="margin-left:10px"><input type="checkbox" id="f_illust"> <span>사진 대신 일러스트로 <span class="hint">(시연판은 샘플로 대체)</span></span></label></div></fieldset>`;
+  if(kind==='obit') return `<div class="fam-sent">
+    <div class="fam-line fixed big">삼가 알려드립니다.</div>
+    <div class="fam-line">${who}의 <select id="f_rel" style="width:auto">${REL_OBIT.map(r=>`<option>${r}</option>`).join('')}</select>께서 <input id="f_ddate" type="date" style="width:150px"> 별세하셨음을 알려드립니다.</div>
+    <div class="fam-line">○ 빈   소 : ${I('f_place','장례식장 · 호실',230)} (${I('f_addr','주소',215)})</div>
+    <div class="fam-line">○ 발   인 : <input id="f_balin" type="datetime-local" style="width:230px"></div>
+    <div class="fam-line">○ 장   지 : ${I('f_jangji','장지',220)}</div>
+    <div class="fam-line">○ 연락처 : ${I('f_tel','이름 (010-0000-0000)',220)}</div>
+    <div class="fam-line">○ 마음 전하실 곳 : ${I('f_bank','은행 계좌번호 (예금주)',300)}</div>
+    <div class="fam-line"><label class="chk inl"><input type="checkbox" id="f_noVisit"> ※ 가족장으로 조문과 조의는 정중히 사양하오니 양해 부탁드립니다.</label></div>
+    ${foot}</div>
+   <fieldset class="pbox fam-opt"><legend>이미지</legend><label class="chk"><input type="checkbox" id="f_obitImg"> <span>텍스트에 더해 <b>이미지 카드도</b> 만들기 <span class="hint">(부고는 게시판 관행대로 텍스트가 기본입니다)</span></span></label></fieldset>`;
+  return `<div class="fam-sent">
+    <div class="seg2" id="f_tkind" style="margin-bottom:10px;display:inline-flex"><button class="on" data-v="wed" type="button">결혼 감사</button><button data-v="fun" type="button">조문 감사</button></div>
+    <div class="fam-line fixed big" id="f_thHead">감사의 인사를 올립니다.</div>
+    <div class="fam-line">지난 <input id="f_edate" type="date" style="width:150px"> 저희 ${I('f_rel2','딸 하늘이 / 부친상',150)}<span id="f_thTail">의 결혼식에 귀한 걸음 해 주시고 축복과 격려를 보내주셔서 진심으로 감사드립니다.</span></div>
+    <div class="fam-line fixed hint" id="f_thBody">직접 찾아뵙고 인사드리는 것이 도리이오나 감사의 마음을 글로 대신함을 너그러이 이해하여 주시기 바랍니다. … (본문은 오른쪽에서 확인)</div>
+    <div class="fam-line fam-foot"><input id="f_wdate" type="date" style="width:150px"> <span class="hint">게시일</span></div>
+    <div class="fam-line fam-foot">${who} <select id="f_close" style="width:auto"><option>올림</option><option>배상</option><option>드림</option></select></div>
+    <p class="hint" style="margin-top:6px">소속·이름·직위는 이 PC에 기억해 두었다가 다음에 채워 줍니다 · <a href="#" id="f_forget">기억 지우기</a> · 부서장 명의는 감사글에 쓰지 않습니다</p></div>`;
 }
+
 const v=id=>{ const e=document.getElementById(id); return e?e.value.trim():''; };
 const ck=id=>{ const e=document.getElementById(id); return !!(e&&e.checked); };
 
@@ -85,7 +73,7 @@ const ck=id=>{ const e=document.getElementById(id); return !!(e&&e.checked); };
 function collect(){
   const k=F.kind, d={kind:k, dept:v('f_dept')||'○○과', name:v('f_name')||'○○○', title:v('f_title'), sender:v('f_sender')||'○○과장 ○○○', wdate:v('f_wdate')};
   d.wdateS = d.wdate? fDate(d.wdate).replace(/\(.\)$/,'') : today();
-  if(k==='wed'){ Object.assign(d,{rel:v('f_rel'),bride:v('f_bride')||'○○○',groom:v('f_groom')||'○○○',when:v('f_when'),place:v('f_place')||'○○○홀',addr:v('f_addr'),tel:v('f_tel'),bank:v('f_bank'),bankImg:ck('f_bankImg'),illust:ck('f_illust')}); }
+  if(k==='wed'){ Object.assign(d,{rel:v('f_rel'),bride:v('f_bride')||'○○○',groom:v('f_groom')||'○○○',when:v('f_when'),place:v('f_place')||'○○○홀',addr:v('f_addr'),tel:v('f_tel'),bank:v('f_bank'),bankImg:ck('f_bankImg'),illust:ck('f_illust'),spouse:v('f_spouse')||'○○○',spouseDept:v('f_spouseDept'),orient:$('#f_orient .on')?.dataset.v||'any'}); }
   if(k==='obit'){ Object.assign(d,{rel:v('f_rel'),ddate:v('f_ddate'),noVisit:ck('f_noVisit'),place:v('f_place')||'○○장례식장',addr:v('f_addr'),balin:v('f_balin'),jangji:v('f_jangji'),tel:v('f_tel'),bank:v('f_bank'),obitImg:ck('f_obitImg')}); }
   if(k==='thanks'){ Object.assign(d,{tkind:$('#f_tkind .on')?.dataset.v||'wed',edate:v('f_edate'),rel2:v('f_rel2'),close:v('f_close')||'올림'}); }
   return d;
@@ -101,7 +89,7 @@ function postTitle(d){
 function line(k,val){ return val?`○ ${k} : ${val}\n`:''; }
 function postBody(d){
   if(d.kind==='wed'){
-    const subj = d.rel==='본인' ? `${who(d)}의 결혼식을` : `${who(d)}의 ${d.rel} ${d.bride} 양과 ${d.groom} 군의 결혼식을`;
+    const subj = d.rel==='본인' ? `${who(d)}과 ${d.spouseDept?d.spouseDept+' ':''}${d.spouse} 님의 결혼식을` : `${who(d)}의 ${d.rel} ${d.bride} 양과 ${d.groom} 군의 결혼식을`;
     return `${subj} 아래와 같이 알려드리오니\n두 사람의 앞날을 축복해 주시면 감사하겠습니다.\n\n`
       + line('일 시',fDateTime(d.when)) + line('장 소',d.place+(d.addr?` (${d.addr})`:'')) + line('연락처',d.tel) + line('마음 전하실 곳',d.bank)
       + `\n${d.wdateS}\n${d.sender}`;
@@ -178,7 +166,7 @@ function wedCard(d, layout, theme, photo, illust){
   .dc .info small{color:${t.sub};font-size:14px}
   .dc .sender{margin-top:26px;font-family:${FONT_SERIF};font-size:20px;letter-spacing:2px}
   .dc .orn{color:${t.accent};font-size:18px;letter-spacing:6px;margin:8px 0}`;
-  const subj = d.rel==='본인' ? `<b>${esc(who(d))}</b>의 결혼식을 알려드리오니` : `<b>${esc(who(d))}</b>의 ${esc(d.rel)}<br><b>${esc(d.bride)}</b> 양과 <b>${esc(d.groom)}</b> 군의 결혼식을 알려드리오니`;
+  const subj = d.rel==='본인' ? `<b>${esc(who(d))}</b>과<br><b>${esc((d.spouseDept?d.spouseDept+' ':'')+d.spouse)}</b> 님의 결혼식을 알려드리오니` : `<b>${esc(who(d))}</b>의 ${esc(d.rel)}<br><b>${esc(d.bride)}</b> 양과 <b>${esc(d.groom)}</b> 군의 결혼식을 알려드리오니`;
   const body=`<div class="lead">${subj}<br>두 사람의 앞날을 축복해 주시면 감사하겠습니다.</div>
   <div class="info"><div><span class="k">일 시</span>${esc(fDateTime(d.when))}</div><div><span class="k">장 소</span>${esc(d.place)}${d.addr?` <small>(${esc(d.addr)})</small>`:''}</div>${d.tel?`<div><span class="k">연락처</span>${esc(d.tel)}</div>`:''}${d.bank&&d.bankImg?`<div><span class="k">마음 전하실 곳</span>${esc(d.bank)}</div>`:''}</div>
   <div class="sender">${esc(d.sender)}</div>`;
@@ -243,6 +231,7 @@ function pick(arr,seed){ return arr[Math.floor(rnd(seed)()*arr.length)%arr.lengt
 function autoWed(d, seed){
   const hasPic=!!(F.photo||d.illust);
   let layouts = d.illust ? ['L3'] : hasPic ? (F.pw>=F.ph ? ['L2','L1'] : ['L1','L2','L1']) : ['L4'];
+  if(hasPic && !d.illust && d.orient==='portrait') layouts=['L2']; if(hasPic && !d.illust && d.orient==='landscape') layouts=['L1'];
   let themes=Object.keys(WED_THEMES);
   if(F.photo&&F.tone){ const t=F.tone; themes = t==='pink'?['rose','flower','rose','pastel']: t==='green'?['green','green','gold']: t==='dark'?['mono','gold','mono']: t==='blue'?['pastel','mono','green']: t==='warm'?['gold','green','rose']: themes; }
   return {layout:pick(layouts,seed), theme:pick(themes,seed+11)};
@@ -253,45 +242,66 @@ function photoTone(dataUrl){ const im=new Image(); im.onload=()=>{ const c=docum
 function build(){
   const root=$('#famApp'); if(!root||root.dataset.built) return; root.dataset.built=1;
   root.innerHTML=`
-  <div class="card famcard"><h4>1. 어떤 소식인가요</h4>
-   <div class="fam-kinds" id="famKinds">
-    <button class="on" data-k="wed"><i>💐</i><b>결혼</b><small>본인 · 자녀 결혼식 알림</small></button>
-    <button data-k="obit"><i>🕊</i><b>부고</b><small>별세 알림 · 텍스트 기본</small></button>
-    <button data-k="thanks"><i>🙏</i><b>감사 인사</b><small>결혼 · 조문 후 인사</small></button></div></div>
-  <div class="card famcard"><h4>2. 내용을 적어 주세요 <small>비운 칸은 ○○로 표시됩니다 · 브라우저 안에서만 처리</small></h4>
-   <div id="famForm"></div>
-   <div class="row rw" style="margin-top:6px"><button class="primary" id="famMake">✨ 만들기</button><button class="ghost" id="famAgain" disabled>🎲 다르게</button><button class="ghost" id="famPick" disabled>🗂 직접 고르기</button><span class="hint" id="famNote"></span></div>
-   <div id="famGrid" class="fam-grid" hidden></div></div>
-  <div class="card famcard" id="famOut" hidden><h4>3. 이렇게 올리시면 됩니다 <small>제목·본문은 새올 게시판에 그대로 붙여넣기</small></h4>
-   <div class="fam-out">
-    <div class="fam-txt">
+  <div class="fam-cols">
+   <div class="fam-left">
+    <div class="card famcard"><h4>1. 어떤 소식인가요</h4>
+     <div class="fam-kinds" id="famKinds">
+      <button class="on" data-k="wed"><i>💐</i><b>결혼</b><small>본인 · 자녀 결혼식 알림</small></button>
+      <button data-k="obit"><i>🕊</i><b>부고</b><small>별세 알림 · 텍스트 기본</small></button>
+      <button data-k="thanks"><i>🙏</i><b>감사 인사</b><small>결혼 · 조문 후 인사</small></button></div></div>
+    <div class="card famcard"><h4>2. 내용을 적어 주세요 <small>적는 대로 오른쪽이 바뀝니다 · 브라우저 안에서만 처리</small></h4>
+     <div id="famForm"></div>
+     <div class="fam-ai" id="famAiBox">
+      <div class="row rw" style="margin-top:4px"><button class="primary" id="famAI">🤖 AI로 카드 만들기 <small>30~60초</small></button><input id="f_mood" placeholder="원하는 느낌 (선택) 예) 화사하게 · 참꽃 넣어줘 · 차분한 골드" style="flex:1;min-width:220px"><span class="hint" id="famAiNote"></span></div>
+      <label class="chk" style="margin-top:6px"><input type="checkbox" id="f_aiConsent"> <span>사진과 문안을 <b>외부 AI(OpenAI)</b>로 보내 카드를 만드는 데 동의합니다 <span class="hint">· 시연판은 담당자 개인 계정 종량제 · 생성 후 저장하지 않음</span></span></label></div>
+     <div class="row rw" style="margin-top:8px"><button class="ghost" id="famMake">✨ 기본 카드로 만들기 <small>즉시 · 전송 없음</small></button><button class="ghost" id="famAgain" disabled>🎲 다르게</button><button class="ghost" id="famPick" disabled>🗂 직접 고르기</button><span class="hint" id="famNote"></span></div>
+     <div id="famGrid" class="fam-grid" hidden></div></div>
+   </div>
+   <div class="fam-right">
+    <div class="card famcard fam-sticky"><h4>3. 게시판에 올릴 것 <small>제목은 복사 · 카드는 첨부</small></h4>
      <label>게시글 제목<div class="fam-copy"><input id="famTitle" readonly><button class="ghost sm" data-copy="famTitle">복사</button></div></label>
-     <label>본문<div class="fam-copy col"><textarea id="famBody" rows="14" readonly></textarea><button class="ghost sm" data-copy="famBody">복사</button></div></label>
+     <div id="famOut" hidden>
+      <div class="fam-img" id="famImgWrap"><div class="fam-preview" id="famPreview"></div>
+       <div class="row rw"><button class="primary" id="famDl">⬇ 카드 이미지 내려받기 (PNG)</button><span class="hint" id="famImgNote"></span></div></div></div>
+     <div id="famTextWrap">
+      <label>본문 <span class="hint">이미지 없이 글로 올릴 때</span><div class="fam-copy col"><textarea id="famBody" rows="15" readonly></textarea><button class="ghost sm" data-copy="famBody">복사</button></div></label></div>
+     <p class="fam-alt hint" id="famAltTxt" hidden><a href="#" id="famShowTxt">글로 올릴 본문도 보기</a></p>
      <p class="hint">※ 이름·날짜·계좌는 반드시 확인 후 올려 주세요. 잘못 올린 글은 정보통신과(☎2454)에서 수정할 수 있습니다.</p></div>
-    <div class="fam-img" id="famImgWrap"><div class="fam-preview" id="famPreview"></div>
-     <div class="row rw"><button class="primary" id="famDl">⬇ 카드 이미지 내려받기 (PNG)</button><span class="hint" id="famImgNote"></span></div></div>
-   </div></div>`;
+   </div>
+  </div>`;
   $$('#famKinds button').forEach(b=>b.onclick=()=>{ $$('#famKinds button').forEach(x=>x.classList.toggle('on',x===b)); F.kind=b.dataset.k; renderForm(); });
-  $('#famMake').onclick=()=>make(0); $('#famAgain').onclick=()=>make((F.hist.length||0)+1); $('#famPick').onclick=togglePick; $('#famDl').onclick=download;
+  $('#famShowTxt').onclick=e=>{ e.preventDefault(); $('#famTextWrap').hidden=false; $('#famAltTxt').hidden=true; };
+  $('#famMake').onclick=()=>make(0); $('#famAI').onclick=()=>makeAI(0); $('#famAgain').onclick=()=>{ if(F.lastMode==='ai') makeAI((F.aiSeed||0)+1); else make((F.hist.length||0)+1); }; $('#famPick').onclick=togglePick; $('#famDl').onclick=download;
+  $('#famPreview').onclick=()=>{ if(!F.img) return; let m=$('#mCard'); if(!m){ m=document.createElement('div'); m.className='modal'; m.id='mCard'; m.innerHTML='<div class="box cardbox"><div class="box-h"><b>카드 미리보기</b><button class="x" data-close>✕</button></div><img></div>'; document.body.appendChild(m); m.onclick=e=>{ if(e.target===m||e.target.closest('[data-close]')) m.hidden=true; }; } m.querySelector('img').src=F.img; m.hidden=false; };
+  probeAI();
   root.addEventListener('click',e=>{ const b=e.target.closest('[data-copy]'); if(!b) return; const el=document.getElementById(b.dataset.copy); const txt=el.value; (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>toastF('복사했습니다'),()=>{ el.select(); document.execCommand('copy'); toastF('복사했습니다'); }); });
   renderForm();
 }
+function setMode(img){ $('#famOut').hidden=!img; $('#famTextWrap').hidden=img; $('#famAltTxt').hidden=!img; }
 function toastF(m){ if(window.toast) toast(m); else alert(m); }
+function updateText(){ const d=collect(); $('#famTitle').value=postTitle(d); $('#famBody').value=postBody(d); }
 function renderForm(){
-  const f=$('#famForm'); f.innerHTML=formHtml(F.kind); F.photo=null; F.hist=[]; $('#famOut').hidden=true; $('#famGrid').hidden=true; $('#famAgain').disabled=true; $('#famPick').disabled=true; $('#famNote').textContent='';
+  const f=$('#famForm'); f.innerHTML=formHtml(F.kind); f.oninput=updateText; f.onchange=updateText; F.photo=null; F.hist=[]; setMode(false); $('#famGrid').hidden=true; F.img=''; $('#famAgain').disabled=true; $('#famPick').disabled=true; $('#famNote').textContent='';
   const wd=$('#f_wdate'); if(wd){ const d=new Date(); wd.value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
   const ph=$('#f_photo'); if(ph){ ph.onchange=()=>{ const file=ph.files[0]; if(!file) return; const r=new FileReader(); r.onload=()=>setPhoto(r.result, file.name); r.readAsDataURL(file); };
     $('#f_sample').onclick=()=>fetch('assets/family_sample.jpg').then(r=>r.blob()).then(b=>{ const r=new FileReader(); r.onload=()=>setPhoto(r.result,'샘플 사진'); r.readAsDataURL(b); });
     $('#f_clear').onclick=()=>{ F.photo=null; $('#f_clear').hidden=true; $('#f_photoNote').textContent='브라우저 안에서만 처리되고 어디로도 전송되지 않습니다'; }; }
-  const tk=$('#f_tkind'); if(tk){ $$('#f_tkind button').forEach(b=>b.onclick=()=>{ $$('#f_tkind button').forEach(x=>x.classList.toggle('on',x===b)); $('#f_rel2').placeholder = b.dataset.v==='wed'?'예) 딸 하늘이':'예) 부친상'; }); }
+  // 기억한 값 채우기
+  try{ const m=JSON.parse(localStorage.getItem('dOnFam')||'{}'); ['f_dept','f_name','f_title','f_sender'].forEach(id=>{ const e=document.getElementById(id); if(e&&m[id]&&!e.value) e.value=m[id]; }); }catch(e){}
+  const fg=$('#f_forget'); if(fg) fg.onclick=e=>{ e.preventDefault(); localStorage.removeItem('dOnFam'); ['f_dept','f_name','f_title','f_sender'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; }); toastF('기억한 값을 지웠습니다'); };
+  const rel=$('#f_rel'); if(rel&&F.kind==='wed'){ const sync=()=>{ const self=rel.value==='본인'; $$('#famForm .wchild').forEach(x=>x.hidden=self); $$('#famForm .wself').forEach(x=>x.hidden=!self); }; rel.onchange=sync; sync(); }
+  const ori=$('#f_orient'); if(ori){ $$('#f_orient button').forEach(b=>b.onclick=()=>$$('#f_orient button').forEach(x=>x.classList.toggle('on',x===b))); }
+  const tk=$('#f_tkind'); if(tk){ const syncT=()=>{ const fun=$('#f_tkind .on')?.dataset.v==='fun'; $('#f_thHead').textContent=fun?'삼가 감사의 인사를 드립니다.':'감사의 인사를 올립니다.'; $('#f_thTail').textContent=fun?'에 바쁘신 가운데에도 따뜻한 위로와 조의를 보내주신 모든 분들께 진심으로 감사드립니다.':'의 결혼식에 귀한 걸음 해 주시고 축복과 격려를 보내주셔서 진심으로 감사드립니다.'; $('#f_rel2').placeholder=fun?'부친상':'딸 하늘이'; }; $$('#f_tkind button').forEach(b=>b.onclick=()=>{ $$('#f_tkind button').forEach(x=>x.classList.toggle('on',x===b)); syncT(); updateText(); }); }
+  updateText();
 }
 function setPhoto(dataUrl,name){ F.photo=dataUrl; F.tone=null; photoTone(dataUrl); $('#f_clear').hidden=false; $('#f_photoNote').textContent=`${name} — 올려졌습니다 (전송 안 함)`; }
 let ILLUST=null;
 async function illustData(){ if(ILLUST) return ILLUST; const b=await fetch('assets/family_sample_illust.jpg').then(r=>r.blob()); ILLUST=await new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(b); }); return ILLUST; }
 
 async function make(seed){
-  const d=collect(); F.data=d;
-  $('#famTitle').value=postTitle(d); $('#famBody').value=postBody(d); $('#famOut').hidden=false; $('#famGrid').hidden=true;
+  const d=collect(); F.data=d; F.lastMode='tpl'; const fv=$('#famVerify'); if(fv) fv.remove();
+  try{ localStorage.setItem('dOnFam',JSON.stringify({f_dept:v('f_dept'),f_name:v('f_name'),f_title:v('f_title'),f_sender:v('f_sender')})); }catch(e){}
+  updateText(); $('#famGrid').hidden=true;
   let card=null, note='';
   if(d.kind==='wed'){
     if(d.illust) F.illust=await illustData();
@@ -306,8 +316,8 @@ async function make(seed){
     const ks=Object.keys(TH_THEMES[d.tkind]); const th=ks[F.hist.length%ks.length]; F.hist.push({t:th}); F.theme=th; card=thanksCard(d,th); note=TH_THEMES[d.tkind][th]; $('#famAgain').disabled=false; $('#famPick').disabled=false;
   }
   $('#famNote').textContent = note? `선택: ${note}`:'';
+  setMode(!!card); if(!card){ toastF('게시글 제목·본문이 오른쪽에 준비되었습니다'); return; }
   await showCard(card);
-  $('#famOut').scrollIntoView({behavior:'smooth',block:'start'});
 }
 async function showCard(card){
   const wrap=$('#famImgWrap'), pv=$('#famPreview');
@@ -329,7 +339,60 @@ async function togglePick(){
   g.innerHTML='';
   for(const c of combos){ const el=document.createElement('button'); el.className='fam-thumb'; el.innerHTML=`<span class="fam-th"></span><small>${c.label}</small>`; g.appendChild(el);
     renderPng(c.card,0.35).then(u=>{ el.querySelector('.fam-th').innerHTML=`<img src="${u}">`; }).catch(()=>{ el.querySelector('.fam-th').textContent='미리보기 불가'; });
-    el.onclick=async()=>{ if(c.l){ F.layout=c.l; } F.theme=c.t; $('#famNote').textContent=`선택: ${c.label}`; await showCard(c.card); $('#famOut').scrollIntoView({behavior:'smooth',block:'start'}); }; }
+    el.onclick=async()=>{ if(c.l){ F.layout=c.l; } F.theme=c.t; $('#famNote').textContent=`선택: ${c.label}`; setMode(true); await showCard(c.card); }; }
+}
+/* ═══ AI 생성 (OpenAI gpt-image · 서버 프록시 /api/card → 백그라운드 card-run) ═══ */
+const code=()=>{ try{ return localStorage.getItem('dOnCode')||''; }catch(e){ return ''; } };
+function probeAI(){ fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':code()},body:'{"ping":1}'}).then(r=>r.json()).then(j=>{ F.ai=!!(j&&j.ok&&j.hasKey&&j.codeOk); F.aiModel=j&&j.model; const n=$('#famAiNote'); if(!F.ai){ $('#famAI').disabled=true; n.textContent = j&&j.ok&&!j.hasKey ? 'AI 생성은 서버에 키를 넣으면 켜집니다 (관리자)' : j&&j.ok&&!j.codeOk ? '접속 코드가 맞지 않습니다 (관리자 › 모델 설정)' : 'AI 생성 서버가 없습니다'; } else n.textContent='모델 '+F.aiModel; }).catch(()=>{ F.ai=false; $('#famAI').disabled=true; $('#famAiNote').textContent='AI 생성 서버에 연결되지 않습니다'; }); }
+const STYLES=['soft watercolor Korean azalea (진달래·참꽃) blossoms in pink and eucalyptus leaves, warm cream paper','green botanical eucalyptus and white flowers, airy white paper, thin sage lines','blush pink watercolor roses and peonies, romantic, soft','ivory paper with thin gold line frame and gold flourishes, classic and elegant','black and white minimal, generous white space, thin hairline frame, modern serif','light pastel confetti and tiny hearts, bright and cheerful, sky blue accents'];
+function aiPrompt(d, seed){
+  const mood=v('f_mood'); const st=STYLES[(seed+(d.name||'').length)%STYLES.length];
+  const lines=[]; let head='';
+  if(d.kind==='wed'){
+    head=`Design a complete Korean wedding invitation card${F.photo?' using the attached couple photo (keep their faces exactly as in the photo)':''}. Style: ${st}. `;
+    lines.push('Wedding Invitation');
+    if(d.rel==='본인') lines.push(`${who(d)}과 ${d.spouseDept?d.spouseDept+' ':''}${d.spouse} 님의 결혼식을 알려드리오니`);
+    else lines.push(`${who(d)}의 ${d.rel}`, `${d.bride} 양과 ${d.groom} 군의 결혼식을 알려드리오니`);
+    lines.push('두 사람의 앞날을 축복해 주시면 감사하겠습니다.', `일 시 : ${fDateTime(d.when)}`, `장 소 : ${d.place}${d.addr?` (${d.addr})`:''}`);
+    if(d.tel) lines.push(`연락처 : ${d.tel}`); if(d.bank&&d.bankImg) lines.push(`마음 전하실 곳 : ${d.bank}`); lines.push(d.sender);
+  } else if(d.kind==='thanks'){
+    head=`Design a complete Korean thank-you card (${d.tkind==='fun'?'after a funeral: quiet, respectful, white chrysanthemums, muted tones':'after a wedding: warm, flowers, soft pastel'}). Style: ${st}. No people. `;
+    postBody(d).split('\n').filter(l=>l.trim()).forEach(l=>lines.push(l));
+  } else {
+    head=`Design a Korean funeral notice card, solemn and respectful, white chrysanthemums, grey/ivory tones, no people. `;
+    postBody(d).split('\n').filter(l=>l.trim()).forEach(l=>lines.push(l));
+  }
+  const prompt = head + (mood?`Requested mood from the user: "${mood}". `:'') +
+    `The card must contain exactly the following Korean text, every character rendered accurately and legibly, in this order, with clean typography (Korean serif for body). Do not add any other words. Do not translate.\n\n` + lines.join('\n') +
+    `\n\nHigh quality, print-ready layout, balanced margins, nothing cut off at the edges.`;
+  const expect = lines.filter(l=>/[0-9]/.test(l) || l===d.sender || (d.name&&l.includes(d.name)));
+  return {prompt, expect};
+}
+async function makeAI(seed){
+  if(!F.ai){ toastF('AI 생성 서버가 준비되지 않았습니다'); return; }
+  if(!ck('f_aiConsent')){ toastF('외부 AI 전송 동의에 체크해 주세요'); $('#f_aiConsent').focus(); return; }
+  const d=collect(); F.data=d; F.aiSeed=seed; F.lastMode='ai';
+  try{ localStorage.setItem('dOnFam',JSON.stringify({f_dept:v('f_dept'),f_name:v('f_name'),f_title:v('f_title'),f_sender:v('f_sender')})); }catch(e){}
+  updateText(); $('#famGrid').hidden=true; setMode(true);
+  const {prompt,expect}=aiPrompt(d,seed);
+  const size = d.orient==='landscape'?'1536x1024': d.orient==='portrait'?'1024x1536': (F.photo&&F.pw>F.ph?'1536x1024':'1024x1536');
+  const pv=$('#famPreview'); pv.innerHTML='<div class="fam-wait"><div class="spin"></div><b>AI가 카드를 그리는 중…</b><small>보통 30~60초 걸립니다. 이 화면을 그대로 두세요.</small></div>';
+  $('#famImgNote').textContent=''; $('#famAI').disabled=true; $('#famAgain').disabled=true; $('#famPick').disabled=true; F.img=''; const fv=$('#famVerify'); if(fv) fv.remove();
+  try{
+    const r=await fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':code()},body:JSON.stringify({action:'start',prompt,photo:F.photo||null,size,expect})});
+    const j=await r.json(); if(!r.ok||!j.id) throw new Error(j.error||('오류 '+r.status));
+    const t0=Date.now(); let job=null;
+    while(Date.now()-t0<180000){ await new Promise(res=>setTimeout(res,3000)); const q=await fetch('/api/card?id='+j.id,{headers:{'x-access-code':code()}}); job=await q.json(); if(job.status==='done'||job.status==='error') break; const w=pv.querySelector('small'); if(w) w.textContent=`${Math.round((Date.now()-t0)/1000)}초 경과 · 보통 30~60초 걸립니다`; }
+    if(!job||job.status!=='done') throw new Error((job&&job.error)||'시간 초과 — 다시 시도해 주세요');
+    F.img=job.image; pv.innerHTML=`<img src="${job.image}" alt="AI 카드" title="누르면 크게 봅니다">`;
+    let note=`AI 생성 · ${job.model||''}`; if(job.verify){ if(job.verify.ok===true) note+=' · 글자 검증 통과 ✓'; else if(job.verify.ok===false) note+=' · ⚠ 확인 필요'; }
+    $('#famImgNote').textContent=note; $('#famNote').textContent='AI 생성 · 마음에 안 들면 「다르게」';
+    const warn=document.createElement('div'); warn.id='famVerify'; warn.className='fam-verify'; $('#famImgWrap').appendChild(warn);
+    if(job.verify&&job.verify.ok===false) warn.innerHTML=`<b>⚠ 카드에서 다음 문구가 정확히 읽히지 않았습니다. 눈으로 꼭 확인하세요.</b><ul>${job.verify.missing.map(m=>`<li>${esc(m)}</li>`).join('')}</ul><span class="hint">틀렸으면 「다르게」로 다시 만들거나 「기본 카드」를 쓰세요.</span>`;
+    else if(job.verify&&job.verify.ok===true) warn.innerHTML='<span class="hint ok">✓ 날짜·장소·연락처·계좌·이름이 카드에 그대로 들어간 것을 확인했습니다. 그래도 올리기 전에 한 번 더 보세요.</span>';
+    else warn.innerHTML='<span class="hint">글자 자동 검증을 하지 못했습니다. 날짜·계좌를 눈으로 확인하세요.</span>';
+  }catch(e){ pv.innerHTML=`<div class="hint" style="padding:30px;text-align:center">AI 생성 실패: ${esc(e.message)}<br><br>「기본 카드로 만들기」는 바로 됩니다.</div>`; $('#famImgNote').textContent=''; }
+  $('#famAI').disabled=false; $('#famAgain').disabled=false; $('#famPick').disabled=(d.kind==='obit'&&!d.obitImg);
 }
 window.FAMILY={init:build};
 })();
