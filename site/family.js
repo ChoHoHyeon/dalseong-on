@@ -190,7 +190,9 @@ function photoTone(dataUrl){ const im=new Image(); im.onload=()=>{ const c=docum
 /* ═══ 화면 ═══ */
 const STEPS={wed:[['photo','사진'],['text','내용 입력']], obit:[['text','내용 입력']], thanks:[['text','내용 입력']]};
 const consentStored=()=>true; /* 시연판: 동의 절차 없음 (본 구축 시 추가) */
-function toastF(m){ if(window.toast) toast(m); else alert(m); }
+function toastF(m){ if(window.toast) toast(m); else { const st=$('#famAiStatus')||$('#famNote'); if(st){ st.hidden=false; st.textContent=m; } else console.log(m); } }
+let _ldT=null;
+function loading(on, title, sub){ const L=$('#famLoad'); if(!L) return; clearInterval(_ldT); if(!on){ L.hidden=true; return; } L.hidden=false; const t0=Date.now(); const T=$('#famLoadT'), S=$('#famLoadS'); T.textContent=title; S.textContent=sub; _ldT=setInterval(()=>{ T.textContent=`${title} ${Math.round((Date.now()-t0)/1000)}초`; },1000); }
 function build(){
   const root=$('#famApp'); if(!root||root.dataset.built) return; root.dataset.built=1;
   root.innerHTML=`
@@ -201,7 +203,7 @@ function build(){
    <div class="card fam3-main" id="famMain"></div>
    <div class="fam3-side">
     <div class="card fam2-title"><span class="hint">게시글 제목</span><input id="famTitle" readonly><button class="ghost sm" data-copy="famTitle">복사</button></div>
-    <div class="card fam2-card"><div class="fam-preview" id="famPreview"></div>
+    <div class="card fam2-card"><div class="fam-pvwrap"><div class="fam-preview" id="famPreview"></div><div class="fam-load" id="famLoad" hidden><div class="spin"></div><b id="famLoadT">AI가 그리는 중…</b><small id="famLoadS">기다리는 동안 내용을 입력해 주세요</small></div></div>
      <div id="famTextWrap" hidden><div class="fam-copy col"><textarea id="famBody" rows="16" readonly></textarea><button class="ghost sm" data-copy="famBody">복사</button></div></div>
      <div class="row rw fam2-bar"><button class="primary" id="famDl">⬇ 카드 내려받기</button><button class="ghost" id="famMore" hidden>🎲 다르게 <small>AI 한 장 더</small></button><button class="ghost" id="famPickTgl" hidden>🗂 틀 바꾸기</button><span style="flex:1"></span><span class="hint" id="famNote"></span><a href="#" class="hint" id="famShowTxt" hidden>「글로 올릴 본문」 보기</a></div>
      <div class="fam3-frames strip" id="f_frames" hidden></div>
@@ -216,7 +218,7 @@ function build(){
   root.addEventListener('click',e=>{ const b=e.target.closest('[data-copy]'); if(!b) return; const el=document.getElementById(b.dataset.copy); (navigator.clipboard?navigator.clipboard.writeText(el.value):Promise.reject()).then(()=>toastF('복사했습니다'),()=>{ el.select(); document.execCommand('copy'); toastF('복사했습니다'); }); });
   probeAI(); resetKind();
 }
-function resetKind(){ F.consent=consentStored(); F.aiStarted=null; F.photo=null; F.illusts=[]; F.pic=null; F.picKind='photo'; F.frames=[]; F.frame=null; F.img=''; F.theme=null; F.data=null; F.form=null; goStep(0); }
+function resetKind(){ F.consent=consentStored(); F.aiStarted=null; F.autoAI=false; F.photo=null; F.illusts=[]; F.pic=null; F.picKind='photo'; F.frames=[]; F.frame=null; F.img=''; F.theme=null; F.data=null; F.form=null; goStep(0); }
 function goStep(i){
   F.step=i; const steps=STEPS[F.kind];
   $('#famSteps').innerHTML=steps.map(([id,label],k)=>`<button class="fam3-step ${k===i?'cur':k<i?'done':''}" data-i="${k}"><i>${k<i?'✓':k+1}</i><b>${label}</b></button>`).join('<span class="fam3-arrow">›</span>');
@@ -230,28 +232,26 @@ function maxStep(){ if(F.kind==='wed') return (F.pic||F.noPhoto)?1:0; return 0; 
 function panelPhoto(){
   const m=$('#famMain');
   m.innerHTML=`<h4>① 사진 <small>없어도 됩니다 — 없으면 꽃 프레임 틀로 갑니다</small></h4>
-   <div class="fam3-drop" id="f_drop">
-    <div class="fam3-drop-empty" ${F.photo?'hidden':''}><div class="fam3-drop-ico">📷</div><b>사진을 여기에 끌어다 놓거나</b><div class="row" style="justify-content:center;margin-top:10px"><label class="filebtn">사진 올리기<input type="file" id="f_photo" accept="image/*"></label><button class="ghost" id="f_sample" type="button">샘플 사진</button></div><span class="hint" style="margin-top:8px">브라우저 안에서만 처리됩니다 · 결혼 스냅·스튜디오 사진 아무거나</span></div>
+   <div class="row rw"><label class="filebtn">📷 사진 올리기<input type="file" id="f_photo" accept="image/*"></label><button class="ghost" id="f_sample" type="button">샘플 사진</button><button class="ghost" id="f_nophoto" type="button">사진 없이 진행 ›</button><span class="hint" id="f_photoNote">${F.photo?'올려졌습니다 (전송 안 함)':'브라우저 안에서만 처리됩니다 · 끌어다 놓아도 됩니다'}</span></div>
+   <div class="fam3-body" id="f_drop">
     <div class="fam3-pics" id="f_pics"></div>
-    <div class="row rw" id="f_picTools" ${F.photo?'':'hidden'} style="margin-top:10px"><label class="filebtn">📷 다른 사진</label><span class="hint" id="f_photoNote">${F.photo?'올려졌습니다 (전송 안 함)':''}</span></div></div>
-   <div class="row rw" style="margin-top:10px;justify-content:flex-end"><button class="ghost" id="f_nophoto" type="button">사진 없이 진행 ›</button></div>
-   <div id="f_picBox" ${F.photo?'':'hidden'}>
-    <div class="fam-ai" style="margin-top:12px"><div class="row rw"><b>🎨 사진을 일러스트로 바꾸기</b><span class="hint">AI · 30~40초</span></div>
-     <div class="row rw" style="margin-top:8px"><button class="ghost" data-ill="water">수채 일러스트</button><button class="ghost" data-ill="chic">화보풍 (길고 날씬하게)</button><button class="ghost" data-ill="line">라인 드로잉</button><span class="hint" id="famAiNote"></span></div>
-     </div>
-    <div class="row" style="margin-top:14px;justify-content:flex-end"><button class="primary big" id="f_next">다음 · 내용 입력 ›</button></div></div>`;
+    <div class="fam3-empty" ${F.photo?'hidden':''}><div class="fam3-drop-ico">📷</div><small>사진을 올리면 여기에 보입니다</small></div>
+    <div id="f_picBox" ${F.photo?'':'hidden'}>
+     <div class="fam-ai" style="margin-top:12px"><div class="row rw"><b>🎨 사진을 일러스트로 바꾸기</b><span class="hint">AI · 30~40초 · 선택</span></div>
+      <div class="row rw" style="margin-top:8px"><button class="ghost" data-ill="water">수채 일러스트</button><button class="ghost" data-ill="chic">화보풍 (길고 날씬하게)</button><button class="ghost" data-ill="line">라인 드로잉</button><span class="hint" id="famAiNote"></span></div></div></div></div>
+   <div class="row rw" id="f_nextRow" style="margin-top:14px;justify-content:flex-end" ${F.photo?'':'hidden'}><button class="ghost" id="f_nextPlain">AI 없이 내용 입력 ›</button><button class="primary big" id="f_next">🤖 AI 틀 만들기 · 내용 입력 ›</button></div>`;
   const onFile=f=>{ if(!f||!f.type.startsWith('image/')) return; const r=new FileReader(); r.onload=()=>setPhoto(r.result,f.name); r.readAsDataURL(f); };
   $('#f_photo').onchange=e=>onFile(e.target.files[0]);
   const t2=$('#f_picTools label'); if(t2) t2.onclick=()=>$('#f_photo').click();
   const dz=$('#f_drop'); dz.ondragover=e=>{ e.preventDefault(); dz.classList.add('over'); }; dz.ondragleave=()=>dz.classList.remove('over'); dz.ondrop=e=>{ e.preventDefault(); dz.classList.remove('over'); onFile(e.dataTransfer.files[0]); };
   $('#f_sample').onclick=loadSamplePhoto; $('#f_nophoto').onclick=()=>{ F.noPhoto=true; F.pic=null; F.frames=[]; F.frame=null; goStep(1); };
-  $('#f_next').onclick=()=>{ goStep(1); };
+  $('#f_next').onclick=()=>{ F.autoAI=true; goStep(1); }; $('#f_nextPlain').onclick=()=>{ F.autoAI=false; goStep(1); };
   $$('#famMain [data-ill]').forEach(b=>b.onclick=()=>makeIllust(b.dataset.ill));
 
   renderPics(); probeAI();
 }
 function loadSamplePhoto(){ fetch('assets/family_sample.jpg').then(r=>r.blob()).then(b=>{ const r=new FileReader(); r.onload=()=>setPhoto(r.result,'샘플 사진'); r.readAsDataURL(b); }); }
-function setPhoto(dataUrl,name){ F.photo=dataUrl; F.pic=dataUrl; F.picKind='photo'; F.noPhoto=false; F.illusts=[]; F.frames=[]; F.frame=null; F.aiStarted=null; photoTone(dataUrl); const n=$('#f_photoNote'); if(n) n.textContent=`${name} — 올려졌습니다 (전송 안 함)`; const b=$('#f_picBox'); if(b) b.hidden=false; const e=$('#f_drop .fam3-drop-empty'); if(e) e.hidden=true; const t=$('#f_picTools'); if(t) t.hidden=false; renderPics(); setTimeout(refresh,250); }
+function setPhoto(dataUrl,name){ F.photo=dataUrl; F.pic=dataUrl; F.picKind='photo'; F.noPhoto=false; F.illusts=[]; F.frames=[]; F.frame=null; F.aiStarted=null; photoTone(dataUrl); const n=$('#f_photoNote'); if(n) n.textContent=`${name} — 올려졌습니다 (전송 안 함)`; const b=$('#f_picBox'); if(b) b.hidden=false; const e=$('#f_drop .fam3-empty'); if(e) e.hidden=true; const r=$('#f_nextRow'); if(r) r.hidden=false; renderPics(); setTimeout(refresh,250); }
 function renderPics(){
   const box=$('#f_pics'); if(!box) return;
   const items=[{src:F.photo,label:'원본 사진',key:'photo'}].concat(F.illusts.map((u,i)=>({src:u.src,label:u.label,key:'ill'+i,pending:u.pending})));
@@ -265,8 +265,10 @@ const ILL_PROMPT={
 async function makeIllust(style){
   if(!F.ai){ toastF('AI 생성 서버가 준비되지 않았습니다'); return; }
   const label={water:'수채',chic:'화보풍',line:'라인'}[style]+' 일러스트'; const slot={src:'',label,pending:true}; F.illusts.push(slot); renderPics();
-  try{ const img=await aiJob({prompt:ILL_PROMPT[style], photo:F.photo, size:'auto'}); slot.src=img; slot.pending=false; F.pic=img; F.picKind='illust'; F.frames=[]; F.frame=null; renderPics(); refresh(); }
-  catch(e){ F.illusts=F.illusts.filter(x=>x!==slot); renderPics(); toastF('일러스트 실패: '+e.message); }
+  loading(true,`🎨 ${label} 그리는 중…`,'보통 30~40초 · 완성되면 왼쪽 후보에 추가되고 오른쪽에 크게 보입니다');
+  try{ const img=await aiJob({prompt:ILL_PROMPT[style], photo:F.photo, size:'auto'}); slot.src=img; slot.pending=false; F.pic=img; F.picKind='illust'; F.frames=[]; F.frame=null; F.aiStarted=null; renderPics(); refresh(); }
+  catch(e){ F.illusts=F.illusts.filter(x=>x!==slot); renderPics(); const n=$('#famAiNote'); if(n) n.textContent='일러스트 실패: '+e.message.slice(0,160); }
+  finally{ loading(false); }
 }
 
 /* ── ② 틀 고르기 ── */
@@ -287,7 +289,7 @@ function ensureFrames(){
     else if(F.kind==='obit') F.frame=0; else F.frame=0;
   }
   const key=(F.pic||'')+'|'+orient()+'|'+F.kind+'|'+F.tkind;
-  if(F.consent&&F.ai&&F.aiStarted!==key&&!(F.kind==='obit')){ F.aiStarted=key; makeFrame(true); }
+  if(F.autoAI&&F.ai&&F.aiStarted!==key&&F.kind==='wed'){ F.aiStarted=key; makeFrame(true); }
 }
 function renderFrames(){
   const box=$('#f_frames'); if(!box) return; const d=F.data||collect();
@@ -310,7 +312,7 @@ async function makeFrame(auto){
   const o=orient(); const size=o==='landscape'?'1536x1024':'1024x1536'; const n=F.frames.filter(f=>f.kind==='ai').length+1;
   const slot={id:'ai'+Date.now(),kind:'ai',label:'AI 틀 '+n,pending:true}; F.frames.push(slot); renderFrames();
   const idx=F.frames.indexOf(slot); const t0=Date.now(); const st=$('#famAiStatus'); const tick=setInterval(()=>{ const sec=Math.round((Date.now()-t0)/1000); const e=document.getElementById('fw'+idx); if(e) e.textContent=sec+'초 · 보통 30~60초'; if(st) st.textContent=`🤖 AI 틀 그리는 중… ${sec}초 (적으시는 동안 뒤에서 만듭니다)`; },1000);
-  if(st) st.hidden=false;
+  if(st) st.hidden=false; loading(true,'🤖 AI 틀을 그리는 중…','보통 30~60초 · 기다리는 동안 내용을 입력해 주세요 — 완성되면 카드가 바뀝니다');
   try{
     const img=await aiJob({prompt:framePrompt(), photo:(F.kind==='wed'&&F.pic)?F.pic:null, size});
     const W=o==='landscape'?1536:1024, H=o==='landscape'?1024:1536;
@@ -320,7 +322,7 @@ async function makeFrame(auto){
     const prev=F.frame; F.frame=idx; renderFrames(); await refresh();
     if(st){ st.hidden=false; st.innerHTML=`✨ AI 틀로 바뀌었습니다 · <a href="#" id="famUndo">이전 틀로</a>`; $('#famUndo').onclick=e=>{ e.preventDefault(); F.frame=prev; renderFrames(); refresh(); st.hidden=true; }; }
   }catch(e){ F.frames=F.frames.filter(x=>x!==slot); renderFrames(); if(st){ st.hidden=false; st.textContent='AI 틀 생성 실패: '+e.message+' — 기본 틀로 계속 진행됩니다'; } if(!auto) toastF('AI 틀 실패: '+e.message); }
-  finally{ clearInterval(tick); }
+  finally{ clearInterval(tick); loading(false); }
 }
 function regionInk(src,W,H,a){ return new Promise(res=>{ const im=new Image(); im.onload=()=>{ try{ const c=document.createElement('canvas'); c.width=24;c.height=24; const g=c.getContext('2d'); g.drawImage(im, a.x*im.naturalWidth, a.y*im.naturalHeight, a.w*im.naturalWidth, a.h*im.naturalHeight, 0,0,24,24); const px=g.getImageData(0,0,24,24).data; let l=0,n=0; for(let i=0;i<px.length;i+=4){ l+=(px[i]*.3+px[i+1]*.59+px[i+2]*.11); n++; } res(l/n<120?'light':'dark'); }catch(e){ res('dark'); } }; im.onerror=()=>res('dark'); im.src=src; }); }
 /* AI 틀 위에 글자 얹기 */

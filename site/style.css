@@ -1189,3 +1189,11 @@ body[data-theme=dark] .bugnote{background:rgba(217,138,0,.14);color:#f0d9a6;bord
 .fam3-drop-empty{text-align:center;color:var(--tx);display:grid;justify-items:center;gap:4px} .fam3-drop-ico{font-size:40px;margin-bottom:4px}
 .fam3-drop .fam3-pics{justify-content:center;margin-top:0}
 .fam3-side .fam-preview{min-height:420px}
+.fam-pvwrap{position:relative}
+.fam-load{position:absolute;left:0;top:0;right:0;bottom:0;border-radius:12px;background:rgba(255,255,255,.82);backdrop-filter:blur(3px);display:grid;place-items:center;align-content:center;gap:8px;text-align:center;padding:20px;z-index:3}
+.fam-load .spin{width:38px;height:38px;border-radius:50%;border:3px solid rgba(47,111,237,.2);border-top-color:var(--acc);animation:famspin .9s linear infinite}
+.fam-load b{font-size:15px;color:var(--tx)} .fam-load small{font-size:12.5px;color:var(--mut);max-width:320px;line-height:1.5}
+.fam3-body{min-height:400px;display:flex;flex-direction:column} .fam3-body .fam3-pics{margin-top:12px}
+.fam3-empty{flex:1;display:grid;place-items:center;align-content:center;gap:6px;color:var(--mut);border:1px dashed var(--line);border-radius:12px;margin-top:12px;min-height:300px} .fam3-empty .fam3-drop-ico{font-size:36px;opacity:.6}
+.fam3-body.over .fam3-empty{border-color:var(--acc);background:rgba(47,111,237,.06)}
+.fam3-drop{min-height:0;border:0;background:none;padding:0}
