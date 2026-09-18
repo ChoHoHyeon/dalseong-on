@@ -23,47 +23,66 @@ function today(){ const d=new Date(); return `${d.getFullYear()}. ${d.getMonth()
 const REL_WED=['장녀','장남','차녀','차남','딸','아들','본인'];
 const REL_OBIT=['부친','모친','시부','시모','장인','장모','빙부','빙모','조부','조모','배우자','본인'];
 function formHtml(kind){
-  const I=(id,ph,w,extra='')=>`<input id="${id}" placeholder="${ph}" style="width:${w}px" ${extra}>`;
-  const who=`${I('f_dept','소속(과)',120)} ${I('f_name','이름',90)} ${I('f_title','직위',100)}`;
-  const foot=`<div class="fam-line fam-foot"><input id="f_wdate" type="date" style="width:150px"> <span class="hint">게시일</span></div>
-    <div class="fam-line fam-foot">${I('f_sender','부서장 직위·이름 (예: 정보통신과장 김정보)',300)} <span class="hint">발신 명의</span></div>
-    <p class="hint" style="margin-top:6px">소속·이름·직위·부서장은 이 PC에 기억해 두었다가 다음에 채워 줍니다 · <a href="#" id="f_forget">기억 지우기</a></p>`;
-  if(kind==='wed') return `<div class="fam-sent">
-    <div class="fam-line">${who}의 <select id="f_rel" style="width:auto">${REL_WED.map(r=>`<option>${r}</option>`).join('')}</select>
-      <span class="wchild">${I('f_bride','신부 이름',100)} 양과 ${I('f_groom','신랑 이름',100)} 군의</span>
-      <span class="wself" hidden>${I('f_spouseDept','배우자 소속·직위 (선택)',200)} ${I('f_spouse','배우자 이름',100)} 님과의</span> 결혼식을 아래와 같이 알려드리오니</div>
-    <div class="fam-line fixed">두 사람의 앞날을 축복해 주시면 감사하겠습니다.</div>
-    <div class="fam-line">○ 일 시 : <input id="f_when" type="datetime-local" style="width:230px"></div>
-    <div class="fam-line">○ 장 소 : ${I('f_place','예식장 (예: 노비아갈라 동촌 포레야홀)',250)} (${I('f_addr','주소',215)})</div>
-    <div class="fam-line">○ 연락처 : ${I('f_tel','010-0000-0000',170)}</div>
-    <div class="fam-line">○ 마음 전하실 곳 : ${I('f_bank','은행 계좌번호 (예금주)',300)} <label class="chk inl"><input type="checkbox" id="f_bankImg" checked> 카드 이미지에도 넣기</label></div>
-    ${foot}</div>
-   <fieldset class="pbox fam-opt"><legend>사진 · 카드 방향 <span class="optnote">사진은 없어도 됩니다 · 브라우저 안에서만 처리</span></legend>
+  const common=`<div class="pgrid pgrid3">
+    <label>소속 <b class="req">*</b><input id="f_dept" placeholder="예) 정보통신과"></label>
+    <label>이름 <b class="req">*</b><input id="f_name" placeholder="예) 김달성"></label>
+    <label>직위<input id="f_title" placeholder="예) 주무관 · 팀장 · 前 ○○과장"></label></div>`;
+  const remember=`<span class="optnote">소속·이름·직위·부서장은 이 PC에 기억해 두었다가 다음에 채워 줍니다 · <a href="#" id="f_forget">기억 지우기</a></span>`;
+  if(kind==='wed') return `
+   <fieldset class="pbox req-box"><legend>누구의 결혼인가요</legend>${common}
+    <div class="pgrid pgrid3">
+     <label>관계<select id="f_rel">${REL_WED.map(r=>`<option>${r}</option>`).join('')}</select></label>
+     <label class="wchild">신부 이름 <b class="req">*</b><input id="f_bride" placeholder="예) 김하늘"></label>
+     <label class="wchild">신랑 이름 <b class="req">*</b><input id="f_groom" placeholder="예) 박비슬"></label>
+     <label class="wself" hidden>배우자 이름 <span class="optnote">배우자도 공무원일 때만 · 아니면 비움</span><input id="f_spouse" placeholder="예) 이두리 (게시판 관행: 공무원이 아니면 적지 않음)"></label>
+     <label class="wself" hidden>배우자 소속 · 직위<div class="row" style="margin:0;gap:6px"><input id="f_spouseDept" placeholder="예) 수성구 수성2·3가동" style="flex:2"><input id="f_spouseTitle" placeholder="주무관" style="flex:1"></div></label></div>
+    <p class="hint wself" hidden>게시판 관행: 배우자가 공무원이 아니면 이름 없이 「○○○ 주무관의 결혼식」으로만 알리고, 둘 다 공무원이면 두 사람 소속·이름을 함께 적고 <b>양쪽 부서장 명의</b>로 냅니다.</p></fieldset>
+   <fieldset class="pbox"><legend>일시 · 장소</legend>
+    <div class="pgrid pgrid2">
+     <label>일시 <b class="req">*</b><input id="f_when" type="datetime-local"></label>
+     <label>예식장 <b class="req">*</b><input id="f_place" placeholder="예) 노비아갈라 동촌 포레야홀"></label>
+     <label>주소<input id="f_addr" placeholder="예) 대구광역시 동구 동촌로 87"></label>
+     <label>연락처<input id="f_tel" placeholder="예) 010-0000-0000"></label>
+     <label>마음 전하실 곳<input id="f_bank" placeholder="예) iM뱅크 000-00-000000 (김달성)"></label>
+     <label class="chk" style="align-self:end"><input type="checkbox" id="f_bankImg" checked> 계좌를 카드 이미지에도 넣기</label></div></fieldset>
+   <fieldset class="pbox"><legend>발신 명의 ${remember}</legend>
+    <div class="pgrid pgrid2"><label>부서장 직위·이름<input id="f_sender" placeholder="예) 정보통신과장 김정보"></label>
+    <label>게시일<input id="f_wdate" type="date"></label>
+    <label class="wself" hidden>배우자 쪽 부서장 <span class="optnote">둘 다 공무원일 때</span><input id="f_sender2" placeholder="예) 수성구 수성2·3가동장 권정윤"></label></div></fieldset>
+   <fieldset class="pbox"><legend>사진 · 카드 방향 <span class="optnote">사진은 없어도 됩니다 — 없으면 꽃 프레임 카드로 만듭니다</span></legend>
     <div class="fam-photo"><label class="filebtn">📷 사진 올리기<input type="file" id="f_photo" accept="image/*"></label>
      <button class="ghost sm" id="f_sample" type="button">샘플 사진으로 해보기</button>
      <button class="ghost sm" id="f_clear" type="button" hidden>사진 빼기</button>
-     <span class="hint" id="f_photoNote">어디로도 전송되지 않습니다 (AI 생성 선택 시에만 동의 후 전송)</span></div>
-    <div class="row rw" style="margin-top:8px;align-items:center"><span class="hint" style="margin-right:4px">카드 방향</span><div class="seg2" id="f_orient"><button type="button" data-v="any" class="on">상관없음</button><button type="button" data-v="portrait">세로형</button><button type="button" data-v="landscape">가로형</button></div>
-     <label class="chk inl" style="margin-left:10px"><input type="checkbox" id="f_illust"> <span>사진 대신 일러스트로 <span class="hint">(시연판은 샘플로 대체)</span></span></label></div></fieldset>`;
-  if(kind==='obit') return `<div class="fam-sent">
-    <div class="fam-line fixed big">삼가 알려드립니다.</div>
-    <div class="fam-line">${who}의 <select id="f_rel" style="width:auto">${REL_OBIT.map(r=>`<option>${r}</option>`).join('')}</select>께서 <input id="f_ddate" type="date" style="width:150px"> 별세하셨음을 알려드립니다.</div>
-    <div class="fam-line">○ 빈   소 : ${I('f_place','장례식장 · 호실',230)} (${I('f_addr','주소',215)})</div>
-    <div class="fam-line">○ 발   인 : <input id="f_balin" type="datetime-local" style="width:230px"></div>
-    <div class="fam-line">○ 장   지 : ${I('f_jangji','장지',220)}</div>
-    <div class="fam-line">○ 연락처 : ${I('f_tel','이름 (010-0000-0000)',220)}</div>
-    <div class="fam-line">○ 마음 전하실 곳 : ${I('f_bank','은행 계좌번호 (예금주)',300)}</div>
-    <div class="fam-line"><label class="chk inl"><input type="checkbox" id="f_noVisit"> ※ 가족장으로 조문과 조의는 정중히 사양하오니 양해 부탁드립니다.</label></div>
-    ${foot}</div>
-   <fieldset class="pbox fam-opt"><legend>이미지</legend><label class="chk"><input type="checkbox" id="f_obitImg"> <span>텍스트에 더해 <b>이미지 카드도</b> 만들기 <span class="hint">(부고는 게시판 관행대로 텍스트가 기본입니다)</span></span></label></fieldset>`;
-  return `<div class="fam-sent">
-    <div class="seg2" id="f_tkind" style="margin-bottom:10px;display:inline-flex"><button class="on" data-v="wed" type="button">결혼 감사</button><button data-v="fun" type="button">조문 감사</button></div>
-    <div class="fam-line fixed big" id="f_thHead">감사의 인사를 올립니다.</div>
-    <div class="fam-line">지난 <input id="f_edate" type="date" style="width:150px"> 저희 ${I('f_rel2','딸 하늘이 / 부친상',150)}<span id="f_thTail">의 결혼식에 귀한 걸음 해 주시고 축복과 격려를 보내주셔서 진심으로 감사드립니다.</span></div>
-    <div class="fam-line fixed hint" id="f_thBody">직접 찾아뵙고 인사드리는 것이 도리이오나 감사의 마음을 글로 대신함을 너그러이 이해하여 주시기 바랍니다. … (본문은 오른쪽에서 확인)</div>
-    <div class="fam-line fam-foot"><input id="f_wdate" type="date" style="width:150px"> <span class="hint">게시일</span></div>
-    <div class="fam-line fam-foot">${who} <select id="f_close" style="width:auto"><option>올림</option><option>배상</option><option>드림</option></select></div>
-    <p class="hint" style="margin-top:6px">소속·이름·직위는 이 PC에 기억해 두었다가 다음에 채워 줍니다 · <a href="#" id="f_forget">기억 지우기</a> · 부서장 명의는 감사글에 쓰지 않습니다</p></div>`;
+     <span class="hint" id="f_photoNote">어디로도 전송되지 않습니다 (AI 생성을 고를 때만 동의 후 전송)</span></div>
+    <div class="row rw" style="margin-top:10px;align-items:center"><span class="hint" style="margin-right:4px">카드 방향</span><div class="seg2" id="f_orient"><button type="button" data-v="any" class="on">상관없음</button><button type="button" data-v="portrait">세로형</button><button type="button" data-v="landscape">가로형</button></div><span class="hint">상관없음 = 사진 방향을 따릅니다</span></div>
+    <label class="chk" style="margin-top:8px"><input type="checkbox" id="f_illust"> <span>사진 대신 <b>일러스트로 바꿔서</b> 넣기 <span class="hint">(시연판은 샘플 일러스트로 대체 · 본 구축 시 사진→일러스트 변환)</span></span></label></fieldset>`;
+  if(kind==='obit') return `
+   <fieldset class="pbox req-box"><legend>누구의 부고인가요</legend>${common}
+    <div class="pgrid pgrid3">
+     <label>관계<select id="f_rel">${REL_OBIT.map(r=>`<option>${r}</option>`).join('')}</select></label>
+     <label>별세일 <b class="req">*</b><input id="f_ddate" type="date"></label>
+     <label class="chk" style="align-self:end"><input type="checkbox" id="f_noVisit"> 가족장 — 조문·조의 정중히 사양</label></div></fieldset>
+   <fieldset class="pbox"><legend>빈소 · 발인 · 장지</legend>
+    <div class="pgrid pgrid2">
+     <label>빈소 <b class="req">*</b><input id="f_place" placeholder="예) 대구전문장례식장 특1호실"></label>
+     <label>주소<input id="f_addr" placeholder="예) 대구 동구 금호강변로 71"></label>
+     <label>발인<input id="f_balin" type="datetime-local"></label>
+     <label>장지<input id="f_jangji" placeholder="예) 대구명복공원"></label>
+     <label>연락처<input id="f_tel" placeholder="예) 김달성 (010-0000-0000)"></label>
+     <label>마음 전하실 곳<input id="f_bank" placeholder="예) iM뱅크 000-00-000000 (김달성)"></label></div></fieldset>
+   <fieldset class="pbox"><legend>발신 명의 ${remember}</legend>
+    <div class="pgrid pgrid2"><label>부서장 직위·이름<input id="f_sender" placeholder="예) 정보통신과장 김정보"></label>
+    <label>게시일<input id="f_wdate" type="date"></label></div>
+    <label class="chk"><input type="checkbox" id="f_obitImg"> <span>텍스트에 더해 <b>이미지 카드도</b> 만들기 <span class="hint">(부고는 게시판 관행대로 텍스트가 기본입니다)</span></span></label></fieldset>`;
+  return `
+   <fieldset class="pbox req-box"><legend>어떤 감사 인사인가요 ${remember}</legend>
+    <div class="seg2" id="f_tkind" style="margin-bottom:10px"><button class="on" data-v="wed" type="button">결혼 감사</button><button data-v="fun" type="button">조문 감사</button></div>
+    ${common}
+    <div class="pgrid pgrid3">
+     <label>행사일 <b class="req">*</b><input id="f_edate" type="date"></label>
+     <label>관계 (예: 딸 하늘이 / 부친상)<input id="f_rel2" placeholder="예) 딸 하늘이"></label>
+     <label>맺음말<select id="f_close"><option>올림</option><option>배상</option><option>드림</option></select></label></div></fieldset>
+   <fieldset class="pbox"><legend>게시일</legend><div class="pgrid pgrid2"><label>게시일<input id="f_wdate" type="date"></label></div></fieldset>`;
 }
 
 const v=id=>{ const e=document.getElementById(id); return e?e.value.trim():''; };
@@ -73,7 +92,7 @@ const ck=id=>{ const e=document.getElementById(id); return !!(e&&e.checked); };
 function collect(){
   const k=F.kind, d={kind:k, dept:v('f_dept')||'○○과', name:v('f_name')||'○○○', title:v('f_title'), sender:v('f_sender')||'○○과장 ○○○', wdate:v('f_wdate')};
   d.wdateS = d.wdate? fDate(d.wdate).replace(/\(.\)$/,'') : today();
-  if(k==='wed'){ Object.assign(d,{rel:v('f_rel'),bride:v('f_bride')||'○○○',groom:v('f_groom')||'○○○',when:v('f_when'),place:v('f_place')||'○○○홀',addr:v('f_addr'),tel:v('f_tel'),bank:v('f_bank'),bankImg:ck('f_bankImg'),illust:ck('f_illust'),spouse:v('f_spouse')||'○○○',spouseDept:v('f_spouseDept'),orient:$('#f_orient .on')?.dataset.v||'any'}); }
+  if(k==='wed'){ Object.assign(d,{rel:v('f_rel'),bride:v('f_bride')||'○○○',groom:v('f_groom')||'○○○',when:v('f_when'),place:v('f_place')||'○○○홀',addr:v('f_addr'),tel:v('f_tel'),bank:v('f_bank'),bankImg:ck('f_bankImg'),illust:ck('f_illust'),spouse:v('f_spouse'),spouseDept:v('f_spouseDept'),spouseTitle:v('f_spouseTitle')||(v('f_spouse')?'주무관':''),sender2:v('f_sender2'),orient:$('#f_orient .on')?.dataset.v||'any'}); }
   if(k==='obit'){ Object.assign(d,{rel:v('f_rel'),ddate:v('f_ddate'),noVisit:ck('f_noVisit'),place:v('f_place')||'○○장례식장',addr:v('f_addr'),balin:v('f_balin'),jangji:v('f_jangji'),tel:v('f_tel'),bank:v('f_bank'),obitImg:ck('f_obitImg')}); }
   if(k==='thanks'){ Object.assign(d,{tkind:$('#f_tkind .on')?.dataset.v||'wed',edate:v('f_edate'),rel2:v('f_rel2'),close:v('f_close')||'올림'}); }
   return d;
@@ -82,17 +101,17 @@ const who=d=> d.title? `${d.dept} ${d.name} ${d.title}` : `${d.dept} ${d.name}`;
 
 /* ── 게시글 제목 · 본문 ── */
 function postTitle(d){
-  if(d.kind==='wed') return `${d.name}[${fShort(d.when)}, ${d.rel==='본인'?'♥결혼♥':'자녀혼사'}, ${d.dept}${d.title?' '+d.title:''}]`;
+  if(d.kind==='wed'){ if(d.rel==='본인'&&d.spouse) return `${d.name}♥${d.spouse}[${fShort(d.when)}, ♥결혼♥, ${d.dept}${d.spouseDept?'/'+d.spouseDept:''}]`; return `${d.name}[${fShort(d.when)}, ${d.rel==='본인'?'♥결혼♥':'자녀혼사'}, ${d.dept}${d.title?' '+d.title:''}]`; }
   if(d.kind==='obit') return `${d.name}[${fShort(d.ddate)}, ${d.rel}상, ${d.dept}]`;
   return `감사의 인사를 드립니다(${d.dept} ${d.name})`;
 }
 function line(k,val){ return val?`○ ${k} : ${val}\n`:''; }
 function postBody(d){
   if(d.kind==='wed'){
-    const subj = d.rel==='본인' ? `${who(d)}과 ${d.spouseDept?d.spouseDept+' ':''}${d.spouse} 님의 결혼식을` : `${who(d)}의 ${d.rel} ${d.bride} 양과 ${d.groom} 군의 결혼식을`;
+    const subj = d.rel==='본인' ? (d.spouse ? `${who(d)}과 ${d.spouseDept?d.spouseDept+' ':''}${d.spouse}${d.spouseTitle?' '+d.spouseTitle:''}의 결혼식을` : `${who(d)}의 결혼식을`) : `${who(d)}의 ${d.rel} ${d.bride} 양과 ${d.groom} 군의 결혼식을`;
     return `${subj} 아래와 같이 알려드리오니\n두 사람의 앞날을 축복해 주시면 감사하겠습니다.\n\n`
       + line('일 시',fDateTime(d.when)) + line('장 소',d.place+(d.addr?` (${d.addr})`:'')) + line('연락처',d.tel) + line('마음 전하실 곳',d.bank)
-      + `\n${d.wdateS}\n${d.sender}`;
+      + `\n${d.wdateS}\n${d.sender}${d.sender2?'\n'+d.sender2:''}`;
   }
   if(d.kind==='obit'){
     const subj = d.rel==='본인' ? `${who(d)}께서` : `${who(d)}의 ${d.rel}께서`;
@@ -166,10 +185,10 @@ function wedCard(d, layout, theme, photo, illust){
   .dc .info small{color:${t.sub};font-size:14px}
   .dc .sender{margin-top:26px;font-family:${FONT_SERIF};font-size:20px;letter-spacing:2px}
   .dc .orn{color:${t.accent};font-size:18px;letter-spacing:6px;margin:8px 0}`;
-  const subj = d.rel==='본인' ? `<b>${esc(who(d))}</b>과<br><b>${esc((d.spouseDept?d.spouseDept+' ':'')+d.spouse)}</b> 님의 결혼식을 알려드리오니` : `<b>${esc(who(d))}</b>의 ${esc(d.rel)}<br><b>${esc(d.bride)}</b> 양과 <b>${esc(d.groom)}</b> 군의 결혼식을 알려드리오니`;
+  const subj = d.rel==='본인' ? (d.spouse ? `<b>${esc(who(d))}</b>과<br><b>${esc((d.spouseDept?d.spouseDept+' ':'')+d.spouse+(d.spouseTitle?' '+d.spouseTitle:''))}</b>의 결혼식을 알려드리오니` : `<b>${esc(who(d))}</b>의 결혼식을 알려드리오니`) : `<b>${esc(who(d))}</b>의 ${esc(d.rel)}<br><b>${esc(d.bride)}</b> 양과 <b>${esc(d.groom)}</b> 군의 결혼식을 알려드리오니`;
   const body=`<div class="lead">${subj}<br>두 사람의 앞날을 축복해 주시면 감사하겠습니다.</div>
   <div class="info"><div><span class="k">일 시</span>${esc(fDateTime(d.when))}</div><div><span class="k">장 소</span>${esc(d.place)}${d.addr?` <small>(${esc(d.addr)})</small>`:''}</div>${d.tel?`<div><span class="k">연락처</span>${esc(d.tel)}</div>`:''}${d.bank&&d.bankImg?`<div><span class="k">마음 전하실 곳</span>${esc(d.bank)}</div>`:''}</div>
-  <div class="sender">${esc(d.sender)}</div>`;
+  <div class="sender">${esc(d.sender)}${d.sender2?'<br/>'+esc(d.sender2):''}</div>`;
   const pic = illust||photo;
   let W,H,inner;
   if(layout==='L1'){ W=1200;H=800; inner=`${deco(theme,'tr')}${deco(theme,'bl')}<div class="paper" style="position:relative;z-index:2;height:100%;display:flex;gap:44px;padding:36px;margin:44px">
@@ -289,9 +308,9 @@ function renderForm(){
   // 기억한 값 채우기
   try{ const m=JSON.parse(localStorage.getItem('dOnFam')||'{}'); ['f_dept','f_name','f_title','f_sender'].forEach(id=>{ const e=document.getElementById(id); if(e&&m[id]&&!e.value) e.value=m[id]; }); }catch(e){}
   const fg=$('#f_forget'); if(fg) fg.onclick=e=>{ e.preventDefault(); localStorage.removeItem('dOnFam'); ['f_dept','f_name','f_title','f_sender'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; }); toastF('기억한 값을 지웠습니다'); };
-  const rel=$('#f_rel'); if(rel&&F.kind==='wed'){ const sync=()=>{ const self=rel.value==='본인'; $$('#famForm .wchild').forEach(x=>x.hidden=self); $$('#famForm .wself').forEach(x=>x.hidden=!self); }; rel.onchange=sync; sync(); }
+  const rel=$('#f_rel'); if(rel&&F.kind==='wed'){ const sync=()=>{ const self=rel.value==='본인'; $$('#famForm .wchild').forEach(x=>x.hidden=self); $$('#famForm .wself').forEach(x=>x.hidden=!self); }; rel.onchange=()=>{ sync(); updateText(); }; sync(); }
   const ori=$('#f_orient'); if(ori){ $$('#f_orient button').forEach(b=>b.onclick=()=>$$('#f_orient button').forEach(x=>x.classList.toggle('on',x===b))); }
-  const tk=$('#f_tkind'); if(tk){ const syncT=()=>{ const fun=$('#f_tkind .on')?.dataset.v==='fun'; $('#f_thHead').textContent=fun?'삼가 감사의 인사를 드립니다.':'감사의 인사를 올립니다.'; $('#f_thTail').textContent=fun?'에 바쁘신 가운데에도 따뜻한 위로와 조의를 보내주신 모든 분들께 진심으로 감사드립니다.':'의 결혼식에 귀한 걸음 해 주시고 축복과 격려를 보내주셔서 진심으로 감사드립니다.'; $('#f_rel2').placeholder=fun?'부친상':'딸 하늘이'; }; $$('#f_tkind button').forEach(b=>b.onclick=()=>{ $$('#f_tkind button').forEach(x=>x.classList.toggle('on',x===b)); syncT(); updateText(); }); }
+  const tk=$('#f_tkind'); if(tk){ $$('#f_tkind button').forEach(b=>b.onclick=()=>{ $$('#f_tkind button').forEach(x=>x.classList.toggle('on',x===b)); $('#f_rel2').placeholder = b.dataset.v==='wed'?'예) 딸 하늘이':'예) 부친상'; updateText(); }); }
   updateText();
 }
 function setPhoto(dataUrl,name){ F.photo=dataUrl; F.tone=null; photoTone(dataUrl); $('#f_clear').hidden=false; $('#f_photoNote').textContent=`${name} — 올려졌습니다 (전송 안 함)`; }
@@ -351,10 +370,10 @@ function aiPrompt(d, seed){
   if(d.kind==='wed'){
     head=`Design a complete Korean wedding invitation card${F.photo?' using the attached couple photo (keep their faces exactly as in the photo)':''}. Style: ${st}. `;
     lines.push('Wedding Invitation');
-    if(d.rel==='본인') lines.push(`${who(d)}과 ${d.spouseDept?d.spouseDept+' ':''}${d.spouse} 님의 결혼식을 알려드리오니`);
+    if(d.rel==='본인') lines.push(d.spouse ? `${who(d)}과 ${d.spouseDept?d.spouseDept+' ':''}${d.spouse}${d.spouseTitle?' '+d.spouseTitle:''}의 결혼식을 알려드리오니` : `${who(d)}의 결혼식을 알려드리오니`);
     else lines.push(`${who(d)}의 ${d.rel}`, `${d.bride} 양과 ${d.groom} 군의 결혼식을 알려드리오니`);
     lines.push('두 사람의 앞날을 축복해 주시면 감사하겠습니다.', `일 시 : ${fDateTime(d.when)}`, `장 소 : ${d.place}${d.addr?` (${d.addr})`:''}`);
-    if(d.tel) lines.push(`연락처 : ${d.tel}`); if(d.bank&&d.bankImg) lines.push(`마음 전하실 곳 : ${d.bank}`); lines.push(d.sender);
+    if(d.tel) lines.push(`연락처 : ${d.tel}`); if(d.bank&&d.bankImg) lines.push(`마음 전하실 곳 : ${d.bank}`); lines.push(d.sender); if(d.sender2) lines.push(d.sender2);
   } else if(d.kind==='thanks'){
     head=`Design a complete Korean thank-you card (${d.tkind==='fun'?'after a funeral: quiet, respectful, white chrysanthemums, muted tones':'after a wedding: warm, flowers, soft pastel'}). Style: ${st}. No people. `;
     postBody(d).split('\n').filter(l=>l.trim()).forEach(l=>lines.push(l));
