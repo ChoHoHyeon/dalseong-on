@@ -1235,3 +1235,4 @@ body[data-theme=dark] .bugnote{background:rgba(217,138,0,.14);color:#f0d9a6;bord
 /* 경조사 입력칸: 예시(placeholder)는 더 옅게, 실제 입력값은 진하게 — 값이 있는 것처럼 보이지 않도록 */
 #famForm input::placeholder{color:#c3c9d3;font-weight:400}
 #famForm input:not(:placeholder-shown){color:var(--tx);font-weight:600;background:#eef4ff;border-color:#c7d7f5}
+#famForm select,#famForm input[type=date]:valid{color:var(--tx);font-weight:600;background:#eef4ff;border-color:#c7d7f5}
