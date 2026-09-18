@@ -188,13 +188,14 @@ function photoTone(dataUrl){ const im=new Image(); im.onload=()=>{ const c=docum
 
 /* ── 화면 ── */
 /* ═══ 화면 ═══ */
-const STEPS={wed:[['photo','사진'],['frame','틀 고르기'],['text','내용 입력']], obit:[['frame','틀 고르기'],['text','내용 입력']], thanks:[['frame','틀 고르기'],['text','내용 입력']]};
+const STEPS={wed:[['photo','사진'],['text','내용 입력']], obit:[['text','내용 입력']], thanks:[['text','내용 입력']]};
+const consentStored=()=>true; /* 시연판: 동의 절차 없음 (본 구축 시 추가) */
 function toastF(m){ if(window.toast) toast(m); else alert(m); }
 function build(){
   const root=$('#famApp'); if(!root||root.dataset.built) return; root.dataset.built=1;
   root.innerHTML=`
   <div class="fam3-head"><div class="fam2-tabs" id="famKinds"><button class="on" data-k="wed">💐 결혼</button><button data-k="obit">🕊 부고</button><button data-k="thanks">🙏 감사 인사</button></div>
-   <span class="hint">사진·계좌는 브라우저 안에서만 처리 · AI 틀·일러스트를 고를 때만 동의 후 전송 · <a href="#" id="famFill">샘플 채우기</a> · <a href="#" id="famEmpty">비우기</a></span></div>
+   <span class="hint">사진 올리고 내용만 적으면 됩니다 · AI 틀은 뒤에서 자동으로 · <a href="#" id="famFill">샘플 채우기</a> · <a href="#" id="famEmpty">비우기</a></span></div>
   <div class="fam3-steps" id="famSteps"></div>
   <div class="fam3-cols">
    <div class="card fam3-main" id="famMain"></div>
@@ -202,27 +203,28 @@ function build(){
     <div class="card fam2-title"><span class="hint">게시글 제목</span><input id="famTitle" readonly><button class="ghost sm" data-copy="famTitle">복사</button></div>
     <div class="card fam2-card"><div class="fam-preview" id="famPreview"></div>
      <div id="famTextWrap" hidden><div class="fam-copy col"><textarea id="famBody" rows="16" readonly></textarea><button class="ghost sm" data-copy="famBody">복사</button></div></div>
-     <div class="row rw fam2-bar"><button class="primary" id="famDl">⬇ 카드 내려받기</button><span style="flex:1"></span><span class="hint" id="famNote"></span><a href="#" class="hint" id="famShowTxt" hidden>「글로 올릴 본문」 보기</a></div>
+     <div class="row rw fam2-bar"><button class="primary" id="famDl">⬇ 카드 내려받기</button><button class="ghost" id="famMore" hidden>🎲 다르게 <small>AI 한 장 더</small></button><button class="ghost" id="famPickTgl" hidden>🗂 틀 바꾸기</button><span style="flex:1"></span><span class="hint" id="famNote"></span><a href="#" class="hint" id="famShowTxt" hidden>「글로 올릴 본문」 보기</a></div>
+     <div class="fam3-frames strip" id="f_frames" hidden></div>
      <p class="hint" style="margin-top:8px">※ 이름·날짜·계좌는 반드시 확인 후 올려 주세요. 잘못 올린 글은 정보통신과(☎2454)에서 수정할 수 있습니다.</p></div>
    </div></div>`;
   $$('#famKinds button').forEach(b=>b.onclick=()=>{ $$('#famKinds button').forEach(x=>x.classList.toggle('on',x===b)); F.kind=b.dataset.k; resetKind(); });
   $('#famShowTxt').onclick=e=>{ e.preventDefault(); const w=$('#famTextWrap'); w.hidden=!w.hidden; e.target.textContent=w.hidden?'「글로 올릴 본문」 보기':'본문 닫기'; };
-  $('#famDl').onclick=download;
+  $('#famDl').onclick=download; $('#famMore').onclick=()=>makeFrame(); $('#famPickTgl').onclick=()=>{ const b=$('#f_frames'); b.hidden=!b.hidden; if(!b.hidden) renderFrames(); };
   $('#famPreview').onclick=()=>{ if(!F.img) return; let m=$('#mCard'); if(!m){ m=document.createElement('div'); m.className='modal'; m.id='mCard'; m.innerHTML='<div class="box cardbox"><div class="box-h"><b>카드 미리보기</b><button class="x" data-close>✕</button></div><img></div>'; document.body.appendChild(m); m.onclick=e=>{ if(e.target===m||e.target.closest('[data-close]')) m.hidden=true; }; } m.querySelector('img').src=F.img; m.hidden=false; };
   $('#famFill').onclick=e=>{ e.preventDefault(); F.noSample=false; F.data=null; if(F.kind==='wed'&&!F.photo) loadSamplePhoto(); goStep(F.kind==='wed'?0:0); };
   $('#famEmpty').onclick=e=>{ e.preventDefault(); F.noSample=true; F.data=null; resetKind(); };
   root.addEventListener('click',e=>{ const b=e.target.closest('[data-copy]'); if(!b) return; const el=document.getElementById(b.dataset.copy); (navigator.clipboard?navigator.clipboard.writeText(el.value):Promise.reject()).then(()=>toastF('복사했습니다'),()=>{ el.select(); document.execCommand('copy'); toastF('복사했습니다'); }); });
   probeAI(); resetKind();
 }
-function resetKind(){ F.photo=null; F.illusts=[]; F.pic=null; F.picKind='photo'; F.frames=[]; F.frame=null; F.img=''; F.theme=null; F.data=null; F.form=null; goStep(0); }
+function resetKind(){ F.consent=consentStored(); F.aiStarted=null; F.photo=null; F.illusts=[]; F.pic=null; F.picKind='photo'; F.frames=[]; F.frame=null; F.img=''; F.theme=null; F.data=null; F.form=null; goStep(0); }
 function goStep(i){
   F.step=i; const steps=STEPS[F.kind];
   $('#famSteps').innerHTML=steps.map(([id,label],k)=>`<button class="fam3-step ${k===i?'cur':k<i?'done':''}" data-i="${k}"><i>${k<i?'✓':k+1}</i><b>${label}</b></button>`).join('<span class="fam3-arrow">›</span>');
   $$('#famSteps .fam3-step').forEach(b=>b.onclick=()=>{ const k=+b.dataset.i; if(k<=maxStep()) goStep(k); });
-  const id=steps[i][0]; if(id==='photo') panelPhoto(); else if(id==='frame') panelFrame(); else panelText();
+  const id=steps[i][0]; if(id==='photo') panelPhoto(); else panelText();
   refresh();
 }
-function maxStep(){ const s=STEPS[F.kind]; if(F.kind==='wed') return F.frame!=null?2:(F.pic||F.noPhoto)?1:0; return F.frame!=null?1:0; }
+function maxStep(){ if(F.kind==='wed') return (F.pic||F.noPhoto)?1:0; return 0; }
 
 /* ── ① 사진 ── */
 function panelPhoto(){
@@ -231,15 +233,15 @@ function panelPhoto(){
    <div class="row rw"><label class="filebtn">📷 사진 올리기<input type="file" id="f_photo" accept="image/*"></label><button class="ghost" id="f_sample" type="button">샘플 사진</button><button class="ghost" id="f_nophoto" type="button">사진 없이 진행 ›</button><span class="hint" id="f_photoNote">${F.photo?'올려졌습니다 (전송 안 함)':'브라우저 안에서만 처리됩니다'}</span></div>
    <div id="f_picBox" ${F.photo?'':'hidden'}>
     <div class="fam3-pics" id="f_pics"></div>
-    <div class="fam-ai" style="margin-top:12px"><div class="row rw"><b>🎨 사진을 일러스트로 바꾸기</b><span class="hint">AI · 30~40초 · 사진이 OpenAI로 전송됩니다</span></div>
+    <div class="fam-ai" style="margin-top:12px"><div class="row rw"><b>🎨 사진을 일러스트로 바꾸기</b><span class="hint">AI · 30~40초</span></div>
      <div class="row rw" style="margin-top:8px"><button class="ghost" data-ill="water">수채 일러스트</button><button class="ghost" data-ill="chic">화보풍 (길고 날씬하게)</button><button class="ghost" data-ill="line">라인 드로잉</button><span class="hint" id="famAiNote"></span></div>
-     <label class="chk" style="margin-top:8px"><input type="checkbox" id="f_aiConsent" ${F.consent?'checked':''}> <span>사진을 외부 AI(OpenAI)로 보내는 데 동의 <span class="hint">· 생성 후 저장 안 함</span></span></label></div>
-    <div class="row" style="margin-top:14px;justify-content:flex-end"><button class="primary big" id="f_next">다음 · 틀 고르기 ›</button></div></div>`;
+     </div>
+    <div class="row" style="margin-top:14px;justify-content:flex-end"><button class="primary big" id="f_next">다음 · 내용 입력 ›</button></div></div>`;
   $('#f_photo').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>setPhoto(r.result,f.name); r.readAsDataURL(f); };
   $('#f_sample').onclick=loadSamplePhoto; $('#f_nophoto').onclick=()=>{ F.noPhoto=true; F.pic=null; F.frames=[]; F.frame=null; goStep(1); };
-  $('#f_next').onclick=()=>{ F.frames=[]; F.frame=null; goStep(1); };
+  $('#f_next').onclick=()=>{ goStep(1); };
   $$('#famMain [data-ill]').forEach(b=>b.onclick=()=>makeIllust(b.dataset.ill));
-  $('#f_aiConsent').onchange=e=>{ F.consent=e.target.checked; };
+
   renderPics(); probeAI();
 }
 function loadSamplePhoto(){ fetch('assets/family_sample.jpg').then(r=>r.blob()).then(b=>{ const r=new FileReader(); r.onload=()=>setPhoto(r.result,'샘플 사진'); r.readAsDataURL(b); }); }
@@ -256,7 +258,6 @@ const ILL_PROMPT={
   line:'Convert this photo into a minimal single-line ink drawing with a few soft blush accents. Keep the pose and facial features recognizable. Clean white background, no text.'};
 async function makeIllust(style){
   if(!F.ai){ toastF('AI 생성 서버가 준비되지 않았습니다'); return; }
-  if(!F.consent&&!ck('f_aiConsent')){ toastF('외부 AI 전송 동의에 체크해 주세요'); return; } F.consent=true;
   const label={water:'수채',chic:'화보풍',line:'라인'}[style]+' 일러스트'; const slot={src:'',label,pending:true}; F.illusts.push(slot); renderPics();
   try{ const img=await aiJob({prompt:ILL_PROMPT[style], photo:F.photo, size:'auto'}); slot.src=img; slot.pending=false; F.pic=img; F.picKind='illust'; F.frames=[]; F.frame=null; renderPics(); refresh(); }
   catch(e){ F.illusts=F.illusts.filter(x=>x!==slot); renderPics(); toastF('일러스트 실패: '+e.message); }
@@ -272,32 +273,21 @@ function tplFrames(){
   else { const ks=TH_THEMES[F.tkind]; for(const t of Object.keys(ks)) out.push({id:'tpl-'+t,kind:'tpl',label:ks[t],render:dd=>thanksCard(Object.assign({},dd,{tkind:F.tkind}),t)}); }
   return out;
 }
-function panelFrame(){
-  const m=$('#famMain'); const wed=F.kind==='wed';
-  m.innerHTML=`<h4>${wed?'②':'①'} 틀 고르기 <small>기본 틀은 바로 나옵니다 · AI 틀은 누를 때마다 하나씩 추가됩니다 · 마음에 드는 걸 누르세요</small></h4>
-   <div class="row rw" style="margin-bottom:10px">
-    ${F.kind==='thanks'?`<div class="seg2" id="f_tkind"><button data-v="wed" class="${F.tkind==='wed'?'on':''}">결혼 감사</button><button data-v="fun" class="${F.tkind==='fun'?'on':''}">조문 감사</button></div>`:''}
-    ${wed&&F.pic?`<span class="hint">방향</span><div class="seg2" id="f_orient"><button data-v="auto" class="${F.orient==='auto'?'on':''}">자동</button><button data-v="portrait" class="${F.orient==='portrait'?'on':''}">세로</button><button data-v="landscape" class="${F.orient==='landscape'?'on':''}">가로</button></div>`:''}
-    <span style="flex:1"></span>
-    <input id="f_mood" placeholder="원하는 느낌 (선택) — 화사하게 · 참꽃 · 차분한 골드" style="width:280px" value="${esc(F.mood||'')}">
-    <button class="primary" id="f_aiFrame">🤖 AI로 틀 만들기 <small>30~60초</small></button></div>
-   <label class="chk" style="margin-bottom:10px"><input type="checkbox" id="f_aiConsent" ${F.consent?'checked':''}> <span>${wed&&F.pic?'사진을 ':''}외부 AI(OpenAI)로 보내는 데 동의 <span class="hint">· 생성 후 저장 안 함</span></span> <span class="hint" id="famAiNote"></span></label>
-   <div class="fam3-frames" id="f_frames"></div>
-   <div class="row" style="margin-top:14px;justify-content:space-between">${wed?'<button class="ghost" id="f_prev">‹ 사진</button>':'<span></span>'}<button class="primary big" id="f_next" ${F.frame==null?'disabled':''}>다음 · 내용 입력 ›</button></div>`;
-  if(!F.frames.length||F.frames[0].kind==='ai'&&false) F.frames=tplFrames().concat(F.frames.filter(f=>f.kind==='ai'));
-  else { const ai=F.frames.filter(f=>f.kind==='ai'); F.frames=tplFrames().concat(ai); }
-  if(F.frame==null){ F.frame=F.kind==='obit'?0:0; }
-  $('#f_aiFrame').onclick=makeFrame; $('#f_next').onclick=()=>goStep(wed?2:1); const pv=$('#f_prev'); if(pv) pv.onclick=()=>goStep(0);
-  $('#f_mood').oninput=e=>F.mood=e.target.value; $('#f_aiConsent').onchange=e=>{ F.consent=e.target.checked; };
-  const ori=$('#f_orient'); if(ori) $$('#f_orient button').forEach(b=>b.onclick=()=>{ F.orient=b.dataset.v; F.frame=0; panelFrame(); refresh(); });
-  const tk=$('#f_tkind'); if(tk) $$('#f_tkind button').forEach(b=>b.onclick=()=>{ F.tkind=b.dataset.v; F.frame=0; panelFrame(); refresh(); });
-  renderFrames(); probeAI();
+/* 틀 자동 준비: 기본 틀은 사진 색감·방향으로 자동 선택, AI 틀은 동의 시 뒤에서 1장 */
+function ensureFrames(){
+  const ai=F.frames.filter(f=>f.kind==='ai'); F.frames=tplFrames().concat(ai);
+  if(F.frame==null||F.frame>=F.frames.length){
+    if(F.kind==='wed'){ const a=autoWed(F.data||collect(),0); const keys=Object.keys(WED_THEMES); F.frame=Math.max(0,keys.indexOf(a.theme)); }
+    else if(F.kind==='obit') F.frame=0; else F.frame=0;
+  }
+  const key=(F.pic||'')+'|'+orient()+'|'+F.kind+'|'+F.tkind;
+  if(F.consent&&F.ai&&F.aiStarted!==key&&!(F.kind==='obit')){ F.aiStarted=key; makeFrame(true); }
 }
 function renderFrames(){
   const box=$('#f_frames'); if(!box) return; const d=F.data||collect();
   box.innerHTML=F.frames.map((f,i)=>`<button class="fam3-frame ${F.frame===i?'on':''} ${f.kind}" data-i="${i}"><span class="fam-th">${f.pending?'<div class="fam-wait small"><div class="spin"></div><small id="fw'+i+'">그리는 중…</small></div>':f.kind==='txt'?'<div class="fam3-txt">가<br><small>텍스트</small></div>':''}</span><small>${f.kind==='ai'?'🤖 ':''}${f.label}</small></button>`).join('');
   F.frames.forEach((f,i)=>{ if(f.pending||f.kind==='txt') return; const th=box.querySelector(`[data-i="${i}"] .fam-th`); if(f.thumb){ th.innerHTML=`<img src="${f.thumb}">`; return; } const card=f.render(d); renderPng(card,0.32).then(u=>{ f.thumb=u; th.innerHTML=`<img src="${u}">`; }).catch(()=>{ th.textContent='미리보기 불가'; }); });
-  $$('#f_frames .fam3-frame').forEach(b=>b.onclick=()=>{ const i=+b.dataset.i; if(F.frames[i].pending) return; F.frame=i; $$('#f_frames .fam3-frame').forEach(x=>x.classList.toggle('on',+x.dataset.i===i)); $('#f_next').disabled=false; refresh(); });
+  $$('#f_frames .fam3-frame').forEach(b=>b.onclick=()=>{ const i=+b.dataset.i; if(F.frames[i].pending) return; F.frame=i; $$('#f_frames .fam3-frame').forEach(x=>x.classList.toggle('on',+x.dataset.i===i)); refresh(); });
 }
 function framePrompt(){
   const o=orient(); const st=FRAME_STYLES[(F.frames.filter(f=>f.kind==='ai').length+(F.data?.name||'').length)%FRAME_STYLES.length]; const mood=F.mood?` The user asks for: "${F.mood}".`:'';
@@ -309,20 +299,21 @@ function framePrompt(){
   if(F.kind==='obit') return `Design a Korean funeral notice card BACKGROUND (template). Solemn and respectful: white chrysanthemums, grey/ivory paper, thin frame line.${mood} Decorations only near the corners; the whole center must stay a clean, plain, light area for text to be added later. No people. ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS anywhere.`;
   return `Design a Korean thank-you card BACKGROUND (template) ${F.tkind==='fun'?'after a funeral: quiet, respectful, white chrysanthemums, muted ivory/grey tones':'after a wedding: warm, soft flowers, gentle pastel tones'}.${mood} Decorations only near the edges; the whole center must stay a clean, plain, light area for text to be added later. No people. ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS anywhere.`;
 }
-async function makeFrame(){
+async function makeFrame(auto){
   if(!F.ai){ toastF('AI 생성 서버가 준비되지 않았습니다'); return; }
-  if(!F.consent&&!ck('f_aiConsent')){ toastF('외부 AI 전송 동의에 체크해 주세요'); return; } F.consent=true;
   const o=orient(); const size=o==='landscape'?'1536x1024':'1024x1536'; const n=F.frames.filter(f=>f.kind==='ai').length+1;
   const slot={id:'ai'+Date.now(),kind:'ai',label:'AI 틀 '+n,pending:true}; F.frames.push(slot); renderFrames();
-  const idx=F.frames.indexOf(slot); const t0=Date.now(); const tick=setInterval(()=>{ const e=document.getElementById('fw'+idx); if(e) e.textContent=Math.round((Date.now()-t0)/1000)+'초 · 보통 30~60초'; },1000);
+  const idx=F.frames.indexOf(slot); const t0=Date.now(); const st=$('#famAiStatus'); const tick=setInterval(()=>{ const sec=Math.round((Date.now()-t0)/1000); const e=document.getElementById('fw'+idx); if(e) e.textContent=sec+'초 · 보통 30~60초'; if(st) st.textContent=`🤖 AI 틀 그리는 중… ${sec}초 (적으시는 동안 뒤에서 만듭니다)`; },1000);
+  if(st) st.hidden=false;
   try{
     const img=await aiJob({prompt:framePrompt(), photo:(F.kind==='wed'&&F.pic)?F.pic:null, size});
     const W=o==='landscape'?1536:1024, H=o==='landscape'?1024:1536;
     const area = (F.kind==='wed'&&F.pic) ? (o==='landscape'?{x:.52,y:.10,w:.43,h:.80}:{x:.09,y:.56,w:.82,h:.40}) : {x:.12,y:.14,w:.76,h:.72};
     const ink=await regionInk(img,W,H,area);
     slot.img=img; slot.W=W; slot.H=H; slot.area=area; slot.ink=ink; slot.pending=false; slot.render=dd=>overlayCard(slot,dd);
-    F.frame=idx; renderFrames(); $('#f_next').disabled=false; refresh();
-  }catch(e){ F.frames=F.frames.filter(x=>x!==slot); renderFrames(); toastF('AI 틀 실패: '+e.message); }
+    const prev=F.frame; F.frame=idx; renderFrames(); await refresh();
+    if(st){ st.hidden=false; st.innerHTML=`✨ AI 틀로 바뀌었습니다 · <a href="#" id="famUndo">이전 틀로</a>`; $('#famUndo').onclick=e=>{ e.preventDefault(); F.frame=prev; renderFrames(); refresh(); st.hidden=true; }; }
+  }catch(e){ F.frames=F.frames.filter(x=>x!==slot); renderFrames(); if(st){ st.hidden=false; st.textContent='AI 틀 생성 실패: '+e.message+' — 기본 틀로 계속 진행됩니다'; } if(!auto) toastF('AI 틀 실패: '+e.message); }
   finally{ clearInterval(tick); }
 }
 function regionInk(src,W,H,a){ return new Promise(res=>{ const im=new Image(); im.onload=()=>{ try{ const c=document.createElement('canvas'); c.width=24;c.height=24; const g=c.getContext('2d'); g.drawImage(im, a.x*im.naturalWidth, a.y*im.naturalHeight, a.w*im.naturalWidth, a.h*im.naturalHeight, 0,0,24,24); const px=g.getImageData(0,0,24,24).data; let l=0,n=0; for(let i=0;i<px.length;i+=4){ l+=(px[i]*.3+px[i+1]*.59+px[i+2]*.11); n++; } res(l/n<120?'light':'dark'); }catch(e){ res('dark'); } }; im.onerror=()=>res('dark'); im.src=src; }); }
@@ -349,16 +340,25 @@ function overlayCard(fr,d){
 /* ── ③ 내용 입력 ── */
 function panelText(){
   const m=$('#famMain'); const wed=F.kind==='wed';
-  m.innerHTML=`<h4>${wed?'③':'②'} 내용 입력 <small>적는 대로 오른쪽 카드에 바로 들어갑니다 · AI 재호출 없음</small></h4><div id="famForm"></div>
-   <div class="row" style="margin-top:14px;justify-content:space-between"><button class="ghost" id="f_prev">‹ 틀 고르기</button><button class="primary big" id="f_done">완료 · 카드 내려받기 ⬇</button></div>`;
+  m.innerHTML=`<h4>${wed?'②':'①'} 내용 입력 <small>적는 대로 오른쪽 카드에 바로 들어갑니다</small></h4>
+   <div class="row rw" style="margin-bottom:10px">
+    ${F.kind==='thanks'?`<div class="seg2" id="f_tkind"><button data-v="wed" class="${F.tkind==='wed'?'on':''}">결혼 감사</button><button data-v="fun" class="${F.tkind==='fun'?'on':''}">조문 감사</button></div>`:''}
+    ${F.kind==='obit'?`<label class="chk"><input type="checkbox" id="f_obitImg" ${F.frame&&F.frame>0?'checked':''}> <span>텍스트에 더해 <b>이미지 카드도</b> 만들기 <span class="hint">· 부고는 텍스트가 기본</span></span></label>`:''}
+    ${wed&&F.pic?`<span class="hint">방향</span><div class="seg2" id="f_orient"><button data-v="auto" class="${F.orient==='auto'?'on':''}">자동</button><button data-v="portrait" class="${F.orient==='portrait'?'on':''}">세로</button><button data-v="landscape" class="${F.orient==='landscape'?'on':''}">가로</button></div>`:''}
+    <span class="hint" id="famAiStatus" hidden></span></div>
+   <div id="famForm"></div>
+   <div class="row" style="margin-top:14px;justify-content:space-between">${wed?'<button class="ghost" id="f_prev">‹ 사진</button>':'<span></span>'}<button class="primary big" id="f_done">완료 · 카드 내려받기 ⬇</button></div>`;
+  const tk=$('#f_tkind'); if(tk) $$('#f_tkind button').forEach(b=>b.onclick=()=>{ F.tkind=b.dataset.v; F.frame=null; F.frames=F.frames.filter(f=>f.kind!=='ai'); $$('#f_tkind button').forEach(x=>x.classList.toggle('on',x===b)); ensureFrames(); refresh(); });
+  const ob=$('#f_obitImg'); if(ob) ob.onchange=()=>{ F.frame=ob.checked?1:0; ensureFrames(); refresh(); };
+  const ori=$('#f_orient'); if(ori) $$('#f_orient button').forEach(b=>b.onclick=()=>{ F.orient=b.dataset.v; F.frame=null; F.frames=F.frames.filter(f=>f.kind!=='ai'); $$('#f_orient button').forEach(x=>x.classList.toggle('on',x===b)); ensureFrames(); refresh(); });
   const f=$('#famForm'); f.innerHTML=formHtml(F.kind); f.oninput=liveUpdate; f.onchange=liveUpdate;
   try{ const mem=JSON.parse(localStorage.getItem('dOnFam')||'{}'); ['f_dept','f_name','f_title','f_sender'].forEach(id=>{ const e=document.getElementById(id); if(e&&mem[id]&&!e.value) e.value=mem[id]; }); }catch(e){}
   if(F.form) Object.entries(F.form).forEach(([id,val])=>{ const e=document.getElementById(id); if(e) e.value=val; });
   const fg=$('#f_forget'); if(fg) fg.onclick=e=>{ e.preventDefault(); localStorage.removeItem('dOnFam'); ['f_dept','f_name','f_title','f_sender'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; }); toastF('기억한 값을 지웠습니다'); liveUpdate(); };
   const rel=$('#f_rel'); if(rel&&wed){ const sync=()=>{ const self=rel.value==='본인'; $$('#famForm .wchild').forEach(x=>x.hidden=self); $$('#famForm .wself').forEach(x=>x.hidden=!self); }; rel.addEventListener('change',sync); sync(); }
   if(!F.noSample&&!F.form) fillSample();
-  $('#f_prev').onclick=()=>{ F.form=snapshot(); goStep(wed?1:0); }; $('#f_done').onclick=()=>{ F.form=snapshot(); try{ localStorage.setItem('dOnFam',JSON.stringify({f_dept:v('f_dept'),f_name:v('f_name'),f_title:v('f_title'),f_sender:v('f_sender')})); }catch(e){} download(); };
-  liveUpdate();
+  const pv=$('#f_prev'); if(pv) pv.onclick=()=>{ F.form=snapshot(); goStep(0); }; $('#f_done').onclick=()=>{ F.form=snapshot(); try{ localStorage.setItem('dOnFam',JSON.stringify({f_dept:v('f_dept'),f_name:v('f_name'),f_title:v('f_title'),f_sender:v('f_sender')})); }catch(e){} download(); };
+  ensureFrames(); liveUpdate();
 }
 function snapshot(){ const o={}; $$('#famForm input,#famForm select').forEach(e=>{ if(e.type==='checkbox') o[e.id]=e.checked; else if(e.id) o[e.id]=e.value; }); return o; }
 const SAMPLE={
@@ -393,10 +393,10 @@ function updateText(){ const d=collect(); F.data=d; $('#famTitle').value=postTit
 async function refresh(){
   const d=collect(); F.data=d; const pv=$('#famPreview'); const stepId=STEPS[F.kind][F.step][0];
   updateText();
-  if(stepId==='photo'){ F.img=''; $('#famDl').hidden=true; $('#famTextWrap').hidden=true; $('#famShowTxt').hidden=true; pv.innerHTML = F.pic ? `<img src="${F.pic}" style="max-height:520px;width:auto;margin:0 auto;display:block">` : '<div class="fam-wait"><b>사진을 올리면 여기 보입니다</b><small>사진 없이도 진행할 수 있습니다</small></div>'; $('#famNote').textContent=F.pic?(F.picKind==='illust'?'일러스트 선택됨':'원본 사진 선택됨'):''; return; }
+  if(stepId==='photo'){ F.img=''; $('#famDl').hidden=true; $('#famMore').hidden=true; $('#famPickTgl').hidden=true; $('#f_frames').hidden=true; $('#famTextWrap').hidden=true; $('#famShowTxt').hidden=true; pv.innerHTML = F.pic ? `<img src="${F.pic}" style="max-height:520px;width:auto;margin:0 auto;display:block">` : '<div class="fam-wait"><b>사진을 올리면 여기 보입니다</b><small>사진 없이도 진행할 수 있습니다</small></div>'; $('#famNote').textContent=F.pic?(F.picKind==='illust'?'일러스트 선택됨':'원본 사진 선택됨'):''; return; }
   const fr=F.frames[F.frame]; 
-  if(!fr||fr.kind==='txt'||fr.pending){ F.img=''; $('#famDl').hidden=true; $('#famTextWrap').hidden=false; $('#famShowTxt').hidden=true; pv.innerHTML=''; $('#famNote').textContent=fr&&fr.kind==='txt'?'텍스트로 올립니다':''; return; }
-  $('#famTextWrap').hidden=true; $('#famShowTxt').hidden=false; $('#famDl').hidden=false; $('#famNote').textContent=(fr.kind==='ai'?'🤖 ':'')+fr.label;
+  if(!fr||fr.kind==='txt'||fr.pending){ F.img=''; $('#famDl').hidden=true; $('#famTextWrap').hidden=false; $('#famShowTxt').hidden=true; pv.innerHTML=''; $('#famNote').textContent=fr&&fr.kind==='txt'?'텍스트로 올립니다':''; $('#famMore').hidden=true; $('#famPickTgl').hidden=F.kind!=='obit'; return; }
+  $('#famTextWrap').hidden=true; $('#famShowTxt').hidden=false; $('#famDl').hidden=false; $('#famNote').textContent=(fr.kind==='ai'?'🤖 ':'')+fr.label; $('#famMore').hidden=!(F.ai&&F.consent&&F.kind!=='obit'); $('#famPickTgl').hidden=false;
   const card=fr.render(d);
   if(!pv.querySelector('img')) pv.innerHTML='<div class="hint" style="padding:30px;text-align:center">카드를 그리는 중…</div>';
   try{ F.img=await renderPng(card, card.W>=1400?1:2); pv.innerHTML=`<img src="${F.img}" alt="카드 미리보기" title="누르면 크게 봅니다">`; }
@@ -406,7 +406,7 @@ function download(){ if(!F.img){ toastF('먼저 틀을 고르고 내용을 적�
 
 /* ═══ AI 서버 ═══ */
 const code=()=>{ try{ return localStorage.getItem('dOnCode')||''; }catch(e){ return ''; } };
-function probeAI(){ fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':code()},body:'{"ping":1}'}).then(r=>r.json()).then(j=>{ F.ai=!!(j&&j.ok&&j.hasKey&&j.codeOk); F.aiModel=j&&j.model; const n=$('#famAiNote'); if(!n) return; if(!F.ai){ n.textContent = j&&j.ok&&!j.hasKey ? 'AI 생성은 서버에 키를 넣으면 켜집니다 (관리자)' : j&&j.ok&&!j.codeOk ? '접속 코드가 맞지 않습니다 (관리자 › 모델 설정)' : 'AI 생성 서버가 없습니다'; $$('#famMain [data-ill], #f_aiFrame').forEach(b=>b.disabled=true); } else n.textContent='모델 '+F.aiModel; }).catch(()=>{ F.ai=false; const n=$('#famAiNote'); if(n) n.textContent='AI 생성 서버에 연결되지 않습니다'; $$('#famMain [data-ill], #f_aiFrame').forEach(b=>b.disabled=true); }); }
+function probeAI(){ fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':code()},body:'{"ping":1}'}).then(r=>r.json()).then(j=>{ F.ai=!!(j&&j.ok&&j.hasKey&&j.codeOk); F.aiModel=j&&j.model; const n=$('#famAiNote'); if(!n) return; if(!F.ai){ n.textContent = j&&j.ok&&!j.hasKey ? 'AI 생성은 서버에 키를 넣으면 켜집니다 (관리자)' : j&&j.ok&&!j.codeOk ? '접속 코드가 맞지 않습니다 (관리자 › 모델 설정)' : 'AI 생성 서버가 없습니다'; $$('#famMain [data-ill]').forEach(b=>b.disabled=true); } else n.textContent='모델 '+F.aiModel; }).catch(()=>{ F.ai=false; const n=$('#famAiNote'); if(n) n.textContent='AI 생성 서버에 연결되지 않습니다'; $$('#famMain [data-ill]').forEach(b=>b.disabled=true); }); }
 async function aiJob({prompt,photo,size}){
   const r=await fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':code()},body:JSON.stringify({action:'start',prompt,photo:photo||null,size,expect:[]})});
   const j=await r.json(); if(!r.ok||!j.id) throw new Error(j.error||('오류 '+r.status));
