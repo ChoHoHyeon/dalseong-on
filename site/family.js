@@ -240,8 +240,8 @@ function bindOrient(){ const ori=$('#f_orient'); if(!ori) return; $$('#f_orient 
 /* ── ① 사진 ── */
 function panelPhoto(){
   const m=$('#famMain');
-  m.innerHTML=`<h4>① 사진 <small>없어도 됩니다 — 없으면 꽃 프레임 틀로 갑니다</small></h4>
-   <div class="row rw"><label class="filebtn">📷 사진 올리기<input type="file" id="f_photo" accept="image/*"></label><button class="ghost" id="f_sample" type="button">샘플 사진</button><button class="ghost" id="f_nophoto" type="button">사진 없이 진행 ›</button><span class="hint" id="f_photoNote">${F.photo?'올려졌습니다 (전송 안 함)':'브라우저 안에서만 처리됩니다 · 끌어다 놓아도 됩니다'}</span></div>
+  m.innerHTML=`<h4>① 사진 <small>없어도 됩니다 — 없으면 꽃 배경 디자인으로 만듭니다</small></h4>
+   <div class="row rw"><label class="filebtn">📷 사진 올리기<input type="file" id="f_photo" accept="image/*"></label><button class="ghost" id="f_sample" type="button">샘플 사진</button><span class="hint" id="f_photoNote">${F.photo?'':'브라우저 안에서만 처리됩니다 · 끌어다 놓아도 됩니다'}</span></div>
    <div class="fam3-body" id="f_drop">
     <div class="fam3-pics" id="f_pics"></div>
     <div class="fam3-empty" ${F.photo?'hidden':''}><div class="fam3-drop-ico">📷</div><small>사진을 올리면 여기에 보입니다</small></div>
@@ -253,14 +253,14 @@ function panelPhoto(){
   $('#f_photo').onchange=e=>onFile(e.target.files[0]);
   const t2=$('#f_picTools label'); if(t2) t2.onclick=()=>$('#f_photo').click();
   const dz=$('#f_drop'); dz.ondragover=e=>{ e.preventDefault(); dz.classList.add('over'); }; dz.ondragleave=()=>dz.classList.remove('over'); dz.ondrop=e=>{ e.preventDefault(); dz.classList.remove('over'); onFile(e.dataTransfer.files[0]); };
-  $('#f_sample').onclick=loadSamplePhoto; $('#f_nophoto').onclick=()=>{ F.noPhoto=true; F.pic=null; F.frames=[]; F.frame=null; goStep(1); };
-  const needPhoto=()=>{ if(F.photo) return false; const n=$('#f_photoNote'); n.textContent='먼저 사진을 올려 주세요 (또는 「사진 없이 진행」)'; n.classList.add('warn'); $('#f_drop .fam3-empty')?.classList.add('shake'); setTimeout(()=>{ n.classList.remove('warn'); $('#f_drop .fam3-empty')?.classList.remove('shake'); },1600); return true; };
-  $('#f_next').onclick=()=>{ if(needPhoto()) return; F.autoAI=true; goStep(1); }; $('#f_nextPlain').onclick=()=>{ if(!F.photo){ F.noPhoto=true; F.pic=null; } F.autoAI=false; goStep(1); };
+  $('#f_sample').onclick=loadSamplePhoto;
+  const needPhoto=()=>{ if(F.photo) return false; const n=$('#f_photoNote'); n.textContent='먼저 사진을 올려 주세요'; n.classList.add('warn'); $('#f_drop .fam3-empty')?.classList.add('shake'); setTimeout(()=>{ n.classList.remove('warn'); $('#f_drop .fam3-empty')?.classList.remove('shake'); },1600); return true; };
+  $('#f_next').onclick=()=>{ if(!F.photo){ F.noPhoto=true; F.pic=null; } F.autoAI=true; goStep(1); }; $('#f_nextPlain').onclick=()=>{ if(!F.photo){ F.noPhoto=true; F.pic=null; } F.autoAI=false; goStep(1); };
   $$('#famMain [data-ill]').forEach(b=>b.onclick=()=>{ if(needPhoto()) return; makeIllust(b.dataset.ill); });
   renderPics(); probeAI();
 }
 function loadSamplePhoto(){ fetch('assets/family_sample.jpg').then(r=>r.blob()).then(b=>{ const r=new FileReader(); r.onload=()=>setPhoto(r.result,'샘플 사진'); r.readAsDataURL(b); }); }
-function setPhoto(dataUrl,name){ F.photo=dataUrl; F.pic=dataUrl; F.picKind='photo'; F.noPhoto=false; F.illusts=[]; F.frames=[]; F.frame=null; F.aiStarted=null; photoTone(dataUrl); const n=$('#f_photoNote'); if(n) n.textContent=`${name} — 올려졌습니다 (전송 안 함)`; const b=$('#f_picBox'); if(b) b.hidden=false; const e=$('#f_drop .fam3-empty'); if(e) e.hidden=true; const r=$('#f_nextRow'); if(r) r.hidden=false; renderPics(); setTimeout(refresh,250); }
+function setPhoto(dataUrl,name){ F.photo=dataUrl; F.pic=dataUrl; F.picKind='photo'; F.noPhoto=false; F.illusts=[]; F.frames=[]; F.frame=null; F.aiStarted=null; photoTone(dataUrl); const n=$('#f_photoNote'); if(n){ n.textContent=''; n.classList.remove('warn'); } const b=$('#f_picBox'); if(b) b.hidden=false; const e=$('#f_drop .fam3-empty'); if(e) e.hidden=true; const r=$('#f_nextRow'); if(r) r.hidden=false; renderPics(); setTimeout(refresh,250); }
 function renderPics(){
   const box=$('#f_pics'); if(!box) return;
   const items=[{src:F.photo,label:'원본 사진',key:'photo'}].concat(F.illusts.map((u,i)=>({src:u.src,label:u.label,key:'ill'+i,pending:u.pending})));
