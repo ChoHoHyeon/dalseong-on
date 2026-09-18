@@ -256,7 +256,9 @@ function panelPhoto(){
   const dz=$('#f_drop'); dz.ondragover=e=>{ e.preventDefault(); dz.classList.add('over'); }; dz.ondragleave=()=>dz.classList.remove('over'); dz.ondrop=e=>{ e.preventDefault(); dz.classList.remove('over'); onFile(e.dataTransfer.files[0]); };
   $('#f_sample').onclick=loadSamplePhoto;
   const needPhoto=()=>{ if(F.photo) return false; const n=$('#f_photoNote'); n.textContent='먼저 사진을 올려 주세요'; n.classList.add('warn'); $('#f_drop .fam3-empty')?.classList.add('shake'); setTimeout(()=>{ n.classList.remove('warn'); $('#f_drop .fam3-empty')?.classList.remove('shake'); },1600); return true; };
-  $('#f_next').onclick=()=>{ if(!F.photo){ F.noPhoto=true; F.pic=null; } F.autoAI=true; goStep(1); }; $('#f_nextPlain').onclick=()=>{ if(!F.photo){ F.noPhoto=true; F.pic=null; } F.autoAI=false; goStep(1); };
+  $('#f_next').onclick=async()=>{ if(!F.photo){ F.noPhoto=true; F.pic=null; } F.autoAI=true; goStep(1);
+    if(F.ai==null){ loading(true,'🤖 AI 서버에 연결하는 중…','잠시만 기다려 주세요'); try{ await F.aiProbe; }catch(e){} if(F.step===1){ if(F.ai) ensureFrames(); else showFail('AI 생성 서버에 연결되지 않았습니다'); } }
+    else if(!F.ai){ showFail('AI 생성 서버에 연결되지 않았습니다'); } }; $('#f_nextPlain').onclick=()=>{ if(!F.photo){ F.noPhoto=true; F.pic=null; } F.autoAI=false; goStep(1); };
   $$('#famMain [data-ill]').forEach(b=>b.onclick=()=>{ if(needPhoto()) return; makeIllust(b.dataset.ill); });
   renderPics(); probeAI();
 }
@@ -352,11 +354,12 @@ function aiDayInc(){ try{ const k=new Date().toISOString().slice(0,10); localSto
 function aiLeft(){ return Math.max(0,AI_MAX_DAY-aiDay()); }
 function updateMore(){ const mo=$('#famMore'); if(mo) mo.innerHTML=`✨ 다른 분위기로 한 장 더 <small style="font-weight:500;opacity:.75">(${aiLeft()}장 남음)</small>`; }
 async function makeFrame(auto){
-  if(!F.ai){ toastF('AI 생성 서버가 준비되지 않았습니다'); return; }
+  if(F.ai==null&&F.aiProbe){ try{ await F.aiProbe; }catch(e){} }
+  if(!F.ai){ showFail('AI 생성 서버에 연결되지 않았습니다'); return; }
   if(AI_LIMIT_ENFORCE&&aiLeft()<=0){ toastF(`오늘 만들 수 있는 AI 디자인 ${AI_MAX_DAY}장을 모두 사용했습니다 — 내일 다시 이용해 주세요`); return; }
   aiDayInc(); updateMore();
   const o=orient(); const size=o==='landscape'?'1536x1024':'1024x1536'; const n=F.frames.filter(f=>f.kind==='ai').length+1;
-  const slot={id:'ai'+Date.now(),kind:'ai',label:'AI 디자인 '+n,pending:true}; F.frames.push(slot); renderFrames();
+  const slot={id:'ai'+Date.now(),kind:'ai',label:'AI 디자인 '+n,pending:true}; F.frames.push(slot); renderFrames(); { const cur=F.frames[F.frame]; if(cur&&cur.kind!=='ai') $('#famNote').textContent=''; }
   const idx=F.frames.indexOf(slot); const t0=Date.now(); const st=$('#famAiStatus'); const tick=setInterval(()=>{ const sec=Math.round((Date.now()-t0)/1000); const e=document.getElementById('fw'+idx); if(e) e.textContent=sec+'초 · 보통 30~60초'; },1000);
   if(st) st.hidden=true; loading(true,'🤖 AI 디자인을 그리는 중…','보통 30~60초 · 기다리는 동안 내용을 입력해 주세요 — 완성되면 카드가 바뀝니다');
   try{
@@ -464,7 +467,7 @@ async function refresh(){
   const pw=$('.fam-pvwrap'); if(pw) pw.hidden=!!txtMode;                       // 텍스트 모드는 빈 미리보기 상자를 숨기고 본문만
   const done=$('#f_done'); if(done){ done.textContent=txtMode?'본문 복사':'완료 카드 내려받기 ⬇'; done.dataset.mode=txtMode?'copy':'dl'; }
   if(!fr||fr.kind==='txt'||fr.pending){ F.img=''; $('#famTextWrap').hidden=false; $('#famShowTxt').hidden=true; pv.innerHTML=''; $('#famNote').textContent=txtMode?'텍스트로 올립니다 — 아래 본문을 복사해 새올에 붙여넣으세요':'';  const mo=$('#famMore'); if(mo) mo.hidden=true; $('#famAiChips').innerHTML=''; return; }
-  $('#famTextWrap').hidden=true;  const waiting=F.frames.some(f=>f.pending); $('#famNote').textContent=(fr.kind==='ai'?'🤖 ':'')+fr.label+(waiting&&fr.kind!=='ai'?' — 기본 디자인으로 먼저 보여드리는 중 · AI 디자인이 완성되면 교체됩니다':'');  const mo=$('#famMore'); if(mo){ mo.hidden=!(F.ai&&F.consent&&F.kind!=='obit'); updateMore(); } renderAiChips();
+  $('#famTextWrap').hidden=true;  const waiting=F.frames.some(f=>f.pending); $('#famNote').textContent=(waiting&&fr.kind!=='ai')?'':((fr.kind==='ai'?'🤖 ':'')+fr.label);  const mo=$('#famMore'); if(mo){ mo.hidden=!(F.ai&&F.consent&&F.kind!=='obit'); updateMore(); } renderAiChips();
   const card=fr.render(d);
   if(!pv.querySelector('img')) pv.innerHTML='<div class="hint" style="padding:30px;text-align:center">카드를 그리는 중…</div>';
   try{ F.img=await renderPng(card, card.W>=1400?1:2); pv.innerHTML=`<img src="${F.img}" alt="카드 미리보기" title="누르면 크게 봅니다">`; }
@@ -475,7 +478,7 @@ function download(){ if(!F.img){ toastF('먼저 틀을 고르고 내용을 적�
 
 /* ═══ AI 서버 ═══ */
 const code=()=>{ try{ return localStorage.getItem('dOnCode')||''; }catch(e){ return ''; } };
-function probeAI(){ fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':code()},body:'{"ping":1}'}).then(r=>r.json()).then(j=>{ F.ai=!!(j&&j.ok&&j.hasKey&&j.codeOk); F.aiModel=j&&j.model; const n=$('#famAiNote'); if(!n) return; if(!F.ai){ n.textContent = j&&j.ok&&!j.hasKey ? 'AI 생성은 서버에 키를 넣으면 켜집니다 (관리자)' : j&&j.ok&&!j.codeOk ? '접속 코드가 맞지 않습니다 (관리자 › 모델 설정)' : 'AI 생성 서버가 없습니다'; $$('#famMain [data-ill]').forEach(b=>b.disabled=true); } else n.textContent='모델 '+F.aiModel; }).catch(()=>{ F.ai=false; const n=$('#famAiNote'); if(n) n.textContent='AI 생성 서버에 연결되지 않습니다'; $$('#famMain [data-ill]').forEach(b=>b.disabled=true); }); }
+function probeAI(){ F.aiProbe=fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':code()},body:'{"ping":1}'}).then(r=>r.json()).then(j=>{ F.ai=!!(j&&j.ok&&j.hasKey&&j.codeOk); F.aiModel=j&&j.model; const n=$('#famAiNote'); if(!n) return; if(!F.ai){ n.textContent = j&&j.ok&&!j.hasKey ? 'AI 생성은 서버에 키를 넣으면 켜집니다 (관리자)' : j&&j.ok&&!j.codeOk ? '접속 코드가 맞지 않습니다 (관리자 › 모델 설정)' : 'AI 생성 서버가 없습니다'; $$('#famMain [data-ill]').forEach(b=>b.disabled=true); } else n.textContent='모델 '+F.aiModel; }).catch(()=>{ F.ai=false; const n=$('#famAiNote'); if(n) n.textContent='AI 생성 서버에 연결되지 않습니다'; $$('#famMain [data-ill]').forEach(b=>b.disabled=true); }); }
 async function aiJob({prompt,photo,size}){
   const r=await fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':code()},body:JSON.stringify({action:'start',prompt,photo:photo||null,size,expect:[]})});
   const j=await r.json(); if(!r.ok||!j.id) throw new Error(j.error||('오류 '+r.status));
