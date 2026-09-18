@@ -195,7 +195,10 @@ const STEPS={wed:[['photo','사진'],['text','내용 입력']], obit:[['text','�
 const consentStored=()=>true; /* 시연판: 동의 절차 없음 (본 구축 시 추가) */
 function toastF(m){ if(window.toast) toast(m); else { const st=$('#famAiStatus')||$('#famNote'); if(st){ st.hidden=false; st.textContent=m; } else console.log(m); } }
 let _ldT=null;
-function loading(on, title, sub){ const L=$('#famLoad'); if(!L) return; clearInterval(_ldT); if(!on){ L.hidden=true; return; } L.hidden=false; const t0=Date.now(); const T=$('#famLoadT'), S=$('#famLoadS'); T.textContent=title; S.textContent=sub; _ldT=setInterval(()=>{ T.textContent=`${title} ${Math.round((Date.now()-t0)/1000)}초`; },1000); }
+/* AI 실패: 오른쪽 카드 자리에 크게 알리고 몇 초 뒤 자동으로 걷는다 (카드는 기본 디자인으로 계속) */
+function showFail(msg){ loading(false); const L=$('#famLoad'); if(!L) return; L.hidden=false; L.classList.add('fail'); $('#famLoadT').textContent='⚠️ AI 디자인을 만들지 못했습니다'; $('#famLoadS').textContent=(msg||'').slice(0,140)+' — 기본 디자인으로 계속 진행됩니다'; clearTimeout(_flT); _flT=setTimeout(()=>{ L.hidden=true; L.classList.remove('fail'); },7000); L.onclick=()=>{ L.hidden=true; L.classList.remove('fail'); }; }
+let _flT=null;
+function loading(on, title, sub){ const L=$('#famLoad'); if(!L) return; clearInterval(_ldT); if(!on){ L.hidden=true; return; } L.hidden=false; L.classList.remove('fail'); L.onclick=null; clearTimeout(_flT); const t0=Date.now(); const T=$('#famLoadT'), S=$('#famLoadS'); T.textContent=title; S.textContent=sub; _ldT=setInterval(()=>{ T.textContent=`${title} ${Math.round((Date.now()-t0)/1000)}초`; },1000); }
 function build(){
   const root=$('#famApp'); if(!root||root.dataset.built) return; root.dataset.built=1;
   root.innerHTML=`
@@ -219,7 +222,7 @@ function build(){
   root.addEventListener('click',e=>{ const b=e.target.closest('[data-copy]'); if(!b) return; const el=document.getElementById(b.dataset.copy); (navigator.clipboard?navigator.clipboard.writeText(el.value):Promise.reject()).then(()=>toastF('복사했습니다'),()=>{ el.select(); document.execCommand('copy'); toastF('복사했습니다'); }); });
   probeAI(); resetKind();
 }
-function resetKind(){ F.consent=consentStored(); F.aiStarted=null; F.autoAI=false; F.photo=null; F.illusts=[]; F.pic=null; F.picKind='photo'; F.frames=[]; F.frame=null; F.img=''; F.theme=null; F.data=null; F.form=null; goStep(0); }
+function resetKind(){ F.noSample=true; F.consent=consentStored(); F.aiStarted=null; F.autoAI=false; F.photo=null; F.illusts=[]; F.pic=null; F.picKind='photo'; F.frames=[]; F.frame=null; F.img=''; F.theme=null; F.data=null; F.form=null; goStep(0); }
 function goStep(i){
   F.step=i; const steps=STEPS[F.kind];
   $('#famSteps').innerHTML=steps.map(([id,label],k)=>`<button class="fam3-step ${k===i?'cur':k<i?'done':''}" data-i="${k}"><i>${k<i?'✓':k+1}</i><b>${label}</b></button>`).join('<span class="fam3-arrow">›</span>');
@@ -261,15 +264,22 @@ function setPhoto(dataUrl,name){ F.photo=dataUrl; F.pic=dataUrl; F.picKind='phot
 function renderPics(){
   const box=$('#f_pics'); if(!box) return;
   const items=[{src:F.photo,label:'원본 사진',key:'photo'}].concat(F.illusts.map((u,i)=>({src:u.src,label:u.label,key:'ill'+i,pending:u.pending})));
-  box.innerHTML=items.filter(x=>x.src||x.pending).map(x=>`<button class="fam3-pic ${F.pic===x.src?'on':''}" data-key="${x.key}">${x.pending?'<div class="fam-wait small"><div class="spin"></div><small>그리는 중…</small></div>':`<img src="${x.src}">`}<small>${x.label}</small></button>`).join('');
-  $$('#f_pics .fam3-pic').forEach(b=>b.onclick=()=>{ const k=b.dataset.key; const it=items.find(x=>x.key===k); if(!it||!it.src) return; F.pic=it.src; F.picKind=k==='photo'?'photo':'illust'; F.frames=[]; F.frame=null; renderPics(); refresh(); });
+  box.innerHTML=items.filter(x=>x.src||x.pending).map(x=>`<button class="fam3-pic ${F.pic===x.src?'on':''}" data-key="${x.key}">${x.pending?'<div class="fam-wait small"><div class="spin"></div><small>그리는 중…</small></div>':`<img src="${x.src}"><i class="fam3-x" data-del="${x.key}" title="${x.key==='photo'?'사진 지우기 (일러스트도 함께)':'이 일러스트 지우기'}">×</i>`}<small>${x.label}</small></button>`).join('');
+  $$('#f_pics .fam3-pic').forEach(b=>b.onclick=e=>{ if(e.target.closest('[data-del]')) return; const k=b.dataset.key; const it=items.find(x=>x.key===k); if(!it||!it.src) return; F.pic=it.src; F.picKind=k==='photo'?'photo':'illust'; F.frames=[]; F.frame=null; renderPics(); refresh(); });
+  $$('#f_pics [data-del]').forEach(x=>x.onclick=e=>{ e.stopPropagation(); e.preventDefault(); const k=x.dataset.del;
+    if(k==='photo'){ clearPhoto(); return; }
+    const i=+k.slice(3); const it=F.illusts[i]; if(!it) return; F.illusts.splice(i,1); if(F.pic===it.src){ F.pic=F.photo; F.picKind='photo'; F.frames=[]; F.frame=null; } renderPics(); refresh(); });
 }
+/* 사진 지우기: 원본·일러스트 모두 비우고 처음 상태로 */
+function clearPhoto(){ F.photo=null; F.pic=null; F.picKind='photo'; F.illusts=[]; F.frames=[]; F.frame=null; F.aiStarted=null; F.noPhoto=false; const e=$('#f_drop .fam3-empty'); if(e) e.hidden=false; const n=$('#f_photoNote'); if(n){ n.textContent='브라우저 안에서만 처리됩니다 · 끌어다 놓아도 됩니다'; n.classList.remove('warn'); } const inp=$('#f_photo'); if(inp) inp.value=''; renderPics(); refresh(); }
 const ILL_PROMPT={
   water:'Convert this photo into a warm hand-drawn illustration: soft watercolor and ink line style. Keep the same pose, composition, clothing, hairstyles and facial features so the people are clearly recognizable. Gentle pastel colors, clean plain white background, no text.',
   chic:'Turn this photo into an elegant fashion-illustration artwork. Keep the faces, hairstyles and expressions faithful so friends instantly recognize them, but idealize the figures: slightly elongated, tall and slender proportions like a fashion sketch, graceful posture. Refined ink lines with soft watercolor washes and a touch of gold, luminous mood, clean white background, no text.',
   line:'Convert this photo into a minimal single-line ink drawing with a few soft blush accents. Keep the pose and facial features recognizable. Clean white background, no text.'};
+const ILL_MAX=5;   // 원본 1 + 일러스트 5 = 최대 6장
 async function makeIllust(style){
   if(!F.ai){ toastF('AI 생성 서버가 준비되지 않았습니다'); return; }
+  if(F.illusts.length>=ILL_MAX){ toastF(`일러스트는 ${ILL_MAX}장까지 만들 수 있습니다 — 위에서 마음에 드는 것을 골라 주세요`); const n=$('#famAiNote'); if(n) n.textContent=`일러스트 ${ILL_MAX}장 한도`; return; }
   const label={water:'수채',chic:'화보풍',line:'라인'}[style]+' 일러스트'; const slot={src:'',label,pending:true}; F.illusts.push(slot); renderPics();
   loading(true,`🎨 ${label} 그리는 중…`,'보통 30~40초 · 완성되면 왼쪽 후보에 추가되고 오른쪽에 크게 보입니다');
   try{ const img=await aiJob({prompt:ILL_PROMPT[style], photo:F.photo, size:'auto'}); slot.src=img; slot.pending=false; F.pic=img; F.picKind='illust'; F.frames=[]; F.frame=null; F.aiStarted=null; renderPics(); refresh(); }
@@ -334,9 +344,16 @@ function framePrompt(){
   if(F.kind==='obit') return `Design a Korean funeral notice card BACKGROUND (template). Solemn and respectful: white chrysanthemums, grey/ivory paper, thin frame line.${mood} Decorations only near the corners; the whole center must stay a clean, plain, light area for text to be added later. No people. ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS anywhere.`;
   return `Design a Korean thank-you card BACKGROUND (template) ${F.tkind==='fun'?'after a funeral: quiet, respectful, white chrysanthemums, muted ivory/grey tones':'after a wedding: warm, soft flowers, gentle pastel tones'}.${mood} Decorations only near the edges; the whole center must stay a clean, plain, light area for text to be added later. No people. ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS anywhere.`;
 }
-/* 생성 횟수 제한(카드당·하루)은 테스트 기간 동안 두지 않는다 — 정식 전환 시 서버(계정 기준)에서 건다 */
+/* 하루 생성 카운터 — 지금은 표시만 하고 막지 않는다(테스트). 정식 전환 시 AI_LIMIT_ENFORCE=true 또는 서버(계정 기준)에서 차단 */
+const AI_MAX_DAY=5, AI_LIMIT_ENFORCE=false;
+function aiDay(){ try{ const k=new Date().toISOString().slice(0,10); const o=JSON.parse(localStorage.getItem('dOnAiDay')||'{}'); return o.d===k?(o.n||0):0; }catch(e){ return 0; } }
+function aiDayInc(){ try{ const k=new Date().toISOString().slice(0,10); localStorage.setItem('dOnAiDay',JSON.stringify({d:k,n:aiDay()+1})); }catch(e){} }
+function aiLeft(){ return Math.max(0,AI_MAX_DAY-aiDay()); }
+function updateMore(){ const mo=$('#famMore'); if(mo) mo.innerHTML=`✨ 다른 분위기로 한 장 더 <small style="font-weight:500;opacity:.75">(${aiLeft()}장 남음)</small>`; }
 async function makeFrame(auto){
   if(!F.ai){ toastF('AI 생성 서버가 준비되지 않았습니다'); return; }
+  if(AI_LIMIT_ENFORCE&&aiLeft()<=0){ toastF(`오늘 만들 수 있는 AI 디자인 ${AI_MAX_DAY}장을 모두 사용했습니다 — 내일 다시 이용해 주세요`); return; }
+  aiDayInc(); updateMore();
   const o=orient(); const size=o==='landscape'?'1536x1024':'1024x1536'; const n=F.frames.filter(f=>f.kind==='ai').length+1;
   const slot={id:'ai'+Date.now(),kind:'ai',label:'AI 디자인 '+n,pending:true}; F.frames.push(slot); renderFrames();
   const idx=F.frames.indexOf(slot); const t0=Date.now(); const st=$('#famAiStatus'); const tick=setInterval(()=>{ const sec=Math.round((Date.now()-t0)/1000); const e=document.getElementById('fw'+idx); if(e) e.textContent=sec+'초 · 보통 30~60초'; },1000);
@@ -350,7 +367,7 @@ async function makeFrame(auto){
     slot.img=img; slot.W=W; slot.H=H; slot.area=area; slot.ink=ink; slot.pending=false; slot.render=dd=>overlayCard(slot,dd);
     F.frame=idx; renderFrames(); await refresh();
     if(st) st.hidden=true;
-  }catch(e){ F.frames=F.frames.filter(x=>x!==slot); renderFrames(); if(st){ st.hidden=false; st.textContent='AI 디자인 생성 실패: '+e.message+' — 기본 디자인으로 계속 진행됩니다'; } if(!auto) toastF('AI 디자인 실패: '+e.message); }
+  }catch(e){ F.frames=F.frames.filter(x=>x!==slot); renderFrames(); clearInterval(tick); showFail(e.message); return; }
   finally{ clearInterval(tick); loading(false); }
 }
 function regionInk(src,W,H,a){ return new Promise(res=>{ const im=new Image(); im.onload=()=>{ try{ const c=document.createElement('canvas'); c.width=24;c.height=24; const g=c.getContext('2d'); g.drawImage(im, a.x*im.naturalWidth, a.y*im.naturalHeight, a.w*im.naturalWidth, a.h*im.naturalHeight, 0,0,24,24); const px=g.getImageData(0,0,24,24).data; let l=0,n=0; for(let i=0;i<px.length;i+=4){ l+=(px[i]*.3+px[i+1]*.59+px[i+2]*.11); n++; } res(l/n<120?'light':'dark'); }catch(e){ res('dark'); } }; im.onerror=()=>res('dark'); im.src=src; }); }
@@ -398,9 +415,11 @@ function panelText(){
     const dau=isDaughter(rel.value); const cl=$('#f_childLbl'), pl=$('#f_partnerLbl'); if(cl) cl.innerHTML=dau?'딸 이름 <small>신부</small>':'아들 이름 <small>신랑</small>'; if(pl) pl.innerHTML=dau?'신랑 이름 <small>상대측</small>':'신부 이름 <small>상대측</small>';
     const ci=$('#f_child'), pi=$('#f_partner'); if(ci) ci.placeholder=dau?'김하늘':'박비슬'; if(pi) pi.placeholder=dau?'박비슬':'김하늘'; }; rel.addEventListener('change',sync); const so=$('#f_spouseOff'); if(so) so.addEventListener('change',sync); sync(); }
   if(!F.noSample&&!F.form) fillSample();
-  $('#famFill').onclick=e=>{ e.preventDefault(); F.noSample=false; fillSample(); liveUpdate(); };
+  $('#famFill').onclick=e=>{ e.preventDefault(); fillSample(); liveUpdate(); };
   $('#famEmpty').onclick=e=>{ e.preventDefault(); F.noSample=true; F.form=null; $$('#famForm input,#famForm select').forEach(el=>{ if(el.type==='checkbox') el.checked=el.id==='f_bankImg'; else if(el.tagName==='SELECT') el.selectedIndex=0; else el.value=''; }); const rel=$('#f_rel'); if(rel) rel.dispatchEvent(new Event('change')); liveUpdate(); };
-  $('#f_done').onclick=()=>{ F.form=snapshot(); try{ localStorage.setItem('dOnFam',JSON.stringify({f_dept:v('f_dept'),f_name:v('f_name'),f_title:v('f_title'),f_sender:v('f_sender')})); }catch(e){} download(); };
+  $('#f_done').onclick=()=>{ F.form=snapshot(); try{ localStorage.setItem('dOnFam',JSON.stringify({f_dept:v('f_dept'),f_name:v('f_name'),f_title:v('f_title'),f_sender:v('f_sender')})); }catch(e){}
+    if($('#f_done').dataset.mode==='copy'){ const el=$('#famBody'); (navigator.clipboard?navigator.clipboard.writeText(el.value):Promise.reject()).then(()=>toastF('본문을 복사했습니다 — 새올 게시글에 붙여넣기(Ctrl+V)'),()=>{ el.select(); document.execCommand('copy'); toastF('본문을 복사했습니다'); }); return; }
+    download(); };
   ensureFrames(); liveUpdate();
 }
 function snapshot(){ const o={}; $$('#famForm input,#famForm select').forEach(e=>{ if(e.type==='checkbox') o[e.id]=e.checked; else if(e.id) o[e.id]=e.value; }); return o; }
@@ -410,7 +429,7 @@ const SAMPLE={
   thanks:{f_dept:'정보통신과',f_name:'김달성',f_title:'주무관',f_edate:'2026-11-07',f_rel2:'딸 하늘이',f_close:'올림'}};
 function fillSample(){ const m=SAMPLE[F.kind]||{}; Object.entries(m).forEach(([id,val])=>{ const e=document.getElementById(id); if(e) e.value=val; }); const rel=$('#f_rel'); if(rel) rel.dispatchEvent(new Event('change')); }
 function formHtml(kind){
-  const common=`<div class="g3"><label><b>소속</b><input id="f_dept" placeholder="정보통신과"></label><label><b>이름</b><input id="f_name" placeholder="김달성"></label><label><b>직위</b><input id="f_title" placeholder="주무관 · 前 ○○과장"></label></div>`;
+  const common=`<div class="g3"><label><b>소속</b><input id="f_dept" placeholder="정보통신과"></label><label><b>이름</b><input id="f_name" placeholder="김달성"></label><label><b>직위</b><input id="f_title" placeholder="주무관"></label></div>`;
   const sender=`<div class="grp"><b>발신 명의</b><div class="g2"><label><b>부서장</b><input id="f_sender" placeholder="정보통신과장 김정보"></label></div><p class="hint">소속·이름·직위·부서장은 이 PC에 기억해 두었다가 다음에 채워 줍니다 · <a href="#" id="f_forget">기억 지우기</a></p></div>`;
   if(kind==='wed') return `${common}<div class="g3" style="margin-top:10px"><label><b>관계</b><select id="f_rel">${REL_WED.map(r=>`<option>${r}</option>`).join('')}</select></label><label class="wchild"><b id="f_childLbl">자녀 이름</b><input id="f_child" placeholder="김하늘"></label><label class="wchild"><b id="f_partnerLbl">배우자 이름</b><input id="f_partner" placeholder="박비슬"></label><label class="wself" hidden><b id="f_spouseLbl">배우자 이름</b><input id="f_spouse" placeholder="박비슬"></label><label class="wself" hidden><b>배우자도 공무원인가요?</b><select id="f_spouseOff"><option value="">아니요</option><option value="y">예</option></select></label></div>
    <div class="g3 wselfOff" hidden style="margin-top:10px"><label><b>배우자 소속</b><input id="f_spouseDept" placeholder="수성구 범어동"></label><label><b>배우자 직위</b><input id="f_spouseTitle" placeholder="주무관"></label><label><b>배우자 쪽 부서장 <small>선택 · 비우면 우리 부서장 명의만</small></b><input id="f_sender2" placeholder="수성구 범어동장 ○○○"></label></div>
@@ -423,7 +442,7 @@ function formHtml(kind){
 /* 값 수집: 폼이 화면에 없으면(①②단계) 저장본 또는 샘플로 */
 function collect(){
   const k=F.kind; const g=id=>{ const e=document.getElementById(id); if(e) return e.type==='checkbox'?e.checked:e.value.trim(); if(F.form&&id in F.form) return F.form[id]; if(!F.noSample&&SAMPLE[k]&&id in SAMPLE[k]) return SAMPLE[k][id]; return id==='f_bankImg'?true:''; };
-  const d={kind:k, dept:g('f_dept')||'○○과', name:g('f_name')||'○○○', title:g('f_title'), sender:g('f_sender')||'○○과장 ○○○', wdateS:today()};
+  const d={kind:k, dept:g('f_dept')||'○○○과', name:g('f_name')||'○○○', title:g('f_title'), sender:g('f_sender')||'○○과장 ○○○', wdateS:today()};
   if(k==='wed'){ const rv=g('f_rel')||'장녀'; Object.assign(d,{rel:rv.startsWith('본인')?'본인':rv,sh:rv.includes('신부')?'군':'양',child:g('f_child')||'○○○',partner:g('f_partner')||'○○○',ch:isDaughter(rv)?'양':'군',ph:isDaughter(rv)?'군':'양',when:g('f_when'),place:g('f_place')||'○○○홀',addr:g('f_addr'),tel:g('f_tel'),bank:g('f_bank'),bankImg:!!g('f_bankImg'),spouse:g('f_spouse'),spouseDept:g('f_spouseOff')==='y'?(g('f_spouseDept')||'○○○'):'',spouseTitle:g('f_spouseOff')==='y'?(g('f_spouseTitle')||'주무관'):'',sender2:g('f_spouseOff')==='y'?g('f_sender2'):''}) }
   if(k==='obit') Object.assign(d,{rel:g('f_rel')||'부친',ddate:g('f_ddate'),noVisit:!!g('f_noVisit'),place:g('f_place')||'○○장례식장',addr:g('f_addr'),balin:g('f_balin'),jangji:g('f_jangji'),tel:g('f_tel'),bank:g('f_bank')});
   if(k==='thanks') Object.assign(d,{tkind:F.tkind,edate:g('f_edate'),rel2:g('f_rel2'),close:g('f_close')||'올림'});
@@ -438,10 +457,13 @@ async function refresh(){
   const d=collect(); F.data=d; const pv=$('#famPreview'); const stepId=STEPS[F.kind][F.step][0];
   updateText();
    $('#famOrientWrap').hidden=F.kind!=='wed';
-  if(stepId==='photo'){ F.img=''; $('#famPickTgl').hidden=true; $('#f_frames').hidden=true; $('#famAiChips').innerHTML=''; $('#famTextWrap').hidden=true; $('#famShowTxt').hidden=true; pv.innerHTML = F.pic ? `<img src="${F.pic}" style="height:100%;max-height:720px;width:auto;max-width:100%;object-fit:contain;margin:auto;display:block">` : '<div class="fam-wait"><div class="fam-cardph">💐</div><b>완성된 카드가 여기에 보입니다</b><small>사진을 올리거나 · 없으면 바로 「AI 디자인 만들기」</small></div>'; $('#famNote').textContent=F.pic?(F.picKind==='illust'?'일러스트 선택됨':'원본 사진 선택됨'):''; return; }
+  if(stepId==='photo'){ F.img=''; const pw0=$('.fam-pvwrap'); if(pw0) pw0.hidden=false; $('#famPickTgl').hidden=true; $('#f_frames').hidden=true; $('#famAiChips').innerHTML=''; $('#famTextWrap').hidden=true; $('#famShowTxt').hidden=true; pv.innerHTML = F.pic ? `<img src="${F.pic}" style="height:100%;max-height:600px;width:auto;max-width:100%;object-fit:contain;margin:auto;display:block">` : '<div class="fam-wait"><div class="fam-cardph">💐</div><b>완성된 카드가 여기에 보입니다</b><small>사진을 올리거나 · 없으면 바로 「AI 디자인 만들기」</small></div>'; $('#famNote').textContent=F.pic?(F.picKind==='illust'?'일러스트 선택됨':'원본 사진 선택됨'):''; return; }
   const fr=F.frames[F.frame]; 
-  if(!fr||fr.kind==='txt'||fr.pending){ F.img=''; $('#famTextWrap').hidden=false; $('#famShowTxt').hidden=true; pv.innerHTML=''; $('#famNote').textContent=fr&&fr.kind==='txt'?'텍스트로 올립니다':'';  const mo=$('#famMore'); if(mo) mo.hidden=true; $('#famAiChips').innerHTML=''; return; }
-  $('#famTextWrap').hidden=true;  const waiting=F.frames.some(f=>f.pending); $('#famNote').textContent=(fr.kind==='ai'?'🤖 ':'')+fr.label+(waiting&&fr.kind!=='ai'?' — 기본 디자인으로 먼저 보여드리는 중 · AI 디자인이 완성되면 교체됩니다':'');  const mo=$('#famMore'); if(mo) mo.hidden=!(F.ai&&F.consent&&F.kind!=='obit'); renderAiChips();
+  const txtMode=fr&&fr.kind==='txt';
+  const pw=$('.fam-pvwrap'); if(pw) pw.hidden=!!txtMode;                       // 텍스트 모드는 빈 미리보기 상자를 숨기고 본문만
+  const done=$('#f_done'); if(done){ done.textContent=txtMode?'본문 복사':'완료 카드 내려받기 ⬇'; done.dataset.mode=txtMode?'copy':'dl'; }
+  if(!fr||fr.kind==='txt'||fr.pending){ F.img=''; $('#famTextWrap').hidden=false; $('#famShowTxt').hidden=true; pv.innerHTML=''; $('#famNote').textContent=txtMode?'텍스트로 올립니다 — 아래 본문을 복사해 새올에 붙여넣으세요':'';  const mo=$('#famMore'); if(mo) mo.hidden=true; $('#famAiChips').innerHTML=''; return; }
+  $('#famTextWrap').hidden=true;  const waiting=F.frames.some(f=>f.pending); $('#famNote').textContent=(fr.kind==='ai'?'🤖 ':'')+fr.label+(waiting&&fr.kind!=='ai'?' — 기본 디자인으로 먼저 보여드리는 중 · AI 디자인이 완성되면 교체됩니다':'');  const mo=$('#famMore'); if(mo){ mo.hidden=!(F.ai&&F.consent&&F.kind!=='obit'); updateMore(); } renderAiChips();
   const card=fr.render(d);
   if(!pv.querySelector('img')) pv.innerHTML='<div class="hint" style="padding:30px;text-align:center">카드를 그리는 중…</div>';
   try{ F.img=await renderPng(card, card.W>=1400?1:2); pv.innerHTML=`<img src="${F.img}" alt="카드 미리보기" title="누르면 크게 봅니다">`; }

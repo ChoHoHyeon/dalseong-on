@@ -1223,3 +1223,11 @@ body[data-theme=dark] .bugnote{background:rgba(217,138,0,.14);color:#f0d9a6;bord
 .fam3-side .fam-preview{flex:1;width:100%}
 /* 진입 시 빈 미리보기: 카드 자리 표시 */
 .fam-cardph{width:150px;height:200px;border:2px dashed var(--line);border-radius:12px;margin:0 auto 16px;background:var(--panel,#fff);display:grid;place-items:center;font-size:40px;opacity:.8}
+
+/* AI 실패 안내(카드 자리) */
+.fam-load.fail{background:rgba(255,248,246,.94);cursor:pointer} .fam-load.fail .spin{display:none} .fam-load.fail b{color:#c0392b}
+#famTextWrap textarea{min-height:420px}
+
+/* 사진·일러스트 썸네일의 작은 삭제 × (마우스 올릴 때만 보임) */
+.fam3-pic{position:relative} .fam3-x{position:absolute;top:2px;right:2px;width:22px;height:22px;line-height:20px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-style:normal;font-size:15px;text-align:center;opacity:0;transition:opacity .15s;cursor:pointer}
+.fam3-pic:hover .fam3-x{opacity:1} .fam3-x:hover{background:#c0392b}
