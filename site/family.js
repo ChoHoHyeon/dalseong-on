@@ -261,7 +261,7 @@ function panelPhoto(){
     if(F.ai==null){ loading(true,'🤖 AI 서버에 연결하는 중…','잠시만 기다려 주세요'); try{ await F.aiProbe; }catch(e){} }
     if(F.step!==1) return;
     if(!F.ai){ showFail('AI 생성 서버에 연결되지 않았습니다'); return; }
-    if(!F.frames.some(f=>f.pending)){ F.aiStarted=(F.pic||'')+'|'+orient()+'|'+F.kind+'|'+F.tkind; makeFrame(true); } }; $('#f_nextPlain').onclick=()=>{ if(!F.photo){ F.noPhoto=true; F.pic=null; } F.autoAI=false; goStep(1); };
+    if(!F.frames.some(f=>f.pending)) makeFrame(true); }; $('#f_nextPlain').onclick=()=>{ if(!F.photo){ F.noPhoto=true; F.pic=null; } F.autoAI=false; goStep(1); };
   $$('#famMain [data-ill]').forEach(b=>b.onclick=()=>{ if(needPhoto()) return; makeIllust(b.dataset.ill); });
   renderPics(); probeAI();
 }
@@ -323,8 +323,7 @@ function ensureFrames(){
     if(F.kind==='wed'){ const keys=Object.keys(WED_THEMES); F.frame=Math.floor(Math.random()*keys.length); }   // 사진 유무와 관계없이 기본 디자인 6종 중 무작위
     else if(F.kind==='obit') F.frame=0; else F.frame=0;
   }
-  const key=(F.pic||'')+'|'+orient()+'|'+F.kind+'|'+F.tkind;
-  if(F.autoAI&&F.ai&&F.aiStarted!==key&&F.kind==='wed'){ F.aiStarted=key; makeFrame(true); }
+  // AI 생성은 여기서 자동으로 시작하지 않는다 — 「AI 디자인 만들기」「다른 분위기로 한 장 더」 버튼에서만 (단계를 오가도 다시 그리지 않음)
 }
 /* 만들어 둔 AI 디자인들을 카드 아래에서 바로 고르게 하는 작은 선택 칩 */
 function renderAiChips(){ const c=$('#famAiChips'); if(!c) return; const ais=F.frames.map((f,i)=>({f,i})).filter(x=>x.f.kind==='ai'&&!x.f.pending); if(ais.length<2){ c.innerHTML=''; return; }
