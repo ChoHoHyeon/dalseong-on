@@ -315,7 +315,7 @@ function tplFrames(){
 function ensureFrames(){
   const ai=F.frames.filter(f=>f.kind==='ai'); F.frames=tplFrames().concat(ai);
   if(F.frame==null||F.frame>=F.frames.length){
-    if(F.kind==='wed'){ const a=autoWed(F.data||collect(),0); const keys=Object.keys(WED_THEMES); F.frame=Math.max(0,keys.indexOf(a.theme)); }
+    if(F.kind==='wed'){ const keys=Object.keys(WED_THEMES); F.frame=Math.floor(Math.random()*keys.length); }   // 사진 유무와 관계없이 기본 디자인 6종 중 무작위
     else if(F.kind==='obit') F.frame=0; else F.frame=0;
   }
   const key=(F.pic||'')+'|'+orient()+'|'+F.kind+'|'+F.tkind;
@@ -376,7 +376,7 @@ function regionInk(src,W,H,a){ return new Promise(res=>{ const im=new Image(); i
 function overlayCard(fr,d){
   const W=fr.W,H=fr.H,a=fr.area; const dark=fr.ink==='dark';
   // 글자 크기: 카드 짧은 변 800px 기준으로 비례 확대 (AI 틀 1024·1536 → 1.28배) — 사용자가 크기를 고르지 않으므로 넉넉하게
-  const k=Math.min(W,H)/800; const px=n=>Math.round(n*k*10)/10+'px'; const low=a.h<0.5; /* 세로+사진(글자 영역이 낮음)은 영문 제목을 한 줄로 */ const ink=dark?'#2b2b2b':'#ffffff', sub=dark?'#6b6b6b':'rgba(255,255,255,.8)', line=dark?'rgba(0,0,0,.18)':'rgba(255,255,255,.4)', acc=dark?'#8a6a4a':'#fff';
+  const k=Math.min(W,H)/800; const px=n=>Math.round(n*k*10)/10+'px'; const pad=Math.round(34*k); /* 글자 뒤 반투명 종이 여백 */ const low=a.h<0.5; /* 세로+사진(글자 영역이 낮음)은 영문 제목을 한 줄로 */ const ink=dark?'#2b2b2b':'#ffffff', sub=dark?'#6b6b6b':'rgba(255,255,255,.8)', line=dark?'rgba(0,0,0,.18)':'rgba(255,255,255,.4)', acc=dark?'#8a6a4a':'#fff';
   const css=`.dc{position:relative;overflow:hidden;font-family:${FONT_SANS};color:${ink}}.dc *{box-sizing:border-box;margin:0;padding:0}.dc .eng{font-family:${FONT_ENG};font-style:italic;color:${acc}}.dc .s{font-family:${FONT_SERIF};word-break:keep-all}.dc .info div{word-break:keep-all}.dc .k{display:inline-block;width:${px(150)};color:${sub};letter-spacing:2px;white-space:nowrap}.dc .info{border-top:1px solid ${line};border-bottom:1px solid ${line};padding:${px(16)} 0;margin-top:${px(18)};line-height:1.85}.dc .info small{color:${sub};font-size:${px(15)}}.dc .addr{margin-top:${px(-6)};line-height:1.5}`;
   let body='';
   if(d.kind==='wed'){
@@ -390,7 +390,7 @@ function overlayCard(fr,d){
     const para=rest.map(l=>l?esc(l):'<div style="height:10px"></div>').join('<br/>').replace(/<div style="height:10px"><\/div><br\/>/g,'<div style="height:10px"></div>');
     body=`<div class="s" style="font-size:${px(36)};font-weight:700;letter-spacing:4px;text-align:center">${esc(head)}</div><div style="width:60px;height:1px;background:${line};margin:${px(22)} auto"></div><div class="s" style="font-size:${px(d.kind==='obit'?19.5:19)};line-height:1.9;text-align:center">${para}</div>`;
   }
-  const html=`<div class="dc" style="width:${W}px;height:${H}px"><style>${css}</style><img src="${fr.img}" style="position:absolute;left:0;top:0;width:${W}px;height:${H}px;display:block"/><div style="position:absolute;left:${Math.round(a.x*W)}px;top:${Math.round(a.y*H)}px;width:${Math.round(a.w*W)}px;height:${Math.round(a.h*H)}px;display:flex;flex-direction:column;justify-content:center">${body}</div></div>`;
+  const html=`<div class="dc" style="width:${W}px;height:${H}px"><style>${css}</style><img src="${fr.img}" style="position:absolute;left:0;top:0;width:${W}px;height:${H}px;display:block"/><div style="position:absolute;left:${Math.round(a.x*W-pad)}px;top:${Math.round(a.y*H)}px;width:${Math.round(a.w*W+pad*2)}px;height:${Math.round(a.h*H)}px;display:flex;flex-direction:column;justify-content:center"><div style="width:100%;padding:${Math.round(pad*0.85)}px ${pad}px;border-radius:${Math.round(pad*0.45)}px;background:${dark?'rgba(255,255,255,.72)':'rgba(15,15,20,.45)'};box-shadow:0 2px ${Math.round(pad)}px rgba(0,0,0,.06)">${body}</div></div></div>`;
   return {W,H,html};
 }
 
