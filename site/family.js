@@ -308,7 +308,7 @@ const FRAME_STYLES=[
  ['라벤더 필드','lavender and wildflowers in soft purple watercolor on pale lilac paper'],
  ['리넨 러스틱','natural linen texture with olive branches and a kraft-paper label feel, warm and rustic']
 ];
-function orient(){ if(F.orient!=='auto') return F.orient; if(F.kind!=='wed'||!F.pic) return 'portrait'; return F.pw>F.ph?'landscape':'portrait'; }
+function orient(){ if(F.kind==='obit') return 'landscape'; if(F.orient!=='auto') return F.orient; if(F.kind!=='wed'||!F.pic) return 'portrait'; return F.pw>F.ph?'landscape':'portrait'; }
 function tplFrames(){
   const d=F.data||collect(); const o=orient(); const out=[];
   if(F.kind==='wed'){ const lay=F.pic?(o==='landscape'?'L1':'L2'):'L4'; for(const t of Object.keys(WED_THEMES)) out.push({id:'tpl-'+t,kind:'tpl',label:WED_THEMES[t].name,render:dd=>wedCard(dd,lay,t,F.pic||'',F.picKind==='illust'?F.pic:null)}); }
@@ -321,7 +321,8 @@ function ensureFrames(){
   const ai=F.frames.filter(f=>f.kind==='ai'); F.frames=tplFrames().concat(ai);
   if(F.frame==null||F.frame>=F.frames.length){
     if(F.kind==='wed'){ const keys=Object.keys(WED_THEMES); F.frame=Math.floor(Math.random()*keys.length); }   // 사진 유무와 관계없이 기본 디자인 6종 중 무작위
-    else if(F.kind==='obit') F.frame=0; else F.frame=0;
+    else if(F.kind==='obit'){ const n=Object.keys(OBIT_THEMES).length; F.frame=1+Math.floor(Math.random()*n); }   // 부고도 이미지 카드가 기본 (0번은 텍스트만)
+    else F.frame=0;
   }
   // AI 생성은 여기서 자동으로 시작하지 않는다 — 「AI 디자인 만들기」「다른 분위기로 한 장 더」 버튼에서만 (단계를 오가도 다시 그리지 않음)
 }
@@ -405,13 +406,13 @@ function panelText(){
   m.innerHTML=`<h4>${wed?'②':'①'} 내용 입력 <small>적는 대로 오른쪽 카드에 바로 적용됩니다</small><span style="margin-left:auto;font-size:12.5px;font-weight:500;opacity:.75"><a href="#" id="famFill">샘플 채우기</a> · <a href="#" id="famEmpty">비우기</a></span></h4>
    <div class="row rw" style="margin-bottom:10px">
     ${F.kind==='thanks'?`<div class="seg2" id="f_tkind"><button data-v="wed" class="${F.tkind==='wed'?'on':''}">결혼 감사</button><button data-v="fun" class="${F.tkind==='fun'?'on':''}">조문 감사</button></div>`:''}
-    ${F.kind==='obit'?`<label class="chk"><input type="checkbox" id="f_obitImg" ${F.frame&&F.frame>0?'checked':''}> <span>텍스트에 더해 <b>이미지 카드도</b> 만들기 <span class="hint">· 부고는 텍스트가 기본</span></span></label>`:''}
+    ${F.kind==='obit'?`<div class="seg2" id="f_obitMode"><button type="button" data-v="img" class="${F.frame!==0?'on':''}">🖼 이미지 카드</button><button type="button" data-v="txt" class="${F.frame===0?'on':''}">글로만 올리기</button></div><span class="hint">텍스트 본문은 어느 쪽이든 함께 만들어집니다</span>`:''}
     <span class="hint" id="famAiStatus" hidden></span></div>
    <div id="famForm"></div>
    <div class="row rw fam3-foot" style="justify-content:space-between"><span></span><span class="row rw" style="gap:8px"><button class="primary big" id="famMore" type="button" hidden style="background:var(--panel,#fff);color:var(--tx);border:1.5px solid var(--line);box-shadow:none" title="AI가 다른 분위기의 디자인을 한 장 더 그립니다">✨ 다른 분위기로 한 장 더</button><button class="primary big" id="f_done">완료 카드 내려받기 ⬇</button></span></div>`;
   $('#famMore').onclick=()=>makeFrame();
   const tk=$('#f_tkind'); if(tk) $$('#f_tkind button').forEach(b=>b.onclick=()=>{ F.tkind=b.dataset.v; F.frame=null; F.frames=F.frames.filter(f=>f.kind!=='ai'); $$('#f_tkind button').forEach(x=>x.classList.toggle('on',x===b)); ensureFrames(); refresh(); });
-  const ob=$('#f_obitImg'); if(ob) ob.onchange=()=>{ F.frame=ob.checked?1:0; ensureFrames(); refresh(); };
+  const om=$('#f_obitMode'); if(om) $$('#f_obitMode button').forEach(b=>b.onclick=()=>{ $$('#f_obitMode button').forEach(x=>x.classList.toggle('on',x===b)); if(b.dataset.v==='txt'){ F.obitLast=F.frame; F.frame=0; } else { F.frame=(F.obitLast&&F.obitLast>0)?F.obitLast:null; } ensureFrames(); refresh(); });
   const f=$('#famForm'); f.innerHTML=formHtml(F.kind); f.oninput=liveUpdate; f.onchange=liveUpdate;
   if(REMEMBER_FILL) try{ const mem=JSON.parse(localStorage.getItem('dOnFam')||'{}'); ['f_dept','f_name','f_title','f_sender'].forEach(id=>{ const e=document.getElementById(id); if(e&&mem[id]&&!e.value) e.value=mem[id]; }); }catch(e){}
   if(F.form) Object.entries(F.form).forEach(([id,val])=>{ const e=document.getElementById(id); if(e) e.value=val; });
@@ -469,7 +470,7 @@ async function refresh(){
   const pw=$('.fam-pvwrap'); if(pw) pw.hidden=!!txtMode;                       // 텍스트 모드는 빈 미리보기 상자를 숨기고 본문만
   const done=$('#f_done'); if(done){ done.textContent=txtMode?'본문 복사':'완료 카드 내려받기 ⬇'; done.dataset.mode=txtMode?'copy':'dl'; }
   if(!fr||fr.kind==='txt'||fr.pending){ F.img=''; $('#famTextWrap').hidden=false; $('#famShowTxt').hidden=true; pv.innerHTML=''; $('#famNote').textContent=txtMode?'텍스트로 올립니다 — 아래 본문을 복사해 새올에 붙여넣으세요':'';  const mo=$('#famMore'); if(mo) mo.hidden=true; $('#famAiChips').innerHTML=''; return; }
-  $('#famTextWrap').hidden=true;  const waiting=F.frames.some(f=>f.pending); $('#famNote').textContent=(waiting&&fr.kind!=='ai')?'':((fr.kind==='ai'?'🤖 ':'')+fr.label);  const mo=$('#famMore'); if(mo){ mo.hidden=!(F.ai&&F.consent&&F.kind!=='obit'); updateMore(); } renderAiChips();
+  $('#famTextWrap').hidden=true;  const waiting=F.frames.some(f=>f.pending); $('#famNote').textContent=(waiting&&fr.kind!=='ai')?'':((fr.kind==='ai'?'🤖 ':'')+fr.label);  const mo=$('#famMore'); if(mo){ mo.hidden=!(F.ai&&F.consent); updateMore(); } renderAiChips();
   const card=fr.render(d);
   if(!pv.querySelector('img')) pv.innerHTML='<div class="hint" style="padding:30px;text-align:center">카드를 그리는 중…</div>';
   try{ F.img=await renderPng(card, card.W>=1400?1:2); pv.innerHTML=`<img src="${F.img}" alt="카드 미리보기" title="누르면 크게 봅니다">`; }
