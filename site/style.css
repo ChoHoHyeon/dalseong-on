@@ -1137,3 +1137,26 @@ body[data-theme=dark] .bugnote{background:rgba(217,138,0,.14);color:#f0d9a6;bord
 .fam-verify{margin-top:8px;padding:10px 12px;border-radius:10px;background:#fff7e6;border:1px solid #f1d9a6;font-size:12.5px} .fam-verify ul{margin:6px 0 6px 18px} .fam-verify .ok{color:#2f7d4a}
 .fam-preview img{cursor:zoom-in}
 .box.cardbox{width:min(1100px,96vw);padding:14px} .box.cardbox img{width:100%;height:auto;display:block;border-radius:8px}
+/* ── 경조사 카드 v4 (시안 A: 카드가 주인공 · 실시간 미리보기) ── */
+.fam2-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 12px;flex-wrap:wrap}
+.fam2-tabs{display:inline-flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px}
+.fam2-tabs button{padding:8px 16px;border-radius:10px;font-size:14px;font-weight:600;color:var(--mut)} .fam2-tabs button.on{background:rgba(47,111,237,.12);color:var(--acc2)}
+.fam2-cols{display:grid;grid-template-columns:minmax(0,520px) minmax(360px,1fr);gap:16px;align-items:start}
+.fam2-form{padding:18px 20px}
+.fam2-form label{display:grid;gap:5px;margin-bottom:8px;font-size:12px;color:var(--mut)} .fam2-form label>b{color:var(--tx);font-weight:600;font-size:12.5px;display:flex;align-items:center;gap:8px} .fam2-form label>b small{font-weight:400;color:var(--mut)}
+.fam2-form input,.fam2-form select{font-size:13.5px;padding:8px 11px}
+.fam2-form .g2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px} .fam2-form .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 10px}
+.fam2-form .grp{border-top:1px solid var(--line);padding-top:12px;margin-top:6px} .fam2-form .grp>b{display:block;font-size:12px;color:var(--acc);letter-spacing:.4px;margin-bottom:8px;font-weight:700}
+.fam2-form .chk{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--tx);margin:0} .fam2-form .chk input{width:auto;padding:0;margin:0}
+.fam2-form .chk.inl{display:inline-flex;font-weight:400;color:var(--mut);margin-left:4px}
+.fam2-form .filebtn{font-size:13px}
+.fam2-actions{border-top:1px solid var(--line);margin-top:14px;padding-top:14px;display:grid;gap:8px}
+.fam2-actions .primary.big{padding:12px 18px;font-size:15px;flex:1;justify-content:center;display:inline-flex;align-items:center;gap:6px} .fam2-actions .primary.big small{font-weight:500;opacity:.85}
+.fam2-actions .row{margin:0;gap:10px}
+.fam2-right{display:grid;gap:12px;position:sticky;top:8px}
+.fam2-title{display:flex;align-items:center;gap:10px;padding:12px 16px} .fam2-title input{flex:1;font-family:'Batang','바탕',serif;font-size:14px} .fam2-title .hint{white-space:nowrap}
+.fam2-card{padding:12px}
+.fam2-bar{margin-top:10px;align-items:center}
+.fam2-bar a.hint{color:var(--acc);text-decoration:underline}
+#famTextWrap{margin-top:0} #famTextWrap textarea{font-family:'Batang','바탕',serif;font-size:14px;line-height:1.8;min-height:380px}
+@media(max-width:1100px){.fam2-cols{grid-template-columns:1fr} .fam2-right{position:static}}
