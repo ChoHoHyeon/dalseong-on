@@ -43,13 +43,13 @@ function postBody(d){
   if(d.kind==='wed'){
     const subj = d.rel==='본인' ? (d.spouse ? `${who(d)}과 ${spouseTxt(d)}의 결혼식을` : `${who(d)}의 결혼식을`) : `${who(d)}의 ${d.rel} ${d.child} ${d.ch}과 ${d.partner} ${d.ph}의 결혼식을`;
     return `${subj} 아래와 같이 알려드리오니\n두 사람의 앞날을 축복해 주시면 감사하겠습니다.\n\n`
-      + line('일 시',fDateTime(d.when)) + line('장 소',d.place+(d.addr?` (${d.addr})`:'')) + line('연락처',d.tel) + line('마음 전하실 곳',d.bank)
+      + line('일 시',fDateTime(d.when)) + line('장 소',d.place+(d.addr?` (${d.addr})`:'')) + line('연락처',d.tel) + line('마음 전하실 곳',d.bank) + (d.bank2?line('마음 전하실 곳',d.bank2):'')
       + `\n${d.wdateS}\n${d.sender}${d.sender2?'\n'+d.sender2:''}`;
   }
   if(d.kind==='obit'){
     const subj = d.rel==='본인' ? `${who(d)}께서` : `${who(d)}의 ${d.rel}께서`;
     let t=`삼가 알려드립니다.\n\n${subj}\n${fDate(d.ddate)} 별세하셨음을 알려드립니다.\n\n`;
-    t+= line('빈   소',d.place+(d.addr?` (${d.addr})`:'')) + line('발   인',d.balin?fTime24(d.balin):'') + line('장   지',d.jangji) + line('연락처',d.tel) + line('마음 전하실 곳',d.bank);
+    t+= line('빈   소',d.place+(d.addr?` (${d.addr})`:'')) + line('발   인',d.balin?fTime24(d.balin):'') + line('장   지',d.jangji) + line('연락처',d.tel) + line('마음 전하실 곳',d.bank) + (d.bank2?line('마음 전하실 곳',d.bank2):'');
     if(d.noVisit) t+=`\n※ 가족장으로 조문과 조의는 정중히 사양하오니 양해 부탁드립니다.\n`;
     return t+`\n${d.wdateS}\n${d.sender}`;
   }
@@ -120,7 +120,7 @@ function wedCard(d, layout, theme, photo, illust){
   .dc .orn{color:${t.accent};font-size:18px;letter-spacing:6px;margin:8px 0}`;
   const subj = d.rel==='본인' ? (d.spouse ? `<b>${esc(who(d))}</b>과<br><b>${spouseTxt(d,1)}</b>의 결혼식을 알려드리오니` : `<b>${esc(who(d))}</b>의 결혼식을 알려드리오니`) : `<b>${esc(who(d))}</b>의 ${esc(d.rel)}<br><b>${esc(d.child)}</b> ${d.ch}과 <b>${esc(d.partner)}</b> ${d.ph}의 결혼식을 알려드리오니`;
   const body=`<div class="lead">${subj}<br>두 사람의 앞날을 축복해 주시면 감사하겠습니다.</div>
-  <div class="info"><div><span class="k">일 시</span>${esc(fDateTime(d.when))}</div><div><span class="k">장 소</span>${esc(d.place)}</div>${d.addr?`<div class="addr"><span class="k"></span><small>${esc(d.addr)}</small></div>`:''}${d.tel?`<div><span class="k">연락처</span>${esc(d.tel)}</div>`:''}${d.bank&&d.bankImg?`<div><span class="k">마음 전하실 곳</span>${esc(d.bank)}</div>`:''}</div>
+  <div class="info"><div><span class="k">일 시</span>${esc(fDateTime(d.when))}</div><div><span class="k">장 소</span>${esc(d.place)}</div>${d.addr?`<div class="addr"><span class="k"></span><small>${esc(d.addr)}</small></div>`:''}${d.tel?`<div><span class="k">연락처</span>${esc(d.tel)}</div>`:''}${d.bank&&d.bankImg?`<div><span class="k">마음 전하실 곳</span>${esc(d.bank)}</div>${d.bank2?`<div><span class="k"></span>${esc(d.bank2)}</div>`:''}`:''}</div>
   <div class="sender">${esc(d.sender)}${d.sender2?'<br/>'+esc(d.sender2):''}</div>`;
   const pic = illust||photo;
   let W,H,inner;
@@ -389,7 +389,7 @@ function overlayCard(fr,d){
     const subj = d.rel==='본인' ? (d.spouse ? `<b>${esc(who(d))}</b>과<br/><b>${spouseTxt(d,1)}</b>의 결혼식을 알려드리오니` : `<b>${esc(who(d))}</b>의 결혼식을 알려드리오니`) : `<b>${esc(who(d))}</b>의 ${esc(d.rel)}<br/><b>${esc(d.child)}</b> ${d.ch}과 <b>${esc(d.partner)}</b> ${d.ph}의 결혼식을 알려드리오니`;
     body=`<div class="eng" style="font-size:${px(low?40:48)};line-height:1.1">Wedding${low?' ':'<br/>'}Invitation</div>
     <div class="s" style="font-size:${px(24)};line-height:1.7;margin-top:${px(22)}">${subj}<br/>두 사람의 앞날을 축복해 주시면 감사하겠습니다.</div>
-    <div class="info" style="font-size:${px(19.5)}"><div><span class="k">일 시</span>${esc(fDateTime(d.when))}</div><div><span class="k">장 소</span>${esc(d.place)}</div>${d.addr?`<div class="addr"><span class="k"></span><small>${esc(d.addr)}</small></div>`:''}${d.tel?`<div><span class="k">연락처</span>${esc(d.tel)}</div>`:''}${d.bank&&d.bankImg?`<div><span class="k">마음 전하실 곳</span>${esc(d.bank)}</div>`:''}</div>
+    <div class="info" style="font-size:${px(19.5)}"><div><span class="k">일 시</span>${esc(fDateTime(d.when))}</div><div><span class="k">장 소</span>${esc(d.place)}</div>${d.addr?`<div class="addr"><span class="k"></span><small>${esc(d.addr)}</small></div>`:''}${d.tel?`<div><span class="k">연락처</span>${esc(d.tel)}</div>`:''}${d.bank&&d.bankImg?`<div><span class="k">마음 전하실 곳</span>${esc(d.bank)}</div>${d.bank2?`<div><span class="k"></span>${esc(d.bank2)}</div>`:''}`:''}</div>
     <div class="s" style="font-size:${px(22)};letter-spacing:2px;margin-top:${px(22)}">${esc(d.sender)}${d.sender2?'<br/>'+esc(d.sender2):''}</div>`;
   } else {
     const lines=postBody(d).split('\n'); const head=lines[0]; const rest=lines.slice(1);
@@ -418,6 +418,7 @@ function panelText(){
   if(F.form) Object.entries(F.form).forEach(([id,val])=>{ const e=document.getElementById(id); if(e) e.value=val; });
   const fg=$('#f_forget'); if(fg) fg.onclick=e=>{ e.preventDefault(); localStorage.removeItem('dOnFam'); ['f_dept','f_name','f_title','f_sender'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; }); toastF('기억한 값을 지웠습니다'); liveUpdate(); };
   // 관계에 따라 이름 칸 라벨을 바꾼다 — 「신부/신랑」으로 두면 아들 결혼에 아들 이름을 신부 칸에 적는 실수가 잦다
+  const ba=$('#f_bankAdd'), bw=$('#f_bank2Wrap'); if(ba&&bw){ const b2=$('#f_bank2'); if(b2&&b2.value) bw.hidden=false; ba.onclick=e=>{ e.preventDefault(); bw.hidden=false; b2.focus(); }; $('#f_bankDel').onclick=e=>{ e.preventDefault(); b2.value=''; bw.hidden=true; liveUpdate(); }; }
   const rel=$('#f_rel'); if(rel&&wed){ const sync=()=>{ const self=rel.value.startsWith('본인'); const sl=$('#f_spouseLbl'); if(sl) sl.innerHTML=rel.value.includes('신부')?'신랑 이름 <small>배우자</small>':'신부 이름 <small>배우자</small>'; $$('#famForm .wchild').forEach(x=>x.hidden=self); $$('#famForm .wself').forEach(x=>x.hidden=!self); const so=$('#f_spouseOff'); $$('#famForm .wselfOff').forEach(x=>x.hidden=!(self&&so&&so.value==='y'));
     const dau=isDaughter(rel.value); const cl=$('#f_childLbl'), pl=$('#f_partnerLbl'); if(cl) cl.innerHTML=dau?'딸 이름 <small>신부</small>':'아들 이름 <small>신랑</small>'; if(pl) pl.innerHTML=dau?'신랑 이름 <small>상대측</small>':'신부 이름 <small>상대측</small>';
     const ci=$('#f_child'), pi=$('#f_partner'); if(ci) ci.placeholder=dau?'김하늘':'박비슬'; if(pi) pi.placeholder=dau?'박비슬':'김하늘'; }; rel.addEventListener('change',sync); const so=$('#f_spouseOff'); if(so) so.addEventListener('change',sync); sync(); }
@@ -434,24 +435,29 @@ const SAMPLE={
   wed:{f_dept:'정보통신과',f_name:'김달성',f_title:'주무관',f_rel:'장녀',f_child:'김하늘',f_partner:'박비슬',f_when:'2026-11-07T13:00',f_place:'노비아갈라 동촌 포레야홀',f_addr:'대구광역시 동구 동촌로 87',f_tel:'010-0000-0000',f_bank:'iM뱅크 000-00-000000 (김달성)',f_sender:'정보통신과장 김정보'},
   obit:{f_dept:'정보통신과',f_name:'김달성',f_title:'주무관',f_rel:'부친',f_ddate:'2026-11-03',f_place:'대구전문장례식장 특1호실',f_addr:'대구 동구 금호강변로 71',f_balin:'2026-11-05T08:00',f_jangji:'대구명복공원',f_tel:'김달성 (010-0000-0000)',f_bank:'iM뱅크 000-00-000000 (김달성)',f_sender:'정보통신과장 김정보'},
   thanks:{f_dept:'정보통신과',f_name:'김달성',f_title:'주무관',f_edate:'2026-11-07',f_rel2:'딸 하늘이',f_close:'올림'}};
-function fillSample(){ const m=SAMPLE[F.kind]||{}; Object.entries(m).forEach(([id,val])=>{ const e=document.getElementById(id); if(e) e.value=val; }); const rel=$('#f_rel'); if(rel) rel.dispatchEvent(new Event('change')); }
+function fillSample(){ const m=SAMPLE[F.kind]||{}; Object.entries(m).forEach(([id,val])=>{ if(id==='f_when'||id==='f_balin'){ dtSet(id,val); return; } const e=document.getElementById(id); if(e) e.value=val; }); const rel=$('#f_rel'); if(rel) rel.dispatchEvent(new Event('change')); }
 function formHtml(kind){
   const common=`<div class="g3"><label><b>소속</b><input id="f_dept" placeholder="정보통신과"></label><label><b>이름</b><input id="f_name" placeholder="김달성"></label><label><b>직위</b><input id="f_title" placeholder="주무관"></label></div>`;
   const sender=`<div class="grp"><b>발신 명의</b><div class="g2"><label><b>부서장</b><input id="f_sender" placeholder="정보통신과장 김정보"></label></div></div>`;
   if(kind==='wed') return `${common}<div class="g3" style="margin-top:10px"><label><b>관계</b><select id="f_rel">${REL_WED.map(r=>`<option>${r}</option>`).join('')}</select></label><label class="wchild"><b id="f_childLbl">자녀 이름</b><input id="f_child" placeholder="김하늘"></label><label class="wchild"><b id="f_partnerLbl">배우자 이름</b><input id="f_partner" placeholder="박비슬"></label><label class="wself" hidden><b id="f_spouseLbl">배우자 이름</b><input id="f_spouse" placeholder="박비슬"></label><label class="wself" hidden><b>배우자도 공무원인가요?</b><select id="f_spouseOff"><option value="">아니요</option><option value="y">예</option></select></label></div>
-   <div class="g3 wselfOff" hidden style="margin-top:10px"><label><b>배우자 소속</b><input id="f_spouseDept" placeholder="수성구 범어동"></label><label><b>배우자 직위</b><input id="f_spouseTitle" placeholder="주무관"></label><label><b>배우자 쪽 부서장 <small>선택 · 비우면 우리 부서장 명의만</small></b><input id="f_sender2" placeholder="수성구 범어동장 ○○○"></label></div>
-   <div class="grp"><b>일시 · 장소</b><div class="g2"><label><b>일시</b><input id="f_when" type="datetime-local"></label><label><b>예식장</b><input id="f_place" placeholder="노비아갈라 동촌 포레야홀"></label><label><b>주소</b><input id="f_addr" placeholder="대구광역시 동구 동촌로 87"></label><label><b>연락처</b><input id="f_tel" placeholder="010-0000-0000"></label></div>
-   <label style="margin-top:10px"><b>마음 전하실 곳 <span class="chk inl"><input type="checkbox" id="f_bankImg" checked> 카드에도 넣기</span></b><input id="f_bank" placeholder="iM뱅크 000-00-000000 (김달성)"></label></div>${sender}`;
+   <div class="g3 wselfOff" hidden style="margin-top:10px"><label><b>배우자 소속</b><input id="f_spouseDept" placeholder="수성구 범어동"></label><label><b>배우자 직위</b><input id="f_spouseTitle" placeholder="주무관"></label><label><b>배우자 쪽 부서장 <small>비우면 우리 부서장만</small></b><input id="f_sender2" placeholder="수성구 범어동장 ○○○"></label></div>
+   <div class="grp"><b>일시 · 장소</b><div class="g2">${dtField('f_when','일시')}<label><b>예식장</b><input id="f_place" placeholder="노비아갈라 동촌 포레야홀"></label><label><b>주소</b><input id="f_addr" placeholder="대구광역시 동구 동촌로 87"></label><label><b>연락처</b><input id="f_tel" placeholder="010-0000-0000"></label></div>
+   <label style="margin-top:10px"><b>마음 전하실 곳 <span class="chk inl"><input type="checkbox" id="f_bankImg" checked> 카드에도 넣기</span> <a href="#" id="f_bankAdd" class="hint" style="margin-left:8px;font-weight:500">+ 계좌 하나 더</a></b><input id="f_bank" placeholder="iM뱅크 000-00-000000 (김달성)"></label>
+   <label id="f_bank2Wrap" hidden><b>마음 전하실 곳 2 <small>둘 다 공무원일 때 등</small> <a href="#" id="f_bankDel" class="hint" style="margin-left:8px;font-weight:500">지우기</a></b><input id="f_bank2" placeholder="수성구 범어동 박비슬 · iM뱅크 000-00-000000"></label></div>${sender}`;
   if(kind==='obit') return `${common}<div class="g3" style="margin-top:10px"><label><b>관계</b><select id="f_rel">${REL_OBIT.map(r=>`<option>${r}</option>`).join('')}</select></label><label><b>별세일</b><input id="f_ddate" type="date"></label><label class="chk" style="align-self:end;margin-bottom:12px"><input type="checkbox" id="f_noVisit"> 가족장 · 조문 사양</label></div>
-   <div class="grp"><b>빈소 · 발인 · 장지</b><div class="g2"><label><b>빈소</b><input id="f_place" placeholder="대구전문장례식장 특1호실"></label><label><b>주소</b><input id="f_addr" placeholder="대구 동구 금호강변로 71"></label><label><b>발인</b><input id="f_balin" type="datetime-local"></label><label><b>장지</b><input id="f_jangji" placeholder="대구명복공원"></label><label><b>연락처</b><input id="f_tel" placeholder="김달성 (010-0000-0000)"></label><label><b>마음 전하실 곳</b><input id="f_bank" placeholder="iM뱅크 000-00-000000 (김달성)"></label></div></div>${sender}`;
+   <div class="grp"><b>빈소 · 발인 · 장지</b><div class="g2"><label><b>빈소</b><input id="f_place" placeholder="대구전문장례식장 특1호실"></label><label><b>주소</b><input id="f_addr" placeholder="대구 동구 금호강변로 71"></label>${dtField('f_balin','발인')}<label><b>장지</b><input id="f_jangji" placeholder="대구명복공원"></label><label><b>연락처</b><input id="f_tel" placeholder="김달성 (010-0000-0000)"></label><label><b>마음 전하실 곳</b><input id="f_bank" placeholder="iM뱅크 000-00-000000 (김달성)"></label></div></div>${sender}`;
   return `${common}<div class="g3" style="margin-top:10px"><label><b>행사일</b><input id="f_edate" type="date"></label><label><b>관계 <small>딸 하늘이 / 부친상</small></b><input id="f_rel2" placeholder="딸 하늘이"></label><label><b>맺음말</b><select id="f_close"><option>올림</option><option>배상</option><option>드림</option></select></label></div>`;
 }
 /* 값 수집: 폼이 화면에 없으면(①②단계) 저장본 또는 샘플로 */
+/* 일시 입력: 브라우저의 오전/오후 표기를 피하려고 날짜 + 시(24시간) + 분으로 나눠 받는다. 값은 f_xxx_d / f_xxx_h / f_xxx_m 에 있고 collect()에서 "YYYY-MM-DDTHH:MM" 으로 합친다 */
+function dtField(id,label){ const hs=Array.from({length:24},(_,i)=>String(i).padStart(2,'0')); const ms=['00','10','20','30','40','50']; return `<label><b>${label}</b><div class="row" style="margin:0;gap:6px;flex-wrap:nowrap"><input id="${id}_d" type="date" style="flex:2.4;min-width:150px"><select id="${id}_h" style="flex:1;min-width:0;padding-left:6px;padding-right:2px">${hs.map(h=>`<option value="${h}">${h}시</option>`).join('')}</select><select id="${id}_m" style="flex:1;min-width:0;padding-left:6px;padding-right:2px">${ms.map(m=>`<option value="${m}">${m}분</option>`).join('')}</select></div></label>`; }
+function dtGet(id,g){ const d=g(id+'_d'); if(!d) return ''; return d+'T'+(g(id+'_h')||'00')+':'+(g(id+'_m')||'00'); }
+function dtSet(id,val){ const m=/^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/.exec(val||''); const d=document.getElementById(id+'_d'), h=document.getElementById(id+'_h'), mi=document.getElementById(id+'_m'); if(!d) return; if(!m){ d.value=''; if(h) h.value='00'; if(mi) mi.value='00'; return; } d.value=m[1]; if(h) h.value=m[2]; if(mi){ const mm=String(Math.round(+m[3]/10)*10%60).padStart(2,'0'); mi.value=mm; } }
 function collect(){
   const k=F.kind; const g=id=>{ const e=document.getElementById(id); if(e) return e.type==='checkbox'?e.checked:e.value.trim(); if(F.form&&id in F.form) return F.form[id]; if(!F.noSample&&SAMPLE[k]&&id in SAMPLE[k]) return SAMPLE[k][id]; return id==='f_bankImg'?true:''; };
   const d={kind:k, dept:g('f_dept')||'○○○과', name:g('f_name')||'○○○', title:g('f_title'), sender:g('f_sender')||'○○과장 ○○○', wdateS:today()};
-  if(k==='wed'){ const rv=g('f_rel')||'장녀'; Object.assign(d,{rel:rv.startsWith('본인')?'본인':rv,sh:rv.includes('신부')?'군':'양',child:g('f_child')||'○○○',partner:g('f_partner')||'○○○',ch:isDaughter(rv)?'양':'군',ph:isDaughter(rv)?'군':'양',when:g('f_when'),place:g('f_place')||'○○○홀',addr:g('f_addr'),tel:g('f_tel'),bank:g('f_bank'),bankImg:!!g('f_bankImg'),spouse:g('f_spouse'),spouseDept:g('f_spouseOff')==='y'?(g('f_spouseDept')||'○○○'):'',spouseTitle:g('f_spouseOff')==='y'?(g('f_spouseTitle')||'주무관'):'',sender2:g('f_spouseOff')==='y'?g('f_sender2'):''}) }
-  if(k==='obit') Object.assign(d,{rel:g('f_rel')||'부친',ddate:g('f_ddate'),noVisit:!!g('f_noVisit'),place:g('f_place')||'○○장례식장',addr:g('f_addr'),balin:g('f_balin'),jangji:g('f_jangji'),tel:g('f_tel'),bank:g('f_bank')});
+  if(k==='wed'){ const rv=g('f_rel')||'장녀'; Object.assign(d,{rel:rv.startsWith('본인')?'본인':rv,sh:rv.includes('신부')?'군':'양',child:g('f_child')||'○○○',partner:g('f_partner')||'○○○',ch:isDaughter(rv)?'양':'군',ph:isDaughter(rv)?'군':'양',when:dtGet('f_when',g),place:g('f_place')||'○○○홀',addr:g('f_addr'),tel:g('f_tel'),bank:g('f_bank'),bank2:g('f_bank2'),bankImg:!!g('f_bankImg'),spouse:g('f_spouse'),spouseDept:g('f_spouseOff')==='y'?(g('f_spouseDept')||'○○○'):'',spouseTitle:g('f_spouseOff')==='y'?(g('f_spouseTitle')||'주무관'):'',sender2:g('f_spouseOff')==='y'?g('f_sender2'):''}) }
+  if(k==='obit') Object.assign(d,{rel:g('f_rel')||'부친',ddate:g('f_ddate'),noVisit:!!g('f_noVisit'),place:g('f_place')||'○○장례식장',addr:g('f_addr'),balin:dtGet('f_balin',g),jangji:g('f_jangji'),tel:g('f_tel'),bank:g('f_bank')});
   if(k==='thanks') Object.assign(d,{tkind:F.tkind,edate:g('f_edate'),rel2:g('f_rel2'),close:g('f_close')||'올림'});
   return d;
 }
