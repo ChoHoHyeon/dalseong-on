@@ -1207,3 +1207,8 @@ body[data-theme=dark] .bugnote{background:rgba(217,138,0,.14);color:#f0d9a6;bord
 .fam3-main{flex:1;display:flex;flex-direction:column} .fam3-main #famForm{flex:0 0 auto} .fam3-main .fam3-body{flex:1}
 .fam3-foot{margin-top:auto;padding-top:14px}
 .fam3-side{position:static}
+/* 사진 단계 버튼 3개: 같은 박스 모델·같은 줄높이로 글자 세로 정렬 통일 */
+.fam3-main .row>label.filebtn,.fam3-main .row>.ghost{display:inline-block;box-sizing:border-box;height:36px;line-height:34px;padding:0 12px;font-size:13px;vertical-align:middle}
+.fam3-main .row>label.filebtn{line-height:34px;gap:0;padding:0 14px} .fam3-main .row>label.filebtn input{display:none}
+.hint.warn{color:#c0392b;font-weight:600}
+.fam3-empty.shake{animation:famshake .5s} @keyframes famshake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
