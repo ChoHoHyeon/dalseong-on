@@ -202,14 +202,14 @@ function build(){
   <div class="fam3-steps" id="famSteps"></div>
   <div class="fam3-cols">
    <div class="fam3-left">
-    <div class="card fam2-title"><span class="hint">게시글 제목</span><input id="famTitle" readonly><button class="ghost sm" data-copy="famTitle">복사</button></div>
     <div class="card fam3-main" id="famMain"></div></div>
    <div class="fam3-side">
     <div class="card fam2-card"><div class="fam-pvwrap"><div class="fam-preview" id="famPreview"></div><div class="fam-load" id="famLoad" hidden><div class="spin"></div><b id="famLoadT">AI가 그리는 중…</b><small id="famLoadS">기다리는 동안 내용을 입력해 주세요</small></div></div>
      <div id="famTextWrap" hidden><div class="fam-copy col"><textarea id="famBody" rows="16" readonly></textarea><button class="ghost sm" data-copy="famBody">복사</button></div></div>
      <div class="row rw fam2-bar"><span class="hint" id="famNote"></span><span style="flex:1"></span><a href="#" class="hint" id="famShowTxt" hidden>「글로 올릴 본문」 보기</a></div>
      <div id="famPickPark" style="display:none"><div id="famPick" hidden><div class="row rw"><button class="ghost" id="famMore" type="button" hidden>🎲 다르게 <small>AI 한 장 더</small></button><button class="ghost" id="famPickTgl" type="button">🗂 틀 바꾸기</button><span class="hint">AI 틀이 안 나오거나 사진이 없을 때 쓰는 기본 틀</span></div><div class="fam3-frames strip" id="f_frames" hidden></div></div></div>
-     <p class="hint" style="margin-top:8px">※ 이름·날짜·계좌는 반드시 확인 후 올려 주세요. 잘못 올린 글은 정보통신과(☎2454)에서 수정할 수 있습니다.</p></div>
+     <div class="fam2-title" id="famTitleRow" hidden style="padding:10px 0 0;margin-top:10px;border-top:1px dashed var(--line)"><span class="hint">새올 게시글 제목 <small>자동</small></span><input id="famTitle" readonly><button class="ghost sm" data-copy="famTitle">복사</button></div>
+     <p class="hint" id="famWarn" style="margin-top:8px" hidden>※ 이름·날짜·계좌는 반드시 확인 후 올려 주세요. 잘못 올린 글은 정보통신과(☎2454)에서 수정할 수 있습니다.</p></div>
    </div></div>`;
   $$('#famKinds button').forEach(b=>b.onclick=()=>{ $$('#famKinds button').forEach(x=>x.classList.toggle('on',x===b)); F.kind=b.dataset.k; resetKind(); });
   $('#famShowTxt').onclick=e=>{ e.preventDefault(); const w=$('#famTextWrap'); w.hidden=!w.hidden; e.target.textContent=w.hidden?'「글로 올릴 본문」 보기':'본문 닫기'; };
@@ -419,6 +419,7 @@ function updateText(){ const d=collect(); F.data=d; $('#famTitle').value=postTit
 async function refresh(){
   const d=collect(); F.data=d; const pv=$('#famPreview'); const stepId=STEPS[F.kind][F.step][0];
   updateText();
+  $('#famWarn').hidden=stepId==='photo'; $('#famTitleRow').hidden=stepId==='photo';
   if(stepId==='photo'){ F.img=''; $('#famPick').hidden=true; $('#f_frames').hidden=true; $('#famTextWrap').hidden=true; $('#famShowTxt').hidden=true; pv.innerHTML = F.pic ? `<img src="${F.pic}" style="max-height:520px;width:auto;margin:0 auto;display:block">` : '<div class="fam-wait"><b>사진을 올리면 여기 보입니다</b><small>사진 없이도 진행할 수 있습니다</small></div>'; $('#famNote').textContent=F.pic?(F.picKind==='illust'?'일러스트 선택됨':'원본 사진 선택됨')+(F.orient==='auto'?' · 방향 자동':F.orient==='portrait'?' · 세로 카드':' · 가로 카드'):''; return; }
   const fr=F.frames[F.frame]; 
   if(!fr||fr.kind==='txt'||fr.pending){ F.img=''; $('#famTextWrap').hidden=false; $('#famShowTxt').hidden=true; pv.innerHTML=''; $('#famNote').textContent=fr&&fr.kind==='txt'?'텍스트로 올립니다':''; $('#famPick').hidden=F.kind!=='obit'; return; }
