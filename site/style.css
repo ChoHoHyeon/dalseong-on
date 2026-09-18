@@ -1160,3 +1160,27 @@ body[data-theme=dark] .bugnote{background:rgba(217,138,0,.14);color:#f0d9a6;bord
 .fam2-bar a.hint{color:var(--acc);text-decoration:underline}
 #famTextWrap{margin-top:0} #famTextWrap textarea{font-family:'Batang','바탕',serif;font-size:14px;line-height:1.8;min-height:380px}
 @media(max-width:1100px){.fam2-cols{grid-template-columns:1fr} .fam2-right{position:static}}
+/* ── 경조사 카드 v5: 3단계(사진 → 틀 → 내용) ── */
+.fam3-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 10px;flex-wrap:wrap} .fam3-head a{color:var(--acc);text-decoration:underline}
+.fam3-steps{display:flex;align-items:center;gap:8px;margin:0 0 14px;flex-wrap:wrap}
+.fam3-step{display:inline-flex;align-items:center;gap:10px;padding:10px 18px 10px 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--mut);font-size:14.5px;font-weight:600;transition:.15s}
+.fam3-step i{font-style:normal;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--panel2);color:var(--mut);font-size:13px;font-weight:800}
+.fam3-step.cur{border-color:var(--acc);background:rgba(47,111,237,.10);color:var(--acc2);box-shadow:0 6px 18px rgba(47,111,237,.18)} .fam3-step.cur i{background:linear-gradient(135deg,var(--acc),#3c6fe0);color:#fff}
+.fam3-step.done{color:var(--tx)} .fam3-step.done i{background:#35d39b;color:#fff}
+.fam3-arrow{color:var(--mut);font-size:18px}
+.fam3-cols{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(360px,1fr);gap:16px;align-items:start}
+.fam3-main{padding:18px 20px} .fam3-main h4{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:16px} .fam3-main h4 small{font-weight:500;color:var(--mut);font-size:12.5px}
+.fam3-side{display:grid;gap:12px;position:sticky;top:8px}
+.fam3-pics{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.fam3-pic{display:grid;gap:4px;padding:6px;border:2px solid var(--line);border-radius:12px;background:var(--panel);text-align:center;width:150px} .fam3-pic img{width:100%;height:150px;object-fit:cover;border-radius:8px} .fam3-pic.on{border-color:var(--acc);box-shadow:0 0 0 3px rgba(47,111,237,.15)} .fam3-pic small{font-size:12px;color:var(--mut)} .fam3-pic .fam-wait{height:150px;padding:0}
+.fam3-frames{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.fam3-frame{display:grid;gap:4px;padding:6px;border:2px solid var(--line);border-radius:12px;background:var(--panel);text-align:center;cursor:pointer;transition:.15s} .fam3-frame:hover{border-color:rgba(47,111,237,.5)} .fam3-frame.on{border-color:var(--acc);box-shadow:0 0 0 3px rgba(47,111,237,.15)}
+.fam3-frame .fam-th{min-height:110px;display:grid;place-items:center;background:var(--panel2);border-radius:8px;overflow:hidden} .fam3-frame img{width:100%;height:auto;display:block} .fam3-frame small{font-size:12px;color:var(--mut)} .fam3-frame.ai small{color:var(--acc2);font-weight:600}
+.fam3-txt{font-family:'Batang',serif;font-size:34px;color:var(--mut);line-height:1} .fam3-txt small{display:block;font-size:11px;font-family:inherit}
+.fam-wait.small{padding:20px 10px;gap:6px} .fam-wait.small .spin{width:24px;height:24px}
+.fam3-main .g2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px} .fam3-main .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 10px}
+.fam3-main label{display:grid;gap:5px;margin-bottom:8px;font-size:12px;color:var(--mut)} .fam3-main label>b{color:var(--tx);font-weight:600;font-size:12.5px;display:flex;align-items:center;gap:8px} .fam3-main label>b small{font-weight:400;color:var(--mut)}
+.fam3-main .grp{border-top:1px solid var(--line);padding-top:12px;margin-top:6px} .fam3-main .grp>b{display:block;font-size:12px;color:var(--acc);letter-spacing:.4px;margin-bottom:8px;font-weight:700}
+.fam3-main .chk{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--tx);margin:0} .fam3-main .chk input{width:auto;padding:0;margin:0} .fam3-main .chk.inl{display:inline-flex;font-weight:400;color:var(--mut);margin-left:4px}
+.fam3-main .primary.big{padding:12px 20px;font-size:15px} .fam3-main .primary small{font-weight:500;opacity:.85;margin-left:4px}
+@media(max-width:1100px){.fam3-cols{grid-template-columns:1fr} .fam3-side{position:static}}
