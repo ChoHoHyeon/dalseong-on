@@ -201,13 +201,13 @@ function build(){
   root.innerHTML=`
   <div class="fam3-head"><div class="fam2-tabs" id="famKinds"><button class="on" data-k="wed">💐 결혼</button><button data-k="obit">🕊 부고</button><button data-k="thanks">🙏 감사 인사</button></div>
    <span class="hint">사진 올리고 내용만 적으면 됩니다 · AI 디자인은 뒤에서 자동으로 · <a href="#" id="famFill">샘플 채우기</a> · <a href="#" id="famEmpty">비우기</a></span></div>
-  <div class="fam3-steps" id="famSteps"></div>
+  <div class="fam3-steps"><span id="famSteps" class="row" style="gap:8px;margin:0"></span><span id="famOrientWrap" style="margin-left:18px;padding-left:18px;border-left:1px solid var(--line)">${orientSeg('카드 방향')}</span></div>
   <div class="fam3-cols">
    <div class="fam3-left">
     <div class="card fam3-main" id="famMain"></div></div>
    <div class="fam3-side">
     <div class="card fam2-card"><div class="fam-pvwrap"><div class="fam-preview" id="famPreview"></div><div class="fam-load" id="famLoad" hidden><div class="spin"></div><b id="famLoadT">AI가 그리는 중…</b><small id="famLoadS">기다리는 동안 내용을 입력해 주세요</small></div></div>
-     <div class="row rw fam2-bar"><span id="famOrientWrap">${orientSeg()}</span><span class="hint" id="famNote"></span><span class="row" id="famAiChips" style="gap:4px;margin:0"></span><span style="flex:1"></span><span class="row" style="gap:12px;margin:0 0 0 auto;white-space:nowrap"><a href="#" class="hint" id="famPickTgl" hidden title="AI 디자인이 안 나오거나 사진이 없을 때 쓰는 기본 디자인">🗂 기본 디자인</a><a href="#" class="hint" id="famShowTxt" hidden>새올 게시글 제목·본문 보기</a></span></div>
+     <div class="row rw fam2-bar"><span class="hint" id="famNote"></span><span class="row" id="famAiChips" style="gap:4px;margin:0"></span><span style="flex:1"></span><span class="row" style="gap:12px;margin:0 0 0 auto;white-space:nowrap"><a href="#" class="hint" id="famPickTgl" hidden title="AI 디자인이 안 나오거나 사진이 없을 때 쓰는 기본 디자인">🗂 기본 디자인</a><a href="#" class="hint" id="famShowTxt" hidden>새올 게시글 제목·본문 보기</a></span></div>
      <div class="fam3-frames strip" id="f_frames" hidden></div>
      <div id="famTextWrap" hidden><div class="fam-post"><b>📋 새올 게시글</b><span class="hint">제목은 게시판 관례 서식으로 자동 · 카드는 내려받아 첨부</span></div>
       <div class="fam-copy" style="margin-top:6px"><span class="hint" style="white-space:nowrap">제목</span><input id="famTitle" readonly><button class="ghost sm" data-copy="famTitle">복사</button></div>
@@ -234,7 +234,7 @@ function goStep(i){
 function maxStep(){ if(F.kind==='wed') return (F.pic||F.noPhoto)?1:0; return 0; }
 
 /* 방향 선택 (사진 단계·내용 단계 공용) — 바꾸면 AI 틀을 새 방향으로 다시 그린다 */
-function orientSeg(){ return `<span class="row rw" style="gap:8px"><span class="hint">방향</span><div class="seg2" id="f_orient"><button type="button" data-v="auto" class="${F.orient==='auto'?'on':''}">자동</button><button type="button" data-v="portrait" class="${F.orient==='portrait'?'on':''}">세로</button><button type="button" data-v="landscape" class="${F.orient==='landscape'?'on':''}">가로</button></div></span>`; }
+function orientSeg(lbl){ return `<span class="row rw" style="gap:8px;margin:0"><span class="hint">${lbl||'방향'}</span><div class="seg2" id="f_orient"><button type="button" data-v="auto" class="${F.orient==='auto'?'on':''}">자동</button><button type="button" data-v="portrait" class="${F.orient==='portrait'?'on':''}">세로</button><button type="button" data-v="landscape" class="${F.orient==='landscape'?'on':''}">가로</button></div></span>`; }
 function bindOrient(){ const ori=$('#f_orient'); if(!ori) return; $$('#f_orient button').forEach(b=>b.onclick=()=>{ if(F.orient===b.dataset.v) return; F.orient=b.dataset.v; $$('#f_orient button').forEach(x=>x.classList.toggle('on',x===b)); F.frame=null; F.frames=F.frames.filter(f=>f.kind!=='ai'); if(F.step>0){ ensureFrames(); } refresh(); }); }
 
 /* ── ① 사진 ── */
@@ -370,7 +370,7 @@ function overlayCard(fr,d){
 /* ── ③ 내용 입력 ── */
 function panelText(){
   const m=$('#famMain'); const wed=F.kind==='wed';
-  m.innerHTML=`<h4>${wed?'②':'①'} 내용 입력 <small>적는 대로 오른쪽 카드에 바로 들어갑니다</small></h4>
+  m.innerHTML=`<h4>${wed?'②':'①'} 내용 입력 <small>적는 대로 오른쪽 카드에 바로 적용됩니다</small></h4>
    <div class="row rw" style="margin-bottom:10px">
     ${F.kind==='thanks'?`<div class="seg2" id="f_tkind"><button data-v="wed" class="${F.tkind==='wed'?'on':''}">결혼 감사</button><button data-v="fun" class="${F.tkind==='fun'?'on':''}">조문 감사</button></div>`:''}
     ${F.kind==='obit'?`<label class="chk"><input type="checkbox" id="f_obitImg" ${F.frame&&F.frame>0?'checked':''}> <span>텍스트에 더해 <b>이미지 카드도</b> 만들기 <span class="hint">· 부고는 텍스트가 기본</span></span></label>`:''}
@@ -426,7 +426,7 @@ async function refresh(){
   const d=collect(); F.data=d; const pv=$('#famPreview'); const stepId=STEPS[F.kind][F.step][0];
   updateText();
   $('#famWarn').hidden=stepId==='photo'; $('#famOrientWrap').hidden=F.kind!=='wed';
-  if(stepId==='photo'){ F.img=''; $('#famPickTgl').hidden=true; $('#f_frames').hidden=true; $('#famAiChips').innerHTML=''; $('#famTextWrap').hidden=true; $('#famShowTxt').hidden=true; pv.innerHTML = F.pic ? `<img src="${F.pic}" style="max-height:520px;width:auto;margin:0 auto;display:block">` : '<div class="fam-wait"><b>사진을 올리면 여기 보입니다</b><small>사진 없이도 진행할 수 있습니다</small></div>'; $('#famNote').textContent=F.pic?(F.picKind==='illust'?'일러스트 선택됨':'원본 사진 선택됨'):''; return; }
+  if(stepId==='photo'){ F.img=''; $('#famPickTgl').hidden=true; $('#f_frames').hidden=true; $('#famAiChips').innerHTML=''; $('#famTextWrap').hidden=true; $('#famShowTxt').hidden=true; pv.innerHTML = F.pic ? `<img src="${F.pic}" style="height:100%;max-height:720px;width:auto;max-width:100%;object-fit:contain;margin:auto;display:block">` : '<div class="fam-wait"><div class="fam-cardph">💐</div><b>완성된 카드가 여기에 보입니다</b><small>사진을 올리거나 · 없으면 바로 「AI 디자인 만들기」</small></div>'; $('#famNote').textContent=F.pic?(F.picKind==='illust'?'일러스트 선택됨':'원본 사진 선택됨'):''; return; }
   const fr=F.frames[F.frame]; 
   if(!fr||fr.kind==='txt'||fr.pending){ F.img=''; $('#famTextWrap').hidden=false; $('#famShowTxt').hidden=true; pv.innerHTML=''; $('#famNote').textContent=fr&&fr.kind==='txt'?'텍스트로 올립니다':''; $('#famPickTgl').hidden=F.kind!=='obit'; const mo=$('#famMore'); if(mo) mo.hidden=true; $('#famAiChips').innerHTML=''; return; }
   $('#famTextWrap').hidden=true; $('#famShowTxt').hidden=false; const waiting=F.frames.some(f=>f.pending); $('#famNote').textContent=(fr.kind==='ai'?'🤖 ':'')+fr.label+(waiting&&fr.kind!=='ai'?' — 기본 디자인으로 먼저 보여드리는 중 · AI 디자인이 완성되면 교체됩니다':''); $('#famPickTgl').hidden=false; const mo=$('#famMore'); if(mo){ mo.hidden=!(F.ai&&F.consent&&F.kind!=='obit'); const nAi=F.frames.filter(f=>f.kind==='ai').length; mo.textContent=`🎲 다르게 AI 한 장 더 (${Math.max(0,Math.min(AI_MAX_CARD-nAi,AI_MAX_DAY-aiDay()))}장 남음)`; } renderAiChips();

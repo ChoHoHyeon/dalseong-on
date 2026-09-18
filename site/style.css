@@ -1216,3 +1216,10 @@ body[data-theme=dark] .bugnote{background:rgba(217,138,0,.14);color:#f0d9a6;bord
 /* 새올 게시글(제목·본문) 묶음 */
 .fam-post{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);font-size:14px}
 #famTextWrap .fam-copy input{font-size:14px}
+
+/* 오른쪽 결과 카드가 왼쪽 높이만큼 늘어날 때 미리보기 영역이 빈 공간을 채우도록 */
+.fam3-side .fam2-card{display:flex;flex-direction:column}
+.fam3-side .fam-pvwrap{flex:1;display:flex;min-height:0}
+.fam3-side .fam-preview{flex:1;width:100%}
+/* 진입 시 빈 미리보기: 카드 자리 표시 */
+.fam-cardph{width:150px;height:200px;border:2px dashed var(--line);border-radius:12px;margin:0 auto 16px;background:var(--panel,#fff);display:grid;place-items:center;font-size:40px;opacity:.8}
