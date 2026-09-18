@@ -7,6 +7,7 @@
    ═══════════════════════════════════════════════════════════════════ */
 (function(){
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const REMEMBER_FILL=false;   // 소속·이름·직위·부서장 자동 채움(이 PC 기억) — 테스트 기간엔 끔(항상 빈 칸). 본구축 시 true
 const F={kind:'wed', step:0, noSample:true, photo:null, pw:0, ph:0, illusts:[], pic:null, picKind:'photo', frames:[], frame:null, img:'', orient:'auto', tkind:'wed', theme:null, hist:[]};
 const DOW=['일','월','화','수','목','금','토'];
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -407,7 +408,7 @@ function panelText(){
   const tk=$('#f_tkind'); if(tk) $$('#f_tkind button').forEach(b=>b.onclick=()=>{ F.tkind=b.dataset.v; F.frame=null; F.frames=F.frames.filter(f=>f.kind!=='ai'); $$('#f_tkind button').forEach(x=>x.classList.toggle('on',x===b)); ensureFrames(); refresh(); });
   const ob=$('#f_obitImg'); if(ob) ob.onchange=()=>{ F.frame=ob.checked?1:0; ensureFrames(); refresh(); };
   const f=$('#famForm'); f.innerHTML=formHtml(F.kind); f.oninput=liveUpdate; f.onchange=liveUpdate;
-  try{ const mem=JSON.parse(localStorage.getItem('dOnFam')||'{}'); ['f_dept','f_name','f_title','f_sender'].forEach(id=>{ const e=document.getElementById(id); if(e&&mem[id]&&!e.value) e.value=mem[id]; }); }catch(e){}
+  if(REMEMBER_FILL) try{ const mem=JSON.parse(localStorage.getItem('dOnFam')||'{}'); ['f_dept','f_name','f_title','f_sender'].forEach(id=>{ const e=document.getElementById(id); if(e&&mem[id]&&!e.value) e.value=mem[id]; }); }catch(e){}
   if(F.form) Object.entries(F.form).forEach(([id,val])=>{ const e=document.getElementById(id); if(e) e.value=val; });
   const fg=$('#f_forget'); if(fg) fg.onclick=e=>{ e.preventDefault(); localStorage.removeItem('dOnFam'); ['f_dept','f_name','f_title','f_sender'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; }); toastF('기억한 값을 지웠습니다'); liveUpdate(); };
   // 관계에 따라 이름 칸 라벨을 바꾼다 — 「신부/신랑」으로 두면 아들 결혼에 아들 이름을 신부 칸에 적는 실수가 잦다
@@ -430,14 +431,14 @@ const SAMPLE={
 function fillSample(){ const m=SAMPLE[F.kind]||{}; Object.entries(m).forEach(([id,val])=>{ const e=document.getElementById(id); if(e) e.value=val; }); const rel=$('#f_rel'); if(rel) rel.dispatchEvent(new Event('change')); }
 function formHtml(kind){
   const common=`<div class="g3"><label><b>소속</b><input id="f_dept" placeholder="정보통신과"></label><label><b>이름</b><input id="f_name" placeholder="김달성"></label><label><b>직위</b><input id="f_title" placeholder="주무관"></label></div>`;
-  const sender=`<div class="grp"><b>발신 명의</b><div class="g2"><label><b>부서장</b><input id="f_sender" placeholder="정보통신과장 김정보"></label></div><p class="hint">소속·이름·직위·부서장은 이 PC에 기억해 두었다가 다음에 채워 줍니다 · <a href="#" id="f_forget">기억 지우기</a></p></div>`;
+  const sender=`<div class="grp"><b>발신 명의</b><div class="g2"><label><b>부서장</b><input id="f_sender" placeholder="정보통신과장 김정보"></label></div></div>`;
   if(kind==='wed') return `${common}<div class="g3" style="margin-top:10px"><label><b>관계</b><select id="f_rel">${REL_WED.map(r=>`<option>${r}</option>`).join('')}</select></label><label class="wchild"><b id="f_childLbl">자녀 이름</b><input id="f_child" placeholder="김하늘"></label><label class="wchild"><b id="f_partnerLbl">배우자 이름</b><input id="f_partner" placeholder="박비슬"></label><label class="wself" hidden><b id="f_spouseLbl">배우자 이름</b><input id="f_spouse" placeholder="박비슬"></label><label class="wself" hidden><b>배우자도 공무원인가요?</b><select id="f_spouseOff"><option value="">아니요</option><option value="y">예</option></select></label></div>
    <div class="g3 wselfOff" hidden style="margin-top:10px"><label><b>배우자 소속</b><input id="f_spouseDept" placeholder="수성구 범어동"></label><label><b>배우자 직위</b><input id="f_spouseTitle" placeholder="주무관"></label><label><b>배우자 쪽 부서장 <small>선택 · 비우면 우리 부서장 명의만</small></b><input id="f_sender2" placeholder="수성구 범어동장 ○○○"></label></div>
    <div class="grp"><b>일시 · 장소</b><div class="g2"><label><b>일시</b><input id="f_when" type="datetime-local"></label><label><b>예식장</b><input id="f_place" placeholder="노비아갈라 동촌 포레야홀"></label><label><b>주소</b><input id="f_addr" placeholder="대구광역시 동구 동촌로 87"></label><label><b>연락처</b><input id="f_tel" placeholder="010-0000-0000"></label></div>
    <label style="margin-top:10px"><b>마음 전하실 곳 <span class="chk inl"><input type="checkbox" id="f_bankImg" checked> 카드에도 넣기</span></b><input id="f_bank" placeholder="iM뱅크 000-00-000000 (김달성)"></label></div>${sender}`;
   if(kind==='obit') return `${common}<div class="g3" style="margin-top:10px"><label><b>관계</b><select id="f_rel">${REL_OBIT.map(r=>`<option>${r}</option>`).join('')}</select></label><label><b>별세일</b><input id="f_ddate" type="date"></label><label class="chk" style="align-self:end;margin-bottom:12px"><input type="checkbox" id="f_noVisit"> 가족장 · 조문 사양</label></div>
    <div class="grp"><b>빈소 · 발인 · 장지</b><div class="g2"><label><b>빈소</b><input id="f_place" placeholder="대구전문장례식장 특1호실"></label><label><b>주소</b><input id="f_addr" placeholder="대구 동구 금호강변로 71"></label><label><b>발인</b><input id="f_balin" type="datetime-local"></label><label><b>장지</b><input id="f_jangji" placeholder="대구명복공원"></label><label><b>연락처</b><input id="f_tel" placeholder="김달성 (010-0000-0000)"></label><label><b>마음 전하실 곳</b><input id="f_bank" placeholder="iM뱅크 000-00-000000 (김달성)"></label></div></div>${sender}`;
-  return `${common}<div class="g3" style="margin-top:10px"><label><b>행사일</b><input id="f_edate" type="date"></label><label><b>관계 <small>딸 하늘이 / 부친상</small></b><input id="f_rel2" placeholder="딸 하늘이"></label><label><b>맺음말</b><select id="f_close"><option>올림</option><option>배상</option><option>드림</option></select></label></div><p class="hint" style="margin-top:8px">소속·이름·직위는 이 PC에 기억해 두었다가 다음에 채워 줍니다 · <a href="#" id="f_forget">기억 지우기</a></p>`;
+  return `${common}<div class="g3" style="margin-top:10px"><label><b>행사일</b><input id="f_edate" type="date"></label><label><b>관계 <small>딸 하늘이 / 부친상</small></b><input id="f_rel2" placeholder="딸 하늘이"></label><label><b>맺음말</b><select id="f_close"><option>올림</option><option>배상</option><option>드림</option></select></label></div>`;
 }
 /* 값 수집: 폼이 화면에 없으면(①②단계) 저장본 또는 샘플로 */
 function collect(){
