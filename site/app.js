@@ -175,7 +175,7 @@ const HOME_MENU=[
   // ── 직원 생활 (개인 업무·경조사)
   {mode:'staff',view:'meal',   icon:'🍚', label:'급량비\n계산하기', cls:'sep', ready:1},
   {mode:'staff',view:'trip',   icon:'🚗', label:'출장비\n계산하기'},
-  {mode:'staff',view:'family', icon:'💐', label:'경조사 카드\n만들기'},
+  {mode:'staff',view:'family', icon:'💐', label:'경조사 카드\n만들기', ready:1},
   // ── 알리기 · 홍보물 만들기
   {mode:'staff',view:'press',  icon:'📰', label:'보도자료\n작성하기', cls:'sep', ready:1},
   {mode:'staff',view:'banner', icon:'🎏', label:'홍보 현수막\n제작하기'},
@@ -777,3 +777,6 @@ try{ const th=localStorage.getItem('dOnTheme'); if(th){ document.body.dataset.th
 
 init().catch(e=>{ addMsg('ai','자료 색인을 불러오지 못했습니다: '+e.message); });
 })();
+
+// 사이트를 열 때 AI 생성 함수를 미리 깨워 둔다 (Netlify 콜드스타트 → 경조사 카드에서 바로 눌러도 지연 없이)
+try{ fetch("/api/card",{method:"POST",headers:{"content-type":"application/json"},body:"{\"ping\":1}"}).catch(()=>{}); }catch(e){}

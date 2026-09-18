@@ -256,9 +256,12 @@ function panelPhoto(){
   const dz=$('#f_drop'); dz.ondragover=e=>{ e.preventDefault(); dz.classList.add('over'); }; dz.ondragleave=()=>dz.classList.remove('over'); dz.ondrop=e=>{ e.preventDefault(); dz.classList.remove('over'); onFile(e.dataTransfer.files[0]); };
   $('#f_sample').onclick=loadSamplePhoto;
   const needPhoto=()=>{ if(F.photo) return false; const n=$('#f_photoNote'); n.textContent='먼저 사진을 올려 주세요'; n.classList.add('warn'); $('#f_drop .fam3-empty')?.classList.add('shake'); setTimeout(()=>{ n.classList.remove('warn'); $('#f_drop .fam3-empty')?.classList.remove('shake'); },1600); return true; };
+  // 「AI 디자인 만들기」: 누르면 반드시 한 장 생성이 시작되게 한다 (서버 확인 중이면 기다렸다가, 이미 그리는 중이 아니면 새로 시작)
   $('#f_next').onclick=async()=>{ if(!F.photo){ F.noPhoto=true; F.pic=null; } F.autoAI=true; goStep(1);
-    if(F.ai==null){ loading(true,'🤖 AI 서버에 연결하는 중…','잠시만 기다려 주세요'); try{ await F.aiProbe; }catch(e){} if(F.step===1){ if(F.ai) ensureFrames(); else showFail('AI 생성 서버에 연결되지 않았습니다'); } }
-    else if(!F.ai){ showFail('AI 생성 서버에 연결되지 않았습니다'); } }; $('#f_nextPlain').onclick=()=>{ if(!F.photo){ F.noPhoto=true; F.pic=null; } F.autoAI=false; goStep(1); };
+    if(F.ai==null){ loading(true,'🤖 AI 서버에 연결하는 중…','잠시만 기다려 주세요'); try{ await F.aiProbe; }catch(e){} }
+    if(F.step!==1) return;
+    if(!F.ai){ showFail('AI 생성 서버에 연결되지 않았습니다'); return; }
+    if(!F.frames.some(f=>f.pending)){ F.aiStarted=(F.pic||'')+'|'+orient()+'|'+F.kind+'|'+F.tkind; makeFrame(true); } }; $('#f_nextPlain').onclick=()=>{ if(!F.photo){ F.noPhoto=true; F.pic=null; } F.autoAI=false; goStep(1); };
   $$('#famMain [data-ill]').forEach(b=>b.onclick=()=>{ if(needPhoto()) return; makeIllust(b.dataset.ill); });
   renderPics(); probeAI();
 }
