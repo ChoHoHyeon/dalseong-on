@@ -7,7 +7,7 @@
    ═══════════════════════════════════════════════════════════════════ */
 (function(){
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const F={kind:'wed', step:0, photo:null, pw:0, ph:0, illusts:[], pic:null, picKind:'photo', frames:[], frame:null, img:'', orient:'auto', tkind:'wed', theme:null, hist:[]};
+const F={kind:'wed', step:0, noSample:true, photo:null, pw:0, ph:0, illusts:[], pic:null, picKind:'photo', frames:[], frame:null, img:'', orient:'auto', tkind:'wed', theme:null, hist:[]};
 const DOW=['일','월','화','수','목','금','토'];
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
@@ -200,7 +200,7 @@ function build(){
   const root=$('#famApp'); if(!root||root.dataset.built) return; root.dataset.built=1;
   root.innerHTML=`
   <div class="fam3-head"><div class="fam2-tabs" id="famKinds"><button class="on" data-k="wed">💐 결혼</button><button data-k="obit">🕊 부고</button><button data-k="thanks">🙏 감사 인사</button></div>
-   <span class="hint" style="opacity:.7"><a href="#" id="famFill">샘플 채우기</a> · <a href="#" id="famEmpty">비우기</a></span></div>
+   </div>
   <div class="fam3-steps"><span id="famSteps" class="row" style="gap:8px;margin:0"></span><span id="famOrientWrap" style="margin-left:18px;padding-left:18px;border-left:1px solid var(--line)">${orientSeg('카드 방향')}</span></div>
   <div class="fam3-cols">
    <div class="fam3-left">
@@ -216,8 +216,6 @@ function build(){
   $('#famShowTxt').onclick=e=>{ e.preventDefault(); showPost(!$('#famTextWrap').hidden?false:true); };
   bindOrient(); $('#famPickTgl').onclick=e=>{ e.preventDefault(); const b=$('#f_frames'); b.hidden=!b.hidden; if(!b.hidden) renderFrames(); };
   $('#famPreview').onclick=()=>{ if(!F.img) return; let m=$('#mCard'); if(!m){ m=document.createElement('div'); m.className='modal'; m.id='mCard'; m.innerHTML='<div class="box cardbox"><div class="box-h"><b>카드 미리보기</b><button class="x" data-close>✕</button></div><img></div>'; document.body.appendChild(m); m.onclick=e=>{ if(e.target===m||e.target.closest('[data-close]')) m.hidden=true; }; } m.querySelector('img').src=F.img; m.hidden=false; };
-  $('#famFill').onclick=e=>{ e.preventDefault(); F.noSample=false; F.data=null; if(F.kind==='wed'&&!F.photo) loadSamplePhoto(); goStep(F.kind==='wed'?0:0); };
-  $('#famEmpty').onclick=e=>{ e.preventDefault(); F.noSample=true; F.data=null; resetKind(); };
   root.addEventListener('click',e=>{ const b=e.target.closest('[data-copy]'); if(!b) return; const el=document.getElementById(b.dataset.copy); (navigator.clipboard?navigator.clipboard.writeText(el.value):Promise.reject()).then(()=>toastF('복사했습니다'),()=>{ el.select(); document.execCommand('copy'); toastF('복사했습니다'); }); });
   probeAI(); resetKind();
 }
@@ -381,7 +379,7 @@ function overlayCard(fr,d){
 /* ── ③ 내용 입력 ── */
 function panelText(){
   const m=$('#famMain'); const wed=F.kind==='wed';
-  m.innerHTML=`<h4>${wed?'②':'①'} 내용 입력 <small>적는 대로 오른쪽 카드에 바로 적용됩니다</small></h4>
+  m.innerHTML=`<h4>${wed?'②':'①'} 내용 입력 <small>적는 대로 오른쪽 카드에 바로 적용됩니다</small><span style="margin-left:auto;font-size:12.5px;font-weight:500;opacity:.75"><a href="#" id="famFill">샘플 채우기</a> · <a href="#" id="famEmpty">비우기</a></span></h4>
    <div class="row rw" style="margin-bottom:10px">
     ${F.kind==='thanks'?`<div class="seg2" id="f_tkind"><button data-v="wed" class="${F.tkind==='wed'?'on':''}">결혼 감사</button><button data-v="fun" class="${F.tkind==='fun'?'on':''}">조문 감사</button></div>`:''}
     ${F.kind==='obit'?`<label class="chk"><input type="checkbox" id="f_obitImg" ${F.frame&&F.frame>0?'checked':''}> <span>텍스트에 더해 <b>이미지 카드도</b> 만들기 <span class="hint">· 부고는 텍스트가 기본</span></span></label>`:''}
@@ -400,6 +398,8 @@ function panelText(){
     const dau=isDaughter(rel.value); const cl=$('#f_childLbl'), pl=$('#f_partnerLbl'); if(cl) cl.innerHTML=dau?'딸 이름 <small>신부</small>':'아들 이름 <small>신랑</small>'; if(pl) pl.innerHTML=dau?'신랑 이름 <small>상대측</small>':'신부 이름 <small>상대측</small>';
     const ci=$('#f_child'), pi=$('#f_partner'); if(ci) ci.placeholder=dau?'김하늘':'박비슬'; if(pi) pi.placeholder=dau?'박비슬':'김하늘'; }; rel.addEventListener('change',sync); const so=$('#f_spouseOff'); if(so) so.addEventListener('change',sync); sync(); }
   if(!F.noSample&&!F.form) fillSample();
+  $('#famFill').onclick=e=>{ e.preventDefault(); F.noSample=false; fillSample(); liveUpdate(); };
+  $('#famEmpty').onclick=e=>{ e.preventDefault(); F.noSample=true; F.form=null; $$('#famForm input,#famForm select').forEach(el=>{ if(el.type==='checkbox') el.checked=el.id==='f_bankImg'; else if(el.tagName==='SELECT') el.selectedIndex=0; else el.value=''; }); const rel=$('#f_rel'); if(rel) rel.dispatchEvent(new Event('change')); liveUpdate(); };
   $('#f_done').onclick=()=>{ F.form=snapshot(); try{ localStorage.setItem('dOnFam',JSON.stringify({f_dept:v('f_dept'),f_name:v('f_name'),f_title:v('f_title'),f_sender:v('f_sender')})); }catch(e){} download(); };
   ensureFrames(); liveUpdate();
 }
