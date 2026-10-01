@@ -181,7 +181,13 @@ function judge(r,c){
 function run(text){
   const all=parse(text);
   if(!all.length) return false;   // 실패 안내는 드롭존이 맡는다
-  const ym0=($('#mlYm').value||'').trim()||all[0].date.slice(0,7);
+  /* 기준월 결정 — 칸에 적힌 달이 확인서에 없으면(예: 예시 8월을 돌린 뒤 9월 확인서를 올린 경우)
+     확인서에 가장 많이 나오는 달로 바꾼다. 그대로 두면 전부 걸러져 「형식이 아님」으로 잘못 안내된다 */
+  const cnt={}; for(const r of all){ const m=r.date.slice(0,7); cnt[m]=(cnt[m]||0)+1; }
+  const top=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0];
+  const typed=($('#mlYm').value||'').trim();
+  const ym0=(typed && cnt[typed]) ? typed : top;
+  if(typed && typed!==ym0) $('#mlYm').value=ym0;
   const d0=[...new Set(all.filter(r=>r.date.startsWith(ym0)).map(r=>r.dept))];
   if(d0.length===1) useProfile(d0[0]);   // 확인서의 과로 저장 칸을 나눈다
   const c=cfgRead(); S.cfg=c;
