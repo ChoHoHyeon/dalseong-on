@@ -27,6 +27,15 @@ export default async (req) => {
     let b;
     try { b = await req.json(); } catch { return json({ error: "형식이 올바르지 않습니다" }, 400); }
 
+    // 공감 누르기/취소 — 공감 수(likes)만 따로 센다 (화면 폭 w 와 섞지 않음)
+    if (b.action === "like") {
+      const list = (await store.get(KEY, { type: "json" })) || [];
+      const i = list.findIndex(x => x.id === b.id); if (i < 0) return json({ error: "없는 글입니다" }, 404);
+      list[i].likes = Math.max(0, (list[i].likes || 0) + (b.on ? 1 : -1));
+      await store.setJSON(KEY, list);
+      return json({ ok: true, likes: list[i].likes });
+    }
+
     const text = cut(b.text, 1000).trim();
     if (!text) return json({ error: "내용을 적어 주세요" }, 400);
 

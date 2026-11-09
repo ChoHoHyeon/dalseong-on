@@ -25,11 +25,13 @@ function render(){
   const rows=ST.list.filter(x=>ST.filter==='all'||kindOf(x)===ST.filter);
   $('#shCount').textContent=`${rows.length}건`;
   if(!rows.length){ $('#shList').innerHTML='<li class="sh-empty">아직 올라온 글이 없습니다. 첫 제안을 남겨 주세요 🙂</li>'; return; }
-  $('#shList').innerHTML=rows.map(x=>{ const [t,bd]=(x.text||'').split('\n',2); const body=(x.text||'').slice(t.length+1); const [kn,kc,kb]=KIND[kindOf(x)]; const bugWhere=BUGK[x.kind]&&x.where&&!['접수','검토','반영'].includes(x.where)?` <small class="sh-where">· ${esc(x.where)} 화면</small>`:''; const liked=!!LIKES[x.id]; const n=(x.w||0)+(liked?1:0);
+  $('#shList').innerHTML=rows.map(x=>{ const [t,bd]=(x.text||'').split('\n',2); const body=(x.text||'').slice(t.length+1); const [kn,kc,kb]=KIND[kindOf(x)]; const bugWhere=BUGK[x.kind]&&x.where&&!['접수','검토','반영'].includes(x.where)?` <small class="sh-where">· ${esc(x.where)} 화면</small>`:''; const liked=!!LIKES[x.id]; const n=x.likes||0;
     return `<li class="sh-item"><div class="sh-top"><span class="sh-kind" style="color:${kc};background:${kb}">${kn}</span><b>${esc(t)}</b>${bugWhere}<span class="sh-meta">${esc(x.who||'익명')} · ${new Date(x.at).toLocaleDateString('ko-KR')}</span></div>
       ${body?`<p class="sh-body">${esc(body)}</p>`:''}
       <div class="sh-act"><button class="sh-like${liked?' on':''}" data-id="${x.id}">👍 공감 ${n}</button><span class="sh-state">${stOf(x)==='반영'?'✅ 반영됨':stOf(x)==='검토'?'🔍 검토 중':'📨 접수'}</span></div></li>`; }).join('');
-  $('#shList').querySelectorAll('.sh-like').forEach(b=>b.onclick=()=>{ const id=b.dataset.id; LIKES[id]=!LIKES[id]; try{ localStorage.setItem(LS,JSON.stringify(LIKES)); }catch(e){} render(); });
+  $('#shList').querySelectorAll('.sh-like').forEach(b=>b.onclick=async()=>{ const id=b.dataset.id, on=!LIKES[id]; const x=ST.list.find(y=>y.id===id); if(!x) return;
+    LIKES[id]=on; x.likes=Math.max(0,(x.likes||0)+(on?1:-1)); try{ localStorage.setItem(LS,JSON.stringify(LIKES)); }catch(e){} render();
+    try{ const r=await fetch('/api/bugs',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'like',id,on})}); const j=await r.json(); if(j.ok){ x.likes=j.likes; render(); } }catch(e){} });
 }
 async function submit(){
   if(ST.busy) return; const kind=$('#shKind').value, title=($('#shTitle').value||'').trim(), body=($('#shBody').value||'').trim(), who=($('#shWho').value||'').trim();
@@ -37,7 +39,7 @@ async function submit(){
   if(/\d{6}-\d{7}|01\d-?\d{3,4}-?\d{4}/.test(title+body)){ $('#shMsg').textContent='주민등록번호·휴대전화번호로 보이는 내용은 올릴 수 없습니다.'; return; }
   ST.busy=true; $('#shSend').disabled=true; $('#shMsg').textContent='올리는 중…';
   try{
-    const r=await fetch('/api/bugs',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({kind,where:'접수',text:title+'\n'+body,who,w:0})});
+    const r=await fetch('/api/bugs',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({kind,where:'접수',text:title+'\n'+body,who})});
     if(!r.ok) throw new Error(await r.text());
     $('#shTitle').value=''; $('#shBody').value=''; $('#shMsg').textContent='✓ 올라갔습니다 — 고맙습니다! 검토 후 반영 여부를 표시합니다.'; await load();
   }catch(e){ $('#shMsg').textContent='⚠ 올리지 못했습니다: '+e.message; }
