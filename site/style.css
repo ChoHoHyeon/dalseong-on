@@ -1494,3 +1494,16 @@ body[data-theme=dark] .bugnote{background:rgba(217,138,0,.14);color:#f0d9a6;bord
 body[data-theme=dark] .cd{background:linear-gradient(145deg,#2a3247,#1f2638);box-shadow:4px 4px 10px rgba(0,0,0,.4),-3px -3px 8px rgba(255,255,255,.04)}
 body[data-theme=dark] .cd .n{color:#dfe6f3}
 @media (max-width:1000px){.cd{min-height:56px;border-radius:14px}.cd .ev{display:none}.cd.has::after{content:'';position:absolute;bottom:6px;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#1d5fd6}}
+.cd::before{left:auto;right:10%;top:7%;width:34%;height:16%}
+.cd .n{z-index:1}
+.cd .ev{display:flex;gap:3px;align-items:center;min-width:0}.cd .ev em{flex:none}
+/* 하단 두 칸 아래끝을 왼쪽 메뉴 박스 아래끝(=본문 아래끝)에 맞춤 */
+.hm-row{align-items:stretch}
+.hm-col>.card{margin:0}
+.hm-col>.card:last-child{flex:1;display:flex;flex-direction:column}
+.hm-col>.card:last-child .hm-recent{flex:1}
+.cal-card{display:flex;flex-direction:column}.cal-card .cal-up{margin-top:auto;padding-top:12px}
+/* 다가오는 일정 3줄 자리 고정 — 일정 개수와 상관없이 카드 높이 일정 */
+.cal-up{min-height:calc(3 * 38px + 2 * 6px + 12px);justify-content:flex-start}
+.cal-up li{min-height:38px;box-sizing:border-box}
+.cal-up li.none{display:flex;align-items:center;justify-content:center;flex:1}

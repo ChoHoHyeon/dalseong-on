@@ -8,7 +8,8 @@
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const KEY='dsOn.cal';
-const COLORS=['#1d5fd6','#12a15f','#f08c00','#d6336c','#7048e8'];
+const COLORS=['#e03131','#f08c00','#ca8a04','#12a15f','#0ea5e9','#1d5fd6','#7048e8'];   // 빨강·주황·노랑·초록·하늘·파랑·보라
+const DEF='#1d5fd6';
 const HOL={'2026-01-01':'신정','2026-02-16':'설날','2026-02-17':'설날','2026-02-18':'설날','2026-03-01':'삼일절','2026-03-02':'대체공휴일','2026-05-05':'어린이날','2026-05-24':'부처님오신날','2026-05-25':'대체공휴일','2026-06-03':'지방선거','2026-06-06':'현충일','2026-08-15':'광복절','2026-08-17':'대체공휴일','2026-09-24':'추석','2026-09-25':'추석','2026-09-26':'추석','2026-10-03':'개천절','2026-10-05':'대체공휴일','2026-10-09':'한글날','2026-12-25':'성탄절',
   '2027-01-01':'신정','2027-02-06':'설날','2027-02-07':'설날','2027-02-08':'설날','2027-02-09':'대체공휴일','2027-03-01':'삼일절','2027-05-05':'어린이날','2027-05-13':'부처님오신날','2027-06-06':'현충일','2027-08-15':'광복절','2027-08-16':'대체공휴일','2027-09-14':'추석','2027-09-15':'추석','2027-09-16':'추석','2027-10-03':'개천절','2027-10-04':'대체공휴일','2027-10-09':'한글날','2027-10-11':'대체공휴일','2027-12-25':'성탄절'};
 const C={y:0,m:0,edit:null,day:null};
@@ -26,7 +27,7 @@ function render(){
     const k=ymd(y,m,d), ev=L.filter(e=>e.d===k).sort((a,b)=>(a.t||'99').localeCompare(b.t||'99')), dow=(first+d-1)%7;
     const cls=['cd',k===td?'today':'',dow===0||HOL[k]?'sun':'',dow===6?'sat':'',ev.length?'has':''].join(' ');
     h+=`<div class="${cls}" data-d="${k}" tabindex="0"><span class="n">${d}</span>${HOL[k]?`<span class="hol">${HOL[k]}</span>`:''}
-      ${ev.slice(0,2).map(e=>`<span class="ev" data-id="${e.id}" style="--c:${e.c||COLORS[0]}">${e.t?`<em>${e.t}</em>`:''}${esc(e.title)}</span>`).join('')}${ev.length>2?`<span class="more">+${ev.length-2}</span>`:''}</div>`;
+      ${ev.slice(0,2).map(e=>`<span class="ev" data-id="${e.id}" style="--c:${e.c||DEF}">${e.t?`<em>${e.t}</em>`:''}${esc(e.title)}</span>`).join('')}${ev.length>2?`<span class="more">+${ev.length-2}</span>`:''}</div>`;
   }
   $('#calGrid').innerHTML=h;
   $('#calGrid').querySelectorAll('.cd[data-d]').forEach(el=>{
@@ -36,14 +37,14 @@ function render(){
   // 다가오는 일정
   const up=L.filter(e=>e.d>=td).sort((a,b)=>(a.d+(a.t||'')).localeCompare(b.d+(b.t||''))).slice(0,3);
   $('#calUp').innerHTML=up.length?up.map(e=>{ const dd=new Date(e.d+'T00:00:00'), diff=Math.round((dd-new Date(td+'T00:00:00'))/864e5);
-    return `<li data-id="${e.id}"><i style="background:${e.c||COLORS[0]}"></i><b>${esc(e.title)}</b><small>${dd.getMonth()+1}/${dd.getDate()}${e.t?' '+e.t:''}</small><em>${diff===0?'오늘':'D-'+diff}</em></li>`; }).join('')
+    return `<li data-id="${e.id}"><i style="background:${e.c||DEF}"></i><b>${esc(e.title)}</b><small>${dd.getMonth()+1}/${dd.getDate()}${e.t?' '+e.t:''}</small><em>${diff===0?'오늘':'D-'+diff}</em></li>`; }).join('')
     :'<li class="none">날짜를 누르면 일정을 넣을 수 있어요 ✍️</li>';
   $('#calUp').querySelectorAll('li[data-id]').forEach(li=>li.onclick=()=>openEdit(li.dataset.id));
 }
-function openDay(d){ C.edit=null; C.day=d; fill({title:'',t:'',memo:'',c:COLORS[0]}); $('#calDel').hidden=true; $('#calPopTitle').textContent=label(d)+' 일정 추가'; show(); }
+function openDay(d){ C.edit=null; C.day=d; fill({title:'',t:'',memo:'',c:DEF}); $('#calDel').hidden=true; $('#calPopTitle').textContent=label(d)+' 일정 추가'; show(); }
 function openEdit(id){ const e=load().find(x=>x.id===id); if(!e) return; C.edit=id; C.day=e.d; fill(e); $('#calDel').hidden=false; $('#calPopTitle').textContent=label(e.d)+' 일정'; show(); }
 const label=d=>{ const x=new Date(d+'T00:00:00'); return `${x.getMonth()+1}월 ${x.getDate()}일(${'일월화수목금토'[x.getDay()]})`; };
-function fill(e){ $('#calIn').value=e.title||''; $('#calTime').value=e.t||''; $('#calMemo').value=e.memo||''; $('#calDate').value=C.day; C.c=e.c||COLORS[0]; $('#calColors').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.c===C.c)); }
+function fill(e){ $('#calIn').value=e.title||''; $('#calTime').value=e.t||''; $('#calMemo').value=e.memo||''; $('#calDate').value=C.day; C.c=e.c||DEF; $('#calColors').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.c===C.c)); }
 function show(){ $('#calPop').hidden=false; setTimeout(()=>$('#calIn').focus(),30); }
 function hide(){ $('#calPop').hidden=true; }
 function commit(){
