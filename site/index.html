@@ -153,97 +153,68 @@
     </section>
 
     <!-- 결과보고서 작성하기 (세부 내역 추후 확정) -->
-    <!-- 공문 초안 작성하기 (세부 내역 추후 확정) -->
-    <section class="view" data-view="draft">
-      <div class="vh"><h2>공문 초안 작성하기</h2><p>보내려는 내용만 적으면 달성군 공문 서식에 맞춘 시행문 초안을 만들어 주는 화면입니다.</p></div>
-      <div class="card flowcard">
-        <h4>이렇게 씁니다 <small>3단계면 끝납니다</small></h4>
-        <ol class="flow3">
-          <li><span class="fnum">1</span><span class="fico" aria-hidden="true">✍️</span>
-            <span class="ftx"><b>요지 입력</b><small>유형(안내·협조·제출 등)을 고르고 보내려는 내용만 적습니다</small></span></li>
-          <li class="farr" aria-hidden="true">→</li>
-          <li><span class="fnum">2</span><span class="fico" aria-hidden="true">✨</span>
-            <span class="ftx"><b>달성On이 초안 작성</b><small>항목 기호(1. 가. 1))·날짜 표기·붙임·「끝.」까지 공문 작성 기준대로</small></span></li>
-          <li class="farr" aria-hidden="true">→</li>
-          <li><span class="fnum">3</span><span class="fico" aria-hidden="true">📄</span>
-            <span class="ftx"><b>복사 또는 한글 파일</b><small>온나라 본문에 붙여 넣거나 hwpx로 내려받습니다</small></span></li>
-        </ol>
-        <p class="flownote">※ <b>마지막 확인은 담당자가</b> 합니다. 수신자·날짜·근거 공문번호·금액은 반드시 검토 후 기안하세요.</p>
-      </div>
-
+    <!-- 조례·지침 초안 만들기 (세부 내역 추후 확정) -->
+    <section class="view" data-view="rule">
+      <div class="vh"><h2>조례·지침 초안 만들기</h2><p>현행 조문과 개정 요지를 넣으면 개정안과 신구조문대비표를, 목적·내용을 넣으면 제정 조례·내부지침 조문 체계를 잡아 주는 화면입니다.</p></div>
       <div class="card pcard">
-        <h4>공문 초안 만들기 <small>「행정 효율과 협업 촉진에 관한 규정 시행규칙」 문서 작성 기준</small></h4>
+        <h4>초안 만들기 <small>「지방자치법」 제28조 · 법제처 자치법규 입안 기준</small></h4>
         <div class="pcols">
         <fieldset class="pbox req-box">
           <legend>꼭 입력해 주세요</legend>
-          <label class="pfull"><span class="cap">문서 유형 <b class="req">*</b></span>
-            <select id="dfKind">
-              <option value="notice">안내</option><option value="coop">협조 요청</option><option value="submit">제출 요청</option>
-              <option value="report">보고·통보</option><option value="reply">회신</option><option value="plan">계획 알림</option><option value="internal">내부결재(품의)</option>
-            </select><small class="hint" id="dfKindHint"></small></label>
-          <label class="pfull"><span class="cap">보내려는 내용(요지) <b class="req">*</b></span>
-            <textarea id="dfGist" rows="8" placeholder="한 줄에 하나씩 — 무엇을·누구에게·언제까지·왜&#10;예) 하반기 정보화교육 수요조사&#10;과목·인원·시기를 붙임 서식에 작성&#10;11. 14.까지 정보통신과로 제출"></textarea></label>
-          <label class="pfull"><span class="cap">수신 <small class="hint">비우면 「수신자 참조」</small></span>
-            <input id="dfTo" placeholder="예) 각 실·과·소·읍·면장 / 대구광역시장(정보화담당관)"></label>
+          <label class="pfull"><span class="cap">작업 <b class="req">*</b></span>
+            <select id="ruMode" class="psel"><option value="amend">일부개정 (개정안 + 신구조문대비표)</option><option value="new">제정 조례 · 내부지침 초안</option></select></label>
+          <label class="pfull"><span class="cap">조례·지침 이름 <b class="req">*</b></span><input id="ruName" placeholder="예) 달성군 ○○ 지원 조례"></label>
+          <label class="pfull" id="ruCurWrap"><span class="cap">현행 조문 <b class="req">*</b> <small class="hint">자치법규정보시스템에서 복사해 붙여넣기 (바꿀 조문만)</small></span>
+            <textarea id="ruCur" rows="7" placeholder="제5조(○○) ① 군수는 …&#10;② …&#10;&#10;제7조(○○) 군수는 … 할 수 있다."></textarea></label>
+          <label class="pfull"><span class="cap" id="ruGistCap">개정 요지 <b class="req">*</b></span><textarea id="ruGist" rows="5"></textarea></label>
         </fieldset>
-
         <fieldset class="pbox opt-box">
-          <legend>선택 입력 <span class="optnote">모르는 값은 비워 두면 <b class="miss">○○</b>로 표시됩니다</span></legend>
-          <label class="pfull">제목(참고)<input id="dfSubject" placeholder="비우면 요지에 맞게 명사형으로 만듭니다"></label>
-          <label class="pfull">관련 근거<input id="dfRef" placeholder="예) 정보통신과-12345(2026. 10. 20.) 「○○ 운영 계획」"></label>
-          <label class="pfull">붙임 <small class="hint">한 줄에 하나</small><textarea id="dfAtt" rows="2" placeholder="예) 수요조사서(서식) 1부"></textarea></label>
-          <div class="pgrid pgrid2">
-            <label>제출·회신 기한<input id="dfDue" type="date"></label>
-            <label>시행일<input id="dfDate" type="date"></label>
-            <label>경유<input id="dfVia" placeholder="예) 행정국장"></label>
-            <label>발신 명의<input id="dfSign" placeholder="달성군수"></label>
-            <label>담당부서<input id="dfDept" placeholder="정보통신과"></label>
-            <label>담당자<input id="dfPic" placeholder="예) 조호현"></label>
-            <label>전화<input id="dfTel" placeholder="예) 053)668-2454"></label>
-          </div>
+          <legend>선택 입력</legend>
+          <label class="pfull">상위 법령·위임근거 <small class="hint">비우면 권리제한·의무부과·벌칙 조문은 만들지 않고 확인 요청으로 돌립니다</small><input id="ruBase" placeholder="예) 「공공데이터의 제공 및 이용 활성화에 관한 법률」 제12조"></label>
+          <p class="hint" style="margin-top:10px">※ <b>초안 작성까지만</b> 지원합니다. 법제심사·조례규칙심의회·의회 의결 절차는 그대로이며, 위임근거가 확인되지 않는 조문은 생성하지 않고 담당자 확인을 요청합니다.<br>※ 신구조문대비표는 「복사」하면 <b>표 형태로 한글에 붙여넣기</b>됩니다.</p>
         </fieldset>
         </div>
-        <div class="pact">
-          <button id="dfGo" class="p">공문 초안 만들기</button>
-          <button id="dfSample">예시로 채우기</button>
-          <button id="dfReset">비우기</button>
-          <span class="hint" id="dfMsg"></span>
-        </div>
+        <div class="pact"><button id="ruGo" class="p">초안 만들기</button><button id="ruSample">예시로 채우기</button><button id="ruReset">비우기</button><span class="hint" id="ruMsg"></span></div>
       </div>
-
-      <div class="card pout" id="draftOut" hidden>
-        <h4>생성된 초안 <small>담당자 검토 후 사용하세요</small></h4>
-        <div class="pv gmwrap" id="draftView"></div>
-        <div class="pact">
-          <button id="dfHwpx" class="p">📄 한글 파일로 내려받기</button>
-          <button id="dfCopy">복사 (온나라 본문에 붙이기)</button>
-          <button id="dfAgain">다시 생성</button>
-        </div>
-        <p class="hint" style="margin-top:10px">※ 미리보기는 시행문 본문 기준입니다. 문서번호·결재선·직인은 온나라(전자문서시스템)에서 기안 시 자동 부여됩니다.</p>
+      <div class="card pout" id="ruleOut" hidden>
+        <h4>생성된 초안 <small>법무 검토 전 담당자 확인용</small></h4>
+        <div class="pv rpwrap" id="ruleView"></div>
+        <div class="pact"><button id="ruHwpx" class="p">📄 한글 파일로 내려받기</button><button id="ruCopy">복사 (대비표는 표로)</button><button id="ruAgain">다시 생성</button></div>
       </div>
-    </section>
-
-    <!-- 조례·지침 초안 만들기 (세부 내역 추후 확정) -->
-    <section class="view" data-view="rule">
-      <div class="vh"><h2>조례·지침 초안 만들기</h2><p>자치법규·내부지침을 만들거나 고칠 때 조문 체계와 신구조문대비표까지 잡아 주는 화면입니다.</p></div>
-      <div class="card soon-card"><h4>준비 중 <small>메뉴 자리만 잡아둔 화면입니다</small></h4>
-        <ul class="soon-list"><li><b>신구조문대비표 자동 작성</b> — 개정 전·후 조문을 좌우로 대조 (개정 실무에서 가장 손이 많이 가는 작업)</li><li><b>내부지침·훈령·예규 초안 작성</b> (목적-정의-적용범위-절차-서식 체계 자동 구성)</li><li><b>표준조례안 대조</b> — 부처 시달 표준(안)과 우리 군 조례의 차이 확인</li><li><b>타 지자체 조례 비교</b> (자치법규정보시스템 연계 시 · 2단계)</li><li><b>법령 용어·조문 번호 체계 자구 정리</b> (제1항 → 1. → 가. → 1) 등)</li></ul>
-        <p class="hint" style="margin-top:12px">※ <b>초안 작성까지만 지원하며, 법제심사·조례규칙심의회·의회 의결 절차는 그대로 유지</b>합니다. 「지방자치법」 제28조에 따라 조례는 법령의 범위에서 제정하여야 하고, 주민의 권리 제한·의무 부과·벌칙은 법률의 위임이 있어야 하므로, <b>위임근거가 확인되지 않는 조문은 생성하지 않고 담당자에게 확인을 요청</b>하는 방식으로 검토합니다. 세부 기능·화면 구성은 협의 후 확정합니다.</p></div>
-    </section>
-
-    <section class="view" data-view="report">
-      <div class="vh"><h2>보고서 작성하기</h2><p>추진계획서·결과보고서 등 각종 보고서를 달성군 서식에 맞춰 초안까지 만들어 주는 화면입니다.</p></div>
-      <div class="card soon-card"><h4>준비 중 <small>메뉴 자리만 잡아둔 화면입니다</small></h4>
-        <ul class="soon-list"><li><b>사업명·기간·예산 입력 → 보고서 초안 자동 생성</b> (추진계획 · 결과보고 · 중간보고 등 유형 선택)</li><li><b>추진 실적·기대효과 문단 작성 지원</b></li><li><b>달성군 서식 한글(hwpx) 파일로 내려받기</b></li></ul>
-        <p class="hint" style="margin-top:12px">세부 기능·화면 구성은 협의 후 확정합니다.</p></div>
     </section>
 
     <!-- 회의록 정리하기 (세부 내역 추후 확정) -->
     <section class="view" data-view="minutes">
-      <div class="vh"><h2>회의록 정리하기</h2><p>회의 녹음 파일을 텍스트로 바꾸고, 안건별 회의록 초안까지 만들어 주는 화면입니다.</p></div>
-      <div class="card soon-card"><h4>준비 중 <small>메뉴 자리만 잡아둔 화면입니다</small></h4>
-        <ul class="soon-list"><li><b>녹음 파일 올리기 → 텍스트 변환</b> (mp3·m4a·wav)</li><li><b>안건별 정리 · 결정사항 · 후속조치 자동 추출</b></li><li><b>달성군 회의록 서식 한글(hwpx) 파일로 내려받기</b></li></ul>
-        <p class="hint" style="margin-top:12px">※ 음성 변환은 업무망 자체 서버에서 처리하여 녹음 파일이 외부로 전송되지 않는 구조로 검토합니다. 세부 기능·화면 구성은 협의 후 확정합니다.</p></div>
+      <div class="vh"><h2>회의록 정리하기</h2><p>회의 중 적은 메모나 녹취 텍스트를 붙여넣으면 안건별 논의 요지·결정사항·후속조치로 정리한 회의록 초안을 만들어 주는 화면입니다.</p></div>
+      <div class="card pcard">
+        <h4>회의록 정리하기 <small>메모 → 안건별 정리 → 한글 파일</small></h4>
+        <div class="pcols">
+        <fieldset class="pbox req-box">
+          <legend>꼭 입력해 주세요</legend>
+          <label class="pfull"><span class="cap">회의명 <b class="req">*</b></span><input id="mtName" placeholder="예) 2026년 ○○ 추진 회의"></label>
+          <label class="pfull"><span class="cap">회의 메모·녹취 내용 <b class="req">*</b> <small class="hint">발언 순서대로 대충 적은 메모면 충분합니다</small></span>
+            <textarea id="mtNotes" rows="10" placeholder="과장: 11월 말 제출이니 담당 이번 주에 정하자&#10;팀장: 2지표는 결재만 남음, 다음 주 월요일 상신&#10;…"></textarea></label>
+        </fieldset>
+        <fieldset class="pbox opt-box">
+          <legend>선택 입력 <span class="optnote">비우면 <b class="miss">○○</b>로 표시됩니다</span></legend>
+          <div class="pgrid pgrid2">
+            <label>일자<input id="mtDate" type="date"></label>
+            <label>시각<input id="mtTime" placeholder="예) 14:00"></label>
+            <label>장소<input id="mtPlace" placeholder="예) 군청 3층 소회의실"></label>
+            <label>작성 부서<input id="mtDept" placeholder="행정국 정보통신과"></label>
+          </div>
+          <label class="pfull">참석자<input id="mtWho" placeholder="예) 정보통신과장, 정보통계팀장, ○○○ 주무관"></label>
+          <label class="pfull">안건 <small class="hint">한 줄에 하나, 비우면 메모에서 파악</small><textarea id="mtAgenda" rows="3"></textarea></label>
+          <p class="hint" style="margin-top:8px">※ 녹음 파일 변환은 넣지 않았습니다(외부 전송 문제). 비공개 사항·개인정보가 담긴 내용은 입력하지 마세요.</p>
+        </fieldset>
+        </div>
+        <div class="pact"><button id="mtGo" class="p">회의록 정리하기</button><button id="mtSample">예시로 채우기</button><button id="mtReset">비우기</button><span class="hint" id="mtMsg"></span></div>
+      </div>
+      <div class="card pout" id="minutesOut" hidden>
+        <h4>회의록 초안 <small>참석자 확인 후 확정하세요</small></h4>
+        <div class="pv rpwrap" id="minutesView"></div>
+        <div class="pact"><button id="mtHwpx" class="p">📄 한글 파일로 내려받기</button><button id="mtCopy">복사</button><button id="mtAgain">다시 생성</button></div>
+      </div>
     </section>
 
     <!-- 안내방송 만들기 (세부 내역 추후 확정) -->
@@ -575,14 +546,6 @@
         <p class="hint" style="margin-top:12px">※ 현수막은 실물 인쇄물이라 높은 해상도가 필요합니다. 배경을 AI로 새로 만들지 않고 <b>군이 보유한 고해상도 사진</b>을 쓰는 방식으로 검토합니다. 세부 기능·화면 구성은 협의 후 확정합니다.</p></div>
 </section>
 
-    <!-- 인포그래픽 제작하기 (세부 내역 추후 확정) -->
-    <section class="view" data-view="info">
-      <div class="vh"><h2>인포그래픽 제작하기</h2><p>통계·실적 수치를 카드뉴스·인포그래픽 형태의 이미지로 만들어 주는 화면입니다.</p></div>
-      <div class="card soon-card"><h4>준비 중 <small>메뉴 자리만 잡아둔 화면입니다</small></h4>
-        <ul class="soon-list"><li><b>수치 입력 또는 공공데이터 선택 → 그래프·카드 자동 배치</b></li><li><b>달성군 상징색·CI 적용 템플릿</b> (세로형 카드뉴스 · 가로형 배너)</li><li><b>PNG 이미지 내려받기</b> (편집용 원본 함께 제공)</li></ul>
-        <p class="hint" style="margin-top:12px">※ 사진·일러스트를 새로 그리는 방식이 아니라, <b>수치를 정해진 템플릿에 배치</b>하는 방식으로 검토합니다. 세부 기능·화면 구성은 협의 후 확정합니다.</p></div>
-    </section>
-
     <!-- SNS 카드뉴스 제작하기 (세부 내역 추후 확정) -->
     <section class="view" data-view="card">
       <div class="vh"><h2>카드뉴스 제작하기</h2><p>알릴 내용을 인스타그램·블로그에 올릴 카드뉴스 여러 장으로 만들어 주는 화면입니다.</p></div>
@@ -703,7 +666,8 @@
 <script src="hwpx.js"></script>
 <script src="meal.js"></script>
 <script src="family.js"></script>
-<script src="draft.js"></script>
+<script src="rule.js"></script>
+<script src="minutes.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

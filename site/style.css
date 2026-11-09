@@ -1237,14 +1237,19 @@ body[data-theme=dark] .bugnote{background:rgba(217,138,0,.14);color:#f0d9a6;bord
 #famForm input:not(:placeholder-shown){color:var(--tx);font-weight:600;background:#eef4ff;border-color:#c7d7f5}
 #famForm select,#famForm input[type=date]:valid{color:var(--tx);font-weight:600;background:#eef4ff;border-color:#c7d7f5}
 
-/* ── 공문 초안 미리보기 (.gm) ── */
-.pv.gmwrap{font-family:'한컴바탕확장','휴먼명조',Batang,serif;padding:30px 36px}
-.gm-org{text-align:center;font-size:20px;font-weight:800;letter-spacing:2px;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid #111}
-.gm-meta{display:flex;flex-direction:column;gap:4px;font-size:14.5px;margin-bottom:6px}
-.gm-title{font-size:14.5px;font-weight:700;margin:4px 0 16px}
-.gm-body{font:inherit;font-size:14.5px;line-height:1.8;white-space:pre-wrap;word-break:keep-all;margin:0 0 26px;color:#111}
-.gm-sign{text-align:center;font-size:21px;font-weight:800;letter-spacing:6px;margin:10px 0 18px}
-.gm-foot{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:#555;border-top:1px solid #bbb;padding-top:8px}
-#dfKind{border:1px solid var(--line);border-radius:10px;padding:9px 11px;font:inherit;font-size:13.5px;color:var(--tx);background:var(--panel)}
-.pfull select+.hint{font-weight:400;margin-top:2px}
-.pfull textarea#dfAtt{min-height:0}
+/* ── 조례·회의록 초안 미리보기 (.rp) ── */
+.psel{border:1px solid var(--line);border-radius:10px;padding:9px 11px;font:inherit;font-size:13.5px;color:var(--tx);background:var(--panel)}
+.pv.rpwrap{font-family:'맑은 고딕','Malgun Gothic',sans-serif;padding:28px 34px}
+.rp-title{text-align:center;font-size:21px;font-weight:800;line-height:1.35;margin:0 0 6px;padding-bottom:10px;border-bottom:2px solid #003087}
+.rp-dept{text-align:center;font-size:13px;font-weight:700;margin:8px 0 18px}.rp-dept span{color:#003087}
+.rp-body{font-size:13.5px;line-height:1.7}
+.rp-sec{background:#003087;color:#fff;font-weight:800;font-size:14.5px;padding:5px 12px;border-radius:4px;margin:16px 0 8px}
+.rp-sq{font-weight:700;margin:8px 0 3px}.rp-cir{padding-left:16px;margin:2px 0}.rp-dash{padding-left:34px;margin:1px 0;color:#222}
+.rp-note{padding-left:16px;color:#595959;font-style:italic;font-size:12.5px;margin:3px 0}.rp-blank{height:6px}
+.rp-law{font:inherit;font-size:13.5px;line-height:1.75;white-space:pre-wrap;word-break:keep-all;margin:4px 0 0 8px}
+.rp-tbl{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+.rp-tbl th{background:#e8eef9;border:1px solid #9aa7c2;padding:6px;text-align:center}
+.rp-tbl td{border:1px solid #9aa7c2;padding:6px 8px;vertical-align:top;width:50%}
+.rp-tbl pre{font:inherit;white-space:pre-wrap;word-break:keep-all;margin:0;line-height:1.6}
+.rp-check{margin-top:16px;padding:10px 14px;border:1px solid #f0b429;background:#fff8e1;border-radius:8px;font-size:12.5px}
+.rp-check ul{margin:6px 0 0 18px;padding:0}

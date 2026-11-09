@@ -7,6 +7,7 @@
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const S={ mode:'home', view:'home', ds:0, docs:[], meta:null, idx:null, layers:{1:true,2:true}, key:'', code:(localStorage.getItem('dOnCode')||''), model:'claude-sonnet-4-5', offline:false, server:false,
           hist:[], lastAnswer:null, lastCites:[], lastQ:'', stats:{q:0,cite:0,gen:0,hwpx:0,hits:{}}, busy:false, khist:[] };
+window.S=S;  // 분리 모듈(meal/trip/family 등)에서 모델 연결 상태를 읽을 수 있게
 try{ const hh=JSON.parse(localStorage.getItem('dOnHits')||'{}'); if(hh&&typeof hh==='object') S.stats.hits=hh; }catch(e){}
 function saveHits(){ try{ localStorage.setItem('dOnHits',JSON.stringify(S.stats.hits)); }catch(e){} }
 
@@ -168,10 +169,9 @@ const HOME_MENU=[
   // ── 핵심
   {mode:'staff',view:'on',     icon:'✦',  label:'달성On\n사용하기', cls:'on-item', ready:1},
   // ── 문서 만들기
-  {mode:'staff',view:'draft',  icon:'📝', label:'공문 초안\n작성하기', cls:'sep', ready:1},
-  {mode:'staff',view:'report', icon:'📄', label:'보고서\n작성하기'},
-  {mode:'staff',view:'rule',   icon:'⚖️', label:'조례·지침\n초안 만들기'},
-  {mode:'staff',view:'minutes',icon:'🎙', label:'회의록\n정리하기'},
+  // (제외) 공문 초안·보고서 작성 — 내부 행정문서를 외부 LLM으로 작성하는 것은 보안상 부적절(지능정보화 담당 협의) → 범정부 AI 공통기반·내부망 모델 전환 시 재검토
+  {mode:'staff',view:'rule',   icon:'⚖️', label:'조례·지침\n초안 만들기', cls:'sep', ready:1},
+  {mode:'staff',view:'minutes',icon:'🎙', label:'회의록\n정리하기', ready:1},
   // ── 직원 생활 (개인 업무·경조사)
   {mode:'staff',view:'meal',   icon:'🍚', label:'급량비\n계산하기', cls:'sep', ready:1},
   {mode:'staff',view:'trip',   icon:'🚗', label:'출장비(관내여비)\n계산하기', ready:1},
@@ -179,7 +179,7 @@ const HOME_MENU=[
   // ── 알리기 · 홍보물 만들기
   {mode:'staff',view:'press',  icon:'📰', label:'보도자료\n작성하기', cls:'sep', ready:1},
   {mode:'staff',view:'banner', icon:'🎏', label:'홍보 현수막\n제작하기'},
-  {mode:'staff',view:'info',   icon:'📈', label:'인포그래픽\n제작하기'},
+  // (제외) 인포그래픽 제작하기 — 메뉴 삭제
   {mode:'staff',view:'card',   icon:'📱', label:'카드뉴스\n제작하기'},
   {mode:'staff',view:'movie',  icon:'🎬', label:'홍보영상\n만들기'},
   {mode:'staff',view:'voice',  icon:'🔊', label:'안내방송\n만들기'},
@@ -216,7 +216,7 @@ function renderNav(){
   const nc=$('#navClear'); if(nc) nc.onclick=()=>{ localStorage.removeItem('dOnRecent'); renderNav(); };
 }
 function setMode(m){ S.mode=m; document.body.dataset.mode=m; go(NAV[m][0].id); }
-function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='draft'&&window.DRAFT) DRAFT.init(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='trip') loadTrip(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
+function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='rule'&&window.RULEDRAFT) RULEDRAFT.init(); if(top==='minutes'&&window.MINUTES) MINUTES.init(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='trip') loadTrip(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
 
 /* ── 홈 대시보드 ── */
 document.addEventListener('click',e=>{ const g=e.target.closest('[data-go]'); if(!g) return; const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });
