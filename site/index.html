@@ -224,38 +224,53 @@
     </section>
 
     <!-- 회의록 정리하기 (세부 내역 추후 확정) -->
-    <section class="view" data-view="minutes">
-      <div class="vh"><h2>회의록 정리하기</h2><p>회의 제목을 적고 녹음 파일을 올리면, 이 PC 안에서 글로 바꾼 뒤 안건별 논의·결정사항·조치사항이 정리된 회의록이 아래에 만들어집니다.</p></div>
-      <div class="card pcard mt-card">
-        <div class="mt-top">
-          <label class="pfull"><span class="cap">회의 제목 <b class="req">*</b></span><input id="mtName" placeholder="예) 2026년 데이터기반행정 실태점검 대응 회의"></label>
-          <div class="stt-box">
-            <div class="stt-head"><b>🎙 회의 녹음 파일 올리기</b> <span class="stt-badge">이 PC 안에서만 처리 · 외부 전송 없음</span></div>
-            <label class="filebtn big">📂 녹음 파일 선택 (mp3 · m4a · wav · webm) — 올리면 바로 정리됩니다<input type="file" id="mtAudio" accept="audio/*,.m4a,.mp3,.wav,.webm,.ogg,.aac"></label>
-            <div class="stt-sample"><button id="mtSampleAudio" class="stt-sbtn">▶ 샘플 녹음(5분 40초)으로 해보기</button><audio id="mtSamplePlayer" controls preload="none" src="assets/sample_meeting.mp3"></audio></div>
-            <div class="stt-prog" id="mtSttWrap" hidden><div class="bar"><i id="mtSttBar"></i></div><span id="mtSttMsg"></span></div>
+    <section class="view ru-view" data-view="minutes">
+      <div class="vh"><h2>회의록 정리하기</h2><p>회의 제목을 적고 녹음 파일을 올리면 — 이 PC 안에서 글로 바꾼 뒤, 안건별 논의·결정사항·후속조치가 정리된 회의록을 만듭니다.</p></div>
+      <ol class="ru-rail" id="mtRail">
+        <li data-s="1" class="on"><i>1</i><span>회의 정보</span></li>
+        <li data-s="2"><i>2</i><span>녹음 올리기</span></li>
+        <li data-s="3"><i>3</i><span>글로 바꾸기</span></li>
+        <li data-s="4"><i>4</i><span>회의록 확인</span></li>
+      </ol>
+
+      <div class="card ru-card" id="mtS1">
+        <div class="ru-sh"><i>1</i><div><b>회의 정보</b><small>제목만 꼭 적으면 됩니다 — 나머지는 비워 두면 녹음에서 파악하거나 ○○로 둡니다</small></div></div>
+        <div class="ru-form">
+          <label class="ru-f"><span class="ru-lb">회의 제목 <b class="req">*</b></span><input id="mtName" placeholder="예) 2026년 데이터기반행정 실태점검 대응 회의"></label>
+          <div class="mt-optbox">
+            <div class="mt-optt">선택 입력</div>
+            <div class="mt-grid4">
+              <label class="ru-f"><span class="ru-lb">일자</span><input id="mtDate" type="date"></label>
+              <label class="ru-f"><span class="ru-lb">시각</span><input id="mtTime" placeholder="예) 14:00"></label>
+              <label class="ru-f"><span class="ru-lb">장소</span><input id="mtPlace" placeholder="예) 군청 3층 소회의실"></label>
+              <label class="ru-f"><span class="ru-lb">작성 부서</span><input id="mtDept" placeholder="행정국 정보통신과"></label>
+            </div>
+            <div class="mt-grid2">
+              <label class="ru-f"><span class="ru-lb">참석자</span><input id="mtWho" placeholder="예) 정보통신과장, 정보통계팀장, ○○○ 주무관"></label>
+              <label class="ru-f"><span class="ru-lb">안건 <small>한 줄에 하나</small></span><textarea id="mtAgenda" rows="2" placeholder="예) 실태점검 지표별 담당 배정"></textarea></label>
+            </div>
           </div>
         </div>
-        <details class="mt-opt"><summary>선택 입력 <small>일시·장소·참석자·안건 — 비우면 녹음에서 파악하거나 ○○로 둡니다</small></summary>
-          <div class="pgrid pgrid2" style="margin-top:10px">
-            <label>일자<input id="mtDate" type="date"></label>
-            <label>시각<input id="mtTime" placeholder="예) 14:00"></label>
-            <label>장소<input id="mtPlace" placeholder="예) 군청 3층 소회의실"></label>
-            <label>작성 부서<input id="mtDept" placeholder="행정국 정보통신과"></label>
-          </div>
-          <label class="pfull" style="margin-top:8px">참석자<input id="mtWho" placeholder="예) 정보통신과장, 정보통계팀장, ○○○ 주무관"></label>
-          <label class="pfull" style="margin-top:8px">안건 <small class="hint">한 줄에 하나</small><textarea id="mtAgenda" rows="2"></textarea></label>
-        </details>
-        <details class="mt-opt"><summary>녹음 대신 메모 붙여넣기 <small>녹음이 없을 때 · 변환된 글도 여기서 고칠 수 있습니다</small></summary>
-          <textarea id="mtNotes" rows="8" style="margin-top:10px" placeholder="과장: 11월 말 제출이니 담당 이번 주에 정하자&#10;팀장: 2지표는 결재만 남음, 다음 주 월요일 상신&#10;…"></textarea>
-        </details>
-        <div class="pact"><button id="mtGo" class="p">메모로 정리하기</button><button id="mtSample">예시로 채우기</button><button id="mtReset">비우기</button><span class="hint" id="mtMsg"></span></div>
-        <p class="hint">※ 녹음·메모는 이 PC 안에서 글로 바뀌고, 정리 단계에서 글(텍스트)만 모델에 전달됩니다. 비공개 사항·개인정보가 담긴 회의는 사용하지 마세요.</p>
       </div>
-      <div class="card pout" id="minutesOut" hidden>
-        <h4>회의록 <small>참석자 확인 후 확정하세요</small></h4>
+
+      <div class="card ru-card" id="mtS2">
+        <div class="ru-sh"><i>2</i><div><b>녹음 올리기</b><small>올리면 바로 글로 바꾸고 회의록까지 이어서 정리합니다</small></div><span class="stt-badge mt-badge">🔒 이 PC 안에서만 처리 · 외부 전송 없음</span></div>
+        <label class="mt-drop" id="mtDrop"><span class="mt-dico">🎙️</span><span class="mt-dtx"><b>녹음 파일 선택 또는 여기로 끌어다 놓기</b><small>mp3 · m4a · wav · webm · ogg</small></span><span class="mt-dbtn">파일 고르기</span><input type="file" id="mtAudio" accept="audio/*,.m4a,.mp3,.wav,.webm,.ogg,.aac"></label>
+        <div class="mt-sample"><span class="mt-st">녹음이 없으면</span><button id="mtSampleAudio" class="ru-sub">▶ 샘플 녹음(5분 40초)으로 해보기</button><audio id="mtSamplePlayer" controls preload="none" src="assets/sample_meeting.mp3"></audio></div>
+      </div>
+
+      <div class="card ru-card" id="mtS3">
+        <div class="ru-sh"><i>3</i><div><b>글로 바꾼 내용</b><small>녹음을 올리면 여기에 글이 채워집니다 · 녹음 대신 메모를 붙여넣어도 되고, 틀린 글자는 직접 고쳐도 됩니다</small></div></div>
+        <div class="stt-prog mt-prog" id="mtSttWrap" hidden><div class="bar"><i id="mtSttBar"></i></div><span id="mtSttMsg"></span></div>
+        <textarea id="mtNotes" rows="8" class="mt-notes" placeholder="과장: 11월 말 제출이니 담당 이번 주에 정하자&#10;팀장: 2지표는 결재만 남음, 다음 주 월요일 상신&#10;…"></textarea>
+        <div class="ru-bar"><button id="mtGo" class="ru-go">회의록 정리하기 <span>→</span></button><button id="mtSample" class="ru-sub">예시로 채우기</button><button id="mtReset" class="ru-sub">비우기</button><span class="hint" id="mtMsg"></span></div>
+        <p class="ru-note">녹음은 이 PC 안에서 글로 바뀌고, 정리 단계에서 글(텍스트)만 모델에 전달됩니다. 비공개 사항·개인정보가 담긴 회의는 사용하지 마세요.</p>
+      </div>
+
+      <div class="card ru-card" id="minutesOut" hidden>
+        <div class="ru-sh"><i>4</i><div><b>회의록 확인</b><small>결정사항·담당·기한은 참석자 확인 후 확정하세요</small></div>
+          <div class="ru-shact"><button id="mtHwpx" class="ru-go sm">📄 한글 파일</button><button id="mtCopy" class="ru-sub">복사</button><button id="mtAgain" class="ru-sub">다시 정리</button></div></div>
         <div class="pv mtwrap" id="minutesView"></div>
-        <div class="pact"><button id="mtHwpx" class="p">📄 한글 파일로 내려받기</button><button id="mtCopy">복사</button><button id="mtAgain">다시 정리</button></div>
       </div>
     </section>
 
@@ -898,6 +913,7 @@
   <button class="primary" data-close>시작하기</button>
 </div></div>
 
+<script src="llm.js"></script>
 <script src="hwpx.js"></script>
 <script src="meal.js"></script>
 <script src="family.js"></script>

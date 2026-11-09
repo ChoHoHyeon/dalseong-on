@@ -35,6 +35,39 @@ const SYS=`당신은 대구광역시 달성군의 회의록 작성 담당자입�
 # 5. 기타
 ○ (다음 회의 일정 등, 없으면 "해당 없음")`;
 
+const SYS_TALK=`당신은 대구광역시 달성군의 회의록 작성 담당자입니다. 회의 녹취·메모를 바탕으로 문서 하나를 씁니다 — 앞부분은 "회의 결과 요약", 뒷부분은 발언 순서대로 적은 "회의록"입니다.
+[앞부분 — 결과 요약]
+· 발언을 그대로 옮기지 않고 안건별 요지를 개조식(명사형 종결)으로 정리한다.
+· 결정이 안 난 사항은 「미결(추후 논의)」. 후속조치는 "할 일 — 담당 — 기한" 세 가지가 보이게, 없으면 "○○". 날짜는 "2026. 11. 9.(월) 14:00" 형식.
+[뒷부분 — 회의록(발언 기록)]
+· 모든 말을 옮기지 않는다. 안건마다 핵심 발언(제안·보고·의견·질문·답변·결정)만 골라 "참석자1: 핵심 내용" 줄로 적는다. 말 더듬기·되묻기·맞장구·잡담·말하다 만 문장·순서가 뒤엉킨 부분은 빼고, 같은 사람이 이어서 한 말은 한 줄로 합친다. 한 줄은 1~2문장, 문어체로 다듬되 뜻은 바꾸지 않는다. 안건당 3~8줄 정도.
+· 녹취에는 발언자 표시가 없다. 직위·이름을 추정해 붙이지 말고, 처음 말한 순서대로 "참석자1", "참석자2", "참석자3"…으로 적는다. 같은 사람임이 분명하면 같은 번호. 발언이 바뀐 지점이 분명하지 않으면 한 사람의 발언으로 묶는다.
+· 녹취·메모에 없는 내용은 앞뒤 어디에도 지어내지 않는다.
+반드시 아래 형식으로만 출력한다. 마크다운·표는 쓰지 않는다.
+제목: (회의명) 결과
+# 1. 회의 개요
+○ 일  시 : 
+○ 장  소 : 
+○ 참  석 : 
+○ 안  건 : 
+# 2. 안건별 논의 요지
+□ (안건 1)
+○ (논의 요지)
+  - (세부)
+# 3. 결정 사항
+○ ...
+# 4. 후속 조치
+○ (할 일) — 담당 ○○ — 기한 ○○
+# 5. 기타
+○ (다음 회의 일정 등, 없으면 "해당 없음")
+# 6. 회의록
+[안건 1] (안건명)
+참석자1: (발언 요지)
+참석자2: (발언 요지)
+→ 결정: (이 안건에서 정해진 것, 없으면 줄 생략)
+[안건 2] (안건명)
+...`;
+const kind=()=>($('#mtKind')&&$('#mtKind').value)||'talk';
 const v=id=>($('#'+id).value||'').trim();
 function fmtWhen(d,t){ if(!d) return ''; const dt=new Date(d+'T00:00:00'); const w='일월화수목금토'[dt.getDay()]; return `${dt.getFullYear()}. ${dt.getMonth()+1}. ${dt.getDate()}.(${w})${t?' '+t:''}`; }
 
@@ -61,10 +94,18 @@ function sections(body){
 function kv(lines){ const o={}; lines.forEach(l=>{ const m=l.trim().match(/^[○❍]?\s*([가-힣]\s*[가-힣])\s*[:：]\s*(.*)$/); if(m) o[m[1].replace(/\s+/g,'')]=(o[m[1].replace(/\s+/g,'')]?o[m[1].replace(/\s+/g,'')]+'\n':'')+m[2]; else if(Object.keys(o).length){ const k=Object.keys(o).pop(); o[k]+='\n'+l.trim(); } }); return o; }
 function items(lines){ return lines.map(l=>{ const s=l.trim(); if(/^□/.test(s)) return `<div class="mt-sq">${esc(s.replace(/^□\s?/,''))}</div>`; if(/^[○❍]/.test(s)) return `<div class="mt-cir">${esc(s.replace(/^[○❍]\s?/,''))}</div>`; if(/^-/.test(s)) return `<div class="mt-dash">${esc(s.replace(/^-\s?/,''))}</div>`; return `<div class="mt-cir">${esc(s)}</div>`; }).join(''); }
 function actionRows(lines){ return lines.map(l=>l.trim().replace(/^[○❍-]\s?/,'')).filter(Boolean).map(t=>{ const p=t.split(/\s[—–-]\s/); const task=p[0]||t; let who='',due=''; p.slice(1).forEach(x=>{ if(/담당/.test(x)) who=x.replace(/^담당\s*[:：]?\s*/,''); else if(/기한|까지/.test(x)) due=x.replace(/^기한\s*[:：]?\s*/,''); else if(!who) who=x; else due=x; }); return [task,who||'○○',due||'○○']; }); }
+function talkTable(lines){
+  const R=[]; lines.forEach(raw=>{ const s=raw.trim(); if(!s) return; let m;
+    if((m=s.match(/^\[안건\s*(\d*)\]\s*(.*)$/))) R.push(`<tr class="ag"><td colspan="2">안건 ${esc(m[1])}${m[2]?'. '+esc(m[2]):''}</td></tr>`);
+    else if((m=s.match(/^→\s*(?:결정\s*[:：]\s*)?(.*)$/))) R.push(`<tr class="dc"><th>결정</th><td>${esc(m[1])}</td></tr>`);
+    else if((m=s.match(/^([^○□\-:：\s][^:：]{0,24})\s*[:：]\s*(.+)$/))) R.push(`<tr><th>${esc(m[1].trim())}</th><td>${esc(m[2])}</td></tr>`);
+    else R.push(`<tr><th></th><td>${esc(s.replace(/^[○❍-]\s?/,''))}</td></tr>`); });
+  return `<table class="mt-talk"><colgroup><col style="width:150px"><col></colgroup><tbody>${R.join('')}</tbody></table>`;
+}
 function render(o){
   const H={date:fmtWhen(v('mtDate'),v('mtTime')),place:v('mtPlace'),who:v('mtWho'),dept:v('mtDept')||'행정국 정보통신과'};
   const S=sections(o.body); const find=re=>S.find(x=>re.test(x.name)); 
-  const ov=kv((find(/개요/)||{lines:[]}).lines); const disc=find(/논의|내용/), dec=find(/결정/), act=find(/조치|후속/), etc=find(/기타/);
+  const ov=kv((find(/개요/)||{lines:[]}).lines); const talk=find(/^회의록|발언/), disc=S.find(x=>x!==talk&&/논의|요지|내용/.test(x.name)), dec=find(/결정/), act=find(/조치|후속/), etc=find(/기타/);
   const agenda=(ov['안건']||'').split(/\n|(?=[①②③④⑤⑥⑦⑧⑨])/).map(x=>x.trim()).filter(Boolean);
   $('#minutesView').innerHTML=`<div class="mt">
     <div class="mt-title">${esc(o.title.replace(/\s*(결과|회의록)$/,''))}<small>회 의 록</small></div>
@@ -73,30 +114,23 @@ function render(o){
       <tr><th>참석자</th><td colspan="3">${esc(H.who||ov['참석']||'○○')}</td></tr>
       <tr><th>안  건</th><td colspan="3">${agenda.length?agenda.map((a,i)=>`<div>${esc(a.replace(/^[①②③④⑤⑥⑦⑧⑨\d.\s]+/,''))}</div>`).join(''):'○○'}</td></tr>
     </tbody></table>
-    ${disc?`<div class="mt-h">회의 내용</div><div class="mt-body">${items(disc.lines)}</div>`:''}
+    ${disc?`<div class="mt-h">안건별 논의 요지</div><div class="mt-body">${items(disc.lines)}</div>`:''}
     ${dec?`<div class="mt-h">결정 사항</div><div class="mt-body mt-dec">${items(dec.lines)}</div>`:''}
     ${act?`<div class="mt-h">조치 사항</div><table class="mt-act"><thead><tr><th>조치 내용</th><th>담당</th><th>기한</th></tr></thead><tbody>${actionRows(act.lines).map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join('')}</tbody></table>`:''}
     ${etc&&etc.lines.some(l=>!/해당 없음/.test(l))?`<div class="mt-h">기타</div><div class="mt-body">${items(etc.lines)}</div>`:''}
+    ${talk?`<div class="mt-part"><span>회 의 록</span><small>발언 순서대로 기록 · 발언자는 참석자 번호로 표기</small></div>${talkTable(talk.lines)}`:''}
     <div class="mt-foot"><span>작성 : ${esc(H.dept)}</span><span>${esc(fmtWhen(new Date().toISOString().slice(0,10),''))}</span></div>
   </div>`;
   $('#minutesOut').hidden=false; window.dsSave&&dsSave('minutes',o.title,o.title+'\n\n'+o.body.join('\n')); $('#minutesOut').scrollIntoView({behavior:'smooth',block:'start'});
 }
 async function callModel(user){
-  const S=window.S||{}; const payload=JSON.stringify({model:S.model||'claude-sonnet-4-5',max_tokens:3000,stream:true,system:SYS,messages:[{role:'user',content:user}]});
-  const r=S.key
-    ? await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:payload})
-    : await fetch('/api/chat',{method:'POST',headers:{'content-type':'application/json','x-access-code':S.code||''},body:payload});
-  if(!r.ok) throw new Error('모델 호출 실패 ('+r.status+')');
-  const rd=r.body.getReader(), dec=new TextDecoder(); let buf='',text='';
-  while(true){ const {value,done}=await rd.read(); if(done) break; buf+=dec.decode(value,{stream:true});
-    const ls=buf.split('\n'); buf=ls.pop();
-    for(const ln of ls){ if(!ln.startsWith('data:')) continue; try{ const j=JSON.parse(ln.slice(5)); if(j.type==='content_block_delta'&&j.delta?.text){ text+=j.delta.text; $('#mtMsg').textContent=`정리 중… ${text.length}자`; } }catch(e){} } }
-  return text;
+  // 공통 호출(llm.js): 30초 서버 제한에 끊기면 이어 쓰기
+  return await window.dsLLM(SYS_TALK,user,{max:8000,restartRe:/^\s*제목\s*[:：]/,onText:t=>{ $('#mtMsg').textContent=`정리 중… ${t.length}자`; }});
 }
 async function make(){
   if(M.busy) return;
   if(!v('mtName')){ $('#mtMsg').textContent='회의명은 입력해 주세요.'; return $('#mtName').focus(); }
-  if(!v('mtNotes')){ $('#mtMsg').textContent='녹음 파일을 올리거나, 「녹음 대신 메모 붙여넣기」에 내용을 넣어 주세요.'; document.querySelectorAll('.mt-opt')[1].open=true; return $('#mtNotes').focus(); }
+  if(!v('mtNotes')){ $('#mtMsg').textContent='녹음 파일을 올리거나, 「녹음 대신 메모 붙여넣기」에 내용을 넣어 주세요.'; return $('#mtNotes').focus(); }
   M.busy=true; $('#mtGo').disabled=true; $('#mtMsg').textContent='정리 중…';
   try{
     const S=window.S||{};
@@ -105,21 +139,27 @@ async function make(){
       M.out=parse(await callModel(u)); if(!M.out.body.length) throw new Error('응답 형식을 읽지 못했습니다. 다시 생성해 주세요.');
       $('#mtMsg').textContent='정리 완료 — 결정사항·담당·기한은 참석자 확인 후 확정하세요.';
     }else{ await new Promise(r=>setTimeout(r,400)); M.out=offline(); $('#mtMsg').textContent='오프라인 모드 — 모델 연결 시 메모를 읽어 안건별로 정리합니다.'; }
-    render(M.out); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
+    render(M.out); mrail(5); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
   }catch(err){ $('#mtMsg').textContent='⚠ '+err.message; }
   finally{ M.busy=false; $('#mtGo').disabled=false; }
 }
 async function hwpx(){
   if(!M.out) return;
   try{
-    const blob=await DalseongHwpx.build({kind:'free', title:M.out.title, sub:`달성군 [${v('mtDept')||'행정국 정보통신과'}]`, date:fmtWhen(v('mtDate'),''), answer:M.out.body.join('\n')});
+    const blob=await DalseongHwpx.build({kind:'free', title:M.out.title, sub:`달성군 [${v('mtDept')||'행정국 정보통신과'}]`, date:fmtWhen(v('mtDate'),''), answer:M.out.body.map(l=>{ const s=l.trim(); let m; if((m=s.match(/^\[안건\s*(\d*)\]\s*(.*)$/))) return `□ 안건 ${m[1]}. ${m[2]}`; if(/^→/.test(s)) return '  - '+s.replace(/^→\s*/,''); if(/^[^#○□\-:：\s][^:：]{0,24}[:：]\s/.test(s)) return '○ '+s; return l; }).join('\n')});
     const nm=`${M.out.title.replace(/[\\/:*?"<>|]/g,'').slice(0,40)}_${(v('mtDate')||new Date().toISOString().slice(0,10)).replace(/-/g,'')}.hwpx`;
     DalseongHwpx.download(blob,nm); if(window.S&&S.stats) S.stats.hwpx++; toast?.('한글 파일 생성: '+nm);
   }catch(e){ toast?.('한글 파일 생성 실패: '+e.message); }
 }
+function mrail(n){ document.querySelectorAll('#mtRail li').forEach(li=>{ const k=+li.dataset.s; li.className=k<n?'done':(k===n?'on':''); }); }
 function init(){
   if($('#mtGo')._on) return; $('#mtGo')._on=1;
+  document.querySelectorAll('#mtRail li').forEach(li=>li.onclick=()=>{ const el=$({1:'#mtS1',2:'#mtS2',3:'#mtS3',4:'#minutesOut'}[li.dataset.s]); if(el&&!el.hidden) el.scrollIntoView({behavior:'smooth',block:'start'}); });
+  $('#mtName').addEventListener('input',()=>{ if($('#minutesOut').hidden) mrail(v('mtName')?2:1); });
+  const dz=$('#mtDrop'); ['dragover','dragenter'].forEach(t=>dz.addEventListener(t,e=>{ e.preventDefault(); dz.classList.add('over'); })); ['dragleave','drop'].forEach(t=>dz.addEventListener(t,()=>dz.classList.remove('over')));
+  dz.addEventListener('drop',e=>{ e.preventDefault(); const f=e.dataTransfer.files[0]; if(f) runAudio(f); });
   if(!$('#mtDate').value) $('#mtDate').value=new Date().toISOString().slice(0,10);
+  document.querySelectorAll('.mt-k').forEach(b=>b.onclick=()=>{ $('#mtKind').value=b.dataset.k; document.querySelectorAll('.mt-k').forEach(x=>x.classList.toggle('on',x===b)); });
   $('#mtGo').onclick=make; $('#mtAgain').onclick=make; $('#mtHwpx').onclick=hwpx;
   $('#mtCopy').onclick=()=>{ if(!M.out) return; navigator.clipboard.writeText(M.out.title+'\n\n'+M.out.body.join('\n')); toast?.('복사했습니다'); };
   $('#mtSample').onclick=()=>{
@@ -132,11 +172,11 @@ function init(){
   async function runAudio(f){
     if(!f) return; if(!window.DsSTT){ $('#mtMsg').textContent='음성인식 모듈을 불러오지 못했습니다.'; return; }
     if(!v('mtName')) $('#mtName').value=f.name.replace(/\.[^.]+$/,'').replace(/^샘플_/,'');
-    $('#mtSttWrap').hidden=false; $('#mtGo').disabled=true; $('#mtAudio').disabled=true;
+    $('#mtSttWrap').hidden=false; $('#mtGo').disabled=true; $('#mtAudio').disabled=true; mrail(3); $('#mtS3').scrollIntoView({behavior:'smooth',block:'start'});
     const prog=p=>{ $('#mtSttBar').style.width=(p.pct||0)+'%'; $('#mtSttMsg').textContent=p.msg||''; if(p.text) $('#mtNotes').value=p.text; };
     try{
       const text=await DsSTT.transcribe(f,prog);
-      document.querySelectorAll('.mt-opt')[1].open=true; $('#mtNotes').value=text; $('#mtSttBar').style.width='100%'; $('#mtSttMsg').textContent='글로 바꾸기 완료 — 이어서 회의록을 정리합니다';
+      $('#mtNotes').value=text; $('#mtSttBar').style.width='100%'; $('#mtSttMsg').textContent='글로 바꾸기 완료 — 이어서 회의록을 정리합니다';
       $('#mtGo').disabled=false; await make();
     }catch(err){ $('#mtSttMsg').textContent='⚠ '+err.message; $('#mtGo').disabled=false; }
     finally{ $('#mtAudio').disabled=false; $('#mtAudio').value=''; $('#mtSampleAudio').disabled=false; }
@@ -148,7 +188,7 @@ function init(){
       await runAudio(new File([b],'샘플_회의녹음.mp3',{type:'audio/mpeg'})); }
     catch(e){ $('#mtMsg').textContent='⚠ 샘플을 불러오지 못했습니다: '+e.message; $('#mtSampleAudio').disabled=false; }
   };
-  $('#mtReset').onclick=()=>{ ['mtName','mtTime','mtPlace','mtWho','mtAgenda','mtNotes'].forEach(id=>$('#'+id).value=''); $('#minutesOut').hidden=true; $('#mtMsg').textContent=''; $('#mtSttWrap').hidden=true; $('#mtSttBar').style.width='0'; };
+  $('#mtReset').onclick=()=>{ ['mtName','mtTime','mtPlace','mtWho','mtAgenda','mtNotes'].forEach(id=>$('#'+id).value=''); $('#minutesOut').hidden=true; $('#mtMsg').textContent=''; $('#mtSttWrap').hidden=true; $('#mtSttBar').style.width='0'; mrail(1); };
 }
 window.MINUTES={init};
 })();

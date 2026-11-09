@@ -36,12 +36,18 @@ onmessage=async e=>{
     if(m.t==='load'){ await load(); return; }
     if(m.t==='run'){
       await load();
-      const a=m.audio, SR=16000, SEG=60*SR; const n=Math.ceil(a.length/SEG); let out='';
+      // 30초 이하 조각으로 직접 나누되, 말이 끊기는 조용한 지점(20~29초 사이 가장 작은 소리)에서 자른다.
+      // (모델 내부 30초 분할·겹침 합치기를 쓰면 경계에서 문장이 빠지는 문제가 있어 쓰지 않음)
+      const a=m.audio, SR=16000, W=SR/10; const cuts=[0];
+      while(a.length-cuts[cuts.length-1]>29*SR){ const st=cuts[cuts.length-1]; let best=st+29*SR, bv=Infinity;
+        for(let p=st+20*SR;p+W<=st+29*SR;p+=W/2){ let e=0; for(let k=p;k<p+W;k+=4) e+=a[k]*a[k]; if(e<bv){ bv=e; best=p+W/2; } }
+        cuts.push(Math.floor(best)); }
+      cuts.push(a.length); const n=cuts.length-1; let out='';
       for(let i=0;i<n;i++){
-        const seg=a.subarray(i*SEG, Math.min(a.length,(i+1)*SEG));
-        const r=await asr(seg,{language:'korean',task:'transcribe',chunk_length_s:30,stride_length_s:5,return_timestamps:false});
-        out+=(r.text||'').trim()+' ';
-        postMessage({t:'seg',i:i+1,n,text:out});
+        const seg=a.subarray(cuts[i],cuts[i+1]); if(seg.length<SR/2) continue;
+        const r=await asr(seg,{language:'korean',task:'transcribe',return_timestamps:false});
+        const t=(r.text||'').trim(); if(t) out+=t+' ';
+        postMessage({t:'seg',i:i+1,n,sec:Math.round(cuts[i+1]/SR),tot:Math.round(a.length/SR),text:out});
       }
       postMessage({t:'done',text:out.trim()});
     }
@@ -73,7 +79,7 @@ function transcribe(file,onProgress){
       const m=e.data;
       if(m.t==='load'){ const p=m.p||{}; if(p.status==='progress'&&p.file){ files[p.file]=[p.loaded||0,p.total||0]; const L=Object.values(files).reduce((s,[a])=>s+a,0), T=Object.values(files).reduce((s,[,b])=>s+b,0); onProgress?.({stage:'model',pct:T?Math.round(L/T*100):0,msg:`음성인식 모델 준비 중 (처음 한 번만 내려받습니다) ${T?Math.round(L/1048576)+'/'+Math.round(T/1048576)+'MB':''}`}); } else if(p.status==='ready'||p.status==='done'){ onProgress?.({stage:'model',pct:100,msg:'모델 준비 완료'}); } }
       else if(m.t==='ready'){ ready=true; device=m.dev; onProgress?.({stage:'run',pct:0,msg:`글로 바꾸는 중… (${device==='webgpu'?'그래픽카드 가속':'CPU'}, 이 PC 안에서 처리)`}); }
-      else if(m.t==='seg'){ onProgress?.({stage:'run',pct:Math.round(m.i/m.n*100),msg:`글로 바꾸는 중… ${m.i}/${m.n}분 (이 PC 안에서 처리)`,text:m.text}); }
+      else if(m.t==='seg'){ onProgress?.({stage:'run',pct:Math.round(m.i/m.n*100),msg:`글로 바꾸는 중… ${Math.floor(m.sec/60)}분 ${m.sec%60}초 / ${Math.floor(m.tot/60)}분 ${m.tot%60}초 (이 PC 안에서 처리)`,text:m.text}); }
       else if(m.t==='done'){ w.removeEventListener('message',h); ok(m.text); }
       else if(m.t==='error'){ w.removeEventListener('message',h); no(new Error(m.msg)); }
     };

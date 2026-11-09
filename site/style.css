@@ -1851,3 +1851,38 @@ html[data-theme=dark] .lw-paper,body.dark .lw-paper{background:#fff;color:#111}
 .ru-card .rpwrap{border:0;padding:0;background:none}
 .ru-card .lw-paper{box-shadow:0 14px 34px rgba(20,33,61,.10);border-radius:4px}
 @media(max-width:900px){.ru-rail span{display:none}.ru-sh{flex-wrap:wrap}.ru-shact{width:100%}}
+
+/* ═══ 회의록 — 단계형 레이아웃 ═══ */
+.mt-optbox{border:1px dashed var(--line);border-radius:14px;padding:14px 16px 16px;background:rgba(148,163,184,.05);display:flex;flex-direction:column;gap:12px}
+.mt-optt{font-size:12px;font-weight:700;color:var(--mut);letter-spacing:.3px}
+.mt-grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.mt-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mt-optbox input,.mt-optbox textarea{font-size:13.5px;padding:9px 12px}
+.mt-optbox .ru-lb{font-size:12.5px;font-weight:600}
+.mt-badge{margin-left:auto;align-self:center;white-space:nowrap}
+.mt-drop{display:flex;align-items:center;gap:18px;border:2px dashed rgba(47,111,237,.4);border-radius:16px;padding:24px 26px;background:linear-gradient(180deg,rgba(47,111,237,.05),rgba(47,111,237,.02));cursor:pointer;transition:all .15s;margin:0}
+.mt-drop:hover,.mt-drop.over{border-color:var(--acc);background:rgba(47,111,237,.08)}
+.mt-drop input{display:none}
+.mt-dico{font-size:30px;width:58px;height:58px;border-radius:16px;display:grid;place-items:center;background:var(--acc);box-shadow:0 8px 18px rgba(47,111,237,.3);flex:none}
+.mt-dtx{display:flex;flex-direction:column;gap:3px;flex:1} .mt-dtx b{font-size:16px;color:var(--tx)} .mt-dtx small{font-size:12.5px;color:var(--mut)}
+.mt-dbtn{height:42px;padding:0 20px;border-radius:11px;background:var(--acc);color:#fff;font-weight:800;font-size:14px;display:grid;place-items:center;box-shadow:0 8px 18px rgba(47,111,237,.28)}
+.mt-sample{display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap}
+.mt-st{font-size:12.5px;color:var(--mut)}
+.mt-sample audio{height:38px;flex:1;min-width:220px}
+.mt-prog{margin:0 0 12px}
+.mt-notes{width:100%;font-size:14px;line-height:1.75;padding:14px 16px;border-radius:12px}
+@media(max-width:900px){.mt-grid4{grid-template-columns:1fr 1fr}.mt-grid2{grid-template-columns:1fr}.mt-drop{flex-wrap:wrap}}
+/* 회의록 형식 선택 + 발언 기록표 */
+.mt-kind{display:flex;align-items:stretch;gap:10px;margin-top:14px;flex-wrap:wrap}
+.mt-kl{font-size:12.5px;font-weight:700;color:var(--mut);align-self:center;margin-right:4px}
+.mt-k{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 16px;border:1.5px solid var(--line);border-radius:12px;background:var(--panel);font:inherit;color:var(--tx);cursor:pointer;text-align:left}
+.mt-k b{font-size:14px} .mt-k small{font-size:11.5px;color:var(--mut)}
+.mt-k.on{border-color:var(--acc);background:rgba(47,111,237,.06);box-shadow:0 6px 16px rgba(47,111,237,.12)} .mt-k.on b{color:var(--acc)}
+.mt-talk{width:100%;border-collapse:collapse;font-size:13.5px;margin-bottom:14px}
+.mt-talk th,.mt-talk td{border:1px solid #9aa7c2;padding:7px 10px;vertical-align:top;line-height:1.65}
+.mt-talk th{background:#f4f6fb;font-weight:700;text-align:center;white-space:nowrap;color:#1c2a4a}
+.mt-talk tr.ag td{background:#e8eef9;font-weight:800;color:#003087}
+.mt-talk tr.dc th{background:#fff4dd;color:#9a5b00} .mt-talk tr.dc td{background:#fffaf0;font-weight:600}
+.mt-part{margin:30px 0 12px;padding:14px 0 10px;border-top:2px solid #003087;text-align:center}
+.mt-part span{display:block;font-size:19px;font-weight:800;letter-spacing:8px;color:#14213d}
+.mt-part small{display:block;font-size:12px;color:#666;margin-top:4px}
