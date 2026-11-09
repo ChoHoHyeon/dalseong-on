@@ -52,17 +52,33 @@ function offline(){
   b.push('# 3. 결정 사항','○ ○○ (메모의 결정 내용을 여기에)','# 4. 후속 조치','○ ○○ — 담당 ○○ — 기한 ○○','# 5. 기타','○ 해당 없음');
   return {title:`${name} 결과`,body:b};
 }
-function lineHtml(raw){
-  const s=raw.trim(); if(!s) return '<div class="rp-blank"></div>';
-  if(/^#\s/.test(s)) return `<div class="rp-sec">${esc(s.replace(/^#\s*/,''))}</div>`;
-  if(/^□/.test(s)) return `<div class="rp-sq">${esc(s)}</div>`;
-  if(/^(○|❍)/.test(s)) return `<div class="rp-cir">${esc(s)}</div>`;
-  if(/^-/.test(s)) return `<div class="rp-dash">${esc(s)}</div>`;
-  if(/^※/.test(s)) return `<div class="rp-note">${esc(s)}</div>`;
-  return `<div class="rp-cir">${esc(s)}</div>`;
+/* 회의록 양식 미리보기: 개요 표 → 안건별 논의 → 결정사항 → 조치사항 표 → 기타 */
+function sections(body){
+  const out=[]; let cur=null;
+  body.forEach(raw=>{ const s=raw.trim(); if(!s) return; const m=s.match(/^#\s*\d*\.?\s*(.+)$/); if(m){ cur={name:m[1].trim(),lines:[]}; out.push(cur); return; } if(!cur){ cur={name:'',lines:[]}; out.push(cur);} cur.lines.push(raw.replace(/\s+$/,'')); });
+  return out;
 }
+function kv(lines){ const o={}; lines.forEach(l=>{ const m=l.trim().match(/^[○❍]?\s*([가-힣]\s*[가-힣])\s*[:：]\s*(.*)$/); if(m) o[m[1].replace(/\s+/g,'')]=(o[m[1].replace(/\s+/g,'')]?o[m[1].replace(/\s+/g,'')]+'\n':'')+m[2]; else if(Object.keys(o).length){ const k=Object.keys(o).pop(); o[k]+='\n'+l.trim(); } }); return o; }
+function items(lines){ return lines.map(l=>{ const s=l.trim(); if(/^□/.test(s)) return `<div class="mt-sq">${esc(s.replace(/^□\s?/,''))}</div>`; if(/^[○❍]/.test(s)) return `<div class="mt-cir">${esc(s.replace(/^[○❍]\s?/,''))}</div>`; if(/^-/.test(s)) return `<div class="mt-dash">${esc(s.replace(/^-\s?/,''))}</div>`; return `<div class="mt-cir">${esc(s)}</div>`; }).join(''); }
+function actionRows(lines){ return lines.map(l=>l.trim().replace(/^[○❍-]\s?/,'')).filter(Boolean).map(t=>{ const p=t.split(/\s[—–-]\s/); const task=p[0]||t; let who='',due=''; p.slice(1).forEach(x=>{ if(/담당/.test(x)) who=x.replace(/^담당\s*[:：]?\s*/,''); else if(/기한|까지/.test(x)) due=x.replace(/^기한\s*[:：]?\s*/,''); else if(!who) who=x; else due=x; }); return [task,who||'○○',due||'○○']; }); }
 function render(o){
-  $('#minutesView').innerHTML=`<div class="rp"><div class="rp-title">${esc(o.title)}</div><div class="rp-dept">달성군 <span>[${esc(v('mtDept')||'행정국 정보통신과')}]</span></div><div class="rp-body">${o.body.map(lineHtml).join('')}</div></div>`;
+  const H={date:fmtWhen(v('mtDate'),v('mtTime')),place:v('mtPlace'),who:v('mtWho'),dept:v('mtDept')||'행정국 정보통신과'};
+  const S=sections(o.body); const find=re=>S.find(x=>re.test(x.name)); 
+  const ov=kv((find(/개요/)||{lines:[]}).lines); const disc=find(/논의|내용/), dec=find(/결정/), act=find(/조치|후속/), etc=find(/기타/);
+  const agenda=(ov['안건']||'').split(/\n|(?=[①②③④⑤⑥⑦⑧⑨])/).map(x=>x.trim()).filter(Boolean);
+  $('#minutesView').innerHTML=`<div class="mt">
+    <div class="mt-title">${esc(o.title.replace(/\s*(결과|회의록)$/,''))}<small>회 의 록</small></div>
+    <table class="mt-ov"><tbody>
+      <tr><th>일  시</th><td>${esc(H.date||ov['일시']||'○○')}</td><th>장  소</th><td>${esc(H.place||ov['장소']||'○○')}</td></tr>
+      <tr><th>참석자</th><td colspan="3">${esc(H.who||ov['참석']||'○○')}</td></tr>
+      <tr><th>안  건</th><td colspan="3">${agenda.length?agenda.map((a,i)=>`<div>${esc(a.replace(/^[①②③④⑤⑥⑦⑧⑨\d.\s]+/,''))}</div>`).join(''):'○○'}</td></tr>
+    </tbody></table>
+    ${disc?`<div class="mt-h">회의 내용</div><div class="mt-body">${items(disc.lines)}</div>`:''}
+    ${dec?`<div class="mt-h">결정 사항</div><div class="mt-body mt-dec">${items(dec.lines)}</div>`:''}
+    ${act?`<div class="mt-h">조치 사항</div><table class="mt-act"><thead><tr><th>조치 내용</th><th>담당</th><th>기한</th></tr></thead><tbody>${actionRows(act.lines).map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join('')}</tbody></table>`:''}
+    ${etc&&etc.lines.some(l=>!/해당 없음/.test(l))?`<div class="mt-h">기타</div><div class="mt-body">${items(etc.lines)}</div>`:''}
+    <div class="mt-foot"><span>작성 : ${esc(H.dept)}</span><span>${esc(fmtWhen(new Date().toISOString().slice(0,10),''))}</span></div>
+  </div>`;
   $('#minutesOut').hidden=false; $('#minutesOut').scrollIntoView({behavior:'smooth',block:'start'});
 }
 async function callModel(user){
@@ -80,7 +96,7 @@ async function callModel(user){
 async function make(){
   if(M.busy) return;
   if(!v('mtName')){ $('#mtMsg').textContent='회의명은 입력해 주세요.'; return $('#mtName').focus(); }
-  if(!v('mtNotes')){ $('#mtMsg').textContent='회의 메모·녹취 내용을 붙여넣어 주세요.'; return $('#mtNotes').focus(); }
+  if(!v('mtNotes')){ $('#mtMsg').textContent='녹음 파일을 올리거나, 「녹음 대신 메모 붙여넣기」에 내용을 넣어 주세요.'; document.querySelectorAll('.mt-opt')[1].open=true; return $('#mtNotes').focus(); }
   M.busy=true; $('#mtGo').disabled=true; $('#mtMsg').textContent='정리 중…';
   try{
     const S=window.S||{};
@@ -113,17 +129,24 @@ function init(){
     toast?.('예시를 채웠습니다 — 「회의록 정리하기」를 눌러보세요');
   };
   /* 녹음 파일 → 글 → 바로 정리 */
-  $('#mtAudio').onchange=async e=>{
-    const f=e.target.files[0]; if(!f) return; if(!window.DsSTT){ $('#mtMsg').textContent='음성인식 모듈을 불러오지 못했습니다.'; return; }
-    if(!v('mtName')) $('#mtName').value=f.name.replace(/\.[^.]+$/,'');
+  async function runAudio(f){
+    if(!f) return; if(!window.DsSTT){ $('#mtMsg').textContent='음성인식 모듈을 불러오지 못했습니다.'; return; }
+    if(!v('mtName')) $('#mtName').value=f.name.replace(/\.[^.]+$/,'').replace(/^샘플_/,'');
     $('#mtSttWrap').hidden=false; $('#mtGo').disabled=true; $('#mtAudio').disabled=true;
     const prog=p=>{ $('#mtSttBar').style.width=(p.pct||0)+'%'; $('#mtSttMsg').textContent=p.msg||''; if(p.text) $('#mtNotes').value=p.text; };
     try{
       const text=await DsSTT.transcribe(f,prog);
-      $('#mtNotes').value=text; $('#mtSttBar').style.width='100%'; $('#mtSttMsg').textContent='글로 바꾸기 완료 — 이어서 회의록을 정리합니다';
+      document.querySelectorAll('.mt-opt')[1].open=true; $('#mtNotes').value=text; $('#mtSttBar').style.width='100%'; $('#mtSttMsg').textContent='글로 바꾸기 완료 — 이어서 회의록을 정리합니다';
       $('#mtGo').disabled=false; await make();
     }catch(err){ $('#mtSttMsg').textContent='⚠ '+err.message; $('#mtGo').disabled=false; }
-    finally{ $('#mtAudio').disabled=false; $('#mtAudio').value=''; }
+    finally{ $('#mtAudio').disabled=false; $('#mtAudio').value=''; $('#mtSampleAudio').disabled=false; }
+  }
+  $('#mtAudio').onchange=e=>runAudio(e.target.files[0]);
+  $('#mtSampleAudio').onclick=async()=>{
+    $('#mtSampleAudio').disabled=true; $('#mtMsg').textContent='샘플 녹음을 불러오는 중…';
+    try{ const b=await (await fetch('assets/sample_meeting.mp3')).blob(); if(!v('mtName')) $('#mtName').value='2026년 데이터기반행정 실태점검 대응 회의'; if(!v('mtWho')) $('#mtWho').value='정보통신과장, 정보통계팀장, 조호현 주무관'; if(!v('mtPlace')) $('#mtPlace').value='군청 3층 소회의실'; $('#mtMsg').textContent='';
+      await runAudio(new File([b],'샘플_회의녹음.mp3',{type:'audio/mpeg'})); }
+    catch(e){ $('#mtMsg').textContent='⚠ 샘플을 불러오지 못했습니다: '+e.message; $('#mtSampleAudio').disabled=false; }
   };
   $('#mtReset').onclick=()=>{ ['mtName','mtTime','mtPlace','mtWho','mtAgenda','mtNotes'].forEach(id=>$('#'+id).value=''); $('#minutesOut').hidden=true; $('#mtMsg').textContent=''; $('#mtSttWrap').hidden=true; $('#mtSttBar').style.width='0'; };
 }

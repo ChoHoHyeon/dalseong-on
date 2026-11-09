@@ -181,8 +181,8 @@ const HOME_MENU=[
   {mode:'staff',view:'banner', icon:'🎏', label:'홍보 현수막\n제작하기', ready:1},
   // (제외) 인포그래픽 제작하기 — 메뉴 삭제
   {mode:'staff',view:'card',   icon:'📱', label:'카드뉴스\n제작하기', ready:1},
-  {mode:'staff',view:'movie',  icon:'🎬', label:'홍보영상\n만들기'},
-  {mode:'staff',view:'voice',  icon:'🔊', label:'안내방송\n만들기'},
+  {mode:'staff',view:'movie',  icon:'🎬', label:'홍보영상\n만들기', ready:1},
+  // (제외) 안내방송 만들기 — 메뉴 삭제
   // ── 찾아보기 · 나눔
   {mode:'staff',view:'analyze',icon:'📊', label:'데이터\n분석하기', cls:'sep'},
   {mode:'staff',view:'past',   icon:'🔎', label:'지난 사례\n찾아보기'},
@@ -216,7 +216,7 @@ function renderNav(){
   const nc=$('#navClear'); if(nc) nc.onclick=()=>{ localStorage.removeItem('dOnRecent'); renderNav(); };
 }
 function setMode(m){ S.mode=m; document.body.dataset.mode=m; go(NAV[m][0].id); }
-function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='rule'&&window.RULEDRAFT) RULEDRAFT.init(); if(top==='minutes'&&window.MINUTES) MINUTES.init(); if(top==='banner'&&window.BANNER) BANNER.init(); if(top==='card'&&window.CARDNEWS) CARDNEWS.init(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='trip') loadTrip(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
+function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='rule'&&window.RULEDRAFT) RULEDRAFT.init(); if(top==='minutes'&&window.MINUTES) MINUTES.init(); if(top==='banner'&&window.BANNER) BANNER.init(); if(top==='card'&&window.CARDNEWS) CARDNEWS.init(); if(top==='movie'&&window.MOVIE) MOVIE.init(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='trip') loadTrip(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
 
 /* ── 홈 대시보드 ── */
 document.addEventListener('click',e=>{ const g=e.target.closest('[data-go]'); if(!g) return; const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });

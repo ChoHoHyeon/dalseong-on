@@ -185,45 +185,40 @@
 
     <!-- 회의록 정리하기 (세부 내역 추후 확정) -->
     <section class="view" data-view="minutes">
-      <div class="vh"><h2>회의록 정리하기</h2><p>회의 중 적은 메모나 녹취 텍스트를 붙여넣으면 안건별 논의 요지·결정사항·후속조치로 정리한 회의록 초안을 만들어 주는 화면입니다.</p></div>
-      <div class="card pcard">
-        <h4>회의록 정리하기 <small>메모 → 안건별 정리 → 한글 파일</small></h4>
-        <div class="pcols">
-        <fieldset class="pbox req-box">
-          <legend>꼭 입력해 주세요</legend>
-          <label class="pfull"><span class="cap">회의명 <b class="req">*</b></span><input id="mtName" placeholder="예) 2026년 ○○ 추진 회의"></label>
+      <div class="vh"><h2>회의록 정리하기</h2><p>회의 제목을 적고 녹음 파일을 올리면, 이 PC 안에서 글로 바꾼 뒤 안건별 논의·결정사항·조치사항이 정리된 회의록이 아래에 만들어집니다.</p></div>
+      <div class="card pcard mt-card">
+        <div class="mt-top">
+          <label class="pfull"><span class="cap">회의 제목 <b class="req">*</b></span><input id="mtName" placeholder="예) 2026년 데이터기반행정 실태점검 대응 회의"></label>
           <div class="stt-box">
             <div class="stt-head"><b>🎙 회의 녹음 파일 올리기</b> <span class="stt-badge">이 PC 안에서만 처리 · 외부 전송 없음</span></div>
-            <label class="filebtn big">📂 녹음 파일 선택 (mp3 · m4a · wav · webm)<input type="file" id="mtAudio" accept="audio/*,.m4a,.mp3,.wav,.webm,.ogg,.aac"></label>
+            <label class="filebtn big">📂 녹음 파일 선택 (mp3 · m4a · wav · webm) — 올리면 바로 정리됩니다<input type="file" id="mtAudio" accept="audio/*,.m4a,.mp3,.wav,.webm,.ogg,.aac"></label>
+            <div class="stt-sample"><button id="mtSampleAudio" class="stt-sbtn">▶ 샘플 녹음(5분 40초)으로 해보기</button><audio id="mtSamplePlayer" controls preload="none" src="assets/sample_meeting.mp3"></audio></div>
             <div class="stt-prog" id="mtSttWrap" hidden><div class="bar"><i id="mtSttBar"></i></div><span id="mtSttMsg"></span></div>
-            <p class="hint">올리면 글로 바꾼 뒤 <b>바로 회의록까지 정리</b>합니다. 음성인식은 브라우저 안에서 돌아가며(처음 한 번 모델 약 250MB 내려받음) 녹음 10분에 보통 2~6분 걸립니다.</p>
           </div>
-          <label class="pfull"><span class="cap">회의 메모·녹취 내용 <small class="hint">녹음이 없으면 메모를 직접 붙여넣어도 됩니다 · 변환된 글은 여기서 고칠 수 있습니다</small></span>
-            <textarea id="mtNotes" rows="8" placeholder="과장: 11월 말 제출이니 담당 이번 주에 정하자&#10;팀장: 2지표는 결재만 남음, 다음 주 월요일 상신&#10;…"></textarea></label>
-        </fieldset>
-        <fieldset class="pbox opt-box">
-          <legend>선택 입력 <span class="optnote">비우면 <b class="miss">○○</b>로 표시됩니다</span></legend>
-          <div class="pgrid pgrid2">
+        </div>
+        <details class="mt-opt"><summary>선택 입력 <small>일시·장소·참석자·안건 — 비우면 녹음에서 파악하거나 ○○로 둡니다</small></summary>
+          <div class="pgrid pgrid2" style="margin-top:10px">
             <label>일자<input id="mtDate" type="date"></label>
             <label>시각<input id="mtTime" placeholder="예) 14:00"></label>
             <label>장소<input id="mtPlace" placeholder="예) 군청 3층 소회의실"></label>
             <label>작성 부서<input id="mtDept" placeholder="행정국 정보통신과"></label>
           </div>
-          <label class="pfull">참석자<input id="mtWho" placeholder="예) 정보통신과장, 정보통계팀장, ○○○ 주무관"></label>
-          <label class="pfull">안건 <small class="hint">한 줄에 하나, 비우면 메모에서 파악</small><textarea id="mtAgenda" rows="3"></textarea></label>
-          <p class="hint" style="margin-top:8px">※ 녹음·메모는 이 PC 안에서 글로 바뀌고, 정리 단계에서 글(텍스트)만 모델에 전달됩니다. 비공개 사항·개인정보가 담긴 회의는 사용하지 마세요.</p>
-        </fieldset>
-        </div>
-        <div class="pact"><button id="mtGo" class="p">회의록 정리하기</button><button id="mtSample">예시로 채우기</button><button id="mtReset">비우기</button><span class="hint" id="mtMsg"></span></div>
+          <label class="pfull" style="margin-top:8px">참석자<input id="mtWho" placeholder="예) 정보통신과장, 정보통계팀장, ○○○ 주무관"></label>
+          <label class="pfull" style="margin-top:8px">안건 <small class="hint">한 줄에 하나</small><textarea id="mtAgenda" rows="2"></textarea></label>
+        </details>
+        <details class="mt-opt"><summary>녹음 대신 메모 붙여넣기 <small>녹음이 없을 때 · 변환된 글도 여기서 고칠 수 있습니다</small></summary>
+          <textarea id="mtNotes" rows="8" style="margin-top:10px" placeholder="과장: 11월 말 제출이니 담당 이번 주에 정하자&#10;팀장: 2지표는 결재만 남음, 다음 주 월요일 상신&#10;…"></textarea>
+        </details>
+        <div class="pact"><button id="mtGo" class="p">메모로 정리하기</button><button id="mtSample">예시로 채우기</button><button id="mtReset">비우기</button><span class="hint" id="mtMsg"></span></div>
+        <p class="hint">※ 녹음·메모는 이 PC 안에서 글로 바뀌고, 정리 단계에서 글(텍스트)만 모델에 전달됩니다. 비공개 사항·개인정보가 담긴 회의는 사용하지 마세요.</p>
       </div>
       <div class="card pout" id="minutesOut" hidden>
-        <h4>회의록 초안 <small>참석자 확인 후 확정하세요</small></h4>
-        <div class="pv rpwrap" id="minutesView"></div>
-        <div class="pact"><button id="mtHwpx" class="p">📄 한글 파일로 내려받기</button><button id="mtCopy">복사</button><button id="mtAgain">다시 생성</button></div>
+        <h4>회의록 <small>참석자 확인 후 확정하세요</small></h4>
+        <div class="pv mtwrap" id="minutesView"></div>
+        <div class="pact"><button id="mtHwpx" class="p">📄 한글 파일로 내려받기</button><button id="mtCopy">복사</button><button id="mtAgain">다시 정리</button></div>
       </div>
     </section>
 
-    <!-- 안내방송 만들기 (세부 내역 추후 확정) -->
 
     <!-- 특근매식비 정산하기 -->
     <section class="view" data-view="meal">
@@ -459,13 +454,6 @@
       <div id="famApp"></div>
     </section>
 
-    <section class="view" data-view="voice">
-      <div class="vh"><h2>안내방송 만들기</h2><p>알릴 내용만 적으면 마을 안내방송 원고와 음성 파일까지 만들어 주는 화면입니다.</p></div>
-      <div class="card soon-card"><h4>준비 중 <small>메뉴 자리만 잡아둔 화면입니다</small></h4>
-        <ul class="soon-list"><li><b>알릴 내용 입력 → 방송 원고 자동 정리</b> (인사말·본문·반복 안내 구성)</li><li><b>원고 → 음성 파일(mp3) 생성</b> — 직접 마이크 잡지 않아도 됨</li><li><b>읍·면 방송, 행사장 안내, 재난·기상 안내 등 유형별 문장 틀</b></li></ul>
-        <p class="hint" style="margin-top:12px">※ 음성 합성은 업무망 자체 서버(GPU)에서 처리하는 구조로 검토합니다. 회의록 정리(음성→텍스트)와 같은 서버를 사용합니다. 세부 기능·화면 구성은 협의 후 확정합니다.</p></div>
-    </section>
-
     <!-- 데이터 분석하기 (세부 내역 추후 확정) -->
     <section class="view" data-view="analyze">
       <div class="vh"><h2>데이터 분석하기</h2><p>군 공공데이터를 읍·면별로 집계하고 표·그래프로 정리하는 화면입니다.</p></div>
@@ -627,10 +615,47 @@
 
     <!-- 홍보영상 만들기 (세부 내역 추후 확정) -->
     <section class="view" data-view="movie">
-      <div class="vh"><h2>홍보영상 만들기</h2><p>행사 사진·영상을 올리면 자막·나레이션·배경음악을 붙여 짧은 홍보 클립으로 만들어 주는 화면입니다.</p></div>
-      <div class="card soon-card"><h4>준비 중 <small>메뉴 자리만 잡아둔 화면입니다</small></h4>
-        <ul class="soon-list"><li><b>사진·영상 올리기 → 30초 내외 클립 자동 조립</b> (전환효과·자막 위치 자동)</li><li><b>대본·자막·나레이션 자동 생성</b> (안내방송 기능과 같은 음성 서버 사용)</li><li><b>저작권 부담 없는 배경음악 · 군 CI 삽입</b></li></ul>
-        <p class="hint" style="margin-top:12px">※ 영상 장면을 AI가 새로 만들어 내는 방식이 아니라, <b>담당자가 가진 사진·영상을 조립</b>하는 방식으로 검토합니다. 세부 기능·화면 구성은 협의 후 확정합니다.</p></div>
+      <div class="vh"><h2>홍보영상 만들기</h2><p>계획서·보도자료 PDF를 올리거나 내용을 붙여넣으면, 달성On이 읽고 SNS 홍보용 짧은 영상 대본을 써서 가로·세로·길이에 맞춰 영상으로 만들어 줍니다. 모두 이 브라우저 안에서 그려집니다.</p></div>
+      <div class="card pcard">
+        <h4>대본 만들기 <small>문서 → 장면별 자막 → 영상</small></h4>
+        <div class="pcols">
+        <fieldset class="pbox req-box">
+          <legend>꼭 입력해 주세요</legend>
+          <div class="pfile" style="margin-bottom:8px"><label class="filebtn">📎 문서 올리기 (PDF · txt)<input type="file" id="mvFile" accept=".pdf,.txt,.md,.csv"></label><span class="hint">계획서·보도자료·공고문 PDF면 됩니다 (글자 PDF만, 스캔본 제외)</span></div>
+          <label class="pfull"><span class="cap">내용 <b class="req">*</b> <small class="hint">문서를 올리면 자동으로 채워집니다 · 직접 붙여넣어도 됩니다</small></span><textarea id="mvSrc" rows="8" placeholder="홍보할 사업·행사의 계획서나 보도자료 내용"></textarea></label>
+        </fieldset>
+        <fieldset class="pbox opt-box">
+          <legend>영상 설정</legend>
+          <div class="pgrid pgrid2">
+            <label>화면<select id="mvSize" class="psel"></select></label>
+            <label>길이<select id="mvLen" class="psel"><option>15</option><option selected>30</option><option>45</option><option>60</option></select></label>
+            <label>배경<select id="mvBg" class="psel"><option value="photo">군 보유 사진(비슬산)</option><option value="color">색 테마만</option><option value="custom">내 사진(여러 장)</option></select></label>
+            <label>색 테마<select id="mvTheme" class="psel"></select></label>
+          </div>
+          <div class="pfile" id="mvPhotoWrap" hidden style="margin-top:8px"><label class="filebtn">📷 사진 올리기 (최대 8장)<input type="file" id="mvPhotos" accept="image/*" multiple></label><span class="hint" id="mvPhotoMsg">장면마다 번갈아 배경으로 씁니다</span></div>
+          <label class="pfull" style="margin-top:8px">문의처(마지막 장면)<input id="mvContact" placeholder="예) 문의 정보통신과 053)668-2454"></label>
+          <p class="hint" style="margin-top:8px">※ 자막형 영상입니다. 나레이션·배경음악은 내부 음성서버·무료 음원 확보 후 2단계. 사진은 AI 생성 없이 군 보유·직접 올린 사진만 씁니다.</p>
+        </fieldset>
+        </div>
+        <div class="pact"><button id="mvGo" class="p">대본 만들기</button><button id="mvSample">예시로 채우기</button><button id="mvReset">비우기</button><span class="hint" id="mvMsg"></span></div>
+      </div>
+      <div class="card pout" id="mvOut" hidden>
+        <h4>장면 대본 <small id="mvTotal"></small></h4>
+        <div class="mv-wrap">
+          <div>
+            <div class="mv-scenes" id="mvScenes"></div>
+            <div class="pact" style="margin-top:10px"><button id="mvRec" class="p">🎬 영상 만들기</button><button id="mvAgain">대본 다시 쓰기</button></div>
+            <label class="pfull" style="margin-top:10px">게시글 문구 · 해시태그<textarea id="mvCaption" rows="3"></textarea></label>
+            <div class="pact" style="margin-top:6px"><button id="mvCopy">게시글 복사</button></div>
+          </div>
+          <div>
+            <div class="mv-stage"><canvas id="mvCanvas"></canvas></div>
+            <div id="mvVideoWrap" hidden><video id="mvVideo" controls playsinline style="width:100%;border-radius:10px;margin-top:10px"></video>
+              <div class="pact" style="margin-top:8px"><button id="mvDl" class="p">⬇ 영상 내려받기</button></div></div>
+            <p class="hint" style="margin-top:6px">장면 줄을 누르면 미리보기가 바뀝니다. 「영상 만들기」는 실제 길이만큼(30초면 30초) 그리면서 녹화합니다.</p>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- 지난 사례 찾아보기 (2단계 · 공문서 개방 후) -->
@@ -742,6 +767,7 @@
 <script src="minutes.js"></script>
 <script src="banner.js"></script>
 <script src="cardnews.js"></script>
+<script src="movie.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

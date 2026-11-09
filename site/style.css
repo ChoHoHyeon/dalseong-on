@@ -1281,3 +1281,36 @@ body[data-theme=dark] .bugnote{background:rgba(217,138,0,.14);color:#f0d9a6;bord
 .stt-prog{margin-top:10px;font-size:12.5px;color:var(--mut)}
 .stt-prog .bar{height:8px;border-radius:999px;background:#e3e8f2;overflow:hidden;margin-bottom:5px}
 .stt-prog .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2f6fed,#48c9b0);transition:width .4s}
+
+/* ── 회의록 화면 ── */
+.mt-top{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.mt-top .stt-box{margin:0}
+.mt-opt{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-top:10px}
+.mt-opt summary{cursor:pointer;font-weight:700;font-size:13px}.mt-opt summary small{font-weight:400;color:var(--mut);margin-left:6px}
+.pv.mtwrap{font-family:'맑은 고딕','Malgun Gothic',sans-serif;padding:30px 36px;max-width:860px}
+.mt-title{text-align:center;font-size:21px;font-weight:800;margin-bottom:16px}
+.mt-title small{display:block;font-size:12px;letter-spacing:6px;color:#555;font-weight:600;margin-top:4px}
+.mt-ov,.mt-act{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:14px}
+.mt-ov th,.mt-act th{background:#eef2f9;border:1px solid #9aa7c2;padding:7px 8px;text-align:center;font-weight:700;white-space:nowrap;width:70px}
+.mt-ov td,.mt-act td{border:1px solid #9aa7c2;padding:7px 10px;vertical-align:top;line-height:1.55}
+.mt-act th:nth-child(1){width:auto}.mt-act th:nth-child(2){width:120px}.mt-act th:nth-child(3){width:130px}
+.mt-h{font-weight:800;font-size:14px;color:#003087;border-left:4px solid #003087;padding-left:8px;margin:16px 0 8px}
+.mt-body{font-size:13.5px;line-height:1.7;padding-left:4px}
+.mt-sq{font-weight:700;margin:8px 0 3px}.mt-sq:before{content:"□ "}
+.mt-cir{padding-left:16px;margin:2px 0}.mt-cir:before{content:"○ ";margin-left:-16px}
+.mt-dash{padding-left:34px;margin:1px 0;color:#222}.mt-dash:before{content:"- ";margin-left:-12px}
+.mt-dec .mt-cir{font-weight:600}
+.mt-foot{display:flex;justify-content:space-between;margin-top:22px;padding-top:10px;border-top:1px solid #bbb;font-size:12.5px;color:#444}
+@media (max-width:900px){.mt-top{grid-template-columns:1fr}}
+
+/* ── 홍보영상 ── */
+.mv-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.8fr);gap:16px;align-items:start}
+.mv-scene{display:grid;grid-template-columns:22px 1fr 2fr 40px;gap:6px;align-items:center;padding:6px 8px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;cursor:pointer}
+.mv-scene b{color:#2f6fed}.mv-scene input{padding:6px 8px;font-size:12.5px}.mv-scene span{font-size:11.5px;color:var(--mut);text-align:right}
+.mv-stage{background:#e9edf3;border-radius:12px;padding:12px}
+.mv-stage canvas{display:block;max-width:100%;max-height:520px;margin:0 auto;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.cn-thumb{width:auto;min-width:72px}
+@media (max-width:900px){.mv-wrap{grid-template-columns:1fr}}
+.stt-sample{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+.stt-sbtn{border:1px solid #2f6fed;color:#2f6fed;border-radius:8px;padding:7px 11px;font-weight:700;font-size:12.5px;background:#fff}
+.stt-sample audio{height:32px;flex:1;min-width:200px}
