@@ -228,8 +228,8 @@ function baseName(n){ return String(n||'').replace(/^(대구광역시\s*)?달성
 async function keywords(mode,name,gist){
   const fb={law:[baseName(name)],ordin:[baseName(name)]};
   if(!modelOn()) return fb;
-  try{ const t=await callModel('자치법규 검색어를 뽑는 도우미. JSON만 출력.',`조례 이름: ${name}\n내용: ${gist}\n\n국가법령정보센터 검색에 쓸 짧은 검색어를 뽑아 JSON으로만 답하세요.\n{"law":["상위 법령 검색어 1~2개 (예: 공공데이터)"],"ordin":["다른 지자체 조례 검색어 1~2개 (예: 공공데이터 제공)"]}`,{max:300});
-    const j=jsonOf(t); if(j&&j.law&&j.ordin) return {law:j.law.slice(0,2),ordin:j.ordin.slice(0,2)}; }catch(e){}
+  try{ const t=await callModel('자치법규 검색어를 뽑는 도우미. JSON만 출력.',`조례 이름: ${name}\n내용: ${gist}\n\n국가법령정보센터 검색에 쓸 짧은 검색어를 뽑아 JSON으로만 답하세요.\n※ 법령·조례 "이름"에 들어 있는 낱말로만 검색됩니다. 이름에 실제로 들어갈 1~2단어 명사로 쓰세요.\n{"law":["상위 법률 이름 검색어 1~2개 (예: 공공데이터, 지능정보화)"],"ordin":["다른 지자체 조례 이름 검색어 2~3개, 짧은 것부터 (예: 공공데이터, 데이터 품질)"]}`,{max:300});
+    const j=jsonOf(t); if(j&&j.law&&j.ordin) return {law:j.law.slice(0,2),ordin:j.ordin.slice(0,3)}; }catch(e){}
   return fb;
 }
 async function webRefs(mode,name,gist){
@@ -249,23 +249,28 @@ JSON 형식: {"laws":[{"name":"","articles":"제n조(…) 요지","url":""}],"or
 async function findRefs(mode,name,gist){
   const R={laws:[],ordins:[],current:'',texts:[],via:''};
   step('kw','run'); const kw=await keywords(mode,name,gist); step('kw','done','검색어: '+[...new Set([...kw.law,...kw.ordin])].join(', '));
-  // ① Open API
-  try{
-    step('law','run');
-    for(const q of kw.law){ const j=await lawApi('target=law&n=5&q='+encodeURIComponent(q)); j.list.forEach(x=>{ if(!R.laws.some(y=>y.mst===x.mst)) R.laws.push({...x,url:linkOf('law',x)}); }); }
-    R.laws=R.laws.filter(x=>!/시행규칙/.test(x.name)).slice(0,4); step('law','done',R.laws.length?R.laws.map(x=>x.name).join(' · '):'찾은 법령 없음');
-    step('ordin','run');
-    for(const q of kw.ordin){ const j=await lawApi('target=ordin&n=20&q='+encodeURIComponent(q)); j.list.forEach(x=>{ if(!/달성군/.test(x.org)&&!R.ordins.some(y=>y.mst===x.mst)) R.ordins.push({...x,url:linkOf('ordin',x)}); }); }
-    R.ordins=R.ordins.slice(0,5); step('ordin','done',R.ordins.length?R.ordins.length+'건 — '+R.ordins.slice(0,3).map(fullName).join(' · '):'찾은 조례 없음');
+  // ① Open API — 단계마다 따로 시도(한 단계가 막혀도 나머지는 계속), 결과 0건이면 짧은 검색어로 한 번 더
+  const qs=a=>[...new Set(a.flatMap(q=>[q,String(q).split(/\s+/)[0]]).filter(Boolean))];
+  let okLaw=false, okOrd=false;
+  step('law','run');
+  try{ for(const q of qs(kw.law)){ if(R.laws.length>=4) break; const j=await lawApi('target=law&n=5&q='+encodeURIComponent(q)); j.list.forEach(x=>{ if(!R.laws.some(y=>y.mst===x.mst)) R.laws.push({...x,url:linkOf('law',x)}); }); }
+    R.laws=R.laws.filter(x=>!/시행규칙/.test(x.name)).slice(0,4); okLaw=true; step('law','done',R.laws.length?R.laws.map(x=>x.name).join(' · '):'찾은 법령 없음'); }
+  catch(e){ R.lawErr=e.message; step('law','skip',/미신청|읽지 못/.test(e.message)?'법령 API 미신청 — 다른 지자체 조례로 상위 법령을 확인합니다':'연결 안 됨'); }
+  step('ordin','run');
+  try{ for(const q of qs(kw.ordin)){ if(R.ordins.length>=5) break; const j=await lawApi('target=ordin&n=20&q='+encodeURIComponent(q)); j.list.forEach(x=>{ if(!/달성군/.test(x.org)&&!/의회/.test(x.name)&&!R.ordins.some(y=>y.mst===x.mst)) R.ordins.push({...x,url:linkOf('ordin',x)}); }); }
+    R.ordins=R.ordins.slice(0,5); okOrd=true; step('ordin','done',R.ordins.length?R.ordins.length+'건 — '+R.ordins.slice(0,3).map(fullName).join(' · '):'찾은 조례 없음'); }
+  catch(e){ R.apiErr=e.message; step('ordin','skip','연결 안 됨'); }
+  if(okLaw||okOrd){
     step('cur','run');
-    const own=(await lawApi('target=ordin&org=달성군&n=5&q='+encodeURIComponent('달성군 '+baseName(name)))).list;
-    if(mode==='amend'){ const hit=own[0]; if(hit&&!$('#ruCur').value.trim()){ const b=await lawApi('target=ordin&mst='+hit.mst); R.current=b.text; step('cur','done','불러옴: '+hit.name); } else step('cur','done',$('#ruCur').value.trim()?'입력한 현행 조문 사용':'달성군 조례를 찾지 못함 — 현행 조문을 붙여넣어 주세요'); }
-    else step('cur','done',own.length?`⚠ 이미 있음: ${own[0].name} — 「고치기」가 맞는지 확인하세요`:'같은 이름의 달성군 조례 없음');
+    try{ let own=[]; for(const q of qs([baseName(name)])){ own=(await lawApi('target=ordin&org=달성군&n=5&q='+encodeURIComponent('달성군 '+q))).list; if(own.length) break; }
+      if(mode==='amend'){ const hit=own[0]; if(hit&&!$('#ruCur').value.trim()){ const b=await lawApi('target=ordin&mst='+hit.mst); R.current=b.text; step('cur','done','불러옴: '+hit.name); } else step('cur','done',$('#ruCur').value.trim()?'입력한 현행 조문 사용':'달성군 조례를 찾지 못함 — 현행 조문을 붙여넣어 주세요'); }
+      else step('cur','done',own.length?`⚠ 비슷한 달성군 조례 있음: ${own.slice(0,2).map(x=>x.name).join(' · ')} — 「고치기」가 맞는지 확인하세요`:'같은 내용의 달성군 조례 없음'); }
+    catch(e){ step('cur','skip','확인 못 함'); }
     step('read','run');
-    for(const x of [...R.laws.slice(0,1),...R.ordins.slice(0,2)]){ try{ const b=await lawApi(`target=${R.laws.includes(x)?'law':'ordin'}&mst=${x.mst}`); R.texts.push({name:fullName(x),text:b.text.slice(0,3500)}); step('read','run',`${R.texts.length}건 읽음`); }catch(e){} }
+    for(const x of [...R.ordins.slice(0,3),...R.laws.slice(0,1)]){ try{ const b=await lawApi(`target=${R.laws.includes(x)?'law':'ordin'}&mst=${x.mst}`); R.texts.push({name:fullName(x),text:b.text.slice(0,4000)}); step('read','run',`${R.texts.length}건 읽음`); }catch(e){} }
     step('read','done',R.texts.length?R.texts.map(x=>x.name).join(' · '):'본문을 읽지 못함');
     R.via='api'; return R;
-  }catch(e){ R.apiErr=e.message; }
+  }
   // ② 모델 웹검색
   if(modelOn()){
     try{ U.stepNow='law'; step('law','run','웹 검색으로 찾는 중'); step('ordin','run','웹 검색으로 찾는 중');
