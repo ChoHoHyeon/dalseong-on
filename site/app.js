@@ -280,12 +280,71 @@ function drawVideo(i){
 
 /* 관리자 › 이용 통계·자료 현황 (KPI · 참조 순위 · 자료 구성 · 자치법규) */
 /* ── 홈 하단: 오늘의 한마디 · 이번 주(전 직원 실제 집계) · 성장일기 · 기준 띠 · 기념일 ── */
+/* 오늘의 한마디 — 조건(요일·시간·날짜·달)에 맞는 문구만 골라서 무작위로 보여 준다.
+   d: 요일(0=일~6=토) · h: [시작시,끝시) · dom: [시작일,끝일] · m: 해당 월 · 조건이 없으면 언제나 */
 const MSGS=[
- ['월','한 주 시작! 잔일은 달성On에 맡기고 커피 한 잔 ☕'],['화','회의록, 아직도 직접 쓰세요? 녹음만 올리면 돼요 👀'],['수','벌써 수요일! 반은 왔어요 💪'],['목','보도자료 초안, 계획서 붙여넣기면 5분이에요 📰'],['금','오늘도 칼퇴를 향해! 🚀'],
- ['','급량비 정산은 엑셀 올리고 클릭 한 번 🍚'],['','엑셀 올리고 "읍면별 합계"라고만 물어보세요 📊'],['','카드뉴스 6장, 디자이너 없이 10분 📱'],['','출장내역서 PDF 넣으면 관내여비 끝 🚗'],['','조례 개정? 현행 조문만 붙여넣으면 대비표가 나와요 ⚖️'],
- ['','현수막 문구 3안, 고르기만 하세요 🎏'],['','"이런 기능 있으면 좋겠다" — 나눔터에 남기면 진짜 생겨요 💡'],['','오늘 한 일 중 반복되는 게 있다면, 그게 다음 기능이에요 ✨'],['','홍보영상도 문서 하나면 만들어져요 🎬'],['','경조사 카드, 마음만 준비하세요 💐']];
-function todayMsg(){ const d=new Date(), w='일월화수목금토'[d.getDay()]; const byDay=MSGS.filter(m=>m[0]===w); const rest=MSGS.filter(m=>!m[0]); const seed=Math.floor(d/864e5);
-  return (byDay.length&&seed%2===0)?byDay[0][1]:rest[seed%rest.length][1]; }
+ // ── 요일 (그 요일에만)
+ {t:'한 주 시작! 잔일은 달성On에 맡기고 커피 한 잔 ☕',d:[1]},
+ {t:'월요병엔 반복 업무부터 덜어내기 💪',d:[1]},
+ {t:'월요일 아침 회의, 녹음만 해 두세요 — 회의록은 달성On이 🎙',d:[1],h:[7,12]},
+ {t:'화요일, 이번 주 일정 달력에 넣어 두셨나요? 📅',d:[2]},
+ {t:'화요일은 밀린 보고서 숫자 정리하기 좋은 날 📊',d:[2]},
+ {t:'벌써 수요일! 한 주의 반을 왔어요 🎉',d:[3]},
+ {t:'수요일엔 잠깐 숨 고르기 — 반복 일은 달성On에게 🌿',d:[3]},
+ {t:'목요일, 다음 주 행사 홍보물 미리 준비해 볼까요? 📰',d:[4]},
+ {t:'하루만 더 힘내면 금요일이에요 🙌',d:[4]},
+ {t:'오늘도 칼퇴를 향해! 🚀',d:[5]},
+ {t:'불금! 남은 일은 달성On과 빠르게 끝내요 ✨',d:[5]},
+ {t:'금요일 오후, 이번 주 회의록 정리 끝내고 홀가분하게 🧹',d:[5],h:[13,24]},
+ {t:'주말에도 출근하셨군요. 오늘은 짧게 끝내고 쉬세요 🌤',d:[0,6]},
+ {t:'주말 근무 수고 많아요 — 급량비도 잊지 말고 챙기세요 🍚',d:[0,6]},
+ // ── 시간대 (그 시간에만)
+ {t:'좋은 아침이에요! 오늘 챙길 일은 아래 달력에 ☀️',h:[6,10]},
+ {t:'출근 완료! 오늘 할 일 하나씩 가볍게 시작해요 🌱',h:[6,10]},
+ {t:'점심 맛있게 드세요 🍱 다녀오면 반복 일은 달성On이',h:[11,14]},
+ {t:'식곤증 오는 시간, 단순 작업은 달성On에게 넘겨요 😴',h:[13,16]},
+ {t:'오후 3시, 커피 한 잔 하고 마무리 달려 볼까요 ☕',h:[14,17]},
+ {t:'퇴근이 보여요! 오늘 만든 결과는 「내 최근 작업」에 🗂',h:[17,19]},
+ {t:'야근 중이시네요. 반복 작업은 맡기고 조금이라도 일찍 들어가세요 🌙',h:[19,24]},
+ {t:'늦은 시간까지 수고 많아요. 내일 일정은 달력에 적어 두고 퇴근해요 🌙',h:[19,24]},
+ // ── 날짜 (그 기간에만)
+ {t:'월초엔 지난달 급량비·관내여비 정산부터 🍚🚗',dom:[1,10]},
+ {t:'정산 시즌! 확인서 PDF 하나면 집행대장까지 끝나요 🧾',dom:[1,10]},
+ {t:'월말이 다가와요 — 이번 달 실적, 엑셀 한 장으로 차트까지 📊',dom:[24,31]},
+ {t:'이달 마지막 주, 다음 달 행사 홍보 미리 준비해요 📣',dom:[22,31]},
+ // ── 계절·달 (그 달에만)
+ {t:'새해 첫 달, 올해 업무 계획도 가볍게 시작해요 🎍',m:[1]},
+ {t:'봄 행사 시즌! 현수막 문구 3안, 고르기만 하세요 🌸',m:[3,4,5]},
+ {t:'더운 날씨, 시원한 물 한 잔과 함께 🧊',m:[7,8]},
+ {t:'선선한 가을, 축제 홍보는 카드뉴스로 🍂',m:[9,10]},
+ {t:'연말 조례·지침 정비 시기 — 현행 조문만 붙여넣으면 대비표가 ⚖️',m:[11,12]},
+ {t:'한 해 마무리, 올해 실적 정리는 데이터 분석으로 📈',m:[12]},
+ // ── 언제나
+ {t:'회의록, 아직도 직접 쓰세요? 녹음만 올리면 돼요 👀'},
+ {t:'보도자료 초안, 계획서 붙여넣기면 5분이에요 📰'},
+ {t:'보도자료 다 썼다면 [카드뉴스] 한 번만 눌러 보세요 📱'},
+ {t:'급량비 정산은 확인서 PDF 하나면 충분해요 🍚'},
+ {t:'출장내역서 PDF 넣으면 관내여비 지급조서까지 🚗'},
+ {t:'엑셀 올리고 "읍면별 합계"라고만 물어보세요 📊'},
+ {t:'카드뉴스 6장, 디자이너 없이 10분 📱'},
+ {t:'현수막 문구 3안, 고르기만 하세요 🎏'},
+ {t:'홍보영상도 문서 하나면 만들어져요 🎬'},
+ {t:'경조사 카드, 마음만 준비하세요 💐'},
+ {t:'조례 개정? 현행 조문만 붙여넣으면 대비표가 나와요 ⚖️'},
+ {t:'규정이 헷갈리면 「달성On 사용하기」에 그냥 물어보세요 ✦'},
+ {t:'"이런 기능 있으면 좋겠다" — 나눔터에 남기면 진짜 생겨요 💡'},
+ {t:'오늘 한 일 중 반복되는 게 있다면, 그게 다음 기능이에요 ✨'},
+ {t:'결과는 초안이에요. 마지막 확인은 담당자 몫! ✅'},
+ {t:'만든 결과는 「내 최근 작업」에 남아요 — 새로고침해도 걱정 없어요 🗂'},
+ {t:'오늘도 수고 많았어요. 작은 일은 달성On이 덜어 드릴게요 😊'}];
+function todayMsg(){
+  const d=new Date(), w=d.getDay(), hr=d.getHours(), dom=d.getDate(), mo=d.getMonth()+1;
+  const ok=x=>(!x.d||x.d.includes(w))&&(!x.h||(hr>=x.h[0]&&hr<x.h[1]))&&(!x.dom||(dom>=x.dom[0]&&dom<=x.dom[1]))&&(!x.m||x.m.includes(mo));
+  const special=MSGS.filter(x=>(x.d||x.h||x.dom||x.m)&&ok(x)), always=MSGS.filter(x=>!(x.d||x.h||x.dom||x.m));
+  // 조건이 맞는 문구를 조금 더 자주(60%) — 나머지는 언제나 문구에서 무작위
+  const pool=(special.length&&Math.random()<.6)?special:always;
+  return pool[Math.floor(Math.random()*pool.length)].t;
+}
 const MNAME={minutes:'회의록',press:'보도자료',card:'카드뉴스',meal:'급량비',trip:'출장비',family:'경조사 카드',banner:'현수막',movie:'홍보영상',analyze:'데이터 분석',rule:'조례·지침',share:'나눔터',on:'달성On 질문'};
 /* 최근 작업 — 이 브라우저(localStorage)에만 저장. 서버로 보내지 않는다 */
 const RC_KEY='dsOn.recent';
@@ -371,7 +430,7 @@ function renderUsage(){
    영상이 늘어나면 이 배열에 한 줄만 더하면 된다. 넘김 단추는 개수에 맞춰 저절로 생긴다.
    file 대신 yt(유튜브 ID)를 적어도 된다. */
 const VIDEOS=[
-  {title:'달성On과 함께한 하루', sub:'09시 회의록부터 18시 칼퇴까지', len:'29초', home:true,
+  {title:'달성On과 함께한 하루', sub:'09시 회의록부터 18시 칼퇴까지', len:'31초', home:true,
    file:'assets/day.mp4', poster:'assets/day_poster.jpg'},
   {title:'달성On 소개',        sub:'무엇을 해 주는지 16초로',   len:'16초',   home:true,
    file:'assets/intro.mp4',  poster:'assets/intro_poster.jpg'},
@@ -766,8 +825,9 @@ function renderAdminSrc(){ const t=$('#adminSrc'); const rows=[['자치법규','
   t.onclick=e=>{ if(e.target.dataset.up!==undefined){ e.target.textContent='반영됨 ✓'; e.target.disabled=true; toast('자료 갱신 완료 — 전 직원 화면에 즉시 반영됩니다'); } }; }
 function updPill(){ const on=(S.key||S.server)&&!S.offline; $('#pillModel').classList.toggle('on',!!on); $('#pillTxt').textContent=on?(S.key?`모델 연결(브라우저 직접): ${S.model}`:`모델 연결(서버 프록시): ${S.model}`):(S.serverGate&&!S.server?'서버 연결됨 · 접속 코드 필요(관리자 › 모델 설정)':'오프라인 모드'); if($('#adminModel')) $('#adminModel').textContent=$('#pillTxt').textContent; }
 $('#accessCode').value=S.code; $('#accessCode').onchange=e=>{ S.code=e.target.value.trim(); localStorage.setItem('dOnCode',S.code); probeServer();
-/* 접속 IP 표시 — 서버 함수(/api/whoami)에서 받아옴. 로컬·오프라인이면 '-' */
-fetch('/api/whoami').then(r=>r.ok?r.json():null).then(j=>{ if(j&&j.ip) $('#userIp').textContent=j.ip; }).catch(()=>{}); };
+};
+/* 접속 IP 표시 — 서버 함수(/api/whoami)에서 받아옴. 못 받으면 '–' 그대로 */
+fetch('/api/whoami',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{ if(j&&j.ip){ $('#userIp').textContent=j.ip; $('#userChip').title='지금 접속한 IP: '+j.ip+' (실제 구축 시 새올 인증 사용자 정보로 대체)'; } }).catch(()=>{});
 /* 서버 프록시(Netlify Function) 사용 가능 여부 확인 — 키가 서버에 있으면 화면에서 키 입력 불필요 */
 function probeServer(){ fetch('/api/chat',{method:'POST',headers:{'content-type':'application/json','x-access-code':S.code||''},body:'{"ping":1}'}).then(r=>r.ok?r.json():null).then(j=>{ S.server=!!(j&&j.ok&&j.codeOk); S.serverGate=!!(j&&j.gate); updPill(); }).catch(()=>{ S.server=false; updPill(); }); }
 probeServer();
