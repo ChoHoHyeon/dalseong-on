@@ -1512,3 +1512,9 @@ body[data-theme=dark] .cd .n{color:#dfe6f3}
 .hm-recent li.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;height:100%;min-height:120px;background:transparent;border:1.5px dashed #d6dde9;border-radius:12px;cursor:default}
 .hm-recent li.empty span{font-size:26px;opacity:.6}.hm-recent li.empty b{font-size:13.5px;color:#4b5873;white-space:normal}.hm-recent li.empty small{font-size:12px;line-height:1.5}
 .hm-col>.card:last-child .hm-recent{display:flex;flex-direction:column}
+/* 칸을 가로로 긴 직사각형으로 — 세로 길이 줄이기 */
+.cal-grid{gap:7px 8px}
+.cd{min-height:54px;border-radius:15px;padding:5px 7px 4px;gap:2px}
+.cd .n{font-size:12.5px;line-height:1.2}
+.cd .hol{position:absolute;right:7px;top:6px}
+.cd .more{position:absolute;right:7px;bottom:4px;font-size:9.5px}

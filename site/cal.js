@@ -27,7 +27,7 @@ function render(){
     const k=ymd(y,m,d), ev=L.filter(e=>e.d===k).sort((a,b)=>(a.t||'99').localeCompare(b.t||'99')), dow=(first+d-1)%7;
     const cls=['cd',k===td?'today':'',dow===0||HOL[k]?'sun':'',dow===6?'sat':'',ev.length?'has':''].join(' ');
     h+=`<div class="${cls}" data-d="${k}" tabindex="0"><span class="n">${d}</span>${HOL[k]?`<span class="hol">${HOL[k]}</span>`:''}
-      ${ev.slice(0,2).map(e=>`<span class="ev" data-id="${e.id}" style="--c:${e.c||DEF}">${e.t?`<em>${e.t}</em>`:''}${esc(e.title)}</span>`).join('')}${ev.length>2?`<span class="more">+${ev.length-2}</span>`:''}</div>`;
+      ${ev.slice(0,1).map(e=>`<span class="ev" data-id="${e.id}" style="--c:${e.c||DEF}">${e.t?`<em>${e.t}</em>`:''}${esc(e.title)}</span>`).join('')}${ev.length>1?`<span class="more">+${ev.length-1}</span>`:''}</div>`;
   }
   $('#calGrid').innerHTML=h;
   $('#calGrid').querySelectorAll('.cd[data-d]').forEach(el=>{
