@@ -186,7 +186,8 @@ async function copyTable(o){
 }
 
 async function callModel(system,user,o={}){
-  const S=window.S||{}; const body={model:S.model||'claude-sonnet-4-5',max_tokens:o.max||4000,stream:true,system,messages:[{role:'user',content:user}]};
+  const S=window.S||{}; const msgs=[{role:'user',content:user}]; if(o.prefill) msgs.push({role:'assistant',content:o.prefill});
+  const body={model:S.model||'claude-sonnet-4-5',max_tokens:o.max||4000,stream:true,system,messages:msgs};
   if(o.tools) body.tools=o.tools;
   const payload=JSON.stringify(body);
   const r=S.key
@@ -198,10 +199,18 @@ async function callModel(system,user,o={}){
     const ls=buf.split('\n'); buf=ls.pop();
     for(const ln of ls){ if(!ln.startsWith('data:')) continue; try{ const j=JSON.parse(ln.slice(5));
       if(j.type==='content_block_delta'&&j.delta?.text){ text+=j.delta.text; o.onText&&o.onText(text); }
+      if(j.type==='message_stop') o.done=true;
       if(j.type==='content_block_start'&&j.content_block?.type==='server_tool_use') o.onTool&&o.onTool(j.content_block.input);
       if(j.type==='error') throw new Error(j.error?.message||'모델 오류');
     }catch(e){ if(/모델 오류|overloaded|error/i.test(e.message)) throw e; } } }
   return text;
+}
+/* 긴 조례: 서버 함수 시간 제한(약 30초)으로 응답이 중간에 끊기면, 쓴 데까지를 이어서 계속 쓰게 한다(최대 5번) */
+async function callLong(system,user,o={}){
+  let all=''; for(let k=0;k<5;k++){ const oo={...o,prefill:all?all.replace(/\s+$/,''):undefined,onText:t=>o.onText&&o.onText((all?all.replace(/\s+$/,''):'')+t)};
+    let part=''; try{ part=await callModel(system,user,oo); }catch(e){ if(!all) throw e; }
+    all=(all?all.replace(/\s+$/,''):'')+part; if(oo.done||!part) break; o.onCont&&o.onCont(k+1); }
+  return all;
 }
 const modelOn=()=>{ const S=window.S||{}; return (S.key||S.server)&&!S.offline; };
 const jsonOf=t=>{ t=String(t); const f=[...t.matchAll(/```(?:json)?\s*([\s\S]*?)```/g)].map(m=>m[1]).reverse();
@@ -222,7 +231,7 @@ function step(k,state,msg){ const li=$('#rs-'+k); if(!li) return; li.className=s
 
 /* ── 법령·조례 찾기: ① law.go.kr Open API(/api/law) → ② 모델 웹검색(law.go.kr·elis.go.kr 한정) → ③ 직접 찾아보기 링크 ── */
 async function lawApi(qs){ const r=await fetch('/api/law?'+qs); const j=await r.json().catch(()=>({error:'응답 오류'})); if(!r.ok||j.error) throw new Error(j.error||('HTTP '+r.status)); return j; }
-const fullName=x=>{ const o=(x.org||'').trim(), n=(x.name||'').trim(); return o&&!n.startsWith(o.split(' ').pop())&&!n.startsWith(o)?o+' '+n:n; };
+const fullName=x=>{ const o=/^(법률|대통령령|총리령|부령|.*부령)$/.test(x.kind||'')?'':(x.org||'').trim(), n=(x.name||'').trim(); return o&&!n.startsWith(o.split(' ').pop())&&!n.startsWith(o)?o+' '+n:n; };
 const linkOf=(t,x)=>t==='law'?`https://www.law.go.kr/lsInfoP.do?lsiSeq=${x.mst}`:`https://www.law.go.kr/ordinInfoP.do?ordinSeq=${x.mst}`;
 const searchLinks=q=>`<a href="https://www.law.go.kr/LSW/lsSc.do?query=${encodeURIComponent(q)}" target="_blank" rel="noopener">국가법령정보센터에서 「${esc(q)}」 찾기</a> · <a href="https://www.elis.go.kr/main" target="_blank" rel="noopener">자치법규정보시스템 열기</a>`;
 function baseName(n){ return String(n||'').replace(/^(대구광역시\s*)?달성군\s*/,'').replace(/\s*(일부개정|전부개정)?조례안?$|\s*(규칙|지침|훈령|예규)안?$/,'').replace(/에\s*관한$/,'').trim(); }
@@ -255,7 +264,7 @@ async function findRefs(mode,name,gist){
   let okLaw=false, okOrd=false;
   step('law','run');
   try{ for(const q of qs(kw.law)){ if(R.laws.length>=4) break; const j=await lawApi('target=law&n=5&q='+encodeURIComponent(q)); j.list.forEach(x=>{ if(!R.laws.some(y=>y.mst===x.mst)) R.laws.push({...x,url:linkOf('law',x)}); }); }
-    R.laws=R.laws.filter(x=>!/시행규칙/.test(x.name)).slice(0,4); okLaw=true; step('law','done',R.laws.length?R.laws.map(x=>x.name).join(' · '):'찾은 법령 없음'); }
+    R.laws=R.laws.filter(x=>!/시행규칙/.test(x.name)&&!/^(법원|대법원|선거관리위원회|중앙선거관리위원회|국회|헌법재판소|감사원)\s/.test(x.name)&&!/규칙$/.test(x.kind||'')).slice(0,4); okLaw=true; step('law','done',R.laws.length?R.laws.map(x=>x.name).join(' · '):'찾은 법령 없음'); }
   catch(e){ R.lawErr=e.message; step('law','skip',/미신청|읽지 못/.test(e.message)?'법령 API 미신청 — 다른 지자체 조례로 상위 법령을 확인합니다':'연결 안 됨'); }
   step('ordin','run');
   try{ for(const q of qs(kw.ordin)){ if(R.ordins.length>=5) break; const j=await lawApi('target=ordin&n=20&q='+encodeURIComponent(q)); j.list.forEach(x=>{ if(!/달성군/.test(x.org)&&!/의회/.test(x.name)&&!R.ordins.some(y=>y.mst===x.mst)) R.ordins.push({...x,url:linkOf('ordin',x)}); }); }
@@ -344,7 +353,7 @@ async function make(){
         mode==='amend'?(cur?`현행 조문:\n${cur}`:'현행 조문: (없음 — 개정 대상 조문을 추정하지 말고 확인요청에 적을 것)'):'',
         `담당자가 넣고 싶은 내용(문장 그대로 — 이것이 초안의 기준):\n${gist}`,`</작성 요청>`,
         ref?`\n<참고 자료 — 검색으로 찾은 것>\n${ref}${mode==='new'?stTxt:''}\n</참고 자료>\n※ 담당자 내용을 기준으로 쓰고, 참고 자료는 조문 체계·표현·위임근거 확인에만 쓰세요. 참고 자료에 없는 상위 법령 조문 번호는 지어내지 말고 「○○법」 제○조로 비워 두세요. 다른 지자체 조문을 그대로 베끼지 말고 달성군 실정에 맞게 쓰세요.`:''].filter(Boolean).join('\n');
-      const text=await callModel(sys(mode),u,{max:8000,onText:t=>step('write','run',`${t.length}자 작성 중`)}); U.out=parse(text,mode);
+      const text=await callLong(sys(mode),u,{max:8000,onText:t=>step('write','run',`${t.length}자 작성 중`)}); U.out=parse(text,mode);
       if(!U.out.title||(!U.out.table.length&&!U.out.body.length&&!U.out.amend.length)) throw new Error('응답 형식을 읽지 못했습니다. 다시 생성해 주세요.');
       step('write','done','완료');
       $('#ruMsg').textContent='작성 완료 — 위임근거·상위 법령·용어는 법무 검토 전 담당자가 확인하세요.';

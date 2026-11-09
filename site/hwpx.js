@@ -80,10 +80,43 @@ window.DalseongHwpx = (function(){
     if(kind==='press') return await buildPress(opts);
     const paras=[];
     if(kind==='law'){
-      /* 조례안: 제목 + 기호 없는 조문 단락(○ 머리 기호 제거) */
-      const plain=t=>TPL.para.cir.replace(/<hp:run charPrIDRef="\d+"><hp:t>\s*<\/hp:t><\/hp:run><hp:run charPrIDRef="\d+"><hp:t>❍ <\/hp:t><\/hp:run>/,'').replace('@@TEXT@@',esc(t));
-      const body=P('title',opts.title)+P('blank','')+(opts.lines||[]).map(l=>l.trim()?plain(l.replace(/^\s+/,m=>'\u00a0'.repeat(m.length))):P('blank','')).join('');
-      opts.__law=body; opts.answer=(opts.lines||[]).join('\n');
+      /* 조례안 전용 서식: 문단·글자 모양을 header.xml에 새로 추가해 쓴다
+         · 양쪽 정렬, 한글 단어 단위 줄바꿈(KEEP_WORD) → 글자 사이가 벌어지거나 낱말이 쪼개지지 않게
+         · 항(①)·호(1.)·목(가.)은 내어쓰기로 둘째 줄을 번호 뒤에 맞춤
+         · 줄 배치 정보(linesegarray)는 넣지 않음 → 한글이 열 때 직접 계산(예전 서식의 줄 정보가 남아 자간이 눌리던 문제 해결) */
+      const hdr0=new TextDecoder().decode(b64(TPL.files['Contents/header.xml']));
+      const ids=k=>Math.max(...[...hdr0.matchAll(new RegExp('<hh:'+k+' id="(\\d+)"','g'))].map(m=>+m[1]))+1;
+      const cBase=(hdr0.match(/<hh:charPr id="25"[\s\S]*?<\/hh:charPr>/)||[])[0];
+      const pBase=(hdr0.match(/<hh:paraPr id="24"[\s\S]*?<\/hh:paraPr>/)||[])[0];
+      const c0=ids('charPr'), p0=ids('paraPr');
+      const mkC=(id,h,bold)=>cBase.replace(/id="25"/,`id="${id}"`).replace(/height="\d+"/,`height="${h}"`).replace(/<hh:spacing [^>]*\/>/,'<hh:spacing hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>').replace(/<hh:bold\/>/g,'').replace(/(<hh:relSz [^>]*\/><hh:offset [^>]*\/>)/,bold?'$1<hh:bold/>':'$1');
+      const mkP=(id,align,left,ind,prev)=>pBase.replace(/id="24"/,`id="${id}"`).replace(/horizontal="[A-Z]+"/,`horizontal="${align}"`)
+        .replace(/breakNonLatinWord="[A-Z_]+"/,'breakNonLatinWord="KEEP_WORD"').replace(/widowOrphan="0"/,'widowOrphan="1"')
+        .replace(/<hp:switch>[\s\S]*?<\/hp:switch>/,`<hp:switch><hp:case hp:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar"><hh:margin><hc:intent value="${ind}" unit="HWPUNIT"/><hc:left value="${left}" unit="HWPUNIT"/><hc:right value="0" unit="HWPUNIT"/><hc:prev value="${prev}" unit="HWPUNIT"/><hc:next value="0" unit="HWPUNIT"/></hh:margin><hh:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/></hp:case><hp:default><hh:margin><hc:intent value="${ind*2}" unit="HWPUNIT"/><hc:left value="${left*2}" unit="HWPUNIT"/><hc:right value="0" unit="HWPUNIT"/><hc:prev value="${prev*2}" unit="HWPUNIT"/><hc:next value="0" unit="HWPUNIT"/></hh:margin><hh:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/></hp:default></hp:switch>`);
+      const C={n:c0,b:c0+1,t:c0+2}, W=1400;            // 본문 14pt, 한 글자 폭 ≈ 1400
+      const PP={title:p0,body:p0+1,art:p0+2,hang:p0+3,ho:p0+4,mok:p0+5,center:p0+6};
+      const addC=mkC(C.n,1400,0)+mkC(C.b,1400,1)+mkC(C.t,1800,1);
+      const addP=mkP(PP.title,'CENTER',0,0,0)+mkP(PP.body,'JUSTIFY',0,0,0)+mkP(PP.art,'JUSTIFY',0,0,600)
+        +mkP(PP.hang,'JUSTIFY',W*2,-W,0)+mkP(PP.ho,'JUSTIFY',W*3+700,-(W+700),0)+mkP(PP.mok,'JUSTIFY',W*5,-(W+700),0)+mkP(PP.center,'CENTER',0,0,1200);
+      opts.__hdr=hdr0.replace(/<hh:charProperties itemCnt="(\d+)">/,(m,n)=>`<hh:charProperties itemCnt="${+n+3}">`).replace('</hh:charProperties>',addC+'</hh:charProperties>')
+                     .replace(/<hh:paraProperties itemCnt="(\d+)">/,(m,n)=>`<hh:paraProperties itemCnt="${+n+7}">`).replace('</hh:paraProperties>',addP+'</hh:paraProperties>');
+      const NS='xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph"';
+      const para=(pp,runs)=>`<hp:p ${NS} id="2147483648" paraPrIDRef="${pp}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">${runs}</hp:p>`;
+      const run=(c,t)=>`<hp:run charPrIDRef="${c}"><hp:t>${esc(t)}</hp:t></hp:run>`;
+      const L=[para(PP.title,run(C.t,opts.title)),para(PP.body,run(C.n,''))];
+      (opts.lines||[]).forEach(raw=>{ const t=String(raw).trim(); let m;
+        if(!t){ return; }
+        if(/^부\s*칙/.test(t)&&t.replace(/\s/g,'')==='부칙'){ L.push(para(PP.center,run(C.b,'부      칙'))); return; }
+        if(/^제\d+장\s/.test(t)){ L.push(para(PP.center,run(C.b,t))); return; }
+        if((m=t.match(/^(제\d+조(?:의\d+)?\([^)]*\))\s*(.*)$/))){ L.push(para(PP.art,run(C.b,m[1])+run(C.n,m[2]?' '+m[2]:''))); return; }
+        if(/^[①-⑳]/.test(t)){ L.push(para(PP.hang,run(C.n,t))); return; }
+        if(/^\d+(의\d+)?\.\s/.test(t)){ L.push(para(PP.ho,run(C.n,t))); return; }
+        if(/^[가-하]\.\s/.test(t)){ L.push(para(PP.mok,run(C.n,t))); return; }
+        L.push(para(PP.art,run(C.n,t)));
+      });
+      const secP=P('title',opts.title).replace(/<hp:pic[\s\S]*?<\/hp:pic>/g,'').replace(/<hp:t>\s{10,}<\/hp:t>/g,'<hp:t></hp:t>');   // 제목 문단(쪽 설정 secPr 포함) — 머리말의 군 로고 그림만 뺌
+      L.splice(0,1,secP); const headNoLogo=TPL.head;
+      opts.__law=L.join(''); opts.__head=headNoLogo; opts.answer=(opts.lines||[]).join('\n');
     }
     if(!opts.__law){
     paras.push({k:'title',t:opts.title}); paras.push({k:'sub',t:opts.sub||''}); paras.push({k:'date',t:opts.date||''});
@@ -115,13 +148,13 @@ window.DalseongHwpx = (function(){
     }
 
     const body = opts.__law || paras.map(p=>P(p.k,p.t||'')).join('');
-    const section = TPL.head + body + TPL.tail;
+    const section = (opts.__head||TPL.head) + body + TPL.tail;
 
     const zip = new JSZip();  // 폴더 항목 없이 파일만 (한글은 zip 내 디렉터리 항목이 있으면 손상 문서로 판단할 수 있음)
     zip.file('mimetype', b64(TPL.files['mimetype']), {compression:'STORE', createFolders:false});
     for(const [k,v] of Object.entries(TPL.files)){
       if(k==='mimetype') continue;
-      let data=b64(v);
+      let data=(k==='Contents/header.xml'&&opts.__hdr)?new TextEncoder().encode(opts.__hdr):b64(v);
       if(k==='Contents/content.hpf'){
         let s=new TextDecoder().decode(data).replace(/<opf:title>.*?<\/opf:title>/,'<opf:title>'+esc(opts.title)+'</opf:title>');
         data=new TextEncoder().encode(s);
