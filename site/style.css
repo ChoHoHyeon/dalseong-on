@@ -1733,3 +1733,23 @@ body[data-theme=dark] .hero-float .fchip{background:var(--panel2);color:#cfe0ff;
 .mk-stat{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
 .mk-chip{font-size:12.5px;background:rgba(18,161,95,.08);border:1px solid rgba(18,161,95,.25);border-radius:999px;padding:6px 12px} .mk-chip b{color:#12a15f}
 @media(max-width:1100px){.mk-rules{grid-template-columns:1fr}}
+
+/* 조례안 — 실제 자치법규 서식(명조 계열 · 조 제목 굵게 · 항/호/목 내어쓰기) */
+.lw-paper{background:#fff;color:#111;max-width:760px;margin:6px auto;padding:46px 56px 50px;border:1px solid #d9dee8;box-shadow:0 8px 24px rgba(20,33,61,.08);font-family:"HY신명조","함초롬바탕","바탕",Batang,"Noto Serif KR","Nanum Myeongjo",serif;font-size:15px;line-height:1.85;word-break:keep-all}
+.lw-title{text-align:center;font-size:20px;font-weight:800;letter-spacing:-.3px;line-height:1.5;margin:0 0 28px}
+.lw-body p{margin:0}
+.lw-gap{height:10px}
+.lw-ch{text-align:center;font-weight:800;margin:14px 0 6px!important}
+.lw-art{margin-top:10px!important;padding-left:0}
+.lw-art b{font-weight:800}
+.lw-p{text-indent:0}
+.lw-hang{padding-left:1.1em;text-indent:-1.1em;margin-left:1.1em!important}
+.lw-art+.lw-hang,.lw-p+.lw-hang{margin-top:0}
+.lw-ho{padding-left:1.6em;text-indent:-1.6em;margin-left:2.2em!important}
+.lw-mok{padding-left:1.6em;text-indent:-1.6em;margin-left:3.8em!important}
+.lw-buchik{text-align:center;font-weight:800;margin:30px 0 8px;white-space:pre}
+.lw-extra{margin-top:14px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--panel)}
+.lw-extra summary{cursor:pointer;font-weight:700;font-size:13.5px} .lw-extra summary small{font-weight:400;color:var(--mut)}
+.lw-extra .rp{margin-top:10px}
+#ruleView .rp-check{max-width:760px;margin:12px auto 0}
+html[data-theme=dark] .lw-paper,body.dark .lw-paper{background:#fff;color:#111}

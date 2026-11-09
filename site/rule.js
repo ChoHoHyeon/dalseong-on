@@ -18,7 +18,15 @@ const RULE=`[자치법규 입안 기준 — 「지방자치법」 제28조, 법�
 · 일부개정 시 개정 조문만 쓰고, 그대로 두는 조문은 "(현행과 같음)"으로 표시한다. 신설은 "<신  설>", 삭제는 "<삭  제>".
 · 용어는 「행정기본법」·상위 법령 용어를 따르고, 한 조문에 한 가지 내용만 담는다. "하여야 한다"(의무) "할 수 있다"(재량) "한다"(선언)를 구분한다.
 · 용어 통일: 군수→"달성군수(이하 "군수"라 한다)", 군→"대구광역시 달성군(이하 "군"이라 한다)".
-· 사실·수치·상위 법령 조문 번호를 모르면 지어내지 않고 "○○" 또는 「○○법」 제○조로 비워 둔다.`;
+· 사실·수치·상위 법령 조문 번호를 모르면 지어내지 않고 "○○" 또는 「○○법」 제○조로 비워 둔다.
+· 제명은 "대구광역시 달성군 ○○ 조례"처럼 지자체 이름을 붙인 정식 제명으로 쓴다.
+· 일부개정 개정문(법제처 개정문 작성례):
+  - 첫 줄: "대구광역시 달성군 ○○ 조례 일부를 다음과 같이 개정한다."
+  - 자구 수정: 제7조 중 "할 수 있다"를 "하여야 한다"로 한다.
+  - 호·항 신설: 제5조제2항에 제4호를 다음과 같이 신설한다.  (다음 줄에 신설 호 전문)
+  - 조 전부 개정: 제7조를 다음과 같이 한다.  (다음 줄에 바뀐 조 전문)
+  - 삭제: 제9조를 삭제한다.
+  - 같은 조 안 여러 변경은 "제7조 중 ~로 하고, 같은 조에 제2항 및 제3항을 각각 다음과 같이 신설한다."처럼 한 문장으로 잇는다.`;
 
 function sys(mode){
   const common=`당신은 대구광역시 달성군의 자치법규(조례·규칙·훈령·예규) 입안 담당자입니다. 아래 기준을 그대로 따릅니다.
@@ -26,7 +34,9 @@ ${RULE}
 
 반드시 아래 형식으로만 출력합니다. 설명·마크다운 강조·표 문법은 쓰지 않습니다.`;
   if(mode==='amend') return `${common}
-제목: (예: 달성군 ○○ 조례 일부개정조례안)
+제목: (예: 대구광역시 달성군 ○○ 조례 일부개정조례안)
+개정문:
+(위 개정문 작성례대로. 첫 줄은 "… 조례 일부를 다음과 같이 개정한다.")
 개정이유:
 (2~4줄)
 주요내용:
@@ -65,11 +75,12 @@ ${RULE}
 
 /* 응답 파싱: 섹션 헤더(제목:/개정이유:/…) + 대비표 @@ 블록 */
 function parse(t,mode){
-  const o={title:'',reason:'',main:[],table:[],body:[],buchik:'',check:[]}; let sec='',cur=null,sub='';
+  const o={title:'',amend:[],reason:'',main:[],table:[],body:[],buchik:'',check:[]}; let sec='',cur=null,sub='';
   t.split(/\r?\n/).forEach(raw=>{
     const l=raw.replace(/\s+$/,''); const s=l.trim();
     let m;
     if((m=s.match(/^제목\s*[:：]\s*(.*)$/))){ o.title=m[1].trim(); sec=''; return; }
+    if(/^개정문\s*[:：]\s*$/.test(s)){ sec='amend'; return; }
     if(/^(개정이유|제정이유)\s*[:：]\s*$/.test(s)){ sec='reason'; return; }
     if(/^주요내용\s*[:：]\s*$/.test(s)){ sec='main'; return; }
     if(/^대비표\s*[:：]\s*$/.test(s)){ sec='table'; return; }
@@ -86,6 +97,7 @@ function parse(t,mode){
     if(sec==='reason') o.reason+=(o.reason?'\n':'')+s;
     else if(sec==='main') o.main.push(s);
     else if(sec==='body') o.body.push(l);
+    else if(sec==='amend') o.amend.push(l);
     else if(sec==='buchik') o.buchik+=(o.buchik?'\n':'')+s;
     else if(sec==='check') o.check.push(s.replace(/^[-·•]\s*/,''));
   });
@@ -94,10 +106,33 @@ function parse(t,mode){
     ['old','neu'].forEach(k=>{ let a=r[k].filter((l,i,arr)=>!(/^\s*<\s*(신\s*설|삭\s*제)\s*>\s*$/.test(l)&&arr.length>1));   // 본문이 있는데 끝에 <신 설> 표식만 따로 붙은 경우 제거
       if(a.length&&!/^\s*(제\d+조|<)/.test(a[0])) a=[r.art, ...a];                                                      // 조 제목(제n조(…))을 각 칸 첫 줄에
       r[k]=a; }); });
-  trim(o.body);
+  trim(o.body); trim(o.amend);
+  if(mode==='amend'&&!o.amend.length) o.amend=amendFromTable(o);
   o.check=o.check.filter(x=>x&&!/^없음/.test(x));
   return o;
 }
+
+/* 모델이 개정문을 빠뜨린 경우: 대비표에서 "제n조를 다음과 같이 한다." 형태로 만든다 */
+function amendFromTable(o){
+  const base=(o.title||'').replace(/\s*일부개정조례안\s*$/,'').replace(/안$/,'');
+  const L=[`${base} 일부를 다음과 같이 개정한다.`,''];
+  o.table.forEach(r=>{ const n=r.neu.filter(x=>x.trim()); const num=(r.art.match(/^제\d+조(?:의\d+)?/)||[r.art])[0];
+    if(!n.length||/<\s*삭\s*제\s*>/.test(n.join(''))){ L.push(`${num}를 삭제한다.`); return; }
+    if(n.every(x=>/현행과\s*같음/.test(x)||/^제\d+조/.test(x)&&/현행과\s*같음/.test(x))) return;
+    L.push(`${num}를 다음과 같이 한다.`,...n.map(x=>x.replace(/\s*<\s*(신\s*설|개\s*정)\s*>\s*$/,''))); });
+  return L;
+}
+/* 조문 줄 → 조례 서식 HTML (조 제목 굵게, 항·호·목 들여쓰기) */
+function lawHtml(lines){
+  return lines.map(raw=>{ const t=raw.trim(); if(!t) return '<div class="lw-gap"></div>'; let m;
+    if(/^제\d+장\s/.test(t)) return `<p class="lw-ch">${esc(t)}</p>`;
+    if((m=t.match(/^(제\d+조(?:의\d+)?\([^)]*\))\s*(.*)$/))) return `<p class="lw-art"><b>${esc(m[1])}</b> ${esc(m[2])}</p>`;
+    if(/^[①-⑳]/.test(t)) return `<p class="lw-hang">${esc(t)}</p>`;
+    if(/^\d+\.\s/.test(t)) return `<p class="lw-ho">${esc(t)}</p>`;
+    if(/^[가-하]\.\s/.test(t)) return `<p class="lw-mok">${esc(t)}</p>`;
+    return `<p class="lw-p">${esc(t)}</p>`; }).join('');
+}
+function lawLines(o,mode){ return mode==='amend'?o.amend:o.body; }
 
 /* 오프라인 시연: 틀만 */
 function offline(mode){
@@ -109,8 +144,9 @@ function offline(mode){
     cur.split(/\r?\n/).forEach(l=>{ const m=l.match(/^\s*(제\d+조(?:의\d+)?\s*\([^)]*\))/); if(m){ a={art:m[1].replace(/\s+/,''),old:[l.trim()],neu:[]}; arts.push(a);} else if(a&&l.trim()) a.old.push(l.trim()); });
     if(!arts.length) arts.push({art:'제○조(○○)',old:[cur||'(현행 조문을 붙여넣으세요)'],neu:[]});
     arts.forEach((r,i)=>{ r.neu=i===0&&gist.length?[r.old[0].replace(/\)\s.*$/,') ')+'○○ '+gist[0]+' (개정안 — 모델 연결 시 작성)']:['(현행과 같음)']; });
-    return {title:`${name} 일부개정조례안`,reason:`「○○법」 개정 사항을 반영하고, ${gist[0]||'운영상 나타난 미비점'}을 개선·보완하려는 것임.`,
+    const oo={title:`${name} 일부개정조례안`,reason:`「○○법」 개정 사항을 반영하고, ${gist[0]||'운영상 나타난 미비점'}을 개선·보완하려는 것임.`,
       main:gist.map((g,i)=>`${'가나다라마'[i]||'○'}. ${g}`),table:arts,body:[],buchik:'이 조례는 공포한 날부터 시행한다.',check:['상위 법령 위임근거(「○○법」 제○조) 확인 필요']};
+    oo.amend=amendFromTable(oo); return oo;
   }
   const body=[`제1조(목적) 이 ${/지침|훈령|예규/.test(name)?'지침':'조례'}는 ${gist[0]||'○○'}에 필요한 사항을 규정함을 목적으로 한다.`,'',
     `제2조(정의) 이 ${/지침/.test(name)?'지침':'조례'}에서 사용하는 용어의 뜻은 다음과 같다.`,'  1. "○○"란 ○○을 말한다.','',
@@ -123,17 +159,23 @@ function offline(mode){
 /* 미리보기 */
 function render(o,mode){
   const T=o.table.length?`<table class="rp-tbl"><thead><tr><th>현  행</th><th>개 정 안</th></tr></thead><tbody>${o.table.map(r=>`<tr><td><pre>${esc(r.old.join('\n')||'<신  설>')}</pre></td><td><pre>${esc(r.neu.join('\n')||'<삭  제>')}</pre></td></tr>`).join('')}</tbody></table>`:'';
-  $('#ruleView').innerHTML=`<div class="rp">
-    <div class="rp-title">${esc(o.title)}</div>
-    <div class="rp-sec">1. ${mode==='amend'?'개정 이유':'제정 이유'}</div><div class="rp-cir" style="white-space:pre-wrap">${esc(o.reason)}</div>
-    ${o.main.length?`<div class="rp-sec">2. 주요 내용</div>${o.main.map(m=>`<div class="rp-cir">${esc(m)}</div>`).join('')}`:''}
-    ${o.body.length?`<div class="rp-sec">2. 조문</div><pre class="rp-law">${esc(o.body.join('\n'))}</pre>`:''}
-    ${T?`<div class="rp-sec">3. 신구조문대비표</div>${T}`:''}
-    <div class="rp-sec">${T||o.body.length?'4':'3'}. 부칙</div><div class="rp-cir" style="white-space:pre-wrap">${esc(o.buchik)}</div>
+  $('#ruleView').innerHTML=`<div class="lw-paper">
+      <h3 class="lw-title">${esc(o.title)}</h3>
+      <div class="lw-body">${lawHtml(lawLines(o,mode))}</div>
+      <p class="lw-buchik">부      칙</p>
+      <div class="lw-body">${lawHtml(o.buchik.split('\n'))}</div>
+    </div>
     ${o.check.length?`<div class="rp-check"><b>⚠ 담당자 확인 요청</b><ul>${o.check.map(c=>`<li>${esc(c)}</li>`).join('')}</ul></div>`:''}
-  </div>`;
-  $('#ruleOut').hidden=false; window.dsSave&&dsSave('rule',o.title,plainText(o)); $('#ruleOut').scrollIntoView({behavior:'smooth',block:'start'});
+    <details class="lw-extra"><summary>📎 부속 자료 초안 — ${mode==='amend'?'개정 이유 · 주요 내용 · 신구조문대비표':'제정 이유'} <small>(별도 문서 서식은 추후 확정)</small></summary>
+      <div class="rp">
+        <div class="rp-sec">${mode==='amend'?'개정 이유':'제정 이유'}</div><div class="rp-cir" style="white-space:pre-wrap">${esc(o.reason)}</div>
+        ${o.main.length?`<div class="rp-sec">주요 내용</div>${o.main.map(m=>`<div class="rp-cir">${esc(m)}</div>`).join('')}`:''}
+        ${T?`<div class="rp-sec">신구조문대비표</div>${T}<div class="pact" style="margin-top:8px"><button id="ruCopyT">대비표 표로 복사</button></div>`:''}
+      </div></details>`;
+  const ct=$('#ruCopyT'); if(ct) ct.onclick=()=>copyTable(o);
+  $('#ruleOut').hidden=false; window.dsSave&&dsSave('rule',o.title,lawText(o,mode)); $('#ruleOut').scrollIntoView({behavior:'smooth',block:'start'});
 }
+function lawText(o,mode){ return [o.title,'',...lawLines(o,mode),'','부      칙',o.buchik].join('\n'); }
 function plainText(o){ const L=[o.title,'','1. 이유',o.reason]; if(o.main.length){L.push('','2. 주요 내용',...o.main);} if(o.body.length){L.push('','조문',...o.body);} if(o.table.length){L.push('','신구조문대비표'); o.table.forEach(r=>L.push(`[${r.art}]`,'현행:',...r.old,'개정안:',...r.neu,''));} L.push('부칙',o.buchik); if(o.check.length) L.push('','※ 확인 요청',...o.check.map(c=>'- '+c)); return L.join('\n'); }
 async function copyTable(o){
   if(!o.table.length){ navigator.clipboard.writeText(plainText(o)); return toast?.('복사했습니다'); }
@@ -179,14 +221,8 @@ async function make(){
 
 async function hwpx(){
   if(!U.out) return; const o=U.out;
-  const L=[`# 1. ${U.mode==='amend'?'개정 이유':'제정 이유'}`,...o.reason.split('\n').map(x=>'○ '+x)];
-  if(o.main.length) L.push('# 2. 주요 내용',...o.main.map(x=>'○ '+x));
-  if(o.body.length) L.push('# 2. 조문',...o.body.filter(x=>x.trim()).map(x=>/^\s*제\d+조/.test(x)?'○ '+x.trim():'  - '+x.trim()));
-  if(o.table.length){ L.push('# 3. 신구조문대비표 (한글에서 표로 정리)'); o.table.forEach(r=>{ L.push('□ '+r.art,'○ 현행',...r.old.map(x=>'  - '+x),'○ 개정안',...r.neu.map(x=>'  - '+x)); }); }
-  L.push('# 부칙',...o.buchik.split('\n').map(x=>'○ '+x));
-  if(o.check.length) L.push('# 담당자 확인 요청',...o.check.map(x=>'※ '+x));
   try{
-    const blob=await DalseongHwpx.build({kind:'free', title:o.title, sub:'달성군 [행정국 정보통신과]', date:new Date().toLocaleDateString('ko-KR'), answer:L.join('\n')});
+    const blob=await DalseongHwpx.build({kind:'law', title:o.title, lines:[...lawLines(o,U.mode),'','부      칙',...o.buchik.split('\n')]});
     const nm=`${o.title.replace(/[\\/:*?"<>|]/g,'').slice(0,40)}_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.hwpx`;
     DalseongHwpx.download(blob,nm); if(window.S&&S.stats) S.stats.hwpx++; toast?.('한글 파일 생성: '+nm);
   }catch(e){ toast?.('한글 파일 생성 실패: '+e.message); }
@@ -197,7 +233,7 @@ function init(){
   const sw=()=>{ const a=$('#ruMode').value==='amend'; $('#ruCurWrap').hidden=!a; $('#ruGistCap').textContent=a?'개정 요지':'목적·주요 내용'; $('#ruGist').placeholder=a?'한 줄에 하나씩 — 무엇을 어떻게 바꾸는지\n예) 지원 대상에 1인 가구 추가\n위원회 위원 수 10명 → 12명\n제8조 보고 주기 분기 → 반기':'한 줄에 하나씩\n예) 공공데이터 개방·품질관리 체계 마련\n공공데이터 책임관 지정·역할\n데이터 품질진단 연 1회 실시\n개방 심의위원회 구성'; };
   $('#ruMode').onchange=sw; sw();
   $('#ruGo').onclick=make; $('#ruAgain').onclick=make; $('#ruHwpx').onclick=hwpx;
-  $('#ruCopy').onclick=()=>{ if(U.out) copyTable(U.out); };
+  $('#ruCopy').onclick=()=>{ if(!U.out) return; navigator.clipboard.writeText(lawText(U.out,U.mode)); toast?.('조례안을 복사했습니다 — 한글에 붙여넣기'); };
   $('#ruSample').onclick=()=>{
     $('#ruMode').value='amend'; sw(); $('#ruName').value='달성군 공공데이터 제공 및 이용 활성화에 관한 조례'; $('#ruBase').value='「공공데이터의 제공 및 이용 활성화에 관한 법률」 제12조·제22조';
     $('#ruCur').value='제5조(공공데이터책임관) ① 군수는 공공데이터의 제공과 이용 활성화에 관한 업무를 총괄하는 공공데이터책임관을 지정한다.\n② 공공데이터책임관은 다음 각 호의 업무를 수행한다.\n  1. 공공데이터 제공 계획의 수립·시행\n  2. 공공데이터 목록의 관리\n  3. 그 밖에 공공데이터 제공에 필요한 사항\n\n제7조(품질관리) 군수는 공공데이터의 품질을 높이기 위하여 필요한 조치를 할 수 있다.';

@@ -79,6 +79,13 @@ window.DalseongHwpx = (function(){
     const kind = opts.kind||'review';
     if(kind==='press') return await buildPress(opts);
     const paras=[];
+    if(kind==='law'){
+      /* 조례안: 제목 + 기호 없는 조문 단락(○ 머리 기호 제거) */
+      const plain=t=>TPL.para.cir.replace(/<hp:run charPrIDRef="\d+"><hp:t>\s*<\/hp:t><\/hp:run><hp:run charPrIDRef="\d+"><hp:t>❍ <\/hp:t><\/hp:run>/,'').replace('@@TEXT@@',esc(t));
+      const body=P('title',opts.title)+P('blank','')+(opts.lines||[]).map(l=>l.trim()?plain(l.replace(/^\s+/,m=>'\u00a0'.repeat(m.length))):P('blank','')).join('');
+      opts.__law=body; opts.answer=(opts.lines||[]).join('\n');
+    }
+    if(!opts.__law){
     paras.push({k:'title',t:opts.title}); paras.push({k:'sub',t:opts.sub||''}); paras.push({k:'date',t:opts.date||''});
     if(kind==='free'){
       /* 조례·회의록 등: 제목·부제·날짜 뒤에 본문(# → 파란 제목 박스, □ ○ - · ※)만 */
@@ -105,8 +112,9 @@ window.DalseongHwpx = (function(){
       opts.cites.forEach((c,i)=>paras.push({k:'cir',t:`[${i+1}] ${c.title}${c.source&&!c.title.startsWith(c.source)?' — '+c.source:''}`}));
     }
     paras.push({k:'blank'}); paras.push({k:'note',t:'본 문서는 달성군 AI 업무비서(달성On)가 초안을 생성한 것으로, 담당자 검토 후 사용합니다.'});
+    }
 
-    const body = paras.map(p=>P(p.k,p.t||'')).join('');
+    const body = opts.__law || paras.map(p=>P(p.k,p.t||'')).join('');
     const section = TPL.head + body + TPL.tail;
 
     const zip = new JSZip();  // 폴더 항목 없이 파일만 (한글은 zip 내 디렉터리 항목이 있으면 손상 문서로 판단할 수 있음)
