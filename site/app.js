@@ -298,7 +298,7 @@ function rcOpen(x){
   $('#rcCopy').hidden=false; $('#rcGo').hidden=false; $('#rcDel').hidden=false;
   $('#rcCopy').onclick=()=>{ navigator.clipboard.writeText(x.text); toast('복사했습니다'); };
   $('#rcGo').onclick=()=>{ $('#rcModal').hidden=true; setMode('staff'); go(x.view); };
-  $('#rcDel').onclick=()=>{ try{ localStorage.setItem(RC_KEY,JSON.stringify(rcGet().filter(y=>y.id!==x.id))); }catch(e){} $('#rcModal').hidden=true; if(S.view==='home') renderUsage(); };
+  $('#rcDel').onclick=()=>{ try{ localStorage.setItem(RC_KEY,JSON.stringify(rcGet().filter(y=>y.id!==x.id))); }catch(e){} $('#rcModal').hidden=true; if(S.view==='home') renderNow(); };
 }
 function rcList(){
   const L=rcGet(); $('#rcTitle').textContent='🗂 내 최근 작업'; $('#rcMeta').textContent=`이 PC에만 저장 · 최근 ${L.length}건`;
@@ -325,21 +325,34 @@ function calItems(){
 /* 지금 하실 때예요 = 달력에 적어 둔 일정(7일 안) + 날짜에 맞춘 안내 — 합쳐서 최대 4줄 */
 function renderNow(){
   const el=$('#hmCal'); if(!el) return;
-  const ev=(window.HOMECAL&&HOMECAL.upcoming)?HOMECAL.upcoming(7).slice(0,3):[];
   const dd=n=>n===0?'오늘':n===1?'내일':'D-'+n;
-  const evHtml=ev.map(e=>`<li class="mine" data-ev="${e.id}"><i style="background:color-mix(in srgb,${e.c||'#1d5fd6'} 16%,#fff);color:${e.c||'#1d5fd6'}">📌</i><div><b>${esc(e.title)}</b><small>${new Date(e.d+'T00:00:00').getMonth()+1}/${new Date(e.d+'T00:00:00').getDate()}${e.t?' '+e.t:''} · 내 일정${e.memo?' · '+esc(e.memo):''}</small></div><span class="dday${e.diff===0?' today':''}">${dd(e.diff)}</span></li>`).join('');
-  const sug=calItems().slice(0,Math.max(1,4-ev.length));
-  el.innerHTML=evHtml+sug.map(([v,i,t,s])=>`<li data-go="staff:${v}"><i>${i}</i><div><b>${t}</b><small>${s}</small></div><span>바로 가기 ›</span></li>`).join('');
+  const all=(window.HOMECAL&&HOMECAL.upcoming)?HOMECAL.upcoming(7):[];
+  // ① 내 일정 — 늘 2줄 자리 (없으면 안내 1줄 + 빈 줄, 많으면 2개 + "+N")
+  const ev=all.slice(0,2); let h='<li class="sec">📌 내 일정 <small>7일 안</small>'+(all.length>2?`<em>+${all.length-2}</em>`:'')+'</li>';
+  h+=ev.map(e=>{ const d=new Date(e.d+'T00:00:00'); return `<li class="row mine" data-ev="${e.id}"><i style="background:color-mix(in srgb,${e.c||'#1d5fd6'} 16%,#fff);color:${e.c||'#1d5fd6'}">●</i><div><b>${esc(e.title)}</b><small>${d.getMonth()+1}/${d.getDate()}${e.t?' '+e.t:''}${e.memo?' · '+esc(e.memo):''}</small></div><span class="dday${e.diff===0?' today':''}">${dd(e.diff)}</span></li>`; }).join('');
+  if(!ev.length) h+='<li class="row none"><i>✍️</i><div><b>달력에 일정을 넣으면 여기 보여요</b><small>왼쪽 달력에서 날짜를 눌러 보세요</small></div></li>';
+  if(ev.length<2) h+='<li class="row blank"></li>';
+  // ② 지금 하실 일 — 늘 2줄
+  h+='<li class="sec">📅 지금 하실 때예요</li>';
+  h+=calItems().slice(0,2).map(([v,i,t,s])=>`<li class="row" data-go="staff:${v}"><i>${i}</i><div><b>${t}</b><small>${s}</small></div><span>바로 가기 ›</span></li>`).join('');
+  // ③ 내 최근 작업 — 늘 1줄
+  const R=rcGet(), r=R[0];
+  h+='<li class="sec">🗂 내 최근 작업 <small>이 PC에 저장</small>'+(R.length>1?`<button class="rc-more">전체 ${R.length}건 ›</button>`:'')+'</li>';
+  h+=r?`<li class="row" data-rc1="1"><i>${ICON[r.view]||'🗂'}</i><div><b>${esc(r.title)}</b><small>${MNAME[r.view]||''} · ${ago(r.at)}</small></div><span>다시 보기 ›</span></li>`
+      :'<li class="row none"><i>🗂</i><div><b>만든 결과가 여기 남아요</b><small>회의록·보도자료 등 — 새로고침해도 다시 볼 수 있어요</small></div></li>';
+  el.innerHTML=h;
   el.querySelectorAll('[data-ev]').forEach(li=>li.onclick=()=>HOMECAL.open(li.dataset.ev));
+  const r1=el.querySelector('[data-rc1]'); if(r1) r1.onclick=()=>rcOpen(r);
+  const mo=el.querySelector('.rc-more'); if(mo) mo.onclick=e=>{ e.stopPropagation(); rcList(); };
 }
 window.addEventListener('dscal',()=>{ if(S.view==='home') renderNow(); });
 function renderUsage(){
   const kpis=(w,t,top)=>[['이번 주 이용',(w?w.use:'–')+'회','전 직원 · 메뉴 열기 기준'],['이번 주 만든 초안',(w?w.gen:'–')+'건','회의록·보도자료·카드뉴스 등'],['누적 이용',(t?t.use.toLocaleString():'–')+'회','달성On 오픈 이후'],['이번 주 인기 1위',top&&top[0]?(ICON[top[0][0]]||'⭐')+' '+(MNAME[top[0][0]]||top[0][0]):'–',top&&top[0]?top[0][1]+'회 이용':'이번 주 첫 사용자가 되어 주세요']]
-    .map(([k,v,s])=>`<div class="kpi"><small>${k}</small><b>${v}</b><span class="sub">${s}</span></div>`).join('')+rcKpi();
-  $('#homeKpis').innerHTML=kpis(); bindRcKpi();
+    .map(([k,v,s])=>`<div class="kpi"><small>${k}</small><b>${v}</b><span class="sub">${s}</span></div>`).join('');
+  $('#homeKpis').innerHTML=kpis();
   { const d=new Date(); $('#hmMsg').innerHTML=`<span class="tag">TODAY</span><span class="date">${d.getMonth()+1}월 ${d.getDate()}일 ${'일월화수목금토'[d.getDay()]}요일</span><b>${todayMsg()}</b>`; }
   fetch('/api/hits',{cache:'no-store'}).then(r=>r.json()).then(j=>{
-    $('#homeKpis').innerHTML=kpis(j.week,j.total,j.top); bindRcKpi();
+    $('#homeKpis').innerHTML=kpis(j.week,j.total,j.top);
     const ms=[100,500,1000,3000,5000,10000].filter(x=>j.total.use>=x).pop();
     if(ms){ $('#hmMile').hidden=false; $('#hmMile').innerHTML=`🎉 달성On 누적 이용 <b>${ms.toLocaleString()}회</b> 돌파! 함께 써 주셔서 고맙습니다`; }
   }).catch(()=>{});
@@ -353,7 +366,7 @@ function renderUsage(){
    영상이 늘어나면 이 배열에 한 줄만 더하면 된다. 넘김 단추는 개수에 맞춰 저절로 생긴다.
    file 대신 yt(유튜브 ID)를 적어도 된다. */
 const VIDEOS=[
-  {title:'달성On과 함께한 하루', sub:'09시 회의록부터 18시 칼퇴까지 실제 화면으로', len:'29초', home:true,
+  {title:'달성On과 함께한 하루', sub:'09시 회의록부터 18시 칼퇴까지', len:'29초', home:true,
    file:'assets/day.mp4', poster:'assets/day_poster.jpg'},
   {title:'달성On 소개',        sub:'무엇을 해 주는지 16초로',   len:'16초',   home:true,
    file:'assets/intro.mp4',  poster:'assets/intro_poster.jpg'},
