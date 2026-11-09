@@ -1449,3 +1449,4 @@ body[data-theme=dark] .bugnote{background:rgba(217,138,0,.14);color:#f0d9a6;bord
 .rc-hd{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}.rc-hd b{font-size:16px}.rc-hd small{color:var(--mut);font-size:12px}.rc-hd button{margin-left:auto;font-size:18px;padding:2px 8px}
 .rc-box pre{flex:1;overflow:auto;white-space:pre-wrap;word-break:keep-all;font:inherit;font-size:13.5px;line-height:1.7;background:#f8fafc;border-radius:10px;padding:14px;margin:0 0 10px}
 @media (max-width:1000px){.sf-cols{grid-template-columns:1fr}.kpis.four{grid-template-columns:repeat(2,1fr)}}
+.hm-msg .date{font-size:15px;font-weight:800;color:#c2410c;white-space:nowrap;padding-right:12px;border-right:2px solid rgba(194,65,12,.2)}

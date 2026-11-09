@@ -245,7 +245,7 @@ function drawVideo(i){
   P.innerHTML = media + (n>1 ? `
     <button class="vnav prev" aria-label="이전 영상">‹</button>
     <button class="vnav next" aria-label="다음 영상">›</button>` : '');
-  const note=$('#videoNote'); if(note) note.textContent=v.len+(v.yt?' · 유튜브':'');
+  const note=$('#videoNote'); if(note) note.textContent=`${v.title} · ${v.len}`+(v.yt?' · 유튜브':'');
   const cap=$('#videoCap');
   if(cap) cap.innerHTML=`<b>${v.title}</b> — ${v.sub}` + (n>1?` <span class="vidx">${VIDX+1} / ${n}</span>`:'');
   if(n>1){
@@ -294,7 +294,7 @@ function renderUsage(){
   const kpis=(w,t,top)=>[['이번 주 이용',(w?w.use:'–')+'회','전 직원 · 메뉴 열기 기준'],['이번 주 만든 초안',(w?w.gen:'–')+'건','회의록·보도자료·카드뉴스 등'],['누적 이용',(t?t.use.toLocaleString():'–')+'회','달성On 오픈 이후'],['이번 주 인기 1위',top&&top[0]?(ICON[top[0][0]]||'⭐')+' '+(MNAME[top[0][0]]||top[0][0]):'–',top&&top[0]?top[0][1]+'회 이용':'이번 주 첫 사용자가 되어 주세요']]
     .map(([k,v,s])=>`<div class="kpi"><small>${k}</small><b>${v}</b><span class="sub">${s}</span></div>`).join('');
   $('#homeKpis').innerHTML=kpis();
-  $('#hmMsg').innerHTML=`<span class="tag">TODAY</span><b>${todayMsg()}</b>`;
+  { const d=new Date(); $('#hmMsg').innerHTML=`<span class="tag">TODAY</span><span class="date">${d.getMonth()+1}월 ${d.getDate()}일 ${'일월화수목금토'[d.getDay()]}요일</span><b>${todayMsg()}</b>`; }
   fetch('/api/hits',{cache:'no-store'}).then(r=>r.json()).then(j=>{
     $('#homeKpis').innerHTML=kpis(j.week,j.total,j.top);
     const ms=[100,500,1000,3000,5000,10000].filter(x=>j.total.use>=x).pop();
@@ -323,7 +323,7 @@ const VIDEOS=[
 /* home:true 인 영상만 홈 화면에 나온다(무거워지지 않게 1편만).
    view:'meal' 처럼 기능 화면 id를 적으면 그 화면 제목 옆에 「▶ 이용 안내」 단추가 저절로 붙고,
    「이용 안내」 페이지의 영상 모음에도 함께 나온다. 파일은 누르기 전엔 내려받지 않는다(preload=none). */
-const HOME_VIDEOS=()=>VIDEOS.filter(v=>v.home);
+const HOME_VIDEOS=()=>VIDEOS;   // 홈 영상 칸은 모든 안내 영상을 ‹ › 로 넘겨 본다(누르기 전엔 내려받지 않음)
 function openVideo(v){
   const m=$('#mVideo'); if(!m) return;
   $('#mVideoTitle').textContent=v.title; $('#mVideoSub').textContent=v.sub+' · '+v.len;
