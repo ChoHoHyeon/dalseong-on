@@ -27,7 +27,7 @@ function render(){
     const k=ymd(y,m,d), ev=L.filter(e=>e.d===k).sort((a,b)=>(a.t||'99').localeCompare(b.t||'99')), dow=(first+d-1)%7;
     const cls=['cd',k===td?'today':'',dow===0||HOL[k]?'sun':'',dow===6?'sat':'',ev.length?'has':''].join(' ');
     h+=`<div class="${cls}" data-d="${k}" tabindex="0"><span class="n">${d}</span>${HOL[k]?`<span class="hol">${HOL[k]}</span>`:''}
-      ${ev.slice(0,1).map(e=>`<span class="ev" data-id="${e.id}" style="--c:${e.c||DEF}">${e.t?`<em>${e.t}</em>`:''}${esc(e.title)}</span>`).join('')}${ev.length>1?`<span class="more">+${ev.length-1}</span>`:''}</div>`;
+      ${ev.slice(0,2).map(e=>`<span class="ev" data-id="${e.id}" style="--c:${e.c||DEF}">${e.t?`<em>${e.t}</em>`:''}${esc(e.title)}</span>`).join('')}${ev.length>2?`<span class="more">+${ev.length-2}</span>`:''}</div>`;
   }
   $('#calGrid').innerHTML=h;
   $('#calGrid').querySelectorAll('.cd[data-d]').forEach(el=>{
@@ -38,7 +38,8 @@ function render(){
   const up=L.filter(e=>e.d>=td).sort((a,b)=>(a.d+(a.t||'')).localeCompare(b.d+(b.t||''))).slice(0,3);
   $('#calUp').innerHTML=up.length?up.map(e=>{ const dd=new Date(e.d+'T00:00:00'), diff=Math.round((dd-new Date(td+'T00:00:00'))/864e5);
     return `<li data-id="${e.id}"><i style="background:${e.c||DEF}"></i><b>${esc(e.title)}</b><small>${dd.getMonth()+1}/${dd.getDate()}${e.t?' '+e.t:''}</small><em>${diff===0?'오늘':'D-'+diff}</em></li>`; }).join('')
-    :'<li class="none">날짜를 누르면 일정을 넣을 수 있어요 ✍️</li>';
+    :'';
+  $('#calUp').hidden=!up.length;
   $('#calUp').querySelectorAll('li[data-id]').forEach(li=>li.onclick=()=>openEdit(li.dataset.id));
 }
 function openDay(d){ C.edit=null; C.day=d; fill({title:'',t:'',memo:'',c:DEF}); $('#calDel').hidden=true; $('#calPopTitle').textContent=label(d)+' 일정 추가'; show(); }
