@@ -258,7 +258,7 @@ async function findRefs(mode,name,gist){
     for(const q of kw.ordin){ const j=await lawApi('target=ordin&n=20&q='+encodeURIComponent(q)); j.list.forEach(x=>{ if(!/달성군/.test(x.org)&&!R.ordins.some(y=>y.mst===x.mst)) R.ordins.push({...x,url:linkOf('ordin',x)}); }); }
     R.ordins=R.ordins.slice(0,5); step('ordin','done',R.ordins.length?R.ordins.length+'건 — '+R.ordins.slice(0,3).map(fullName).join(' · '):'찾은 조례 없음');
     step('cur','run');
-    const own=(await lawApi('target=ordin&org=달성군&n=5&q='+encodeURIComponent(baseName(name)))).list;
+    const own=(await lawApi('target=ordin&org=달성군&n=5&q='+encodeURIComponent('달성군 '+baseName(name)))).list;
     if(mode==='amend'){ const hit=own[0]; if(hit&&!$('#ruCur').value.trim()){ const b=await lawApi('target=ordin&mst='+hit.mst); R.current=b.text; step('cur','done','불러옴: '+hit.name); } else step('cur','done',$('#ruCur').value.trim()?'입력한 현행 조문 사용':'달성군 조례를 찾지 못함 — 현행 조문을 붙여넣어 주세요'); }
     else step('cur','done',own.length?`⚠ 이미 있음: ${own[0].name} — 「고치기」가 맞는지 확인하세요`:'같은 이름의 달성군 조례 없음');
     step('read','run');
@@ -335,7 +335,7 @@ async function hwpx(){
 async function findOwn(){
   const q=baseName($('#ruName').value)||$('#ruName').value.trim(); if(!q){ $('#ruName').focus(); return; }
   const box=$('#ruPick'); box.hidden=false; box.innerHTML='<span class="hint">달성군 조례 찾는 중…</span>';
-  try{ const j=await lawApi('target=ordin&org=달성군&n=8&q='+encodeURIComponent(q));
+  try{ const j=await lawApi('target=ordin&org=달성군&n=8&q='+encodeURIComponent('달성군 '+q));
     if(!j.list.length){ box.innerHTML=`<span class="hint">「${esc(q)}」 달성군 조례를 찾지 못했습니다. 이름을 줄여 보거나 현행 조문을 직접 붙여넣어 주세요.</span>`; return; }
     box.innerHTML=j.list.map(x=>`<button type="button" data-mst="${esc(x.mst)}" data-name="${esc(x.name)}">${esc(x.name)} <small>${esc(x.kind)} · 시행 ${esc(x.date)}</small></button>`).join('');
     box.querySelectorAll('button').forEach(b=>b.onclick=async()=>{ $('#ruName').value=b.dataset.name; box.innerHTML='<span class="hint">현행 조문 불러오는 중…</span>';
@@ -358,10 +358,9 @@ function init(){
   $('#ruCopy').onclick=()=>{ if(!U.out) return; navigator.clipboard.writeText(lawText(U.out,U.mode)); toast?.('조례안을 복사했습니다 — 한글에 붙여넣기'); };
   $('#ruSample').onclick=()=>{
     if($('#ruMode').value==='amend'){
-      $('#ruName').value='대구광역시 달성군 공공데이터 제공 및 이용 활성화에 관한 조례';
-      $('#ruCur').value='제5조(공공데이터책임관) ① 군수는 공공데이터의 제공과 이용 활성화에 관한 업무를 총괄하는 공공데이터책임관을 지정한다.\n② 공공데이터책임관은 다음 각 호의 업무를 수행한다.\n  1. 공공데이터 제공 계획의 수립·시행\n  2. 공공데이터 목록의 관리\n  3. 그 밖에 공공데이터 제공에 필요한 사항\n\n제7조(품질관리) 군수는 공공데이터의 품질을 높이기 위하여 필요한 조치를 할 수 있다.';
-      $('#ruCurWrap').open=true; $('#ruCurState').textContent='— 예시 (실제는 「달성군 조례 찾기」로 불러옵니다)';
-      $('#ruGist').value='공공데이터책임관이 하는 일에 데이터기반행정 활성화 업무 총괄도 넣고 싶습니다. 품질관리는 지금 "할 수 있다"로 되어 있는데, 매년 한 번 이상 품질진단을 꼭 하도록 바꾸고 진단 결과를 군 홈페이지에 공개할 근거도 만들고 싶어요.';
+      $('#ruName').value='지능정보화'; $('#ruCur').value='';
+      $('#ruGist').value='생성형 AI 같은 인공지능을 행정업무에 활용하는 근거를 넣고 싶습니다. 군수가 매년 세우는 실행계획에 AI 활용 계획도 포함하게 하고, 직원들에게 AI 활용 교육을 할 수 있게 하고 싶어요. 그리고 AI를 쓸 때 개인정보와 비공개 자료를 넣지 않는 등 지켜야 할 원칙도 조문으로 두고 싶습니다.';
+      findOwn().then(()=>{ const b=document.querySelector('#ruPick button'); if(b) b.click(); });
     }else{
       $('#ruName').value='대구광역시 달성군 공공데이터 품질관리 조례';
       $('#ruGist').value='우리 군이 가진 공공데이터의 품질을 체계적으로 관리하고 싶습니다. 부서마다 데이터 관리 책임자를 두고, 매년 품질진단을 해서 결과를 홈페이지에 공개하고, 품질관리를 잘한 부서와 직원은 포상할 수 있게 하고 싶어요. 진단 방법과 세부 기준은 군수가 따로 정하도록 하면 좋겠습니다.';
