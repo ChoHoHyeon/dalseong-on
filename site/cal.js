@@ -64,5 +64,7 @@ function init(){
 }
 function upcoming(days){ const td=todayStr(), lim=new Date(Date.now()+days*864e5); const end=ymd(lim.getFullYear(),lim.getMonth(),lim.getDate());
   return load().filter(e=>e.d>=td&&e.d<=end).sort((a,b)=>(a.d+(a.t||'')).localeCompare(b.d+(b.t||''))).map(e=>({...e,diff:Math.round((new Date(e.d+'T00:00:00')-new Date(td+'T00:00:00'))/864e5)})); }
-window.HOMECAL={init,upcoming,open:id=>openEdit(id)};
+/* 이번 주(월~일) 남은 일정 — 오늘부터 이번 주 일요일까지 */
+function thisWeek(){ const now=new Date(), toSun=(7-now.getDay())%7; return upcoming(toSun); }
+window.HOMECAL={init,upcoming,thisWeek,open:id=>openEdit(id)};
 })();

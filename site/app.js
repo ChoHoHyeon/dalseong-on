@@ -156,8 +156,8 @@ function chipsHtml(list,n){ return `<div class="chips">${list.slice(0,n).map(t=>
 document.addEventListener('click',e=>{ const c=e.target.closest('.chip[data-q]'); if(!c) return; if(S.mode!=='staff'){ S.mode='staff'; document.body.dataset.mode='staff'; } go('on'); ask(c.dataset.q); });
 
 /* ── 초기화 ── */
-/* 자료 색인(index.json, 약 10MB)은 「달성On 사용하기」 질문에만 필요하다.
-   첫 화면은 색인 없이 바로 그리고, 색인은 「달성On 사용하기」를 처음 열 때 받는다(한 번 받으면 브라우저가 기억). */
+/* 자료 색인(index.json, 약 10MB)은 「AI에게 물어보기」 질문에만 필요하다.
+   첫 화면은 색인 없이 바로 그리고, 색인은 「AI에게 물어보기」를 처음 열 때 받는다(한 번 받으면 브라우저가 기억). */
 let IDX_P=null;
 function idxNote(on,err){ let n=document.getElementById('idxNote'); if(!on&&!err){ if(n) n.remove(); return; } if(!n){ n=document.createElement('div'); n.id='idxNote'; n.className='idx-note'; const c=document.querySelector('.view[data-view="on"]'); (c||document.body).prepend(n); } n.innerHTML=err?'⚠ 자료를 불러오지 못했어요 — 새로고침해 주세요':'<i></i>달성군 자료(조례·규정 등)를 불러오는 중이에요 · 처음 한 번만 걸려요'; }
 function ensureIndex(){
@@ -177,7 +177,7 @@ async function init(){
   $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,8).replace('class="chips"','class="chips big"');
   $('#hDate').value=`${new Date().getFullYear()}. ${new Date().getMonth()+1}. ${new Date().getDate()}. / 정보통신과`;
   go('home'); DalseongHwpx.load().catch(()=>{});
-  // 색인은 미리 받지 않는다 — 「달성On 사용하기」(또는 관리자 자료 현황)를 처음 열 때 받는다
+  // 색인은 미리 받지 않는다 — 「AI에게 물어보기」(또는 관리자 자료 현황)를 처음 열 때 받는다
 }
 /* 좌측 메뉴: 「질문하기」 하나를 주인공으로, 나머지는 조용히. 서브탭 없음(이용 안내·관리자는 한 페이지 세로 구성) */
 /* 좌측 메뉴는 두 벌로 완전히 분리
@@ -185,7 +185,7 @@ async function init(){
    달성On 화면 : 달성On 항목 + 새 대화 + 최근 대화만 (고정)                                                       */
 const HOME_MENU=[
   // ── 핵심
-  {mode:'staff',view:'on',     icon:'✦',  label:'달성On\n사용하기', cls:'on-item', ready:1},
+  {mode:'staff',view:'on',     icon:'✦',  label:'AI에게\n물어보기', cls:'on-item', ready:1},
   // ── 문서 만들기
   // (제외) 공문 초안·보고서 작성 — 내부 행정문서를 외부 LLM으로 작성하는 것은 보안상 부적절(지능정보화 담당 협의) → 범정부 AI 공통기반·내부망 모델 전환 시 재검토
   {mode:'staff',view:'rule',   icon:'⚖️', label:'조례·지침\n초안 만들기', cls:'sep', ready:1},
@@ -331,7 +331,7 @@ const MSGS=[
  {t:'홍보영상도 문서 하나면 만들어져요 🎬'},
  {t:'경조사 카드, 마음만 준비하세요 💐'},
  {t:'조례 개정? 현행 조문만 붙여넣으면 대비표가 나와요 ⚖️'},
- {t:'규정이 헷갈리면 「달성On 사용하기」에 그냥 물어보세요 ✦'},
+ {t:'규정이 헷갈리면 「AI에게 물어보기」에 그냥 물어보세요 ✦'},
  {t:'"이런 기능 있으면 좋겠다" — 나눔터에 남기면 진짜 생겨요 💡'},
  {t:'오늘 한 일 중 반복되는 게 있다면, 그게 다음 기능이에요 ✨'},
  {t:'결과는 초안이에요. 마지막 확인은 담당자 몫! ✅'},
@@ -345,7 +345,7 @@ function todayMsg(){
   const pool=(special.length&&Math.random()<.6)?special:always;
   return pool[Math.floor(Math.random()*pool.length)].t;
 }
-const MNAME={minutes:'회의록',press:'보도자료',card:'카드뉴스',meal:'급량비',trip:'출장비',family:'경조사 카드',banner:'현수막',movie:'홍보영상',analyze:'데이터 분석',rule:'조례·지침',share:'나눔터',on:'달성On 질문'};
+const MNAME={minutes:'회의록',press:'보도자료',card:'카드뉴스',meal:'급량비',trip:'출장비',family:'경조사 카드',banner:'현수막',movie:'홍보영상',analyze:'데이터 분석',rule:'조례·지침',share:'나눔터',on:'AI에게 물어보기'};
 /* 최근 작업 — 이 브라우저(localStorage)에만 저장. 서버로 보내지 않는다 */
 const RC_KEY='dsOn.recent';
 const rcGet=()=>{ try{ return JSON.parse(localStorage.getItem(RC_KEY)||'[]'); }catch(e){ return []; } };
@@ -385,11 +385,12 @@ function calItems(){
 function renderNow(){
   const el=$('#hmCal'); if(!el) return;
   const dd=n=>n===0?'오늘':n===1?'내일':'D-'+n, EV=3, RC=2;     // 내 일정 3줄 · 최근 작업 2줄 — 개수와 상관없이 자리 고정
-  const all=(window.HOMECAL&&HOMECAL.upcoming)?HOMECAL.upcoming(7):[];
+  const all=(window.HOMECAL&&HOMECAL.thisWeek)?HOMECAL.thisWeek():[];
   const ev=all.slice(0,EV);
-  let h='<li class="sec">📌 내 일정 <small>7일 안</small>'+(all.length>EV?`<em>+${all.length-EV}</em>`:'')+'</li>';
+  const wk=(()=>{ const n=new Date(), mon=new Date(n); mon.setDate(n.getDate()-((n.getDay()+6)%7)); const sun=new Date(mon); sun.setDate(mon.getDate()+6); return `${mon.getMonth()+1}/${mon.getDate()}(월) ~ ${sun.getMonth()+1}/${sun.getDate()}(일)`; })();
+  let h=`<li class="sec">📌 이번 주 일정 <small>${wk}</small>`+(all.length>EV?`<em>+${all.length-EV}</em>`:'')+'</li>';
   h+=ev.map(e=>{ const d=new Date(e.d+'T00:00:00'); return `<li class="row mine" data-ev="${e.id}"><i style="background:color-mix(in srgb,${e.c||'#1d5fd6'} 16%,#fff);color:${e.c||'#1d5fd6'}">●</i><div><b>${esc(e.title)}</b><small>${d.getMonth()+1}/${d.getDate()}${e.t?' '+e.t:''}${e.memo?' · '+esc(e.memo):''}</small></div><span class="dday${e.diff===0?' today':''}">${dd(e.diff)}</span></li>`; }).join('');
-  if(!ev.length) h+='<li class="row none"><i>✍️</i><div><b>달력에 일정을 넣으면 여기 보여요</b><small>왼쪽 달력에서 날짜를 눌러 보세요</small></div></li>';
+  if(!ev.length) h+='<li class="row none"><i>✍️</i><div><b>이번 주 남은 일정이 없어요</b><small>왼쪽 달력에서 날짜를 눌러 넣어 보세요</small></div></li>';
   for(let k=Math.max(ev.length,1);k<EV;k++) h+='<li class="row blank"></li>';
   const R=rcGet(), rs=R.slice(0,RC);
   h+='<li class="sec">🗂 내 최근 작업 <small>이 PC에 저장</small>'+(R.length>RC?`<button class="rc-more">전체 ${R.length}건 ›</button>`:'')+'</li>';
