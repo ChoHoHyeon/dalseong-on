@@ -171,7 +171,7 @@ async function make(){
       const text=await callModel(sys(mode),u); U.out=parse(text,mode);
       if(!U.out.title||(!U.out.table.length&&!U.out.body.length)) throw new Error('응답 형식을 읽지 못했습니다. 다시 생성해 주세요.');
       $('#ruMsg').textContent='작성 완료 — 위임근거·상위 법령·용어는 법무 검토 전 담당자가 확인하세요.';
-    }else{ await new Promise(r=>setTimeout(r,400)); U.out=offline(mode); $('#ruMsg').textContent='오프라인 시연 모드 — 모델 연결 시 조문을 작성합니다.'; }
+    }else{ await new Promise(r=>setTimeout(r,400)); U.out=offline(mode); $('#ruMsg').textContent='오프라인 모드 — 모델 연결 시 조문을 작성합니다.'; }
     U.mode=mode; render(U.out,mode); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
   }catch(err){ $('#ruMsg').textContent='⚠ '+err.message; }
   finally{ U.busy=false; $('#ruGo').disabled=false; }

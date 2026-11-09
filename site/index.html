@@ -3,17 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>달성On · 달성군 AI 업무비서 (시연판)</title>
+<title>달성On · 달성군 직원 AI 업무도우미</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <script src="vendor/jszip.min.js"></script>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="trip.css">
 </head>
 <body data-mode="home" data-theme="light" data-view="home">
+<div id="boot"><div class="boot-in"><div class="boot-logo">On</div><b>달성<span>On</span></b><small>자료를 불러오는 중이에요…</small><i class="boot-bar"><u></u></i></div></div>
 
 <!-- ═══════ 상단: 브랜드 · 상태 ═══════ -->
 <header class="top">
-  <div class="brand"><div class="logo"><span>On</span></div><div class="brand-t"><b>달성On</b><small>달성군 AI 업무비서 · 시연판</small></div></div>
+  <div class="brand"><div class="logo"><span>On</span></div><div class="brand-t"><b>달성On</b><small>달성군 직원 AI 업무도우미 · 시범 운영</small></div></div>
   <div class="top-c slogan"><a href="#" class="slogan-link" data-go="home:home" title="첫 화면으로" aria-label="첫 화면으로 가기"><img src="assets/slogan.png" alt="군민이 빛나는 달성"></a></div>
   <div class="top-r">
     <button class="ghost ic" id="btnNoti" title="공지·업데이트">🔔<span class="badge" id="notiN">3</span></button>
@@ -37,14 +38,13 @@
       <div class="hero hero-light">
         <div class="hero-txt"><small id="heroDate"></small>
           <h2>오늘도 수고 많아요 <span class="wave">👋</span><br>잔일은 <b>달성On</b>이 덜어드릴게요</h2>
-          <p class="lead">회의 녹음 올리면 회의록이 되고, 보도자료·카드뉴스·현수막 문구는 5분이면 나오고, 급량비·출장비는 클릭 한 번. 로그인도 설치도 없어요.</p>
+          <p class="lead">반복되는 일은 맡기고, 중요한 일에 집중하세요.</p>
           <div class="hero-chips">
-            <button data-go="staff:minutes">🎙 회의록 정리</button><button data-go="staff:press">📰 보도자료</button><button data-go="staff:card">📱 카드뉴스</button><button data-go="staff:meal">🍚 급량비</button><button data-go="staff:trip">🚗 출장비</button><button data-go="staff:on">✦ 뭐든 물어보기</button>
+            <button data-go="staff:minutes">🎙 회의록</button><button data-go="staff:press">📰 보도자료</button><button data-go="staff:card">📱 카드뉴스</button><button data-go="staff:meal">🍚 급량비</button><button data-go="staff:on">✦ 물어보기</button>
           </div>
         </div>
         <div class="hero-art hero-art-light" aria-hidden="true">
           <div class="bub b1">📝 → 📄</div><div class="bub b2">🎙 → 📋</div><div class="bub b3">⚡ 5분</div>
-          <span class="hero-cap">직원 누구나 · 가볍게 써보는 AI 도구 모음</span>
         </div>
       </div>
       <div class="portal-grid">
@@ -73,14 +73,30 @@
 
     <!-- 홈 · 이용 안내 -->
     <section class="view" data-view="guide">
-      <div class="vh"><h2>이용 안내</h2><p>처음 쓰는 직원을 위한 3단계 안내입니다.</p></div>
-      <div class="guide-grid">
-        <div class="card"><h4>직원 (업무망)</h4><ol class="steps"><li><b>새올 배너 클릭</b><small>별도 설치·가입 없이 업무망 PC에서 접속</small></li><li><b>업무 질문 입력</b><small>"체육시설 사용료 감면 대상은?" 처럼 평소 말로</small></li><li><b>근거 확인 → 한글 파일</b><small>조문 번호를 눌러 원문 확인, [한글 파일로]를 누르면 군 서식 hwpx 다운로드</small></li></ol></div>
-        <div class="card"><h4>한글 문서 만들기</h4><ol class="steps"><li><b>질문하고 답변 확인</b><small>근거 조문이 붙은 답변을 먼저 검토</small></li><li><b>[한글 파일로] 클릭</b><small>품의서·검토보고·업무연락 중 서식 선택, 제목·근거 포함 여부 지정</small></li><li><b>hwpx 다운로드 → 한글에서 마무리</b><small>담당자 검토 문구가 자동으로 붙어 나옵니다</small></li></ol></div>
-        <div class="card"><h4>이런 질문에 답합니다</h4><div class="chips" id="guideChips"></div><p class="hint" style="margin-top:10px">자료에 없는 질문은 <b>AI 일반 답변</b>으로 표시되어 근거 인용 답변과 구분됩니다. 답변은 참고용이며 최종 판단은 담당자가 합니다.</p></div>
-        <div class="card vlist-card"><h4>안내 영상 모음 <small>기능별 사용법 · 누르면 재생</small></h4><div class="vlist" id="videoList"></div><p class="hint" style="margin-top:8px">각 기능 화면 제목 옆 <b>▶ 이용 안내</b> 단추로도 같은 영상을 볼 수 있습니다.</p></div>
-        <div class="card"><h4>자료 범위</h4><table class="tbl"><tr><th>층</th><th>자료</th><th>대상</th></tr><tr><td>1층</td><td>자치법규 · 민원안내 · 공공데이터</td><td>전 직원</td></tr><tr><td>2층</td><td>복무 · 회계 · 계약 · 개인정보 · 보안 지침</td><td>전 직원</td></tr><tr><td>3층</td><td>온나라 문서 · 사업계획 (2단계)</td><td>권한별</td></tr></table></div>
+      <div class="vh"><h2>이용 안내</h2><p>처음 오셨나요? 3단계면 충분해요. 설치·로그인 없이 브라우저만 있으면 됩니다.</p></div>
+      <div class="gd-steps">
+        <div><i>1</i><b>왼쪽 메뉴에서 할 일 고르기</b><small>회의록·보도자료·정산 등 지금 하려는 일</small></div>
+        <div><i>2</i><b>파일 올리거나 몇 줄 적기</b><small>녹음·PDF·엑셀을 올리거나 요지만 · 「예시로 채우기」로 먼저 체험</small></div>
+        <div><i>3</i><b>결과 확인하고 가져가기</b><small>복사 · 한글 파일 · PNG · 엑셀 — 마지막 확인은 담당자가</small></div>
       </div>
+      <div class="card"><h4>이럴 땐 이 메뉴 <small>누르면 바로 이동</small></h4><div class="gd-feat" id="gdFeat"></div></div>
+      <div class="gd-two">
+        <div class="card"><h4>🛡 내 자료는 어디로 가나요?</h4>
+          <table class="tbl gd-safe"><tr><th>처리 방식</th><th>메뉴</th></tr>
+            <tr><td><b class="sf-l">🔒 이 PC 안에서만</b><small>파일이 밖으로 나가지 않아요</small></td><td>급량비 · 출장비</td></tr>
+            <tr><td><b class="sf-h">🔒 파일은 PC · 💬 글만 AI로</b><small>원본은 그대로 두고 필요한 글만</small></td><td>회의록(녹음→글은 PC, 정리할 때 글만) · 데이터 분석(열 이름·샘플 5행만)</td></tr>
+            <tr><td><b class="sf-t">💬 입력한 글이 AI로</b><small>비공개·개인정보는 넣지 마세요</small></td><td>보도자료 · 카드뉴스 · 현수막 · 홍보영상 · 조례·지침 · 경조사 카드 · 달성On 질문</td></tr>
+          </table></div>
+        <div class="card"><h4>자주 묻는 질문</h4><div class="gd-faq">
+          <details><summary>결과를 그대로 써도 되나요?</summary><p>초안입니다. 날짜·수치·이름·인용문은 꼭 확인한 뒤 쓰세요. 비어 있는 값은 <b>○○</b>로 표시됩니다.</p></details>
+          <details><summary>만든 결과가 사라졌어요</summary><p>홈의 <b>내 최근 작업</b>에 최근 결과 8건이 이 PC에 남아 있어요. 누르면 다시 보고 복사할 수 있습니다.</p></details>
+          <details><summary>PDF를 못 읽는다고 나와요</summary><p>스캔본(그림)은 글자를 읽을 수 없어요. 새올·인사랑 화면에서 「인쇄 → PDF로 저장」한 파일을 올려 주세요.</p></details>
+          <details><summary>한글 파일 서식이 달라요</summary><p>달성군 보고서·보도자료 서식을 따릅니다. 다른 서식이 필요하면 나눔터에 남겨 주세요.</p></details>
+          <details><summary>이런 기능도 있으면 좋겠어요</summary><p>왼쪽 <b>제안·활용사례 나눔터</b>에 남겨 주시면 검토해서 반영하고 공지로 알려 드립니다.</p></details>
+        </div></div>
+      </div>
+      <div class="card vlist-card"><h4>안내 영상 <small>누르면 재생</small></h4><div class="vlist" id="videoList"></div></div>
+      <div class="card"><h4>달성On 사용하기에서 이런 질문에 답해요 <small>조례·규정 근거와 함께</small></h4><div class="chips" id="guideChips"></div></div>
     </section>
 
     <!-- 홈 · 서비스 구성 -->
@@ -98,7 +114,7 @@
 
     <!-- 홈 · 공지·업데이트 -->
     <section class="view" data-view="news">
-      <div class="vh"><h2>공지 · 업데이트</h2><p>자료 갱신과 기능 변경 이력입니다. 실제 운영 시 관리자 화면에서 등록합니다.</p></div>
+      <div class="vh"><h2>공지 · 업데이트</h2><p>새 기능과 자료 갱신 소식입니다.</p></div>
       <div class="card"><ul class="timeline big" id="newsList"></ul></div>
     </section>
 
@@ -108,7 +124,7 @@
       <div class="contact-grid">
         <div class="card"><h4>운영 부서</h4><b class="big">달성군 정보통신과</b><p class="hint">데이터기반행정 · 공공데이터 담당<br>☎ 053-668-2454 · ✉ 98turtle@korea.kr</p></div>
         <div class="card"><h4>자료 등록 요청</h4><p class="hint">부서 지침·서식·FAQ를 달성On에 올리고 싶으면 파일과 열람 범위(전 직원/부서)를 알려주세요. 등록 후 전 직원 답변에 즉시 반영됩니다.</p></div>
-        <div class="card"><h4>오류·개선 제안</h4><p class="hint">잘못된 답변은 [근거 보기]에서 조문을 확인한 뒤 화면 캡처와 함께 알려주세요. 시연판은 예시 자료(민원안내·내부지침)를 포함합니다.</p></div>
+        <div class="card"><h4>오류·개선 제안</h4><p class="hint">잘못된 결과는 우측 상단 <b>🐞</b> 단추로, 기능 제안·짧은 의견은 왼쪽 <b>제안·활용사례 나눔터</b>에 남겨 주세요.</p></div>
       </div>
     </section>
 
@@ -560,6 +576,7 @@
           <button id="pfCopy">복사</button>
           <button id="pfAgain">다시 생성</button>
         </div>
+        <div class="chain"><span>✨ 이 보도자료로 이어서 만들기</span><button data-chain="card">📱 카드뉴스</button><button data-chain="banner">🎏 현수막 문구</button><button data-chain="movie">🎬 홍보영상</button></div>
         <p class="hint" style="margin-top:10px">※ 용지 A4 · 여백 위7·아래15·좌우20·머리말20·꼬리말5mm / 제목 HY헤드라인M 22pt · 부제 한컴바탕확장 15pt 진하게 · 본문 한컴바탕확장 15pt(줄간격 160%) — 달성군 보도자료 원본 서식 기준</p>
       </div>
     </section>
@@ -715,10 +732,14 @@
 
     <!-- 관리자 · 이용통계 -->
     <section class="view" data-view="stats">
-      <div class="vh"><h2>이용 통계 · 자료 현황</h2><p>자료 현황·참조 순위는 홈에 공개되어 있고, 여기서는 이용 수치를 봅니다. 실제 구축 시 부서별·기간별 통계와 자주 묻는 질문 분석을 제공합니다.</p></div>
-      <h4>이번 세션</h4>
-      <div class="kpis"><div class="kpi"><small>질의</small><b id="kQ">0</b></div><div class="kpi"><small>근거 인용 답변</small><b id="kCite">0</b></div><div class="kpi"><small>자료 외 AI 답변</small><b id="kGen">0</b></div><div class="kpi"><small>한글 파일 생성</small><b id="kHwpx">0</b></div></div>
-      <div class="card"><h4>자주 찾은 자료</h4><ol class="toplist" id="topDocs"><li class="muted">아직 질의가 없습니다</li></ol></div>
+      <div class="vh"><h2>이용 통계</h2><p>전 직원이 메뉴를 열고 초안을 만든 횟수를 집계합니다. 누가 썼는지는 저장하지 않고 날짜·메뉴·종류의 숫자만 남깁니다.</p></div>
+      <div class="kpis four" id="adKpis"></div>
+      <div class="ad-grid">
+        <div class="card"><h4>이번 주 메뉴별 이용 <small>월요일부터</small></h4><div id="adTop"></div></div>
+        <div class="card"><h4>이 브라우저(관리자 PC) <small>이번 접속</small></h4>
+          <div class="kpis"><div class="kpi"><small>질의</small><b id="kQ">0</b></div><div class="kpi"><small>근거 인용 답변</small><b id="kCite">0</b></div><div class="kpi"><small>초안</small><b id="kGen">0</b></div><div class="kpi"><small>한글 파일</small><b id="kHwpx">0</b></div></div>
+          <h4 style="margin-top:14px">자주 찾은 자료</h4><ol class="toplist" id="topDocs"><li class="muted">아직 질의가 없습니다</li></ol></div>
+      </div>
     </section>
 
     <!-- 관리자 · 자료 갱신 -->
@@ -729,24 +750,25 @@
 
     <!-- 관리자 · 모델 설정 -->
     <section class="view" data-view="model">
-      <div class="vh"><h2>답변 모델 설정</h2><p>시연판은 브라우저에서 모델 API를 직접 호출합니다(키는 메모리에만 보관). 실제 구축 시 업무망 서버의 모델 또는 행안부 온AI API로 교체하며 화면·자료는 그대로 유지됩니다.</p></div>
+      <div class="vh"><h2>답변 모델 설정</h2><p>시범 운영 중에는 브라우저에서 모델 API를 직접 호출합니다(키는 메모리에만 보관). 실제 구축 시 업무망 서버의 모델 또는 행안부 온AI API로 교체하며 화면·자료는 그대로 유지됩니다.</p></div>
       <div class="card narrow">
-        <p class="hint">기본은 <b>서버 프록시</b>입니다 — API 키는 Netlify 환경변수(ANTHROPIC_API_KEY)에만 있고 화면·코드에 없습니다. 아래 키 칸은 서버 설정 전 임시 시연용입니다.</p>
+        <p class="hint">기본은 <b>서버 프록시</b>입니다 — API 키는 Netlify 환경변수(ANTHROPIC_API_KEY)에만 있고 화면·코드에 없습니다. 아래 키 칸은 서버 설정 전 임시 시험용입니다.</p>
         <label>접속 코드 <small>서버에 ACCESS_CODE를 설정한 경우 · 이 브라우저에 저장</small><input id="accessCode" type="password" placeholder="설정했으면 입력" autocomplete="off"></label>
         <label>(임시) Anthropic API 키 직접 입력 <small>브라우저 메모리에만 · 새로고침 시 사라짐</small><input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
         <label>모델<input id="model" value="claude-sonnet-4-5" list="models"><datalist id="models"><option value="claude-sonnet-4-5"><option value="claude-haiku-4-5"><option value="claude-opus-4-1"></datalist></label>
-        <label class="chk"><input type="checkbox" id="offline"> 오프라인 시연 모드(검색 결과만으로 답변 구성)</label>
+        <label class="chk"><input type="checkbox" id="offline"> 오프라인 모드(검색 결과만으로 답변 구성)</label>
         <p class="hint">현재 상태: <b id="adminModel">–</b></p>
       </div>
     </section>
 
     <!-- 관리자 · 오류 신고함 -->
     <section class="view" data-view="bugs">
-      <div class="vh"><h2>오류 신고함</h2><p>직원이 우측 상단 <b>🐞</b> 단추로 보낸 신고·건의가 여기에 쌓입니다. 처리한 건은 정보통신과에서 확인 후 안내합니다.</p></div>
+      <div class="vh"><h2>오류 신고 · 나눔터 관리</h2><p>직원이 우측 상단 <b>🐞</b> 단추로 보낸 신고와 나눔터에 올린 제안·사례·한마디가 여기에 쌓입니다. 처리한 건은 정보통신과에서 확인 후 안내합니다.</p></div>
       <div class="row end bugtop">
         <span class="hint" id="bugMeta">불러오는 중…</span>
         <button class="ghost" id="bugReload">↻ 새로고침</button>
       </div>
+      <div class="ad-code"><label>관리자 코드 <input id="adCode" type="password" placeholder="Netlify ADMIN_CODE 값"></label><span class="hint">입력하면 나눔터 글의 상태(접수 → 검토 중 → 반영됨)를 바꾸고 지울 수 있습니다. 이 PC에만 기억합니다.</span></div>
       <div class="buglist" id="bugList"></div>
     </section>
   </main>
@@ -792,10 +814,11 @@
 <!-- 첫 안내 -->
 <div class="modal" id="mIntro" hidden><div class="box intro">
   <div class="logo big"><span>On</span></div>
-  <h2>달성군 AI 업무비서 <b>달성On</b> 시연판</h2>
-  <p>왼쪽 메뉴에서 <b>달성On · 직원용 · 관리자</b> 기능을 고릅니다. 오른쪽 대화창에 질문하면 근거와 함께 답합니다.</p>
-  <p class="hint">자료: 2026.7.10 공포 조례·규칙 7건, 민원안내 10건(예시), 공공데이터 6종 1,107행, 내부지침 5건(예시)</p>
-  <button class="primary" data-close>시연 시작</button>
+  <h2>반가워요, <b>달성On</b>이에요 👋</h2>
+  <p>달성군 직원 누구나 가볍게 쓰는 AI 업무도우미입니다. 왼쪽 메뉴에서 하고 싶은 일을 고르면 돼요.</p>
+  <ul class="intro-list"><li>🎙 녹음 올리면 <b>회의록</b>, 📰 계획서 붙여넣으면 <b>보도자료</b></li><li>🍚 PDF 하나로 <b>급량비·출장비</b> 정산, 📊 엑셀 올리면 <b>차트·해석</b></li><li>✦ 궁금한 건 <b>달성On 사용하기</b>에서 조례·규정 근거와 함께</li></ul>
+  <p class="hint">설치·로그인 없이 브라우저만 있으면 됩니다. 결과는 초안이니 마지막 확인은 담당자가 해 주세요.</p>
+  <button class="primary" data-close>시작하기</button>
 </div></div>
 
 <script src="hwpx.js"></script>

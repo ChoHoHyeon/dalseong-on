@@ -82,7 +82,8 @@ function draw(p,data){
     x.font='600 18px Pretendard,"Malgun Gothic",sans-serif'; data.slice(0,12).forEach((d,i)=>{ const y=150+i*38; x.fillStyle=PAL[i%PAL.length]; x.fillRect(680,y-14,16,16); x.fillStyle='#17223b'; x.fillText(`${d[0]}  ${fmt(d[1])} (${(d[1]/tot*100).toFixed(1)}%)`,706,y); });
     return;
   }
-  const L=110,R=W-40,T=120,B=H-90; const mx=Math.max(...data.map(d=>d[1]),0)*1.1||1; const mn=Math.min(0,...data.map(d=>d[1]));
+  const L=110,R=W-40,T=120,B=H-90; const mn=Math.min(0,...data.map(d=>d[1]));
+  const raw=(Math.max(...data.map(d=>d[1]),0)||1)/4, mag=Math.pow(10,Math.floor(Math.log10(raw))), step=[1,2,2.5,5,10].map(k=>k*mag).find(x=>x>=raw); const mx=step*4;   // 깔끔한 눈금(1·2·2.5·5 단위)
   const Y=v=>B-(v-mn)/(mx-mn)*(B-T);
   x.strokeStyle='#e3e8f2'; x.lineWidth=1; x.font='500 15px Pretendard,"Malgun Gothic",sans-serif'; x.fillStyle='#8a94a6'; x.textAlign='right';
   for(let i=0;i<=4;i++){ const v=mn+(mx-mn)*i/4; const y=Y(v); x.beginPath(); x.moveTo(L,y); x.lineTo(R,y); x.stroke(); x.fillText(fmt(v),L-10,y+5); }
@@ -105,8 +106,8 @@ async function run(){
     $('#anTable').innerHTML=`<table class="an-tbl"><thead><tr><th>${esc(p.group)}</th><th>${esc((p.value||'')+' '+AGG[p.agg])}</th><th>비중</th></tr></thead><tbody>${(()=>{ const tot=data.reduce((s,d)=>s+d[1],0)||1; return data.map(d=>`<tr><td>${esc(d[0])}</td><td>${(+d[1].toFixed(2)).toLocaleString()}</td><td>${(d[1]/tot*100).toFixed(1)}%</td></tr>`).join(''); })()}</tbody></table>`;
     $('#anOut').hidden=false; $('#anOut').scrollIntoView({behavior:'smooth',block:'start'});
     $('#anInsight').textContent='해석 문장 작성 중…';
-    if((S.key||S.server)&&!S.offline){ const t=await callModel('지방자치단체 보고서용으로, 주어진 집계표를 근거로 해석 문장 2문장을 개조식이 아닌 평서문으로 씁니다. 숫자는 표에 있는 것만. 추측·원인 단정 금지.',`제목: ${p.title}\n집계(${p.group} / ${AGG[p.agg]}):\n${data.slice(0,30).map(d=>d[0]+': '+(+d[1].toFixed(2))).join('\n')}`,300); $('#anInsight').textContent=t.trim(); }
-    else { const top=[...data].sort((a,b)=>b[1]-a[1])[0]; $('#anInsight').textContent=`${p.group} 기준 ${AGG[p.agg]}은(는) 「${top[0]}」이(가) ${(+top[1].toFixed(1)).toLocaleString()}(으)로 가장 큽니다. (오프라인 시연 — 모델 연결 시 해석 문장을 씁니다)`; }
+    if((S.key||S.server)&&!S.offline){ const t=await callModel('지방자치단체 보고서용으로, 제목·마크다운 없이, 주어진 집계표를 근거로 해석 문장 2문장을 개조식이 아닌 평서문으로 씁니다. 숫자는 표에 있는 것만. 추측·원인 단정 금지.',`제목: ${p.title}\n집계(${p.group} / ${AGG[p.agg]}):\n${data.slice(0,30).map(d=>d[0]+': '+(+d[1].toFixed(2))).join('\n')}`,300); $('#anInsight').textContent=t.replace(/^\s*#+.*$/gm,'').replace(/\*\*/g,'').trim(); }
+    else { const top=[...data].sort((a,b)=>b[1]-a[1])[0]; $('#anInsight').textContent=`${p.group} 기준 ${AGG[p.agg]}은(는) 「${top[0]}」이(가) ${(+top[1].toFixed(1)).toLocaleString()}(으)로 가장 큽니다. (오프라인 모드 — 모델 연결 시 해석 문장을 씁니다)`; }
     $('#anMsg').textContent='완료 — 질문을 바꿔 다시 볼 수 있습니다.'; window.dsSave&&dsSave('analyze',p.title,`${p.title} (${A.name})\n\n`+data.map(d=>d[0]+'\t'+(+d[1].toFixed(2))).join('\n')+'\n\n'+$('#anInsight').textContent); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
   }catch(e){ $('#anMsg').textContent='⚠ '+e.message; }
   finally{ A.busy=false; $('#anGo').disabled=false; }

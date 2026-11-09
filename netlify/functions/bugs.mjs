@@ -46,5 +46,19 @@ export default async (req) => {
     return json({ ok: true, item, n: Math.min(list.length, MAX) });
   }
 
+  // 관리자: 상태 바꾸기(접수 → 검토 → 반영) · 지우기 — ADMIN_CODE(없으면 ACCESS_CODE) 환경변수와 같은 코드를 보낸 요청만
+  if (req.method === "PATCH" || req.method === "DELETE") {
+    const code = process.env.ADMIN_CODE || process.env.ACCESS_CODE;
+    if (!code) return json({ error: "서버에 ADMIN_CODE 환경변수가 없습니다 (Netlify › Environment variables)" }, 500);
+    if (req.headers.get("x-admin-code") !== code) return json({ error: "관리자 코드가 맞지 않습니다" }, 401);
+    let b; try { b = await req.json(); } catch { return json({ error: "형식이 올바르지 않습니다" }, 400); }
+    const list = (await store.get(KEY, { type: "json" })) || [];
+    const i = list.findIndex(x => x.id === b.id); if (i < 0) return json({ error: "없는 글입니다" }, 404);
+    if (req.method === "DELETE") list.splice(i, 1);
+    else { const w = ["접수", "검토", "반영"].includes(b.where) ? b.where : null; if (!w) return json({ error: "상태값" }, 400); list[i].where = w; list[i].done = new Date().toISOString(); }
+    await store.setJSON(KEY, list);
+    return json({ ok: true });
+  }
+
   return new Response("Method Not Allowed", { status: 405 });
 };

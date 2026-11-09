@@ -14,7 +14,7 @@ window.DalseongHwpx = (function(){
     text.split(/\r?\n/).forEach(raw=>{
       let l=raw.replace(/\[(\d+)\]/g,'').replace(/\*\*(.+?)\*\*/g,'$1').replace(/`/g,'').trimEnd();
       const s=l.trim();
-      if(!s||/오프라인 시연 모드/.test(s)) return;
+      if(!s||/오프라인 모드/.test(s)) return;
       if(/^#{1,3}\s/.test(s))            out.push({k:'sec',  t:s.replace(/^#+\s*/,'')});
       else if(/^(■|□)\s?/.test(s))      out.push({k:'sq',   t:s.replace(/^(■|□)\s?/,'')});
       else if(/^(❍|○|◦|•|\*|-|·)\s/.test(s) && /^\s{2,}/.test(l)) out.push({k:'dash', t:s.replace(/^(❍|○|◦|•|\*|-|·)\s/,'')});

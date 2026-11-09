@@ -1065,7 +1065,7 @@ function build(){
         <small>새올에서 출력한 파일을 끌어다 놓거나 클릭</small></div>
       <input type="file" id="mlFile" accept="application/pdf" hidden>
       <p class="mlnote" id="mlPdfMsg">이 파일 하나면 판정·인원·명단이 모두 정해집니다.</p>
-      <p class="mldemo"><a href="assets/demo_overtime.pdf" download="시연_초과근무확인서.pdf">⬇ 시연용 예시 파일 내려받기</a>
+      <p class="mldemo"><a href="assets/demo_overtime.pdf" download="예시_초과근무확인서.pdf">⬇ 예시 파일 내려받기</a>
         <small>2026년 8월 · 4명 · 이름은 <b>홍길동·김철수</b> 등 가명입니다</small></p>
     </div>
     <button class="mlmore" id="mlTripToggle">＋ 출장 다녀온 사람이 있나요?</button>

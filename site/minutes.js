@@ -104,7 +104,7 @@ async function make(){
       const u=[`<회의 정보>`,`회의명: ${v('mtName')}`,`일시: ${fmtWhen(v('mtDate'),v('mtTime'))||'○○'}`,`장소: ${v('mtPlace')||'○○'}`,`참석: ${v('mtWho')||'○○'}`,`안건:\n${v('mtAgenda')||'(메모에서 파악)'}`,`</회의 정보>`,`<회의 메모·녹취>`,v('mtNotes'),`</회의 메모·녹취>`].join('\n');
       M.out=parse(await callModel(u)); if(!M.out.body.length) throw new Error('응답 형식을 읽지 못했습니다. 다시 생성해 주세요.');
       $('#mtMsg').textContent='정리 완료 — 결정사항·담당·기한은 참석자 확인 후 확정하세요.';
-    }else{ await new Promise(r=>setTimeout(r,400)); M.out=offline(); $('#mtMsg').textContent='오프라인 시연 모드 — 모델 연결 시 메모를 읽어 안건별로 정리합니다.'; }
+    }else{ await new Promise(r=>setTimeout(r,400)); M.out=offline(); $('#mtMsg').textContent='오프라인 모드 — 모델 연결 시 메모를 읽어 안건별로 정리합니다.'; }
     render(M.out); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
   }catch(err){ $('#mtMsg').textContent='⚠ '+err.message; }
   finally{ M.busy=false; $('#mtGo').disabled=false; }
