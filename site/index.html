@@ -18,7 +18,7 @@
   <div class="top-c slogan"><a href="#" class="slogan-link" data-go="home:home" title="첫 화면으로" aria-label="첫 화면으로 가기"><img src="assets/slogan.png" alt="군민이 빛나는 달성"></a></div>
   <div class="top-r">
     <button class="ghost ic" id="btnNoti" title="공지·업데이트">🔔<span class="badge" id="notiN">3</span></button>
-    <button class="ghost ic" id="btnBug" title="오류 신고 · 건의">🐞</button>
+    <button class="ghost ic" id="btnBug" title="오류·불편 신고 (지금 보는 화면이 함께 적혀요 · 처리 상태는 질문·요청 소통하기에서)">🐞</button>
     <button class="ghost ic" id="btnTheme" title="밝게/어둡게">🌙</button>
     <div class="user" id="userChip" title="접속 IP (실제 구축 시 새올 인증 사용자 정보로 대체)"><span class="uav">🖥</span><div><b id="userIp">–</b><small>접속 IP</small></div></div>
   </div>
@@ -79,23 +79,16 @@
         <div><i>3</i><b>결과 확인하고 가져가기</b><small>복사 · 한글 파일 · PNG · 엑셀 — 마지막 확인은 담당자가</small></div>
       </div>
       <div class="card"><h4>이럴 땐 이 메뉴 <small>누르면 바로 이동</small></h4><div class="gd-feat" id="gdFeat"></div></div>
-      <div class="gd-two">
-        <div class="card"><h4>🛡 내 자료는 어디로 가나요?</h4>
-          <table class="tbl gd-safe"><tr><th>처리 방식</th><th>메뉴</th></tr>
-            <tr><td><b class="sf-l">🔒 이 PC 안에서만</b><small>파일이 밖으로 나가지 않아요</small></td><td>급량비 · 출장비</td></tr>
-            <tr><td><b class="sf-h">🔒 파일은 PC · 💬 글만 AI로</b><small>원본은 그대로 두고 필요한 글만</small></td><td>회의록(녹음→글은 PC, 정리할 때 글만) · 데이터 분석(열 이름·샘플 5행만)</td></tr>
-            <tr><td><b class="sf-t">💬 입력한 글이 AI로</b><small>비공개·개인정보는 넣지 마세요</small></td><td>보도자료 · 카드뉴스 · 현수막 · 홍보영상 · 조례·지침 · 경조사 카드 · 달성On 질문</td></tr>
-          </table></div>
-        <div class="card"><h4>자주 묻는 질문</h4><div class="gd-faq">
+      <div class="card"><h4>자주 묻는 질문</h4><div class="gd-faq">
+          <details><summary>내 자료가 밖으로 나가나요?</summary><p><b>급량비·출장비</b>는 이 PC 안에서만 처리돼요. <b>회의록·데이터 분석</b>은 녹음·엑셀 원본은 PC에 두고 필요한 글만 AI로 보내고, <b>보도자료·카드뉴스 등 글쓰기 메뉴</b>는 입력한 글이 AI로 가요. 비공개·개인정보는 넣지 마세요.</p></details>
+          
           <details><summary>결과를 그대로 써도 되나요?</summary><p>초안입니다. 날짜·수치·이름·인용문은 꼭 확인한 뒤 쓰세요. 비어 있는 값은 <b>○○</b>로 표시됩니다.</p></details>
           <details><summary>만든 결과가 사라졌어요</summary><p>홈의 <b>내 최근 작업</b>에 최근 결과 8건이 이 PC에 남아 있어요. 누르면 다시 보고 복사할 수 있습니다.</p></details>
           <details><summary>PDF를 못 읽는다고 나와요</summary><p>스캔본(그림)은 글자를 읽을 수 없어요. 새올·인사랑 화면에서 「인쇄 → PDF로 저장」한 파일을 올려 주세요.</p></details>
-          <details><summary>한글 파일 서식이 달라요</summary><p>달성군 보고서·보도자료 서식을 따릅니다. 다른 서식이 필요하면 나눔터에 남겨 주세요.</p></details>
-          <details><summary>이런 기능도 있으면 좋겠어요</summary><p>왼쪽 <b>제안·활용사례 나눔터</b>에 남겨 주시면 검토해서 반영하고 공지로 알려 드립니다.</p></details>
+          <details><summary>한글 파일 서식이 달라요</summary><p>달성군 보고서·보도자료 서식을 따릅니다. 다른 서식이 필요하면 질문·요청 소통하기에 남겨 주세요.</p></details>
+          <details><summary>이런 기능도 있으면 좋겠어요</summary><p>왼쪽 <b>질문·요청 소통하기</b>에 남겨 주시면 검토해서 반영하고 공지로 알려 드립니다.</p></details>
         </div></div>
-      </div>
       <div class="card vlist-card"><h4>안내 영상 <small>누르면 재생</small></h4><div class="vlist" id="videoList"></div></div>
-      <div class="card"><h4>AI에게 물어보기에서 이런 질문에 답해요 <small>조례·규정 근거와 함께</small></h4><div class="chips" id="guideChips"></div></div>
     </section>
 
     <!-- 홈 · 서비스 구성 -->
@@ -123,7 +116,7 @@
       <div class="contact-grid">
         <div class="card"><h4>운영 부서</h4><b class="big">달성군 정보통신과</b><p class="hint">데이터기반행정 · 공공데이터 담당<br>☎ 053-668-2454 · ✉ 98turtle@korea.kr</p></div>
         <div class="card"><h4>자료 등록 요청</h4><p class="hint">부서 지침·서식·FAQ를 달성On에 올리고 싶으면 파일과 열람 범위(전 직원/부서)를 알려주세요. 등록 후 전 직원 답변에 즉시 반영됩니다.</p></div>
-        <div class="card"><h4>오류·개선 제안</h4><p class="hint">잘못된 결과는 우측 상단 <b>🐞</b> 단추로, 기능 제안·짧은 의견은 왼쪽 <b>제안·활용사례 나눔터</b>에 남겨 주세요.</p></div>
+        <div class="card"><h4>오류·개선 제안</h4><p class="hint">잘못된 결과는 우측 상단 <b>🐞</b> 단추로, 기능 제안·짧은 의견은 왼쪽 <b>질문·요청 소통하기</b>에 남겨 주세요.</p></div>
       </div>
     </section>
 
@@ -708,22 +701,22 @@
       </div>
     </section>
 
-    <!-- 활용사례 나눔터 (세부 내역 추후 확정) -->
+    <!-- 질문·요청 소통하기 -->
     <section class="view" data-view="share">
-      <div class="vh"><h2>제안·활용사례 나눔터</h2><p>달성On에 넣었으면 하는 기능, 고쳤으면 하는 점, 내가 이렇게 써서 해결한 이야기, 짧은 한마디까지 편하게 올리는 곳입니다. 올라온 제안은 검토해서 이 사이트에 바로 반영합니다.</p></div>
+      <div class="vh"><h2>질문·요청 소통하기</h2><p>"이런 거 만들어 주세요"부터 궁금한 점, 내가 써 본 이야기까지 편하게 남겨 주세요. 올라온 요청은 검토해서 달성On에 바로 반영하고 공지로 알려 드립니다.</p></div>
       <div class="sh-wrap">
         <div class="card pcard sh-form">
-          <h4>올리기 <small>부서명만 적어 주세요 · 이름·연락처 불필요</small></h4>
-          <label class="pfull">유형<select id="shKind" class="psel"><option value="idea">💡 기능 제안 — 이런 게 있으면 좋겠어요</option><option value="improve">🔧 개선 의견 — 이건 이렇게 고쳐 주세요</option><option value="usecase">🙌 활용 사례 — 나는 이렇게 썼어요</option><option value="voice">💬 한마디 — 짧은 의견·응원·불편</option></select></label>
+          <h4>남기기 <small>부서명만 적어 주세요 · 이름·연락처 불필요</small></h4>
+          <label class="pfull">유형<select id="shKind" class="psel"><option value="idea">💡 만들어 주세요 — 이런 기능이 있으면 좋겠어요</option><option value="ask">❓ 질문·문의 — 이건 어떻게 써요?</option><option value="usecase">🙌 이렇게 썼어요 — 써 보니 이렇게 편했어요</option><option value="improve">🔧 개선 의견 — 이건 이렇게 고쳐 주세요</option><option value="voice">💬 한마디 — 짧은 의견·응원</option></select></label>
           <label class="pfull" style="margin-top:8px">제목 <b class="req">*</b><input id="shTitle" maxlength="80"></label>
           <label class="pfull" style="margin-top:8px">내용 <small class="hint">선택 · 상황과 바라는 모습을 편하게</small><textarea id="shBody" rows="5" maxlength="900" placeholder="어떤 업무에서, 무엇이 불편했고, 어떻게 되면 좋을지"></textarea></label>
           <label class="pfull" style="margin-top:8px">부서 <small class="hint">선택</small><input id="shWho" maxlength="30" placeholder="예) 정보통신과"></label>
-          <div class="pact" style="margin-top:10px"><button id="shSend" class="p">📮 올리기</button><span class="hint" id="shMsg"></span></div>
-          <p class="hint" style="margin-top:8px">※ 개인정보·비공개 자료는 올리지 마세요. 접수 → 검토 중 → 반영됨 순서로 표시되고, 반영된 기능은 공지사항에도 올립니다.</p>
+          <div class="pact" style="margin-top:10px"><button id="shSend" class="p">📮 남기기</button><span class="hint" id="shMsg"></span></div>
+          <p class="hint" style="margin-top:8px">※ 개인정보·비공개 자료는 올리지 마세요. 접수 → 검토 중 → 반영됨 순서로 표시되고, 반영된 기능은 공지사항에도 올립니다.<br>※ 화면이 이상하거나 오류가 나면 어느 화면에서든 우측 상단 <b>🐞</b>을 누르세요 — 여기 「🐞 오류·불편」에 함께 쌓입니다.</p>
         </div>
         <div class="card sh-board">
           <h4>올라온 글 <small id="shCount"></small></h4>
-          <div class="sh-tabs" id="shTabs"><button class="on" data-k="all">전체</button><button data-k="idea">💡 기능 제안</button><button data-k="improve">🔧 개선 의견</button><button data-k="usecase">🙌 활용 사례</button><button data-k="voice">💬 한마디</button></div>
+          <div class="sh-tabs" id="shTabs"><button class="on" data-k="all">전체</button><button data-k="idea">💡 만들어 주세요</button><button data-k="ask">❓ 질문·문의</button><button data-k="usecase">🙌 이렇게 썼어요</button><button data-k="improve">🔧 개선 의견</button><button data-k="voice">💬 한마디</button><button data-k="bug">🐞 오류·불편</button></div>
           <ul class="sh-list" id="shList"></ul>
         </div>
       </div>
@@ -762,12 +755,12 @@
 
     <!-- 관리자 · 오류 신고함 -->
     <section class="view" data-view="bugs">
-      <div class="vh"><h2>오류 신고 · 나눔터 관리</h2><p>직원이 우측 상단 <b>🐞</b> 단추로 보낸 신고와 나눔터에 올린 제안·사례·한마디가 여기에 쌓입니다. 처리한 건은 정보통신과에서 확인 후 안내합니다.</p></div>
+      <div class="vh"><h2>오류 신고 · 질문·요청 소통하기 관리</h2><p>직원이 우측 상단 <b>🐞</b> 단추로 보낸 신고와 질문·요청 소통하기에 올린 제안·사례·한마디가 여기에 쌓입니다. 처리한 건은 정보통신과에서 확인 후 안내합니다.</p></div>
       <div class="row end bugtop">
         <span class="hint" id="bugMeta">불러오는 중…</span>
         <button class="ghost" id="bugReload">↻ 새로고침</button>
       </div>
-      <div class="ad-code"><label>관리자 코드 <input id="adCode" type="password" placeholder="Netlify ADMIN_CODE 값"></label><span class="hint">입력하면 나눔터 글의 상태(접수 → 검토 중 → 반영됨)를 바꾸고 지울 수 있습니다. 이 PC에만 기억합니다.</span></div>
+      <div class="ad-code"><label>관리자 코드 <input id="adCode" type="password" placeholder="Netlify ADMIN_CODE 값"></label><span class="hint">입력하면 질문·요청 소통하기 글의 상태(접수 → 검토 중 → 반영됨)를 바꾸고 지울 수 있습니다. 이 PC에만 기억합니다.</span></div>
       <div class="buglist" id="bugList"></div>
     </section>
   </main>

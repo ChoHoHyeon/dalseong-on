@@ -1654,3 +1654,17 @@ body[data-theme=dark] .hm-cal li.mine b{color:var(--tx)}body[data-theme=dark] .h
 .cal-card .cd{min-height:0}
 .hm-col>.now-card{overflow:hidden}
 #userChip small[hidden]{display:none}
+/* 자주 묻는 질문 — 두 칸으로 넓게 */
+.gd-faq{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}
+.gd-faq details{border-bottom:1px solid var(--line);padding:12px 4px}
+.gd-faq summary{list-style:none;display:flex;align-items:center;gap:10px}
+.gd-faq summary::-webkit-details-marker{display:none}
+.gd-faq summary::before{content:'Q';flex:none;width:24px;height:24px;border-radius:50%;background:#eaf1ff;color:#1d5fd6;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center}
+.gd-faq summary::after{content:'＋';margin-left:auto;color:#9aa3b2;font-weight:700}
+.gd-faq details[open] summary::after{content:'－'}
+.gd-faq p{padding-left:34px}
+.view[data-view="guide"]>.card{margin-top:14px}
+@media (max-width:900px){.gd-faq{grid-template-columns:1fr}}
+.nav-foot{text-align:center;align-items:center;justify-content:center}
+.nav-foot small{display:block;width:100%;text-align:center}
+.sh-where{font-size:11.5px;color:var(--mut);font-weight:500}
