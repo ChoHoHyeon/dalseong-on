@@ -17,11 +17,16 @@ export default async (req) => {
   try { body = await req.json(); } catch { return new Response("Bad Request", { status: 400 }); }
   const payload = {
     model: body.model || "claude-sonnet-4-5",
-    max_tokens: Math.min(body.max_tokens || 1200, 2000),
+    max_tokens: Math.min(body.max_tokens || 1200, 4000),
     stream: true,
     system: String(body.system || "").slice(0, 8000),
     messages: (body.messages || []).slice(-8),
   };
+  // 도구는 법령 웹검색만 허용 (law.go.kr · elis.go.kr 도메인 한정, 최대 6회)
+  if (Array.isArray(body.tools)) {
+    const ws = body.tools.find((t) => t && t.type === "web_search_20250305");
+    if (ws) payload.tools = [{ type: "web_search_20250305", name: "web_search", max_uses: Math.min(+ws.max_uses || 4, 6), allowed_domains: ["law.go.kr", "elis.go.kr"] }];
+  }
   const up = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },

@@ -184,8 +184,10 @@ async function copyTable(o){
   catch(e){ navigator.clipboard.writeText(plainText(o)); toast?.('텍스트로 복사했습니다'); }
 }
 
-async function callModel(system,user){
-  const S=window.S||{}; const payload=JSON.stringify({model:S.model||'claude-sonnet-4-5',max_tokens:4000,stream:true,system,messages:[{role:'user',content:user}]});
+async function callModel(system,user,o={}){
+  const S=window.S||{}; const body={model:S.model||'claude-sonnet-4-5',max_tokens:o.max||4000,stream:true,system,messages:[{role:'user',content:user}]};
+  if(o.tools) body.tools=o.tools;
+  const payload=JSON.stringify(body);
   const r=S.key
     ? await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:payload})
     : await fetch('/api/chat',{method:'POST',headers:{'content-type':'application/json','x-access-code':S.code||''},body:payload});
@@ -193,29 +195,128 @@ async function callModel(system,user){
   const rd=r.body.getReader(), dec=new TextDecoder(); let buf='',text='';
   while(true){ const {value,done}=await rd.read(); if(done) break; buf+=dec.decode(value,{stream:true});
     const ls=buf.split('\n'); buf=ls.pop();
-    for(const ln of ls){ if(!ln.startsWith('data:')) continue; try{ const j=JSON.parse(ln.slice(5)); if(j.type==='content_block_delta'&&j.delta?.text){ text+=j.delta.text; $('#ruMsg').textContent=`작성 중… ${text.length}자`; } }catch(e){} } }
+    for(const ln of ls){ if(!ln.startsWith('data:')) continue; try{ const j=JSON.parse(ln.slice(5));
+      if(j.type==='content_block_delta'&&j.delta?.text){ text+=j.delta.text; o.onText&&o.onText(text); }
+      if(j.type==='content_block_start'&&j.content_block?.type==='server_tool_use') o.onTool&&o.onTool(j.content_block.input);
+      if(j.type==='error') throw new Error(j.error?.message||'모델 오류');
+    }catch(e){ if(/모델 오류|overloaded|error/i.test(e.message)) throw e; } } }
   return text;
+}
+const modelOn=()=>{ const S=window.S||{}; return (S.key||S.server)&&!S.offline; };
+const jsonOf=t=>{ const m=String(t).match(/\{[\s\S]*\}|\[[\s\S]*\]/); if(!m) return null; try{ return JSON.parse(m[0]); }catch(e){ return null; } };
+
+/* ── 진행 단계 표시 ── */
+const ST={};
+function stepsInit(mode){
+  const L=[['kw','요청 내용 정리','검색어를 뽑습니다'],['law','관련 법령 찾기','국가법령정보센터 · 상위 법령'],['ordin','다른 지자체 비슷한 조례 찾기','자치법규정보시스템 자료'],
+    ['cur',mode==='amend'?'달성군 현행 조례 불러오기':'달성군에 같은 조례가 있는지 확인','달성군 자치법규'],['read','참고 조문 읽기','찾은 법령·조례 본문'],['write','조례안 작성','실제 조례 서식으로']];
+  $('#ruStepList').innerHTML=L.map(([k,t,d],i)=>`<li id="rs-${k}" class="wait"><span class="rs-n">${i+1}</span><div><b>${t}</b><small>${d}</small><em></em></div><i class="rs-t"></i></li>`).join('');
+  $('#ruRefs').innerHTML=''; $('#ruSteps').hidden=false; $('#ruSteps').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function step(k,state,msg){ const li=$('#rs-'+k); if(!li) return; li.className=state; if(msg!=null) li.querySelector('em').textContent=msg;
+  if(state==='run'){ ST[k]=Date.now(); clearInterval(ST['_'+k]); ST['_'+k]=setInterval(()=>{ li.querySelector('.rs-t').textContent=Math.round((Date.now()-ST[k])/1000)+'초'; },500); }
+  else { clearInterval(ST['_'+k]); if(ST[k]) li.querySelector('.rs-t').textContent=Math.max(1,Math.round((Date.now()-ST[k])/1000))+'초'; } }
+
+/* ── 법령·조례 찾기: ① law.go.kr Open API(/api/law) → ② 모델 웹검색(law.go.kr·elis.go.kr 한정) → ③ 직접 찾아보기 링크 ── */
+async function lawApi(qs){ const r=await fetch('/api/law?'+qs); const j=await r.json().catch(()=>({error:'응답 오류'})); if(!r.ok||j.error) throw new Error(j.error||('HTTP '+r.status)); return j; }
+const fullName=x=>{ const o=(x.org||'').trim(), n=(x.name||'').trim(); return o&&!n.startsWith(o.split(' ').pop())&&!n.startsWith(o)?o+' '+n:n; };
+const linkOf=(t,x)=>t==='law'?`https://www.law.go.kr/lsInfoP.do?lsiSeq=${x.mst}`:`https://www.law.go.kr/ordinInfoP.do?ordinSeq=${x.mst}`;
+const searchLinks=q=>`<a href="https://www.law.go.kr/LSW/lsSc.do?query=${encodeURIComponent(q)}" target="_blank" rel="noopener">국가법령정보센터에서 「${esc(q)}」 찾기</a> · <a href="https://www.elis.go.kr/main" target="_blank" rel="noopener">자치법규정보시스템 열기</a>`;
+function baseName(n){ return String(n||'').replace(/^(대구광역시\s*)?달성군\s*/,'').replace(/\s*(일부개정|전부개정)?조례안?$|\s*(규칙|지침|훈령|예규)안?$/,'').replace(/에\s*관한$/,'').trim(); }
+async function keywords(mode,name,gist){
+  const fb={law:[baseName(name)],ordin:[baseName(name)]};
+  if(!modelOn()) return fb;
+  try{ const t=await callModel('자치법규 검색어를 뽑는 도우미. JSON만 출력.',`조례 이름: ${name}\n내용: ${gist}\n\n국가법령정보센터 검색에 쓸 짧은 검색어를 뽑아 JSON으로만 답하세요.\n{"law":["상위 법령 검색어 1~2개 (예: 공공데이터)"],"ordin":["다른 지자체 조례 검색어 1~2개 (예: 공공데이터 제공)"]}`,{max:300});
+    const j=jsonOf(t); if(j&&j.law&&j.ordin) return {law:j.law.slice(0,2),ordin:j.ordin.slice(0,2)}; }catch(e){}
+  return fb;
+}
+async function webRefs(mode,name,gist){
+  const t=await callModel('당신은 자치법규 조사원입니다. 반드시 웹 검색으로 확인한 것만 적고, 결과는 JSON만 출력합니다.',
+`아래 조례를 ${mode==='amend'?'개정':'제정'}하려 합니다. 국가법령정보센터(law.go.kr)와 자치법규정보시스템(elis.go.kr)에서 찾아 주세요.
+조례 이름: ${name}
+넣고 싶은 내용: ${gist}
+
+1) 근거가 되는 상위 법령(법률·시행령) 2~3개와 관련 조문 번호
+2) 다른 지자체(광역·기초)의 비슷한 조례 3~5개와 참고할 만한 조문 요지
+${mode==='amend'?'3) 대구광역시 달성군의 해당 현행 조례가 있으면 그 조문 원문':''}
+JSON 형식: {"laws":[{"name":"","articles":"제n조(…) 요지","url":""}],"ordins":[{"org":"","name":"","points":"참고 조문 요지","url":""}]${mode==='amend'?',"current":"달성군 현행 조문 원문(없으면 빈칸)"':''}}`,
+    {max:3000,tools:[{type:'web_search_20250305',name:'web_search',max_uses:6,allowed_domains:['law.go.kr','elis.go.kr']}],onTool:i=>{ if(i&&i.query) step(U.stepNow||'law','run','검색: '+i.query); }});
+  const j=jsonOf(t); if(!j) throw new Error('검색 결과를 읽지 못했습니다'); return j;
+}
+
+async function findRefs(mode,name,gist){
+  const R={laws:[],ordins:[],current:'',texts:[],via:''};
+  step('kw','run'); const kw=await keywords(mode,name,gist); step('kw','done','검색어: '+[...new Set([...kw.law,...kw.ordin])].join(', '));
+  // ① Open API
+  try{
+    step('law','run');
+    for(const q of kw.law){ const j=await lawApi('target=law&n=5&q='+encodeURIComponent(q)); j.list.forEach(x=>{ if(!R.laws.some(y=>y.mst===x.mst)) R.laws.push({...x,url:linkOf('law',x)}); }); }
+    R.laws=R.laws.filter(x=>!/시행규칙/.test(x.name)).slice(0,4); step('law','done',R.laws.length?R.laws.map(x=>x.name).join(' · '):'찾은 법령 없음');
+    step('ordin','run');
+    for(const q of kw.ordin){ const j=await lawApi('target=ordin&n=20&q='+encodeURIComponent(q)); j.list.forEach(x=>{ if(!/달성군/.test(x.org)&&!R.ordins.some(y=>y.mst===x.mst)) R.ordins.push({...x,url:linkOf('ordin',x)}); }); }
+    R.ordins=R.ordins.slice(0,5); step('ordin','done',R.ordins.length?R.ordins.length+'건 — '+R.ordins.slice(0,3).map(fullName).join(' · '):'찾은 조례 없음');
+    step('cur','run');
+    const own=(await lawApi('target=ordin&org=달성군&n=5&q='+encodeURIComponent(baseName(name)))).list;
+    if(mode==='amend'){ const hit=own[0]; if(hit&&!$('#ruCur').value.trim()){ const b=await lawApi('target=ordin&mst='+hit.mst); R.current=b.text; step('cur','done','불러옴: '+hit.name); } else step('cur','done',$('#ruCur').value.trim()?'입력한 현행 조문 사용':'달성군 조례를 찾지 못함 — 현행 조문을 붙여넣어 주세요'); }
+    else step('cur','done',own.length?`⚠ 이미 있음: ${own[0].name} — 「고치기」가 맞는지 확인하세요`:'같은 이름의 달성군 조례 없음');
+    step('read','run');
+    for(const x of [...R.laws.slice(0,1),...R.ordins.slice(0,2)]){ try{ const b=await lawApi(`target=${R.laws.includes(x)?'law':'ordin'}&mst=${x.mst}`); R.texts.push({name:fullName(x),text:b.text.slice(0,3500)}); step('read','run',`${R.texts.length}건 읽음`); }catch(e){} }
+    step('read','done',R.texts.length?R.texts.map(x=>x.name).join(' · '):'본문을 읽지 못함');
+    R.via='api'; return R;
+  }catch(e){ R.apiErr=e.message; }
+  // ② 모델 웹검색
+  if(modelOn()){
+    try{ U.stepNow='law'; step('law','run','웹 검색으로 찾는 중'); step('ordin','run','웹 검색으로 찾는 중');
+      const j=await webRefs(mode,name,gist);
+      R.laws=(j.laws||[]).slice(0,4); R.ordins=(j.ordins||[]).slice(0,5); R.current=j.current||'';
+      step('law','done',R.laws.length?R.laws.map(x=>x.name).join(' · '):'찾은 법령 없음');
+      step('ordin','done',R.ordins.length?R.ordins.length+'건 — '+R.ordins.slice(0,3).map(fullName).join(' · '):'찾은 조례 없음');
+      step('cur','done',mode==='amend'?(R.current?'현행 조문 찾음(원문 대조 필요)':($('#ruCur').value.trim()?'입력한 현행 조문 사용':'찾지 못함 — 현행 조문을 붙여넣어 주세요')):'웹 검색 결과로 확인');
+      step('read','done','검색 요지로 대신함 (본문 대조는 담당자 확인)');
+      R.via='web'; return R;
+    }catch(e){ R.webErr=e.message; }
+  }
+  ['law','ordin','cur','read'].forEach(k=>step(k,'skip','연결 안 됨 — 아래 링크로 직접 확인'));
+  $('#ruRefs').innerHTML=`<p class="hint">⚠ 법령 검색에 연결하지 못했습니다 (${esc(R.apiErr||'')}). ${searchLinks(baseName(name))}</p>`;
+  R.via='none'; return R;
+}
+function refsHtml(R){
+  if(!R||(!R.laws.length&&!R.ordins.length)) return '';
+  const li=(x,t)=>`<li><a href="${esc(x.url||'#')}" target="_blank" rel="noopener">${esc(fullName(x))}</a>${x.articles||x.points?`<small>${esc(x.articles||x.points)}</small>`:''}</li>`;
+  return `<div class="ru-refs"><b>📚 참고한 법령·조례</b> <small>${R.via==='api'?'국가법령정보센터 Open API':'웹 검색(law.go.kr·elis.go.kr)'} · 링크를 눌러 원문을 확인하세요</small>
+    <div class="ru-refcols">${R.laws.length?`<div><i>상위 법령</i><ul>${R.laws.map(x=>li(x,'law')).join('')}</ul></div>`:''}${R.ordins.length?`<div><i>다른 지자체 조례</i><ul>${R.ordins.map(x=>li(x,'ordin')).join('')}</ul></div>`:''}</div></div>`;
 }
 
 async function make(){
   if(U.busy) return; const mode=$('#ruMode').value;
-  const name=($('#ruName').value||'').trim(), gist=($('#ruGist').value||'').trim(), cur=($('#ruCur').value||'').trim();
-  if(!name){ $('#ruMsg').textContent='조례·지침 이름은 입력해 주세요.'; return $('#ruName').focus(); }
-  if(mode==='amend'&&!cur){ $('#ruMsg').textContent='일부개정은 현행 조문을 붙여넣어야 대비표를 만듭니다.'; return $('#ruCur').focus(); }
-  if(!gist){ $('#ruMsg').textContent=mode==='amend'?'개정 요지를 입력해 주세요.':'목적·주요 내용을 입력해 주세요.'; return $('#ruGist').focus(); }
-  U.busy=true; $('#ruGo').disabled=true; $('#ruMsg').textContent='작성 중…';
+  const name=($('#ruName').value||'').trim(), gist=($('#ruGist').value||'').trim();
+  if(!name){ $('#ruMsg').textContent='조례·지침 이름을 입력해 주세요.'; return $('#ruName').focus(); }
+  if(!gist){ $('#ruMsg').textContent='넣고 싶은 내용을 문장으로 적어 주세요.'; return $('#ruGist').focus(); }
+  U.busy=true; $('#ruGo').disabled=true; $('#ruMsg').textContent=''; $('#ruleOut').hidden=true;
+  stepsInit(mode);
   try{
-    const S=window.S||{};
-    if((S.key||S.server)&&!S.offline){
-      const u=[`<작성 요청>`,`작업: ${mode==='amend'?'일부개정(신구조문대비표 포함)':'제정 조례·지침 초안'}`,`자치법규 이름: ${name}`,
-        ($('#ruBase').value||'').trim()?`상위 법령·위임근거: ${$('#ruBase').value.trim()}`:'상위 법령·위임근거: 미확인(권리제한·의무부과·벌칙 조문은 만들지 말고 확인요청에 적을 것)',
-        mode==='amend'?`현행 조문:\n${cur}`:'', `${mode==='amend'?'개정 요지':'목적·주요 내용'}:\n${gist}`,`</작성 요청>`].filter(Boolean).join('\n');
-      const text=await callModel(sys(mode),u); U.out=parse(text,mode);
-      if(!U.out.title||(!U.out.table.length&&!U.out.body.length)) throw new Error('응답 형식을 읽지 못했습니다. 다시 생성해 주세요.');
+    const R=await findRefs(mode,name,gist); U.refs=R;
+    if(mode==='amend'&&!$('#ruCur').value.trim()&&R.current){ $('#ruCur').value=R.current; $('#ruCurWrap').hidden=false; $('#ruCurState').textContent='— 자동으로 불러옴 (원문과 대조하세요)'; }
+    const cur=($('#ruCur').value||'').trim();
+    $('#ruRefs').innerHTML=refsHtml(R)+($('#ruRefs').innerHTML.includes('⚠')?$('#ruRefs').innerHTML:'');
+    step('write','run');
+    if(modelOn()){
+      const ref=[
+        R.laws.length?'[상위 법령]\n'+R.laws.map(x=>`- ${x.name}${x.articles?' : '+x.articles:''}`).join('\n'):'',
+        R.ordins.length?'[다른 지자체 비슷한 조례]\n'+R.ordins.map(x=>`- ${fullName(x)}${x.points?' : '+x.points:''}`).join('\n'):'',
+        ...R.texts.map(x=>`[참고 본문 — ${x.name}]\n${x.text}`)].filter(Boolean).join('\n\n');
+      const u=[`<작성 요청>`,`작업: ${mode==='amend'?'일부개정(개정문 + 신구조문대비표)':'제정 조례·지침 초안'}`,`자치법규 이름: ${name}`,
+        ($('#ruBase').value||'').trim()?`담당자가 알려준 상위 법령: ${$('#ruBase').value.trim()}`:'',
+        mode==='amend'?(cur?`현행 조문:\n${cur}`:'현행 조문: (없음 — 개정 대상 조문을 추정하지 말고 확인요청에 적을 것)'):'',
+        `담당자가 넣고 싶은 내용(문장 그대로 — 이것이 초안의 기준):\n${gist}`,`</작성 요청>`,
+        ref?`\n<참고 자료 — 검색으로 찾은 것>\n${ref}\n</참고 자료>\n※ 담당자 내용을 기준으로 쓰고, 참고 자료는 조문 체계·표현·위임근거 확인에만 쓰세요. 참고 자료에 없는 상위 법령 조문 번호는 지어내지 말고 「○○법」 제○조로 비워 두세요. 다른 지자체 조문을 그대로 베끼지 말고 달성군 실정에 맞게 쓰세요.`:''].filter(Boolean).join('\n');
+      const text=await callModel(sys(mode),u,{max:4000,onText:t=>step('write','run',`${t.length}자 작성 중`)}); U.out=parse(text,mode);
+      if(!U.out.title||(!U.out.table.length&&!U.out.body.length&&!U.out.amend.length)) throw new Error('응답 형식을 읽지 못했습니다. 다시 생성해 주세요.');
+      step('write','done','완료');
       $('#ruMsg').textContent='작성 완료 — 위임근거·상위 법령·용어는 법무 검토 전 담당자가 확인하세요.';
-    }else{ await new Promise(r=>setTimeout(r,400)); U.out=offline(mode); $('#ruMsg').textContent='오프라인 모드 — 모델 연결 시 조문을 작성합니다.'; }
-    U.mode=mode; render(U.out,mode); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
-  }catch(err){ $('#ruMsg').textContent='⚠ '+err.message; }
+    }else{ await new Promise(r=>setTimeout(r,400)); U.out=offline(mode); step('write','done','오프라인 모드 — 틀만 만들었습니다'); }
+    U.mode=mode; render(U.out,mode); if(window.S&&S.stats) S.stats.gen++; window.dsHit&&dsHit('gen','rule');
+  }catch(err){ step('write','fail','⚠ '+err.message); $('#ruMsg').textContent='⚠ '+err.message; }
   finally{ U.busy=false; $('#ruGo').disabled=false; }
 }
 
@@ -228,19 +329,44 @@ async function hwpx(){
   }catch(e){ toast?.('한글 파일 생성 실패: '+e.message); }
 }
 
+/* 고치기: 달성군 조례 찾기 → 고르면 현행 조문 불러오기 */
+async function findOwn(){
+  const q=baseName($('#ruName').value)||$('#ruName').value.trim(); if(!q){ $('#ruName').focus(); return; }
+  const box=$('#ruPick'); box.hidden=false; box.innerHTML='<span class="hint">달성군 조례 찾는 중…</span>';
+  try{ const j=await lawApi('target=ordin&org=달성군&n=8&q='+encodeURIComponent(q));
+    if(!j.list.length){ box.innerHTML=`<span class="hint">「${esc(q)}」 달성군 조례를 찾지 못했습니다. 이름을 줄여 보거나 현행 조문을 직접 붙여넣어 주세요.</span>`; return; }
+    box.innerHTML=j.list.map(x=>`<button type="button" data-mst="${esc(x.mst)}" data-name="${esc(x.name)}">${esc(x.name)} <small>${esc(x.kind)} · 시행 ${esc(x.date)}</small></button>`).join('');
+    box.querySelectorAll('button').forEach(b=>b.onclick=async()=>{ $('#ruName').value=b.dataset.name; box.innerHTML='<span class="hint">현행 조문 불러오는 중…</span>';
+      try{ const t=await lawApi('target=ordin&mst='+b.dataset.mst); $('#ruCur').value=t.text; $('#ruCurWrap').hidden=false; $('#ruCurWrap').open=true; $('#ruCurState').textContent='— 불러옴: '+b.dataset.name; box.hidden=true; }
+      catch(e){ box.innerHTML=`<span class="hint">⚠ 본문을 불러오지 못했습니다 — 직접 붙여넣어 주세요 (${esc(e.message)})</span>`; } });
+  }catch(e){ box.innerHTML=`<span class="hint">⚠ 법령 검색 연결 안 됨 — 현행 조문을 아래에 직접 붙여넣어 주세요. ${searchLinks(q)}</span>`; $('#ruCurWrap').hidden=false; $('#ruCurWrap').open=true; }
+}
+
 function init(){
   if($('#ruGo')._on) return; $('#ruGo')._on=1;
-  const sw=()=>{ const a=$('#ruMode').value==='amend'; $('#ruCurWrap').hidden=!a; $('#ruGistCap').textContent=a?'개정 요지':'목적·주요 내용'; $('#ruGist').placeholder=a?'한 줄에 하나씩 — 무엇을 어떻게 바꾸는지\n예) 지원 대상에 1인 가구 추가\n위원회 위원 수 10명 → 12명\n제8조 보고 주기 분기 → 반기':'한 줄에 하나씩\n예) 공공데이터 개방·품질관리 체계 마련\n공공데이터 책임관 지정·역할\n데이터 품질진단 연 1회 실시\n개방 심의위원회 구성'; };
-  $('#ruMode').onchange=sw; sw();
+  const sw=m=>{ $('#ruMode').value=m; document.querySelectorAll('.ru-mode').forEach(b=>b.classList.toggle('on',b.dataset.mode===m)); const a=m==='amend';
+    $('#ruCurWrap').hidden=!a; $('#ruFind').hidden=!a; $('#ruPick').hidden=true;
+    $('#ruNameCap').firstChild.textContent=a?'고칠 달성군 조례 이름 ':'만들 조례·지침 이름 '; $('#ruNameHint').textContent=a?'이름 일부만 넣고 「달성군 조례 찾기」':'가제여도 됩니다';
+    $('#ruName').placeholder=a?'예) 공공데이터 제공 및 이용 활성화':'예) 달성군 공공데이터 품질관리 조례';
+    $('#ruGist').placeholder=a?'무엇을 왜 바꾸고 싶은지 문장으로 편하게 적어 주세요.\n예) 공공데이터책임관이 하는 일에 데이터기반행정 업무 총괄도 넣고 싶어요. 품질관리는 지금 "할 수 있다"로 되어 있는데 매년 한 번 이상 품질진단을 꼭 하도록 바꾸고, 결과를 홈페이지에 공개하는 근거도 만들고 싶습니다.'
+      :'어떤 내용을 담고 싶은지 문장으로 편하게 적어 주세요.\n예) 우리 군이 가진 공공데이터의 품질을 체계적으로 관리하고 싶어요. 부서마다 데이터 관리 책임자를 두고, 매년 품질진단을 해서 결과를 공개하고, 우수 부서는 포상할 수 있게 하고 싶습니다. 진단 방법은 군수가 따로 정하도록 하면 좋겠어요.'; };
+  document.querySelectorAll('.ru-mode').forEach(b=>b.onclick=()=>sw(b.dataset.mode)); sw($('#ruMode').value||'new');
+  $('#ruFind').onclick=findOwn; $('#ruName').addEventListener('keydown',e=>{ if(e.key==='Enter'&&$('#ruMode').value==='amend'){ e.preventDefault(); findOwn(); } });
   $('#ruGo').onclick=make; $('#ruAgain').onclick=make; $('#ruHwpx').onclick=hwpx;
   $('#ruCopy').onclick=()=>{ if(!U.out) return; navigator.clipboard.writeText(lawText(U.out,U.mode)); toast?.('조례안을 복사했습니다 — 한글에 붙여넣기'); };
   $('#ruSample').onclick=()=>{
-    $('#ruMode').value='amend'; sw(); $('#ruName').value='달성군 공공데이터 제공 및 이용 활성화에 관한 조례'; $('#ruBase').value='「공공데이터의 제공 및 이용 활성화에 관한 법률」 제12조·제22조';
-    $('#ruCur').value='제5조(공공데이터책임관) ① 군수는 공공데이터의 제공과 이용 활성화에 관한 업무를 총괄하는 공공데이터책임관을 지정한다.\n② 공공데이터책임관은 다음 각 호의 업무를 수행한다.\n  1. 공공데이터 제공 계획의 수립·시행\n  2. 공공데이터 목록의 관리\n  3. 그 밖에 공공데이터 제공에 필요한 사항\n\n제7조(품질관리) 군수는 공공데이터의 품질을 높이기 위하여 필요한 조치를 할 수 있다.';
-    $('#ruGist').value='공공데이터책임관 업무에 "데이터기반행정 활성화 총괄" 추가\n제7조 품질관리를 재량("할 수 있다")에서 의무("하여야 한다")로 바꾸고 연 1회 이상 품질진단 실시 명시\n품질진단 결과 공표 근거 신설';
+    if($('#ruMode').value==='amend'){
+      $('#ruName').value='대구광역시 달성군 공공데이터 제공 및 이용 활성화에 관한 조례';
+      $('#ruCur').value='제5조(공공데이터책임관) ① 군수는 공공데이터의 제공과 이용 활성화에 관한 업무를 총괄하는 공공데이터책임관을 지정한다.\n② 공공데이터책임관은 다음 각 호의 업무를 수행한다.\n  1. 공공데이터 제공 계획의 수립·시행\n  2. 공공데이터 목록의 관리\n  3. 그 밖에 공공데이터 제공에 필요한 사항\n\n제7조(품질관리) 군수는 공공데이터의 품질을 높이기 위하여 필요한 조치를 할 수 있다.';
+      $('#ruCurWrap').open=true; $('#ruCurState').textContent='— 예시 (실제는 「달성군 조례 찾기」로 불러옵니다)';
+      $('#ruGist').value='공공데이터책임관이 하는 일에 데이터기반행정 활성화 업무 총괄도 넣고 싶습니다. 품질관리는 지금 "할 수 있다"로 되어 있는데, 매년 한 번 이상 품질진단을 꼭 하도록 바꾸고 진단 결과를 군 홈페이지에 공개할 근거도 만들고 싶어요.';
+    }else{
+      $('#ruName').value='대구광역시 달성군 공공데이터 품질관리 조례';
+      $('#ruGist').value='우리 군이 가진 공공데이터의 품질을 체계적으로 관리하고 싶습니다. 부서마다 데이터 관리 책임자를 두고, 매년 품질진단을 해서 결과를 홈페이지에 공개하고, 품질관리를 잘한 부서와 직원은 포상할 수 있게 하고 싶어요. 진단 방법과 세부 기준은 군수가 따로 정하도록 하면 좋겠습니다.';
+    }
     toast?.('예시를 채웠습니다 — 「초안 만들기」를 눌러보세요');
   };
-  $('#ruReset').onclick=()=>{ ['ruName','ruBase','ruCur','ruGist'].forEach(id=>$('#'+id).value=''); $('#ruleOut').hidden=true; $('#ruMsg').textContent=''; };
+  $('#ruReset').onclick=()=>{ ['ruName','ruBase','ruCur','ruGist'].forEach(id=>$('#'+id).value=''); $('#ruleOut').hidden=true; $('#ruSteps').hidden=true; $('#ruPick').hidden=true; $('#ruMsg').textContent=''; };
 }
 window.RULEDRAFT={init};
 })();
