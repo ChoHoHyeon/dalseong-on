@@ -382,9 +382,10 @@ function calItems(){
   return I.slice(0,3);
 }
 /* 지금 하실 때예요 = 달력에 적어 둔 일정(7일 안) + 날짜에 맞춘 안내 — 합쳐서 최대 4줄 */
+let NOW_FIT={ev:3,rc:2};   // 화면 높이에 맞춰 fitHome이 정한다
 function renderNow(){
   const el=$('#hmCal'); if(!el) return;
-  const dd=n=>n===0?'오늘':n===1?'내일':'D-'+n, EV=3, RC=2;     // 내 일정 3줄 · 최근 작업 2줄 — 개수와 상관없이 자리 고정
+  const dd=n=>n===0?'오늘':n===1?'내일':'D-'+n, EV=NOW_FIT.ev, RC=NOW_FIT.rc;     // 내 일정 3줄 · 최근 작업 2줄 — 개수와 상관없이 자리 고정
   const all=(window.HOMECAL&&HOMECAL.thisWeek)?HOMECAL.thisWeek():[];
   const ev=all.slice(0,EV);
   const wk=(()=>{ const n=new Date(), mon=new Date(n); mon.setDate(n.getDate()-((n.getDay()+6)%7)); const sun=new Date(mon); sun.setDate(mon.getDate()+6); return `${mon.getMonth()+1}/${mon.getDate()}(월) ~ ${sun.getMonth()+1}/${sun.getDate()}(일)`; })();
@@ -408,10 +409,12 @@ function fitHome(){
   const m=$('#main'), row=document.querySelector('.hm-row'); if(!m||!row||S.view!=='home') return;
   row.style.height=''; const top=row.getBoundingClientRect().top-m.getBoundingClientRect().top+m.scrollTop;
   const pb=parseFloat(getComputedStyle(m).paddingBottom)||0, avail=Math.floor(m.clientHeight-top-pb-2);
-  const need=Math.max(380, document.querySelector('.now-card')?.scrollHeight||0);   // 이보다 작으면 줄이지 않고 스크롤 허용
-  if(avail>=need) row.style.height=avail+'px';
-}
-window.addEventListener('resize',()=>{ clearTimeout(window._fh); window._fh=setTimeout(fitHome,120); });
+  // 「오늘 챙길 것」 카드에 들어갈 줄 수 계산: 카드 머리·소제목 2개·여백 ≈ 150px, 한 줄 ≈ 54px
+  const rows=Math.max(2,Math.floor((avail-150)/54));
+  const rc=rows>=4?2:1, ev=Math.max(1,Math.min(3,rows-rc));
+  if(ev!==NOW_FIT.ev||rc!==NOW_FIT.rc){ NOW_FIT={ev,rc}; renderNow(); }
+  if(avail>=300) row.style.height=avail+'px';
+}window.addEventListener('resize',()=>{ clearTimeout(window._fh); window._fh=setTimeout(fitHome,120); });
 function renderUsage(){
   const kpis=(w,t,top)=>[['이번 주 이용',(w?w.use:'–')+'회','전 직원 · 메뉴 열기 기준'],['이번 주 만든 초안',(w?w.gen:'–')+'건','회의록·보도자료·카드뉴스 등'],['누적 이용',(t?t.use.toLocaleString():'–')+'회','달성On 오픈 이후'],['이번 주 인기 1위',top&&top[0]?(ICON[top[0][0]]||'⭐')+' '+(MNAME[top[0][0]]||top[0][0]):'–',top&&top[0]?top[0][1]+'회 이용':'이번 주 첫 사용자가 되어 주세요']]
     .map(([k,v,s])=>`<div class="kpi"><small>${k}</small><b>${v}</b><span class="sub">${s}</span></div>`).join('');
