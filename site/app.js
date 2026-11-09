@@ -257,12 +257,6 @@ function renderUsage(){
   const ready=HOME_MENU.filter(n=>n.ready).length, st=S.stats||{};
   $('#homeKpis').innerHTML=[['쓸 수 있는 기능',ready+'개','메뉴에서 바로'],['만든 초안',(st.gen||0)+'건','이 브라우저 기준'],['한글 파일',(st.hwpx||0)+'건','내려받은 hwpx'],['질문',(st.q||0)+'건','달성On 사용하기'],['설치·로그인','0','브라우저만 있으면 OK']]
     .map(([k,v,s])=>`<div class="kpi"><small>${k}</small><b>${v}</b><span class="sub">${s}</span></div>`).join('');
-  // ① 최근 제안·반영 — 나눔터 글 그대로
-  $('#hmSug').innerHTML='<li class="sh-empty">불러오는 중…</li>';
-  fetch('/api/bugs',{cache:'no-store'}).then(r=>r.json()).then(j=>{ const K={idea:'💡',improve:'🔧',usecase:'🙌'}; const L=(j.list||[]).filter(x=>K[x.kind]).slice(0,6);
-    $('#hmSug').innerHTML=L.length?L.map(x=>`<li data-go="staff:share"><span>${K[x.kind]}</span><b>${esc((x.text||'').split('\n')[0])}</b><em class="${x.where==='반영'?'ok':x.where==='검토'?'rv':''}">${x.where==='반영'?'반영됨':x.where==='검토'?'검토 중':'접수'}</em></li>`).join('')
-      :'<li class="sh-empty" data-go="staff:share">아직 올라온 제안이 없어요. 이런 기능 있으면 좋겠다 싶은 게 있으면 남겨 주세요 🙂</li>'; })
-    .catch(()=>{ $('#hmSug').innerHTML='<li class="sh-empty" data-go="staff:share">제안 목록을 불러오지 못했습니다 — 나눔터에서 확인해 주세요</li>'; });
   // ② 이렇게 써보세요 — 메뉴별 한 줄 팁
   const TIPS=[['minutes','🎙','회의 끝나면 녹음 파일만 올리세요','회의록 양식까지 알아서'],['press','📰','계획서 붙여넣으면 보도자료 초안','군 서식 한글 파일로'],['card','📱','보도자료 → 카드뉴스 6장','그림·해시태그까지'],['meal','🍚','급량비는 엑셀 올리고 클릭 한 번','지급명세서 자동'],['trip','🚗','출장내역서 PDF 넣으면 관내여비 끝','지급조서까지'],['analyze','📊','엑셀 올리고 "읍면별 합계"','차트·해석 문장'],['banner','🎏','행사명만 넣으면 현수막 문구 3안','업체 사양서까지'],['rule','⚖️','현행 조문 붙여넣고 개정 요지만','신구조문대비표 자동']];
   $('#hmTips').innerHTML=TIPS.map(([v,i,t,s])=>`<button data-go="staff:${v}"><i>${i}</i><b>${t}</b><small>${s}</small></button>`).join('');
