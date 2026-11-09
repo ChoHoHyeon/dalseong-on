@@ -156,9 +156,71 @@
     <!-- 공문 초안 작성하기 (세부 내역 추후 확정) -->
     <section class="view" data-view="draft">
       <div class="vh"><h2>공문 초안 작성하기</h2><p>보내려는 내용만 적으면 달성군 공문 서식에 맞춘 시행문 초안을 만들어 주는 화면입니다.</p></div>
-      <div class="card soon-card"><h4>준비 중 <small>메뉴 자리만 잡아둔 화면입니다</small></h4>
-        <ul class="soon-list"><li><b>요지 입력 → 제목·본문·붙임 자동 구성</b> (협조·통보·안내·요청 등 유형 선택)</li><li><b>공문 어투·항목 기호(1. 가. 1) 가)) 자동 정리</b></li><li><b>달성군 서식 한글(hwpx) 파일로 내려받기</b></li></ul>
-        <p class="hint" style="margin-top:12px">세부 기능·화면 구성은 협의 후 확정합니다.</p></div>
+      <div class="card flowcard">
+        <h4>이렇게 씁니다 <small>3단계면 끝납니다</small></h4>
+        <ol class="flow3">
+          <li><span class="fnum">1</span><span class="fico" aria-hidden="true">✍️</span>
+            <span class="ftx"><b>요지 입력</b><small>유형(안내·협조·제출 등)을 고르고 보내려는 내용만 적습니다</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">2</span><span class="fico" aria-hidden="true">✨</span>
+            <span class="ftx"><b>달성On이 초안 작성</b><small>항목 기호(1. 가. 1))·날짜 표기·붙임·「끝.」까지 공문 작성 기준대로</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">3</span><span class="fico" aria-hidden="true">📄</span>
+            <span class="ftx"><b>복사 또는 한글 파일</b><small>온나라 본문에 붙여 넣거나 hwpx로 내려받습니다</small></span></li>
+        </ol>
+        <p class="flownote">※ <b>마지막 확인은 담당자가</b> 합니다. 수신자·날짜·근거 공문번호·금액은 반드시 검토 후 기안하세요.</p>
+      </div>
+
+      <div class="card pcard">
+        <h4>공문 초안 만들기 <small>「행정 효율과 협업 촉진에 관한 규정 시행규칙」 문서 작성 기준</small></h4>
+        <div class="pcols">
+        <fieldset class="pbox req-box">
+          <legend>꼭 입력해 주세요</legend>
+          <label class="pfull"><span class="cap">문서 유형 <b class="req">*</b></span>
+            <select id="dfKind">
+              <option value="notice">안내</option><option value="coop">협조 요청</option><option value="submit">제출 요청</option>
+              <option value="report">보고·통보</option><option value="reply">회신</option><option value="plan">계획 알림</option><option value="internal">내부결재(품의)</option>
+            </select><small class="hint" id="dfKindHint"></small></label>
+          <label class="pfull"><span class="cap">보내려는 내용(요지) <b class="req">*</b></span>
+            <textarea id="dfGist" rows="8" placeholder="한 줄에 하나씩 — 무엇을·누구에게·언제까지·왜&#10;예) 하반기 정보화교육 수요조사&#10;과목·인원·시기를 붙임 서식에 작성&#10;11. 14.까지 정보통신과로 제출"></textarea></label>
+          <label class="pfull"><span class="cap">수신 <small class="hint">비우면 「수신자 참조」</small></span>
+            <input id="dfTo" placeholder="예) 각 실·과·소·읍·면장 / 대구광역시장(정보화담당관)"></label>
+        </fieldset>
+
+        <fieldset class="pbox opt-box">
+          <legend>선택 입력 <span class="optnote">모르는 값은 비워 두면 <b class="miss">○○</b>로 표시됩니다</span></legend>
+          <label class="pfull">제목(참고)<input id="dfSubject" placeholder="비우면 요지에 맞게 명사형으로 만듭니다"></label>
+          <label class="pfull">관련 근거<input id="dfRef" placeholder="예) 정보통신과-12345(2026. 10. 20.) 「○○ 운영 계획」"></label>
+          <label class="pfull">붙임 <small class="hint">한 줄에 하나</small><textarea id="dfAtt" rows="2" placeholder="예) 수요조사서(서식) 1부"></textarea></label>
+          <div class="pgrid pgrid2">
+            <label>제출·회신 기한<input id="dfDue" type="date"></label>
+            <label>시행일<input id="dfDate" type="date"></label>
+            <label>경유<input id="dfVia" placeholder="예) 행정국장"></label>
+            <label>발신 명의<input id="dfSign" placeholder="달성군수"></label>
+            <label>담당부서<input id="dfDept" placeholder="정보통신과"></label>
+            <label>담당자<input id="dfPic" placeholder="예) 조호현"></label>
+            <label>전화<input id="dfTel" placeholder="예) 053)668-2454"></label>
+          </div>
+        </fieldset>
+        </div>
+        <div class="pact">
+          <button id="dfGo" class="p">공문 초안 만들기</button>
+          <button id="dfSample">예시로 채우기</button>
+          <button id="dfReset">비우기</button>
+          <span class="hint" id="dfMsg"></span>
+        </div>
+      </div>
+
+      <div class="card pout" id="draftOut" hidden>
+        <h4>생성된 초안 <small>담당자 검토 후 사용하세요</small></h4>
+        <div class="pv gmwrap" id="draftView"></div>
+        <div class="pact">
+          <button id="dfHwpx" class="p">📄 한글 파일로 내려받기</button>
+          <button id="dfCopy">복사 (온나라 본문에 붙이기)</button>
+          <button id="dfAgain">다시 생성</button>
+        </div>
+        <p class="hint" style="margin-top:10px">※ 미리보기는 시행문 본문 기준입니다. 문서번호·결재선·직인은 온나라(전자문서시스템)에서 기안 시 자동 부여됩니다.</p>
+      </div>
     </section>
 
     <!-- 조례·지침 초안 만들기 (세부 내역 추후 확정) -->
@@ -641,6 +703,7 @@
 <script src="hwpx.js"></script>
 <script src="meal.js"></script>
 <script src="family.js"></script>
+<script src="draft.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

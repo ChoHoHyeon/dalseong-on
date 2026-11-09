@@ -79,6 +79,21 @@ window.DalseongHwpx = (function(){
     const kind = opts.kind||'review';
     if(kind==='press') return await buildPress(opts);
     const paras=[];
+    if(kind==='gongmun'){
+      /* 시행문: 기관명(제목 스타일) → 수신/경유/제목 → 본문(입력 그대로, 들여쓰기 유지) → 발신명의 */
+      const plain=t=>({k:'plain',t});
+      if(!TPL.para.plain) TPL.para.plain=TPL.para.dash.replace('<hp:run charPrIDRef="25"><hp:t>     - </hp:t></hp:run>','');
+      paras.push({k:'title',t:'대구광역시 달성군'});
+      paras.push(plain('수신  '+(opts.to||'수신자 참조')));
+      paras.push(plain('(경유)'+(opts.via?'  '+opts.via:'')));
+      paras.push(plain('제목  '+opts.title));
+      paras.push({k:'blank'});
+      (opts.body||[]).forEach(l=>paras.push(l.trim()?plain(l):{k:'blank'}));
+      paras.push({k:'blank'}); paras.push({k:'blank'});
+      paras.push({k:'sub',t:opts.sign||'달성군수'});
+      paras.push({k:'blank'});
+      paras.push({k:'note',t:`담당 ${opts.dept||''} ${opts.pic||''} ☎ ${opts.tel||''} · 시행일 ${opts.date||''} · 본 문서는 달성On이 초안을 생성한 것으로, 담당자 검토 후 사용합니다.`});
+    }else{
     paras.push({k:'title',t:opts.title}); paras.push({k:'sub',t:opts.sub||''}); paras.push({k:'date',t:opts.date||''});
     if(kind==='pumui'){
       paras.push({k:'sec',t:'품의 개요'});
@@ -103,6 +118,7 @@ window.DalseongHwpx = (function(){
       opts.cites.forEach((c,i)=>paras.push({k:'cir',t:`[${i+1}] ${c.title}${c.source&&!c.title.startsWith(c.source)?' — '+c.source:''}`}));
     }
     paras.push({k:'blank'}); paras.push({k:'note',t:'본 문서는 달성군 AI 업무비서(달성On)가 초안을 생성한 것으로, 담당자 검토 후 사용합니다.'});
+    }
 
     const body = paras.map(p=>P(p.k,p.t||'')).join('');
     const section = TPL.head + body + TPL.tail;
@@ -119,7 +135,7 @@ window.DalseongHwpx = (function(){
       zip.file(k,data,{compression:'DEFLATE',createFolders:false});
     }
     zip.file('Contents/section0.xml', new TextEncoder().encode(section), {compression:'DEFLATE',createFolders:false});
-    zip.file('Preview/PrvText.txt', new TextEncoder().encode(opts.title+'\n'+opts.answer.slice(0,800)), {compression:'DEFLATE',createFolders:false});
+    zip.file('Preview/PrvText.txt', new TextEncoder().encode(opts.title+'\n'+String(opts.answer||'').slice(0,800)), {compression:'DEFLATE',createFolders:false});
     const blob = await zip.generateAsync({type:'blob', mimeType:'application/hwp+zip', platform:'DOS'});
     return blob;
   }
