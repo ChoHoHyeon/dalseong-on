@@ -32,7 +32,7 @@ function summary(){
     if(t==='num'){ const ns=vals.map(num).filter(x=>x!==null); extra=`합 ${ns.reduce((a,b)=>a+b,0).toLocaleString()} · 평균 ${(ns.reduce((a,b)=>a+b,0)/ns.length||0).toLocaleString(undefined,{maximumFractionDigits:1})}`; }
     else { const u=new Set(vals.filter(x=>x!=='')).size; extra=`종류 ${u.toLocaleString()}개`; }
     return `<div class="an-col"><b>${esc(c)}</b><span class="t-${t}">${T[t]}</span><small>${extra}${blank?` · 빈칸 ${blank}`:''}</small></div>`; }).join('')}</div>`;
-  $('#anAsk').hidden=false; suggest();
+  $('#anAsk').hidden=false; const ae=$('#anEmpty'); if(ae) ae.hidden=true; suggest();
 }
 function sample(){ return A.rows.slice(0,5).map(r=>A.cols.map(c=>String(r[c]??'').slice(0,20)).join(' | ')).join('\n'); }
 const SYS=`당신은 지방자치단체 데이터 분석 도우미입니다. 표의 열 정보와 질문을 보고 집계 방법만 정합니다. 계산은 하지 않습니다.
@@ -114,6 +114,7 @@ async function run(){
 }
 function init(){
   if($('#anGo')._on) return; $('#anGo')._on=1;
+  { const pv=$('#anPrev'); if(pv){ const go=()=>$('#anSample').click(); pv.onclick=go; pv.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } }; } }
   $('#anFile').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; $('#anMsg').textContent='파일 읽는 중…'; try{ await readFile(f); summary(); $('#anMsg').textContent=''; $('#anOut').hidden=true; }catch(err){ $('#anMsg').textContent='⚠ '+err.message; } e.target.value=''; };
   $('#anGo').onclick=run; $('#anQ').onkeydown=e=>{ if(e.key==='Enter') run(); };
   $('#anSample').onclick=async()=>{ const b=await (await fetch('assets/sample_data.csv')).blob(); await readFile(new File([b],'예시_읍면별_민원접수현황.csv')); summary(); $('#anQ').value='읍면별 접수건수 합계'; toast?.('예시 데이터를 불러왔습니다 — 질문 칩을 눌러 보세요'); };

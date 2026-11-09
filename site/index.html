@@ -488,6 +488,28 @@
           <p class="hint">※ 모델에는 열 이름과 샘플 5행만 전달되고, 집계·차트는 이 브라우저가 직접 계산합니다. 개인정보가 담긴 파일은 올리지 마세요.</p>
         </div>
       </div>
+      <div id="anEmpty">
+        <div class="card flowcard">
+          <h4>이렇게 씁니다 <small>파일 하나, 질문 한 줄이면 끝</small></h4>
+          <ol class="flow3">
+            <li><span class="fnum">1</span><span class="fico" aria-hidden="true">📂</span><span class="ftx"><b>파일 올리기</b><small>엑셀·CSV 그대로 · 열 이름을 자동으로 읽어요</small></span></li>
+            <li class="farr" aria-hidden="true">→</li>
+            <li><span class="fnum">2</span><span class="fico" aria-hidden="true">💬</span><span class="ftx"><b>한 줄로 묻기</b><small>“읍면별 접수건수 합계” 처럼 말하듯이</small></span></li>
+            <li class="farr" aria-hidden="true">→</li>
+            <li><span class="fnum">3</span><span class="fico" aria-hidden="true">📊</span><span class="ftx"><b>표·차트·해석</b><small>복사해서 보고서에 바로 붙여넣기</small></span></li>
+          </ol>
+        </div>
+        <div class="card ae-prev" id="anPrev" role="button" tabindex="0" title="예시 데이터로 바로 해보기">
+          <div class="ae-head"><h4>이런 결과가 나와요 <small>예시 화면 · 누르면 예시 데이터로 실제 분석</small></h4><span class="ae-tag">예시</span></div>
+          <div class="ae-q">💬 읍면별 민원 접수건수 합계</div>
+          <div class="ae-wrap">
+            <div class="ae-chart"><div class="ae-bar"><span class="ae-l">화원읍</span><span class="ae-t"><i style="width:92%"></i></span><span class="ae-v">276</span></div><div class="ae-bar"><span class="ae-l">다사읍</span><span class="ae-t"><i style="width:84%"></i></span><span class="ae-v">252</span></div><div class="ae-bar"><span class="ae-l">논공읍</span><span class="ae-t"><i style="width:61%"></i></span><span class="ae-v">183</span></div><div class="ae-bar"><span class="ae-l">유가읍</span><span class="ae-t"><i style="width:55%"></i></span><span class="ae-v">165</span></div><div class="ae-bar"><span class="ae-l">현풍읍</span><span class="ae-t"><i style="width:47%"></i></span><span class="ae-v">141</span></div><div class="ae-bar"><span class="ae-l">옥포읍</span><span class="ae-t"><i style="width:38%"></i></span><span class="ae-v">114</span></div></div>
+            <div class="ae-ins"><b>해석</b><p>화원읍 접수건수가 가장 많고, 상위 2개 읍(화원·다사)이 전체의 절반 이상(57%)을 차지합니다. 인구 밀집 지역에 민원이 집중되는 경향이 보입니다.</p>
+              <div class="ae-btns"><span>🖼 차트 PNG</span><span>문장 복사</span><span>표 복사</span></div></div>
+          </div>
+        </div>
+        <div class="ae-safe"><span>🔒 파일은 이 PC 브라우저 안에서만 읽어요</span><span>🧮 숫자는 원본에서 직접 계산</span><span>🙅 개인정보 파일은 올리지 마세요</span></div>
+      </div>
       <div class="card pout" id="anOut" hidden>
         <h4>분석 결과 <small>숫자는 브라우저가 원본에서 직접 계산</small></h4>
         <div class="an-wrap">
