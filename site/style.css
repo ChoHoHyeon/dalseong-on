@@ -1626,3 +1626,18 @@ body[data-theme=dark] .hm-cal li.mine b{color:var(--tx)}body[data-theme=dark] .h
 @media (max-width:1100px){.kpis.five{grid-template-columns:repeat(3,1fr)}}
 #heroDate[hidden]{display:none!important}
 .hero.hero-light h2{margin-top:0}
+#navFoot:empty{display:none}
+/* ── 홈 한 화면에 담기: 조금씩 줄이기 (배너 −50 · 공지/영상 −70 · 달력 −70 · TODAY −12) ── */
+.hero.hero-light{padding:20px 30px;min-height:0}
+.hero.hero-light h2{font-size:27px;line-height:1.22;margin:0 0 8px}
+.hero.hero-light .hero-chips{margin-top:12px}
+.hero-art-light{min-height:120px}
+.portal-grid{grid-template-columns:1.6fr 1fr}
+.board-list li{padding:8px 6px}
+.card.video .player{max-height:226px}
+.card.video .vcap{margin-top:6px!important}
+.hm-msg{padding:11px 18px}
+.cd{min-height:60px}
+.cal-grid{gap:7px}
+.cal-hd{margin-bottom:6px}
+.hm-fun{gap:12px;margin-top:12px}

@@ -164,7 +164,7 @@ function ensureIndex(){
   if(IDX_P) return IDX_P;
   IDX_P=fetch('data/index.json').then(r=>r.json()).then(j=>{
     S.docs=j.docs; S.meta=j.meta; S.idx=buildIndex(S.docs);
-    const c=S.meta.counts; $('#navFoot').textContent=`자료 ${(c.law+c.minwon+c.data+c.internal).toLocaleString()}건 연결 · 기준 ${S.meta.built}`;
+    const c=S.meta.counts; 
     if($('#c1')) $('#c1').textContent=(c.law+c.minwon+c.data).toLocaleString(); if($('#c2')) $('#c2').textContent=c.internal;
     try{ renderLib(); renderAdminSrc(); renderDataSeg(); renderPaper(); }catch(e){}
     if(S.view==='data') renderData();
@@ -353,6 +353,8 @@ function renderUsage(){
    영상이 늘어나면 이 배열에 한 줄만 더하면 된다. 넘김 단추는 개수에 맞춰 저절로 생긴다.
    file 대신 yt(유튜브 ID)를 적어도 된다. */
 const VIDEOS=[
+  {title:'달성On과 함께한 하루', sub:'09시 회의록부터 18시 칼퇴까지 실제 화면으로', len:'29초', home:true,
+   file:'assets/day.mp4', poster:'assets/day_poster.jpg'},
   {title:'달성On 소개',        sub:'무엇을 해 주는지 16초로',   len:'16초',   home:true,
    file:'assets/intro.mp4',  poster:'assets/intro_poster.jpg'},
   {title:'급량비 계산하기',     sub:'확인서 PDF 하나로 집행대장까지', len:'1분 13초', view:'meal',
