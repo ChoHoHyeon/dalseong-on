@@ -124,7 +124,7 @@ function amendFromTable(o){
 }
 /* 조문 줄 → 조례 서식 HTML (조 제목 굵게, 항·호·목 들여쓰기) */
 function lawHtml(lines){
-  return lines.map(raw=>{ const t=raw.trim(); if(!t) return '<div class="lw-gap"></div>'; let m;
+  return lines.map((raw,i)=>{ const t=raw.trim(); if(!t){ const nx=(lines.slice(i+1).find(x=>x.trim())||''); return /^\s*제\d+(조|장)/.test(nx)?'<div class="lw-gap"></div>':''; } let m;
     if(/^제\d+장\s/.test(t)) return `<p class="lw-ch">${esc(t)}</p>`;
     if((m=t.match(/^(제\d+조(?:의\d+)?\([^)]*\))\s*(.*)$/))) return `<p class="lw-art"><b>${esc(m[1])}</b> ${esc(m[2])}</p>`;
     if(/^[①-⑳]/.test(t)) return `<p class="lw-hang">${esc(t)}</p>`;
@@ -203,7 +203,9 @@ async function callModel(system,user,o={}){
   return text;
 }
 const modelOn=()=>{ const S=window.S||{}; return (S.key||S.server)&&!S.offline; };
-const jsonOf=t=>{ const m=String(t).match(/\{[\s\S]*\}|\[[\s\S]*\]/); if(!m) return null; try{ return JSON.parse(m[0]); }catch(e){ return null; } };
+const jsonOf=t=>{ t=String(t); const f=[...t.matchAll(/```(?:json)?\s*([\s\S]*?)```/g)].map(m=>m[1]).reverse();
+  for(const c of f){ try{ return JSON.parse(c); }catch(e){} }
+  const end=t.lastIndexOf('}'); for(let i=t.indexOf('{');i>=0&&i<end;i=t.indexOf('{',i+1)){ try{ return JSON.parse(t.slice(i,end+1)); }catch(e){} } return null; };
 
 /* ── 진행 단계 표시 ── */
 const ST={};
@@ -214,8 +216,8 @@ function stepsInit(mode){
   $('#ruRefs').innerHTML=''; $('#ruSteps').hidden=false; $('#ruSteps').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function step(k,state,msg){ const li=$('#rs-'+k); if(!li) return; li.className=state; if(msg!=null) li.querySelector('em').textContent=msg;
-  if(state==='run'){ ST[k]=Date.now(); clearInterval(ST['_'+k]); ST['_'+k]=setInterval(()=>{ li.querySelector('.rs-t').textContent=Math.round((Date.now()-ST[k])/1000)+'초'; },500); }
-  else { clearInterval(ST['_'+k]); if(ST[k]) li.querySelector('.rs-t').textContent=Math.max(1,Math.round((Date.now()-ST[k])/1000))+'초'; } }
+  if(state==='run'){ if(li.dataset.st==='run'){ return; } li.dataset.st='run'; ST[k]=Date.now(); clearInterval(ST['_'+k]); ST['_'+k]=setInterval(()=>{ li.querySelector('.rs-t').textContent=Math.round((Date.now()-ST[k])/1000)+'초'; },500); }
+  else { li.dataset.st=state; clearInterval(ST['_'+k]); if(ST[k]) li.querySelector('.rs-t').textContent=Math.max(1,Math.round((Date.now()-ST[k])/1000))+'초'; } }
 
 /* ── 법령·조례 찾기: ① law.go.kr Open API(/api/law) → ② 모델 웹검색(law.go.kr·elis.go.kr 한정) → ③ 직접 찾아보기 링크 ── */
 async function lawApi(qs){ const r=await fetch('/api/law?'+qs); const j=await r.json().catch(()=>({error:'응답 오류'})); if(!r.ok||j.error) throw new Error(j.error||('HTTP '+r.status)); return j; }
@@ -240,7 +242,7 @@ async function webRefs(mode,name,gist){
 2) 다른 지자체(광역·기초)의 비슷한 조례 3~5개와 참고할 만한 조문 요지
 ${mode==='amend'?'3) 대구광역시 달성군의 해당 현행 조례가 있으면 그 조문 원문':''}
 JSON 형식: {"laws":[{"name":"","articles":"제n조(…) 요지","url":""}],"ordins":[{"org":"","name":"","points":"참고 조문 요지","url":""}]${mode==='amend'?',"current":"달성군 현행 조문 원문(없으면 빈칸)"':''}}`,
-    {max:3000,tools:[{type:'web_search_20250305',name:'web_search',max_uses:6,allowed_domains:['law.go.kr','elis.go.kr']}],onTool:i=>{ if(i&&i.query) step(U.stepNow||'law','run','검색: '+i.query); }});
+    {max:3000,tools:[{type:'web_search_20250305',name:'web_search',max_uses:4,allowed_domains:['law.go.kr','elis.go.kr']}],onTool:i=>{ if(i&&i.query) step(U.stepNow||'law','run','검색: '+i.query); }});
   const j=jsonOf(t); if(!j) throw new Error('검색 결과를 읽지 못했습니다'); return j;
 }
 

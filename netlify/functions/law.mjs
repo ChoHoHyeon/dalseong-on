@@ -22,16 +22,26 @@ function items(j) {
   walk(j);
   return out;
 }
-// 본문: "…내용" 키의 문자열을 등장 순서대로 모은다 (조문내용·항내용·호내용·목내용 / 조내용 등)
+// 본문: "조문" 부분만 골라(개정문·부칙·제개정이유 제외) "…내용" 문자열을 순서대로 모으고 항·호를 줄바꿈
+function findKey(v, key) {
+  if (!v || typeof v !== "object") return null;
+  if (!Array.isArray(v) && key in v) return v[key];
+  for (const x of Object.values(v)) { const r = findKey(x, key); if (r) return r; }
+  return null;
+}
 function bodyText(j) {
+  const root = findKey(j, "조문") || j;
   const L = [];
   const walk = (v, k = "") => {
     if (typeof v === "string") { if (/내용$/.test(k) && v.trim()) L.push(v.replace(/<[^>]+>/g, "").trim()); return; }
     if (Array.isArray(v)) { v.forEach((x) => walk(x, k)); return; }
     if (v && typeof v === "object") Object.entries(v).forEach(([kk, vv]) => walk(vv, kk));
   };
-  walk(j);
-  return L.join("\n");
+  walk(root);
+  return L.join("\n")
+    .replace(/([^\n\s)])\s*(?=[①-⑳])/g, "$1\n")
+    .replace(/([^\d\n])(?=\d{1,2}(?:의\d+)?\.\s)/g, "$1\n  ")
+    .replace(/([^\n])(?=[가-하]\.\s)/g, (s, a) => (/[다.]$/.test(a) ? a + "\n    " : s));
 }
 
 export default async (req) => {
@@ -44,15 +54,16 @@ export default async (req) => {
   const org = (u.searchParams.get("org") || "").trim();
   const n = Math.min(+u.searchParams.get("n") || 8, 20);
   const base = "https://www.law.go.kr/DRF/";
+  const H = { headers: { Referer: "https://ds-on.netlify.app/", "User-Agent": "Mozilla/5.0 (dalseong-on)" } };  // 신청 시 등록한 도메인
   try {
     if (mst) {
-      const r = await fetch(`${base}lawService.do?OC=${encodeURIComponent(oc)}&target=${target}&MST=${mst}&type=JSON`);
+      const r = await fetch(`${base}lawService.do?OC=${encodeURIComponent(oc)}&target=${target}&MST=${mst}&type=JSON`, H);
       const t = await r.text(); let j; try { j = JSON.parse(t); } catch { return J({ error: "본문 응답을 읽지 못했습니다", raw: t.slice(0, 200) }, 502); }
       if (j.result && /실패/.test(j.result)) return J({ error: j.result + " " + (j.msg || "") }, 401);
       return J({ text: bodyText(j).slice(0, 20000) });
     }
     if (!q) return J({ error: "검색어(q)가 없습니다" }, 400);
-    const r = await fetch(`${base}lawSearch.do?OC=${encodeURIComponent(oc)}&target=${target}&type=JSON&display=${org ? 50 : n}&query=${encodeURIComponent(q)}`);
+    const r = await fetch(`${base}lawSearch.do?OC=${encodeURIComponent(oc)}&target=${target}&type=JSON&display=${org ? 50 : n}&query=${encodeURIComponent(q)}`, H);
     const t = await r.text(); let j; try { j = JSON.parse(t); } catch { return J({ error: "검색 응답을 읽지 못했습니다", raw: t.slice(0, 200) }, 502); }
     if (j.result && /실패/.test(j.result)) return J({ error: j.result + " " + (j.msg || "") }, 401);
     let list = items(j).map((x) => target === "law"
