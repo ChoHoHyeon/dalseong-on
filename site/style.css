@@ -1668,3 +1668,15 @@ body[data-theme=dark] .hm-cal li.mine b{color:var(--tx)}body[data-theme=dark] .h
 .nav-foot{text-align:center;align-items:center;justify-content:center}
 .nav-foot small{display:block;width:100%;text-align:center}
 .sh-where{font-size:11.5px;color:var(--mut);font-weight:500}
+/* 메인 배너 오른쪽 — 바로가기 칩이 둥실둥실 */
+.hero-float{position:relative;min-height:150px}
+.hero-float .fchip{position:absolute;background:#fff;border:1px solid rgba(29,95,214,.14);border-radius:999px;padding:9px 16px;font-weight:800;font-size:13.5px;color:#1d4fb0;white-space:nowrap;cursor:pointer;
+  box-shadow:0 8px 22px rgba(29,95,214,.14);animation:float 4.2s ease-in-out infinite;transition:box-shadow .15s,background .15s}
+.hero-float .fchip:hover{background:#eef4ff;box-shadow:0 12px 26px rgba(29,95,214,.22);animation-play-state:paused}
+.hero-float .f1{left:4%;top:4%;animation-delay:0s}
+.hero-float .f2{left:40%;top:0%;animation-delay:-1.1s}
+.hero-float .f3{right:2%;top:24%;animation-delay:-2.3s}
+.hero-float .f4{left:16%;top:56%;animation-delay:-3.1s}
+.hero-float .f5{left:52%;top:62%;animation-delay:-1.7s}
+body[data-theme=dark] .hero-float .fchip{background:var(--panel2);color:#cfe0ff;border-color:var(--line)}
+@media (max-width:900px){.hero-float{display:flex!important;flex-wrap:wrap;gap:8px;min-height:0}.hero-float .fchip{position:static;animation:none}}
