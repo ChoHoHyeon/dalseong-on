@@ -786,9 +786,9 @@ try{ fetch("/api/card",{method:"POST",headers:{"content-type":"application/json"
 let TRIP_LOADED=null;
 function loadTrip(){
   if(TRIP_LOADED) return TRIP_LOADED;
-  const files=['vendor/xlsx.full.min.js','vendor/pdf.min.js','vendor/pdf.worker.min.js','vendor/exceljs.min.js','vendor/html2canvas.min.js','vendor/jspdf.umd.min.js','trip.js'];
+  const files=['vendor/xlsx.full.min.js','vendor/pdf.min.js','vendor/exceljs.min.js','vendor/html2canvas.min.js','vendor/jspdf.umd.min.js','trip.js'];
   const one=src=>new Promise((ok,no)=>{ const el=document.createElement('script'); el.src=src; el.onload=ok; el.onerror=()=>no(new Error(src)); document.head.appendChild(el); });
   const msg=document.querySelector('#trip #readMsg'); if(msg) msg.innerHTML='<div class="msg">출장비 계산 모듈을 불러오는 중…</div>';
-  TRIP_LOADED=files.reduce((p,f)=>p.then(()=>one(f)),Promise.resolve()).then(()=>{ if(msg) msg.innerHTML=''; }).catch(e=>{ TRIP_LOADED=null; if(msg) msg.innerHTML='<div class="msg err">모듈을 불러오지 못했습니다: '+e.message+'</div>'; });
+  TRIP_LOADED=files.reduce((p,f)=>p.then(()=>(f==='trip.js'&&window.pdfjsLib&&(window.pdfjsLib.GlobalWorkerOptions.workerSrc='vendor/pdf.worker.min.js'),one(f))),Promise.resolve()).then(()=>{ if(msg) msg.innerHTML=''; }).catch(e=>{ TRIP_LOADED=null; if(msg) msg.innerHTML='<div class="msg err">모듈을 불러오지 못했습니다: '+e.message+'</div>'; });
   return TRIP_LOADED;
 }
