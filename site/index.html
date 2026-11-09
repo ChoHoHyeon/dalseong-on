@@ -36,7 +36,7 @@
     <!-- 홈 · 대시보드 -->
     <section class="view" data-view="home">
       <div class="hero hero-light">
-        <div class="hero-txt"><small id="heroDate"></small>
+        <div class="hero-txt"><small id="heroDate" hidden></small>
           <h2>오늘도 수고 많아요 <span class="wave">👋</span><br>잔일은 <b>달성On</b>이 덜어드릴게요</h2>
           <p class="lead">반복되는 일은 맡기고, 중요한 일에 집중하세요.</p>
           <div class="hero-chips">
@@ -52,7 +52,7 @@
         <div class="card video"><h4>🎬 영상으로 보기 <small id="videoNote">16초</small></h4><div class="player" id="player"></div><p class="hint vcap" id="videoCap" style="margin-top:10px"></p></div>
       </div>
       <div class="home-usage">
-      <div class="kpis four" id="homeKpis"></div>
+      <div class="kpis five" id="homeKpis"></div>
       <div class="hm-fun">
         <div class="hm-mile" id="hmMile" hidden></div>
         <div class="hm-msg" id="hmMsg"></div>
@@ -63,7 +63,7 @@
             <div class="cal-grid" id="calGrid"></div>
           </div>
           <div class="hm-col">
-            <div class="card"><h4>📅 지금 하실 때예요 <small id="hmCalNote"></small><button class="ghost sm more" id="rcAll" hidden>최근 작업 전체 ›</button></h4><ul class="hm-cal" id="hmCal"></ul><div class="hm-std-line" id="hmStd"></div></div>
+            <div class="card"><h4>📅 지금 하실 때예요 <small id="hmCalNote"></small></h4><ul class="hm-cal" id="hmCal"></ul><div class="hm-std-line" id="hmStd"></div></div>
           </div>
         </div>
       </div>

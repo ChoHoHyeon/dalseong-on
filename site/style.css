@@ -1616,3 +1616,13 @@ body[data-theme=dark] .hm-cal li.mine b{color:var(--tx)}body[data-theme=dark] .h
 .rc-box pre .rc-li{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;width:100%;text-align:left;border:0;border-bottom:1px dashed var(--line);padding:10px 4px;background:none;font:inherit;cursor:pointer;white-space:normal}
 .rc-box pre .rc-li:hover{background:#eef4ff}.rc-li i{font-style:normal;font-size:18px}.rc-li b{font-size:13.5px}.rc-li small{font-size:12px;color:var(--mut)}
 .hm-col>.card:last-child{flex:1}
+.kpis.five{grid-template-columns:repeat(5,1fr)}
+.rc-kpi{cursor:pointer;transition:transform .12s,box-shadow .12s;min-width:0}
+.rc-kpi:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(29,95,214,.14)}
+.rc-kpi small em{font-style:normal;font-weight:800;color:#1d5fd6;margin-left:4px}
+.rc-kpi b{font-size:20px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.rc-kpi .sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.rc-kpi.none{cursor:default}.rc-kpi.none:hover{transform:none;box-shadow:inherit}
+@media (max-width:1100px){.kpis.five{grid-template-columns:repeat(3,1fr)}}
+#heroDate[hidden]{display:none!important}
+.hero.hero-light h2{margin-top:0}

@@ -298,7 +298,7 @@ function rcOpen(x){
   $('#rcCopy').hidden=false; $('#rcGo').hidden=false; $('#rcDel').hidden=false;
   $('#rcCopy').onclick=()=>{ navigator.clipboard.writeText(x.text); toast('복사했습니다'); };
   $('#rcGo').onclick=()=>{ $('#rcModal').hidden=true; setMode('staff'); go(x.view); };
-  $('#rcDel').onclick=()=>{ try{ localStorage.setItem(RC_KEY,JSON.stringify(rcGet().filter(y=>y.id!==x.id))); }catch(e){} $('#rcModal').hidden=true; renderNow(); };
+  $('#rcDel').onclick=()=>{ try{ localStorage.setItem(RC_KEY,JSON.stringify(rcGet().filter(y=>y.id!==x.id))); }catch(e){} $('#rcModal').hidden=true; if(S.view==='home') renderUsage(); };
 }
 function rcList(){
   const L=rcGet(); $('#rcTitle').textContent='🗂 내 최근 작업'; $('#rcMeta').textContent=`이 PC에만 저장 · 최근 ${L.length}건`;
@@ -306,6 +306,10 @@ function rcList(){
   $('#rcCopy').hidden=$('#rcGo').hidden=$('#rcDel').hidden=true; $('#rcModal').hidden=false;
   $$('#rcText .rc-li').forEach(b=>b.onclick=()=>{ const x=rcGet().find(y=>y.id===b.dataset.rc); if(x) rcOpen(x); });
 }
+function rcKpi(){ const R=rcGet(), r=R[0];
+  return r?`<div class="kpi rc-kpi" role="button" tabindex="0" title="눌러서 최근 작업 보기"><small>내 최근 작업 <em>${R.length}건</em></small><b>${ICON[r.view]||'🗂'} ${esc(r.title)}</b><span class="sub">${MNAME[r.view]||''} · ${ago(r.at)} · 이 PC에 저장</span></div>`
+           :`<div class="kpi rc-kpi none"><small>내 최근 작업</small><b>–</b><span class="sub">만들면 여기에 쌓여요</span></div>`; }
+function bindRcKpi(){ const k=document.querySelector('#homeKpis .rc-kpi:not(.none)'); if(!k) return; const go1=()=>{ const R=rcGet(); if(R.length>1) rcList(); else if(R[0]) rcOpen(R[0]); }; k.onclick=go1; k.onkeydown=e=>{ if(e.key==='Enter') go1(); }; }
 function renderRecent(){ /* 최근 작업은 「지금 하실 때예요」 5번째 줄로 들어간다 (renderNow) */ }
 /* 이번 달 — 날짜에 맞춰 바뀌는 때맞춤 안내 */
 function calItems(){
@@ -326,22 +330,16 @@ function renderNow(){
   const evHtml=ev.map(e=>`<li class="mine" data-ev="${e.id}"><i style="background:color-mix(in srgb,${e.c||'#1d5fd6'} 16%,#fff);color:${e.c||'#1d5fd6'}">📌</i><div><b>${esc(e.title)}</b><small>${new Date(e.d+'T00:00:00').getMonth()+1}/${new Date(e.d+'T00:00:00').getDate()}${e.t?' '+e.t:''} · 내 일정${e.memo?' · '+esc(e.memo):''}</small></div><span class="dday${e.diff===0?' today':''}">${dd(e.diff)}</span></li>`).join('');
   const sug=calItems().slice(0,Math.max(1,4-ev.length));
   el.innerHTML=evHtml+sug.map(([v,i,t,s])=>`<li data-go="staff:${v}"><i>${i}</i><div><b>${t}</b><small>${s}</small></div><span>바로 가기 ›</span></li>`).join('');
-  const R=rcGet(), r=R[0];
-  el.insertAdjacentHTML('beforeend', r
-    ? `<li class="recent" data-rc1="${r.id}"><i>${ICON[r.view]||'🗂'}</i><div><b>${esc(r.title)}</b><small>내 최근 작업 · ${MNAME[r.view]||''} · ${ago(r.at)}</small></div><span>다시 보기 ›</span></li>`
-    : `<li class="recent none"><i>🗂</i><div><b>내 최근 작업이 여기 보여요</b><small>회의록·보도자료 등을 만들면 새로고침해도 다시 볼 수 있어요</small></div></li>`);
-  const r1=el.querySelector('[data-rc1]'); if(r1) r1.onclick=()=>rcOpen(r);
-  const all=$('#rcAll'); if(all){ all.hidden=R.length<2; all.textContent=`최근 작업 ${R.length}건 ›`; all.onclick=rcList; }
   el.querySelectorAll('[data-ev]').forEach(li=>li.onclick=()=>HOMECAL.open(li.dataset.ev));
 }
 window.addEventListener('dscal',()=>{ if(S.view==='home') renderNow(); });
 function renderUsage(){
   const kpis=(w,t,top)=>[['이번 주 이용',(w?w.use:'–')+'회','전 직원 · 메뉴 열기 기준'],['이번 주 만든 초안',(w?w.gen:'–')+'건','회의록·보도자료·카드뉴스 등'],['누적 이용',(t?t.use.toLocaleString():'–')+'회','달성On 오픈 이후'],['이번 주 인기 1위',top&&top[0]?(ICON[top[0][0]]||'⭐')+' '+(MNAME[top[0][0]]||top[0][0]):'–',top&&top[0]?top[0][1]+'회 이용':'이번 주 첫 사용자가 되어 주세요']]
-    .map(([k,v,s])=>`<div class="kpi"><small>${k}</small><b>${v}</b><span class="sub">${s}</span></div>`).join('');
-  $('#homeKpis').innerHTML=kpis();
+    .map(([k,v,s])=>`<div class="kpi"><small>${k}</small><b>${v}</b><span class="sub">${s}</span></div>`).join('')+rcKpi();
+  $('#homeKpis').innerHTML=kpis(); bindRcKpi();
   { const d=new Date(); $('#hmMsg').innerHTML=`<span class="tag">TODAY</span><span class="date">${d.getMonth()+1}월 ${d.getDate()}일 ${'일월화수목금토'[d.getDay()]}요일</span><b>${todayMsg()}</b>`; }
   fetch('/api/hits',{cache:'no-store'}).then(r=>r.json()).then(j=>{
-    $('#homeKpis').innerHTML=kpis(j.week,j.total,j.top);
+    $('#homeKpis').innerHTML=kpis(j.week,j.total,j.top); bindRcKpi();
     const ms=[100,500,1000,3000,5000,10000].filter(x=>j.total.use>=x).pop();
     if(ms){ $('#hmMile').hidden=false; $('#hmMile').innerHTML=`🎉 달성On 누적 이용 <b>${ms.toLocaleString()}회</b> 돌파! 함께 써 주셔서 고맙습니다`; }
   }).catch(()=>{});
