@@ -300,15 +300,10 @@ function renderUsage(){
     const ms=[100,500,1000,3000,5000,10000].filter(x=>j.total.use>=x).pop();
     if(ms){ $('#hmMile').hidden=false; $('#hmMile').innerHTML=`🎉 달성On 누적 이용 <b>${ms.toLocaleString()}회</b> 돌파! 함께 써 주셔서 고맙습니다`; }
   }).catch(()=>{});
-  renderRecent();
+  renderRecent(); if(window.HOMECAL) HOMECAL.init();
   const d=new Date(); $('#hmCalNote').textContent=`${d.getMonth()+1}월 ${d.getDate()}일 기준`;
   $('#hmCal').innerHTML=calItems().map(([v,i,t,s])=>`<li data-go="staff:${v}"><i>${i}</i><div><b>${t}</b><small>${s}</small></div><span>바로 가기 ›</span></li>`).join('');
   $('#hmStd').innerHTML='<span class="lbl">📌 정산 기준</span>'+[['관내 출장 4시간↑','20,000원','trip'],['4시간↓','10,000원','trip'],['공용차량','10,000원 / 0원','trip'],['급량비 1식','9,000원','meal']].map(([k,v,g])=>`<button data-go="staff:${g}">${k} <b>${v}</b></button>`).join('');
-  // 내 자료는 어디로 가나요?
-  const SAFE=[['lock','🔒 이 PC 안에서만 처리','파일이 밖으로 나가지 않아요',[['meal','🍚 급량비'],['trip','🚗 출장비']]],
-              ['half','🔒 파일은 PC 안 · 💬 요약 글만 AI로','원본은 그대로 두고 필요한 글만 보내요',[['minutes','🎙 회의록 (녹음→글은 PC, 정리할 때 글만)'],['analyze','📊 데이터 분석 (열 이름·샘플 5행만)']]],
-              ['text','💬 입력한 글이 AI로 가요','비공개·개인정보는 넣지 마세요',[['press','📰 보도자료'],['card','📱 카드뉴스'],['banner','🎏 현수막'],['movie','🎬 홍보영상'],['rule','⚖️ 조례·지침'],['family','💐 경조사 카드'],['on','✦ 달성On 질문']]]];
-  $('#hmSafe').innerHTML=`<div class="sf-hd"><b>🛡 내 자료는 어디로 가나요?</b><small>메뉴마다 처리 방식이 달라요 — 한눈에 확인하고 안심하고 쓰세요</small></div><div class="sf-cols">${SAFE.map(([c,t,s,L])=>`<div class="sf ${c}"><b>${t}</b><small>${s}</small><div>${L.map(([v,n])=>`<button data-go="staff:${v}">${n}</button>`).join('')}</div></div>`).join('')}</div>`;
 }
 
 /* ── 안내 영상 목록 ──────────────────────────────────────────

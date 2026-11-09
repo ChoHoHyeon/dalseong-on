@@ -57,10 +57,17 @@
         <div class="hm-mile" id="hmMile" hidden></div>
         <div class="hm-msg" id="hmMsg"></div>
         <div class="hm-row">
-          <div class="card"><h4>🗂 내 최근 작업 <small>이 PC에만 저장 · 누르면 다시 보기</small></h4><ul class="hm-recent" id="hmRecent"></ul></div>
-          <div class="card"><h4>📅 지금 하실 때예요 <small id="hmCalNote"></small></h4><ul class="hm-cal" id="hmCal"></ul><div class="hm-std-line" id="hmStd"></div></div>
+          <div class="card cal-card">
+            <div class="cal-hd"><button id="calPrev" class="cal-nav" aria-label="이전 달">‹</button><b id="calTitle"></b><button id="calNext" class="cal-nav" aria-label="다음 달">›</button><button id="calToday" class="cal-tbtn">오늘</button><small>날짜를 눌러 일정 넣기 · 이 PC에 저장</small></div>
+            <div class="cal-wk"><span class="sun">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="sat">토</span></div>
+            <div class="cal-grid" id="calGrid"></div>
+            <ul class="cal-up" id="calUp"></ul>
+          </div>
+          <div class="hm-col">
+            <div class="card"><h4>📅 지금 하실 때예요 <small id="hmCalNote"></small></h4><ul class="hm-cal" id="hmCal"></ul><div class="hm-std-line" id="hmStd"></div></div>
+            <div class="card"><h4>🗂 내 최근 작업 <small>이 PC에만 저장 · 누르면 다시 보기</small></h4><ul class="hm-recent" id="hmRecent"></ul></div>
+          </div>
         </div>
-        <div class="hm-safe" id="hmSafe"></div>
       </div>
       </div>
     </section>
@@ -803,7 +810,12 @@
 <script src="movie.js"></script>
 <script src="share.js"></script>
 <script src="analyze.js"></script>
+<script src="cal.js"></script>
 <script src="app.js"></script>
 <div class="rc-modal" id="rcModal" hidden><div class="rc-box"><div class="rc-hd"><b id="rcTitle"></b><small id="rcMeta"></small><button id="rcClose" aria-label="닫기">✕</button></div><pre id="rcText"></pre><div class="pact"><button id="rcCopy" class="p">복사</button><button id="rcGo">이 메뉴로 가기</button><button id="rcDel">목록에서 지우기</button></div></div></div>
+<div class="cal-pop" id="calPop" hidden><div class="cal-box"><b id="calPopTitle"></b>
+<input id="calIn" maxlength="40" placeholder="일정 (예: 정보화교육 수요조사 마감)"><div class="cal-r"><input id="calDate" type="date"><input id="calTime" type="time"></div>
+<textarea id="calMemo" rows="2" maxlength="200" placeholder="메모 (선택)"></textarea><div class="cal-colors" id="calColors"></div>
+<div class="pact"><button id="calSave" class="p">저장</button><button id="calCancel">취소</button><button id="calDel" class="danger" hidden>삭제</button></div></div></div>
 </body>
 </html>
