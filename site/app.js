@@ -293,16 +293,20 @@ const rcGet=()=>{ try{ return JSON.parse(localStorage.getItem(RC_KEY)||'[]'); }c
 window.dsSave=(view,title,text)=>{ try{ const L=rcGet().filter(x=>!(x.view===view&&x.title===title)); L.unshift({id:Date.now().toString(36),view,title:String(title||'').slice(0,60),text:String(text||'').slice(0,8000),at:Date.now()}); localStorage.setItem(RC_KEY,JSON.stringify(L.slice(0,8))); }catch(e){} };
 const ICON={minutes:'🎙',press:'📰',card:'📱',banner:'🎏',movie:'🎬',analyze:'📊',rule:'⚖️'};
 const ago=t=>{ const m=Math.round((Date.now()-t)/6e4); return m<1?'방금':m<60?m+'분 전':m<1440?Math.round(m/60)+'시간 전':Math.round(m/1440)+'일 전'; };
-function renderRecent(){
-  const L=rcGet();
-  $('#hmRecent').innerHTML=L.length?L.slice(0,5).map(x=>`<li data-rc="${x.id}"><i>${ICON[x.view]||'📝'}</i><div><b>${esc(x.title)}</b><small>${MNAME[x.view]||''} · ${ago(x.at)}</small></div><span>›</span></li>`).join('')
-    :`<li class="empty"><span>🗂</span><b>아직 만든 결과물이 없어요</b><small>회의록·보도자료·카드뉴스를 만들면 여기에 쌓여서<br>새로고침해도 다시 볼 수 있어요</small></li>`;
-  $$('#hmRecent [data-rc]').forEach(li=>li.onclick=()=>{ const x=rcGet().find(y=>y.id===li.dataset.rc); if(!x) return;
-    $('#rcTitle').textContent=x.title; $('#rcMeta').textContent=`${MNAME[x.view]||''} · ${new Date(x.at).toLocaleString('ko-KR')}`; $('#rcText').textContent=x.text; $('#rcModal').hidden=false;
-    $('#rcCopy').onclick=()=>{ navigator.clipboard.writeText(x.text); toast('복사했습니다'); };
-    $('#rcGo').onclick=()=>{ $('#rcModal').hidden=true; setMode('staff'); go(x.view); };
-    $('#rcDel').onclick=()=>{ try{ localStorage.setItem(RC_KEY,JSON.stringify(rcGet().filter(y=>y.id!==x.id))); }catch(e){} $('#rcModal').hidden=true; renderRecent(); }; });
+function rcOpen(x){
+  $('#rcTitle').textContent=x.title; $('#rcMeta').textContent=`${MNAME[x.view]||''} · ${new Date(x.at).toLocaleString('ko-KR')}`; $('#rcText').textContent=x.text; $('#rcModal').hidden=false;
+  $('#rcCopy').hidden=false; $('#rcGo').hidden=false; $('#rcDel').hidden=false;
+  $('#rcCopy').onclick=()=>{ navigator.clipboard.writeText(x.text); toast('복사했습니다'); };
+  $('#rcGo').onclick=()=>{ $('#rcModal').hidden=true; setMode('staff'); go(x.view); };
+  $('#rcDel').onclick=()=>{ try{ localStorage.setItem(RC_KEY,JSON.stringify(rcGet().filter(y=>y.id!==x.id))); }catch(e){} $('#rcModal').hidden=true; renderNow(); };
 }
+function rcList(){
+  const L=rcGet(); $('#rcTitle').textContent='🗂 내 최근 작업'; $('#rcMeta').textContent=`이 PC에만 저장 · 최근 ${L.length}건`;
+  $('#rcText').innerHTML=L.map(x=>`<button class="rc-li" data-rc="${x.id}"><i>${ICON[x.view]||'📝'}</i><b>${esc(x.title)}</b><small>${MNAME[x.view]||''} · ${ago(x.at)}</small></button>`).join('');
+  $('#rcCopy').hidden=$('#rcGo').hidden=$('#rcDel').hidden=true; $('#rcModal').hidden=false;
+  $$('#rcText .rc-li').forEach(b=>b.onclick=()=>{ const x=rcGet().find(y=>y.id===b.dataset.rc); if(x) rcOpen(x); });
+}
+function renderRecent(){ /* 최근 작업은 「지금 하실 때예요」 5번째 줄로 들어간다 (renderNow) */ }
 /* 이번 달 — 날짜에 맞춰 바뀌는 때맞춤 안내 */
 function calItems(){
   const d=new Date(), D=d.getDate(), M=d.getMonth()+1, last=new Date(d.getFullYear(),M,0).getDate(), I=[];
@@ -314,6 +318,23 @@ function calItems(){
   I.push(['minutes','🎙','회의가 있었다면 녹음 파일만 올리세요','안건·결정사항·조치사항까지 자동 정리']);
   return I.slice(0,3);
 }
+/* 지금 하실 때예요 = 달력에 적어 둔 일정(7일 안) + 날짜에 맞춘 안내 — 합쳐서 최대 4줄 */
+function renderNow(){
+  const el=$('#hmCal'); if(!el) return;
+  const ev=(window.HOMECAL&&HOMECAL.upcoming)?HOMECAL.upcoming(7).slice(0,3):[];
+  const dd=n=>n===0?'오늘':n===1?'내일':'D-'+n;
+  const evHtml=ev.map(e=>`<li class="mine" data-ev="${e.id}"><i style="background:color-mix(in srgb,${e.c||'#1d5fd6'} 16%,#fff);color:${e.c||'#1d5fd6'}">📌</i><div><b>${esc(e.title)}</b><small>${new Date(e.d+'T00:00:00').getMonth()+1}/${new Date(e.d+'T00:00:00').getDate()}${e.t?' '+e.t:''} · 내 일정${e.memo?' · '+esc(e.memo):''}</small></div><span class="dday${e.diff===0?' today':''}">${dd(e.diff)}</span></li>`).join('');
+  const sug=calItems().slice(0,Math.max(1,4-ev.length));
+  el.innerHTML=evHtml+sug.map(([v,i,t,s])=>`<li data-go="staff:${v}"><i>${i}</i><div><b>${t}</b><small>${s}</small></div><span>바로 가기 ›</span></li>`).join('');
+  const R=rcGet(), r=R[0];
+  el.insertAdjacentHTML('beforeend', r
+    ? `<li class="recent" data-rc1="${r.id}"><i>${ICON[r.view]||'🗂'}</i><div><b>${esc(r.title)}</b><small>내 최근 작업 · ${MNAME[r.view]||''} · ${ago(r.at)}</small></div><span>다시 보기 ›</span></li>`
+    : `<li class="recent none"><i>🗂</i><div><b>내 최근 작업이 여기 보여요</b><small>회의록·보도자료 등을 만들면 새로고침해도 다시 볼 수 있어요</small></div></li>`);
+  const r1=el.querySelector('[data-rc1]'); if(r1) r1.onclick=()=>rcOpen(r);
+  const all=$('#rcAll'); if(all){ all.hidden=R.length<2; all.textContent=`최근 작업 ${R.length}건 ›`; all.onclick=rcList; }
+  el.querySelectorAll('[data-ev]').forEach(li=>li.onclick=()=>HOMECAL.open(li.dataset.ev));
+}
+window.addEventListener('dscal',()=>{ if(S.view==='home') renderNow(); });
 function renderUsage(){
   const kpis=(w,t,top)=>[['이번 주 이용',(w?w.use:'–')+'회','전 직원 · 메뉴 열기 기준'],['이번 주 만든 초안',(w?w.gen:'–')+'건','회의록·보도자료·카드뉴스 등'],['누적 이용',(t?t.use.toLocaleString():'–')+'회','달성On 오픈 이후'],['이번 주 인기 1위',top&&top[0]?(ICON[top[0][0]]||'⭐')+' '+(MNAME[top[0][0]]||top[0][0]):'–',top&&top[0]?top[0][1]+'회 이용':'이번 주 첫 사용자가 되어 주세요']]
     .map(([k,v,s])=>`<div class="kpi"><small>${k}</small><b>${v}</b><span class="sub">${s}</span></div>`).join('');
@@ -324,9 +345,9 @@ function renderUsage(){
     const ms=[100,500,1000,3000,5000,10000].filter(x=>j.total.use>=x).pop();
     if(ms){ $('#hmMile').hidden=false; $('#hmMile').innerHTML=`🎉 달성On 누적 이용 <b>${ms.toLocaleString()}회</b> 돌파! 함께 써 주셔서 고맙습니다`; }
   }).catch(()=>{});
-  renderRecent(); if(window.HOMECAL) HOMECAL.init();
+  if(window.HOMECAL) HOMECAL.init();
   const d=new Date(); $('#hmCalNote').textContent=`${d.getMonth()+1}월 ${d.getDate()}일 기준`;
-  $('#hmCal').innerHTML=calItems().map(([v,i,t,s])=>`<li data-go="staff:${v}"><i>${i}</i><div><b>${t}</b><small>${s}</small></div><span>바로 가기 ›</span></li>`).join('');
+  renderNow();
   $('#hmStd').innerHTML='<span class="lbl">📌 정산 기준</span>'+[['관내 출장 4시간↑','20,000원','trip'],['4시간↓','10,000원','trip'],['공용차량','10,000원 / 0원','trip'],['급량비 1식','9,000원','meal']].map(([k,v,g])=>`<button data-go="staff:${g}">${k} <b>${v}</b></button>`).join('');
 }
 

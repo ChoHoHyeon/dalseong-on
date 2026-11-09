@@ -18,7 +18,7 @@ const save=L=>{ try{ localStorage.setItem(KEY,JSON.stringify(L)); }catch(e){ toa
 const ymd=(y,m,d)=>`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 const todayStr=()=>{ const t=new Date(); return ymd(t.getFullYear(),t.getMonth(),t.getDate()); };
 
-function render(){
+function render(){ try{ window.dispatchEvent(new Event('dscal')); }catch(e){}
   const L=load(), y=C.y, m=C.m, first=new Date(y,m,1).getDay(), last=new Date(y,m+1,0).getDate(), td=todayStr();
   $('#calTitle').textContent=`${y}년 ${m+1}월`;
   let h='';
@@ -62,5 +62,7 @@ function init(){
   }
   render();
 }
-window.HOMECAL={init};
+function upcoming(days){ const td=todayStr(), lim=new Date(Date.now()+days*864e5); const end=ymd(lim.getFullYear(),lim.getMonth(),lim.getDate());
+  return load().filter(e=>e.d>=td&&e.d<=end).sort((a,b)=>(a.d+(a.t||'')).localeCompare(b.d+(b.t||''))).map(e=>({...e,diff:Math.round((new Date(e.d+'T00:00:00')-new Date(td+'T00:00:00'))/864e5)})); }
+window.HOMECAL={init,upcoming,open:id=>openEdit(id)};
 })();

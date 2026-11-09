@@ -1606,3 +1606,13 @@ body[data-theme=dark] #boot{background:linear-gradient(120deg,#0b1220,#0f2a33)}b
 .idx-note{display:flex;align-items:center;gap:10px;justify-content:center;margin:10px auto 0;max-width:560px;padding:9px 16px;border-radius:999px;background:#eef4ff;color:#1d4fb0;font-size:13px;font-weight:600}
 .idx-note i{width:14px;height:14px;border-radius:50%;border:2px solid #9bb8f0;border-top-color:#1d5fd6;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.hm-cal li.mine b{color:#17223b}
+.hm-cal .dday{font-size:12px;font-weight:800;color:#1d5fd6;background:#eef4ff;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.hm-cal .dday.today{background:#1d5fd6;color:#fff}
+body[data-theme=dark] .hm-cal li.mine b{color:var(--tx)}body[data-theme=dark] .hm-cal .dday{background:#1b2a4a;color:#9cc0ff}
+.hm-cal li.recent{border-top:1px solid var(--line);border-bottom:0;margin-top:2px}
+.hm-cal li.recent i{background:#eef4ff}.hm-cal li.recent span{font-size:12px;color:#1d5fd6;font-weight:700;white-space:nowrap}
+.hm-cal li.recent.none{cursor:default;opacity:.75}
+.rc-box pre .rc-li{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;width:100%;text-align:left;border:0;border-bottom:1px dashed var(--line);padding:10px 4px;background:none;font:inherit;cursor:pointer;white-space:normal}
+.rc-box pre .rc-li:hover{background:#eef4ff}.rc-li i{font-style:normal;font-size:18px}.rc-li b{font-size:13.5px}.rc-li small{font-size:12px;color:var(--mut)}
+.hm-col>.card:last-child{flex:1}
