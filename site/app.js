@@ -156,14 +156,28 @@ function chipsHtml(list,n){ return `<div class="chips">${list.slice(0,n).map(t=>
 document.addEventListener('click',e=>{ const c=e.target.closest('.chip[data-q]'); if(!c) return; if(S.mode!=='staff'){ S.mode='staff'; document.body.dataset.mode='staff'; } go('on'); ask(c.dataset.q); });
 
 /* ── 초기화 ── */
+/* 자료 색인(index.json, 약 10MB)은 「달성On 사용하기」 질문에만 필요하다.
+   첫 화면은 색인 없이 바로 그리고, 색인은 「달성On 사용하기」를 처음 열 때 받는다(한 번 받으면 브라우저가 기억). */
+let IDX_P=null;
+function idxNote(on,err){ let n=document.getElementById('idxNote'); if(!on&&!err){ if(n) n.remove(); return; } if(!n){ n=document.createElement('div'); n.id='idxNote'; n.className='idx-note'; const c=document.querySelector('.view[data-view="on"]'); (c||document.body).prepend(n); } n.innerHTML=err?'⚠ 자료를 불러오지 못했어요 — 새로고침해 주세요':'<i></i>달성군 자료(조례·규정 등)를 불러오는 중이에요 · 처음 한 번만 걸려요'; }
+function ensureIndex(){
+  if(IDX_P) return IDX_P;
+  IDX_P=fetch('data/index.json').then(r=>r.json()).then(j=>{
+    S.docs=j.docs; S.meta=j.meta; S.idx=buildIndex(S.docs);
+    const c=S.meta.counts; $('#navFoot').textContent=`자료 ${(c.law+c.minwon+c.data+c.internal).toLocaleString()}건 연결 · 기준 ${S.meta.built}`;
+    if($('#c1')) $('#c1').textContent=(c.law+c.minwon+c.data).toLocaleString(); if($('#c2')) $('#c2').textContent=c.internal;
+    try{ renderLib(); renderAdminSrc(); renderDataSeg(); renderPaper(); }catch(e){}
+    if(S.view==='data') renderData();
+  }).catch(e=>{ IDX_P=null; throw e; });
+  return IDX_P;
+}
 async function init(){
-  const j=await (await fetch('data/index.json')).json(); S.docs=j.docs; S.meta=j.meta; S.idx=buildIndex(S.docs);
-  const c=S.meta.counts; $('#navFoot').textContent=`자료 ${(c.law+c.minwon+c.data+c.internal).toLocaleString()}건 연결 · 기준 ${S.meta.built}`;
-  $('#c1').textContent=(c.law+c.minwon+c.data).toLocaleString(); $('#c2').textContent=c.internal;
-  renderTabs(); renderNav(); renderLib(); renderAdminSrc(); renderDataSeg(); resetChat(); updPill();
+  S.docs=[]; S.meta={counts:{law:0,minwon:0,data:0,internal:0},law_sources:[],laws:[],datasets:[]};
+  renderTabs(); renderNav(); resetChat(); updPill();
   $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,8).replace('class="chips"','class="chips big"');
   $('#hDate').value=`${new Date().getFullYear()}. ${new Date().getMonth()+1}. ${new Date().getDate()}. / 정보통신과`;
-  renderPaper(); go('home'); DalseongHwpx.load().catch(()=>{});
+  go('home'); DalseongHwpx.load().catch(()=>{});
+  // 색인은 미리 받지 않는다 — 「달성On 사용하기」(또는 관리자 자료 현황)를 처음 열 때 받는다
 }
 /* 좌측 메뉴: 「질문하기」 하나를 주인공으로, 나머지는 조용히. 서브탭 없음(이용 안내·관리자는 한 페이지 세로 구성) */
 /* 좌측 메뉴는 두 벌로 완전히 분리
@@ -229,7 +243,7 @@ document.addEventListener('click',e=>{ const b=e.target.closest('[data-chain]');
     if(to==='movie'){ set('mvSrc',full); }
     toast('보도자료 내용을 채워 두었어요 — 버튼만 누르세요'); },250); });
 function bootDone(){ const b=document.getElementById('boot'); if(!b||b._d) return; b._d=1; b.classList.add('out'); setTimeout(()=>b.remove(),450); }
-function go(v){ setTimeout(bootDone,60); const target=ALIAS[v]; const top=target||v; if(HOME_MENU.some(n=>n.view===top&&n.ready&&top!=='on')&&!HIT_SEEN[top]){ HIT_SEEN[top]=1; dsHit('use',top); } S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); renderGuideFeat(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='rule'&&window.RULEDRAFT) RULEDRAFT.init(); if(top==='minutes'&&window.MINUTES) MINUTES.init(); if(top==='banner'&&window.BANNER) BANNER.init(); if(top==='card'&&window.CARDNEWS) CARDNEWS.init(); if(top==='movie'&&window.MOVIE) MOVIE.init(); if(top==='share'&&window.SHARE) SHARE.init(); if(top==='analyze'&&window.ANALYZE) ANALYZE.init(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='trip') loadTrip(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
+function go(v){ setTimeout(bootDone,60); const target=ALIAS[v]; const top=target||v; if(HOME_MENU.some(n=>n.view===top&&n.ready&&top!=='on')&&!HIT_SEEN[top]){ HIT_SEEN[top]=1; dsHit('use',top); } S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); renderGuideFeat(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='rule'&&window.RULEDRAFT) RULEDRAFT.init(); if(top==='minutes'&&window.MINUTES) MINUTES.init(); if(top==='banner'&&window.BANNER) BANNER.init(); if(top==='card'&&window.CARDNEWS) CARDNEWS.init(); if(top==='movie'&&window.MOVIE) MOVIE.init(); if(top==='share'&&window.SHARE) SHARE.init(); if(top==='analyze'&&window.ANALYZE) ANALYZE.init(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='trip') loadTrip(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(['on','data','lib','stats','doc'].includes(top)){ if(top==='on'&&!S.idx) idxNote(true); ensureIndex().then(()=>idxNote(false)).catch(()=>idxNote(false,true)); } if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
 
 /* ── 홈 대시보드 ── */
 document.addEventListener('click',e=>{ if(e.target.id==='rcClose'||e.target.id==='rcModal'){ $('#rcModal').hidden=true; return; } const g=e.target.closest('[data-go]'); if(!g) return; if(g.tagName==='A') e.preventDefault(); const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });
@@ -372,6 +386,7 @@ $('#btnFold').onclick=()=>{ document.body.dataset.chat='off'; $('#btnUnfold').hi
 $('#btnUnfold').onclick=()=>{ document.body.dataset.chat='on'; $('#btnUnfold').hidden=true; };
 async function ask(q){
   S.busy=true; $('#btnSend').disabled=true; $('#onCol').classList.remove('empty'); addMsg('user',q); S.stats.q++; window.dsHit&&dsHit('q','on');
+  if(!S.idx){ const w=document.createElement('div'); w.className='msg ai'; w.innerHTML='<div class="av">On</div><div class="bub">자료를 불러오는 중이에요… 잠깐만요 ⏳</div>'; $('#msgs').appendChild(w); try{ await ensureIndex(); }catch(e){ w.querySelector('.bub').textContent='자료를 불러오지 못했어요. 새로고침 후 다시 물어봐 주세요.'; S.busy=false; $('#btnSend').disabled=false; return; } w.remove(); }
   const filter=d=>{ if(d.type==='internal') return S.layers[2]; return S.layers[1]; };
   let hits=rerank(q,search(expand(q),{filter,k:8})); const ci=countIntent(q); if(!ci&&!relevant(q,hits)) hits=[];
   if(ci){ const agg=S.docs.find(d=>d.source===ci.ds&&d.title.endsWith('읍면별 집계')); if(agg&&!hits.some(h=>h.doc===agg)) hits.unshift({doc:agg,score:99}); }
