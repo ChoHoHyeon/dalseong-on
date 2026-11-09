@@ -175,40 +175,51 @@
 
     <!-- 결과보고서 작성하기 (세부 내역 추후 확정) -->
     <!-- 조례·지침 초안 만들기 (세부 내역 추후 확정) -->
-    <section class="view" data-view="rule">
-      <div class="vh"><h2>조례·지침 초안 만들기</h2><p>새로 만들지, 고칠지 고르고 넣고 싶은 내용을 문장으로 적으면 — 관련 법령과 다른 지자체 조례를 먼저 찾아 읽은 뒤, 실제 조례안 서식으로 초안을 씁니다.</p></div>
-      <div class="card pcard">
-        <h4>1. 무엇을 하시나요? <small>「지방자치법」 제28조 · 법제처 자치법규 입안 기준</small></h4>
-        <input type="hidden" id="ruMode" value="new">
+    <section class="view ru-view" data-view="rule">
+      <div class="vh"><h2>조례·지침 초안 만들기</h2><p>넣고 싶은 내용을 문장으로 적으면 — 관련 법령과 다른 지자체 조례를 먼저 찾아 읽은 뒤, 실제 조례안 서식으로 초안을 씁니다.</p></div>
+      <ol class="ru-rail" id="ruRail">
+        <li data-s="1" class="on"><i>1</i><span>유형 선택</span></li>
+        <li data-s="2"><i>2</i><span>내용 입력</span></li>
+        <li data-s="3"><i>3</i><span>법령·조례 검색</span></li>
+        <li data-s="4"><i>4</i><span>조례안 확인</span></li>
+      </ol>
+      <input type="hidden" id="ruMode" value="new">
+
+      <div class="card ru-card" id="ruS1">
+        <div class="ru-sh"><i>1</i><div><b>무엇을 하시나요?</b><small>새로 만드는지, 이미 있는 달성군 조례를 고치는지에 따라 진행 방식이 달라집니다</small></div></div>
         <div class="ru-modes">
-          <button type="button" class="ru-mode on" data-mode="new"><span class="ru-mi">📜</span><b>새로 만들기 (제정)</b><small>아직 없는 조례·지침을 처음 만듭니다<br>관련 법령 → 다른 지자체 조례 참고 → 조문 체계 초안</small></button>
-          <button type="button" class="ru-mode" data-mode="amend"><span class="ru-mi">✏️</span><b>고치기 (일부개정)</b><small>이미 있는 달성군 조례를 고칩니다<br>현행 조례 불러오기 → 개정문 · 신구조문대비표</small></button>
+          <button type="button" class="ru-mode on" data-mode="new"><span class="ru-mi">📜</span><span class="ru-mt"><b>새로 만들기 <em>제정</em></b><small>아직 없는 조례·지침을 처음 만듭니다</small><span class="ru-flow">관련 법령 → 다른 지자체 조례 참고 → 조문 체계 초안</span></span><span class="ru-ck">✓</span></button>
+          <button type="button" class="ru-mode" data-mode="amend"><span class="ru-mi">✏️</span><span class="ru-mt"><b>고치기 <em>일부개정</em></b><small>이미 있는 달성군 조례를 고칩니다</small><span class="ru-flow">현행 조례 불러오기 → 개정문 · 신구조문대비표</span></span><span class="ru-ck">✓</span></button>
         </div>
-        <h4 style="margin-top:18px">2. 내용 적기</h4>
-        <fieldset class="pbox req-box">
-          <legend>꼭 입력해 주세요</legend>
-          <label class="pfull"><span class="cap" id="ruNameCap">만들 조례·지침 이름 <b class="req">*</b> <small class="hint" id="ruNameHint">가제여도 됩니다</small></span>
+      </div>
+
+      <div class="card ru-card" id="ruS2">
+        <div class="ru-sh"><i>2</i><div><b>내용 적기</b><small>이름과 넣고 싶은 내용만 적으면 됩니다 — 문장으로 편하게</small></div></div>
+        <div class="ru-form">
+          <label class="ru-f"><span class="ru-lb" id="ruNameCap">만들 조례·지침 이름 <b class="req">*</b> <small id="ruNameHint">가제여도 됩니다</small></span>
             <span class="ru-namerow"><input id="ruName" placeholder="예) 달성군 공공데이터 품질관리 조례"><button type="button" id="ruFind" hidden>🔍 달성군 조례 찾기</button></span></label>
           <div id="ruPick" class="ru-pick" hidden></div>
-          <label class="pfull"><span class="cap" id="ruGistCap">넣고 싶은 내용 <b class="req">*</b> <small class="hint">문장으로 편하게 적으세요 — 이걸 바탕으로 조문을 씁니다</small></span><textarea id="ruGist" rows="6"></textarea></label>
-          <details class="ru-cur" id="ruCurWrap" hidden><summary>현행 조문 <small id="ruCurState">— 「달성군 조례 찾기」로 불러오거나 직접 붙여넣기</small></summary>
+          <details class="ru-cur" id="ruCurWrap" hidden><summary><span>📄 현행 조문</span> <small id="ruCurState">— 「달성군 조례 찾기」로 불러오거나 직접 붙여넣기</small></summary>
             <textarea id="ruCur" rows="8" placeholder="제5조(○○) ① 군수는 …&#10;② …"></textarea></details>
-        </fieldset>
-        <details class="pbox opt-box ru-opt"><summary>선택 입력 — 상위 법령을 이미 알고 있다면</summary>
-          <label class="pfull">상위 법령·위임근거 <small class="hint">비워 두면 자동으로 찾습니다</small><input id="ruBase" placeholder="예) 「공공데이터의 제공 및 이용 활성화에 관한 법률」 제12조"></label>
-        </details>
-        <div class="pact"><button id="ruGo" class="p">초안 만들기</button><button id="ruSample">예시로 채우기</button><button id="ruReset">비우기</button><span class="hint" id="ruMsg"></span></div>
-        <p class="hint" style="margin-top:8px">※ 법령·조례 검색은 국가법령정보센터(law.go.kr)·자치법규정보시스템 자료를 씁니다. 초안 작성까지만 지원하며, 법제심사·조례규칙심의회·의회 의결 절차는 그대로입니다.</p>
+          <label class="ru-f"><span class="ru-lb" id="ruGistCap">넣고 싶은 내용 <b class="req">*</b> <small>이 문장을 기준으로 조문을 씁니다</small></span><textarea id="ruGist" rows="6"></textarea></label>
+          <details class="ru-opt"><summary>＋ 상위 법령을 이미 알고 있다면 (선택)</summary>
+            <label class="ru-f"><input id="ruBase" placeholder="예) 「공공데이터의 제공 및 이용 활성화에 관한 법률」 제12조 — 비워 두면 자동으로 찾습니다"></label>
+          </details>
+        </div>
+        <div class="ru-bar"><button id="ruGo" class="ru-go">초안 만들기 <span>→</span></button><button id="ruSample" class="ru-sub">예시로 채우기</button><button id="ruReset" class="ru-sub">비우기</button><span class="hint" id="ruMsg"></span></div>
+        <p class="ru-note">법령·조례 검색은 국가법령정보센터(law.go.kr) Open API를 씁니다 · 자치법규정보시스템 자료 포함. 초안 작성까지만 지원하며 법제심사·조례규칙심의회·의회 의결 절차는 그대로입니다.</p>
       </div>
-      <div class="card pout" id="ruSteps" hidden>
-        <h4>진행 상황 <small id="ruStepNote">순서대로 찾고 읽은 뒤 씁니다 · 1~2분 걸릴 수 있어요</small></h4>
+
+      <div class="card ru-card" id="ruSteps" hidden>
+        <div class="ru-sh"><i>3</i><div><b>관련 법령·조례 찾고 읽기</b><small id="ruStepNote">순서대로 찾고 읽은 뒤 씁니다 · 1분 안팎 걸립니다</small></div></div>
         <ol class="ru-steps" id="ruStepList"></ol>
         <div id="ruRefs"></div>
       </div>
-      <div class="card pout" id="ruleOut" hidden>
-        <h4>생성된 초안 <small>법무 검토 전 담당자 확인용</small></h4>
+
+      <div class="card ru-card" id="ruleOut" hidden>
+        <div class="ru-sh"><i>4</i><div><b>조례안 확인</b><small>법무 검토 전 담당자 확인용 초안입니다</small></div>
+          <div class="ru-shact"><button id="ruHwpx" class="ru-go sm">📄 한글 파일</button><button id="ruCopy" class="ru-sub">조례안 복사</button><button id="ruAgain" class="ru-sub">다시 생성</button></div></div>
         <div class="pv rpwrap" id="ruleView"></div>
-        <div class="pact"><button id="ruHwpx" class="p">📄 한글 파일로 내려받기</button><button id="ruCopy">조례안 복사</button><button id="ruAgain">다시 생성</button></div>
       </div>
     </section>
 

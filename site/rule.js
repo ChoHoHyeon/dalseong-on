@@ -211,7 +211,8 @@ async function callModel(system,user,o={}){
 async function callLong(system,user,o={}){
   let all=''; for(let k=0;k<5;k++){ const oo={...o,prefill:all?all.replace(/\s+$/,''):undefined,onText:t=>o.onText&&o.onText((all?all.replace(/\s+$/,''):'')+t)};
     let part=''; try{ part=await callModel(system,user,oo); }catch(e){ if(!all) throw e; }
-    all=(all?all.replace(/\s+$/,''):'')+part; if(oo.done||!part) break; o.onCont&&o.onCont(k+1); }
+    if(all&&/^\s*제목\s*[:：]/.test(part)) break;                       // 이어 쓰기가 처음부터 다시 쓰면 버림
+    all=(all?all.replace(/\s+$/,''):'')+part; if(oo.done||!part||/확인\s*요청\s*[:：][\s\S]*\S/.test(part)) break; o.onCont&&o.onCont(k+1); }
   return all;
 }
 const modelOn=()=>{ const S=window.S||{}; return (S.key||S.server)&&!S.offline; };
@@ -219,13 +220,15 @@ const jsonOf=t=>{ t=String(t); const f=[...t.matchAll(/```(?:json)?\s*([\s\S]*?)
   for(const c of f){ try{ return JSON.parse(c); }catch(e){} }
   const end=t.lastIndexOf('}'); for(let i=t.indexOf('{');i>=0&&i<end;i=t.indexOf('{',i+1)){ try{ return JSON.parse(t.slice(i,end+1)); }catch(e){} } return null; };
 
+/* ── 상단 단계 표시(1 유형 → 2 내용 → 3 검색 → 4 확인) ── */
+function rail(n,doneUpTo){ document.querySelectorAll('#ruRail li').forEach(li=>{ const k=+li.dataset.s; li.className=k<n||k<=(doneUpTo||0)?'done':(k===n?'on':''); }); }
 /* ── 진행 단계 표시 ── */
 const ST={};
 function stepsInit(mode){
   const L=[['kw','요청 내용 정리','검색어를 뽑습니다'],['law','관련 법령 찾기','국가법령정보센터 · 상위 법령'],['ordin','다른 지자체 비슷한 조례 찾기','자치법규정보시스템 자료'],
     ['cur',mode==='amend'?'달성군 현행 조례 불러오기':'달성군에 같은 조례가 있는지 확인','달성군 자치법규'],['read','참고 조문 읽기','찾은 법령·조례 본문'],['write','조례안 작성','실제 조례 서식으로']];
   $('#ruStepList').innerHTML=L.map(([k,t,d],i)=>`<li id="rs-${k}" class="wait"><span class="rs-n">${i+1}</span><div><b>${t}</b><small>${d}</small><em></em></div><i class="rs-t"></i></li>`).join('');
-  $('#ruRefs').innerHTML=''; $('#ruSteps').hidden=false; $('#ruSteps').scrollIntoView({behavior:'smooth',block:'start'});
+  $('#ruRefs').innerHTML=''; $('#ruSteps').hidden=false; rail(3); $('#ruSteps').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function step(k,state,msg){ const li=$('#rs-'+k); if(!li) return; li.className=state; if(msg!=null) li.querySelector('em').textContent=msg;
   if(state==='run'){ if(li.dataset.st==='run'){ return; } li.dataset.st='run'; ST[k]=Date.now(); clearInterval(ST['_'+k]); ST['_'+k]=setInterval(()=>{ li.querySelector('.rs-t').textContent=Math.round((Date.now()-ST[k])/1000)+'초'; },500); }
@@ -341,7 +344,7 @@ async function make(){
     if(mode==='amend'&&!$('#ruCur').value.trim()&&R.current){ $('#ruCur').value=R.current; $('#ruCurWrap').hidden=false; $('#ruCurState').textContent='— 자동으로 불러옴 (원문과 대조하세요)'; }
     const cur=($('#ruCur').value||'').trim();
     $('#ruRefs').innerHTML=refsHtml(R)+($('#ruRefs').innerHTML.includes('⚠')?$('#ruRefs').innerHTML:'');
-    step('write','run');
+    rail(4,3); step('write','run');
     if(modelOn()){
       const ref=[
         R.laws.length?'[상위 법령]\n'+R.laws.map(x=>`- ${x.name}${x.articles?' : '+x.articles:''}`).join('\n'):'',
@@ -360,7 +363,7 @@ async function make(){
       step('write','done','완료');
       $('#ruMsg').textContent='작성 완료 — 위임근거·상위 법령·용어는 법무 검토 전 담당자가 확인하세요.';
     }else{ await new Promise(r=>setTimeout(r,400)); U.out=offline(mode); step('write','done','오프라인 모드 — 틀만 만들었습니다'); }
-    U.mode=mode; render(U.out,mode); if(window.S&&S.stats) S.stats.gen++; window.dsHit&&dsHit('gen','rule');
+    U.mode=mode; render(U.out,mode); rail(5); if(window.S&&S.stats) S.stats.gen++; window.dsHit&&dsHit('gen','rule');
   }catch(err){ step('write','fail','⚠ '+err.message); $('#ruMsg').textContent='⚠ '+err.message; }
   finally{ U.busy=false; $('#ruGo').disabled=false; }
 }
@@ -395,7 +398,9 @@ function init(){
     $('#ruName').placeholder=a?'예) 공공데이터 제공 및 이용 활성화':'예) 달성군 공공데이터 품질관리 조례';
     $('#ruGist').placeholder=a?'무엇을 왜 바꾸고 싶은지 문장으로 편하게 적어 주세요.\n예) 공공데이터책임관이 하는 일에 데이터기반행정 업무 총괄도 넣고 싶어요. 품질관리는 지금 "할 수 있다"로 되어 있는데 매년 한 번 이상 품질진단을 꼭 하도록 바꾸고, 결과를 홈페이지에 공개하는 근거도 만들고 싶습니다.'
       :'어떤 내용을 담고 싶은지 문장으로 편하게 적어 주세요.\n예) 우리 군이 가진 공공데이터의 품질을 체계적으로 관리하고 싶어요. 부서마다 데이터 관리 책임자를 두고, 매년 품질진단을 해서 결과를 공개하고, 우수 부서는 포상할 수 있게 하고 싶습니다. 진단 방법은 군수가 따로 정하도록 하면 좋겠어요.'; };
-  document.querySelectorAll('.ru-mode').forEach(b=>b.onclick=()=>sw(b.dataset.mode)); sw($('#ruMode').value||'new');
+  document.querySelectorAll('.ru-mode').forEach(b=>b.onclick=()=>{ sw(b.dataset.mode); rail(2); $('#ruS2').scrollIntoView({behavior:'smooth',block:'start'}); }); sw($('#ruMode').value||'new');
+  document.querySelectorAll('#ruRail li').forEach(li=>li.onclick=()=>{ const t={1:'#ruS1',2:'#ruS2',3:'#ruSteps',4:'#ruleOut'}[li.dataset.s]; const el=$(t); if(el&&!el.hidden) el.scrollIntoView({behavior:'smooth',block:'start'}); });
+  $('#ruGist').addEventListener('input',()=>{ if($('#ruSteps').hidden) rail($('#ruGist').value.trim()&&$('#ruName').value.trim()?3:2,1); });
   $('#ruFind').onclick=findOwn; $('#ruName').addEventListener('keydown',e=>{ if(e.key==='Enter'&&$('#ruMode').value==='amend'){ e.preventDefault(); findOwn(); } });
   $('#ruGo').onclick=make; $('#ruAgain').onclick=make; $('#ruHwpx').onclick=hwpx;
   $('#ruCopy').onclick=()=>{ if(!U.out) return; navigator.clipboard.writeText(lawText(U.out,U.mode)); toast?.('조례안을 복사했습니다 — 한글에 붙여넣기'); };
@@ -410,7 +415,7 @@ function init(){
     }
     toast?.('예시를 채웠습니다 — 「초안 만들기」를 눌러보세요');
   };
-  $('#ruReset').onclick=()=>{ ['ruName','ruBase','ruCur','ruGist'].forEach(id=>$('#'+id).value=''); $('#ruleOut').hidden=true; $('#ruSteps').hidden=true; $('#ruPick').hidden=true; $('#ruMsg').textContent=''; };
+  $('#ruReset').onclick=()=>{ ['ruName','ruBase','ruCur','ruGist'].forEach(id=>$('#'+id).value=''); $('#ruleOut').hidden=true; $('#ruSteps').hidden=true; $('#ruPick').hidden=true; $('#ruMsg').textContent=''; rail(1); };
 }
 window.RULEDRAFT={init};
 })();
