@@ -1680,3 +1680,7 @@ body[data-theme=dark] .hm-cal li.mine b{color:var(--tx)}body[data-theme=dark] .h
 .hero-float .f5{left:52%;top:62%;animation-delay:-1.7s}
 body[data-theme=dark] .hero-float .fchip{background:var(--panel2);color:#cfe0ff;border-color:var(--line)}
 @media (max-width:900px){.hero-float{display:flex!important;flex-wrap:wrap;gap:8px;min-height:0}.hero-float .fchip{position:static;animation:none}}
+/* 배너 글줄 간격 넉넉하게 (칩이 빠진 자리만큼) */
+.hero.hero-light .hero-txt{display:flex;flex-direction:column;justify-content:center}
+.hero.hero-light h2{line-height:1.45;margin:0 0 14px}
+.hero.hero-light p.lead{margin-top:0;line-height:1.6}
