@@ -234,7 +234,7 @@
       </ol>
 
       <div class="card ru-card" id="mtS1">
-        <div class="ru-sh"><i>1</i><div><b>회의 정보</b><small>제목만 꼭 적으면 됩니다 — 나머지는 비워 두면 녹음에서 파악하거나 ○○로 둡니다</small></div></div>
+        <div class="ru-sh"><i>1</i><div><b>회의 정보</b><small>제목만 꼭 적으면 됩니다 — 나머지는 비워 두면 녹음에서 파악하거나 ○○로 둡니다</small></div><div class="ru-shact"><button type="button" id="mtFill" class="ru-sub">✨ 예시로 채우기</button></div></div>
         <div class="ru-form">
           <label class="ru-f"><span class="ru-lb">회의 제목 <b class="req">*</b></span><input id="mtName" placeholder="예) 2026년 데이터기반행정 실태점검 대응 회의"></label>
           <div class="mt-optbox">
@@ -256,6 +256,8 @@
       <div class="card ru-card" id="mtS2">
         <div class="ru-sh"><i>2</i><div><b>녹음 올리기</b><small>올리면 바로 글로 바꾸고 회의록까지 이어서 정리합니다</small></div><span class="stt-badge mt-badge">🔒 이 PC 안에서만 처리 · 외부 전송 없음</span></div>
         <label class="mt-drop" id="mtDrop"><span class="mt-dico">🎙️</span><span class="mt-dtx"><b>녹음 파일 선택 또는 여기로 끌어다 놓기</b><small>mp3 · m4a · wav · webm · ogg</small></span><span class="mt-dbtn">파일 고르기</span><input type="file" id="mtAudio" accept="audio/*,.m4a,.mp3,.wav,.webm,.ogg,.aac"></label>
+        <div class="mt-file" id="mtFile" hidden><span class="mt-fico">🎵</span><div class="mt-fn"><b id="mtFileName"></b><small id="mtFileInfo"></small></div><span class="mt-fst" id="mtFileSt">올라감 ✓</span></div>
+        <div class="mt-run" id="mtRun" hidden><span class="mt-spin"></span><div><b id="mtRunH">자동으로 정리하고 있어요 — 따로 누를 버튼은 없습니다</b><small id="mtRunS">녹음 → 글로 바꾸기 → 회의록 정리 순서로 끝까지 진행됩니다. 5분 녹음 기준 4~5분 걸려요. 끝날 때까지 이 화면에서 기다려 주세요.</small></div><em id="mtRunT">0:00</em></div>
         <div class="mt-sample"><span class="mt-st">녹음이 없으면</span><button id="mtSampleAudio" class="ru-sub">▶ 샘플 녹음(5분 40초)으로 해보기</button><audio id="mtSamplePlayer" controls preload="none" src="assets/sample_meeting.mp3"></audio></div>
       </div>
 

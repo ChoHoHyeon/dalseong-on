@@ -169,23 +169,37 @@ function init(){
     toast?.('예시를 채웠습니다 — 「회의록 정리하기」를 눌러보세요');
   };
   /* 녹음 파일 → 글 → 바로 정리 */
+  /* 진행 중 잠금 + 안내 */
+  let runT=null;
+  function busy(on,f){
+    const sec=$('[data-view="minutes"]'); sec.classList.toggle('mt-busy',on);
+    if(on){ const t0=Date.now(); $('#mtRun').hidden=false; $('#mtRun').className='mt-run'; $('#mtRunH').textContent='자동으로 정리하고 있어요 — 따로 누를 버튼은 없습니다';
+      $('#mtRunS').textContent='녹음 → 글로 바꾸기 → 회의록 정리 순서로 끝까지 진행됩니다. 5분 녹음 기준 4~5분 걸려요. 끝날 때까지 이 화면에서 기다려 주세요.';
+      clearInterval(runT); runT=setInterval(()=>{ const s=Math.round((Date.now()-t0)/1000); $('#mtRunT').textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; },1000);
+      $('#mtFile').hidden=false; $('#mtDrop').hidden=true; $('#mtFileName').textContent=f.name; $('#mtFileInfo').textContent=`${(f.size/1048576).toFixed(1)}MB${f.dur?' · '+f.dur:''}`; $('#mtFileSt').textContent='올라감 ✓'; }
+    else clearInterval(runT);
+  }
+  function finish(ok,msg){ busy(false); const r=$('#mtRun'); r.className='mt-run '+(ok?'ok':'err'); $('#mtRunH').textContent=ok?'✅ 회의록이 완성됐어요 — 아래 4단계에서 확인하세요':'⚠ 진행이 멈췄어요'; $('#mtRunS').textContent=ok?'다른 녹음을 올리려면 「다른 녹음 올리기」를 누르세요.':(msg||''); $('#mtFileSt').innerHTML='<button type="button" id="mtOther" class="ru-sub">다른 녹음 올리기</button>'; $('#mtOther').onclick=()=>{ $('#mtFile').hidden=true; $('#mtRun').hidden=true; $('#mtDrop').hidden=false; }; }
   async function runAudio(f){
     if(!f) return; if(!window.DsSTT){ $('#mtMsg').textContent='음성인식 모듈을 불러오지 못했습니다.'; return; }
     if(!v('mtName')) $('#mtName').value=f.name.replace(/\.[^.]+$/,'').replace(/^샘플_/,'');
-    $('#mtSttWrap').hidden=false; $('#mtGo').disabled=true; $('#mtAudio').disabled=true; mrail(3); $('#mtS3').scrollIntoView({behavior:'smooth',block:'start'});
-    const prog=p=>{ $('#mtSttBar').style.width=(p.pct||0)+'%'; $('#mtSttMsg').textContent=p.msg||''; if(p.text) $('#mtNotes').value=p.text; };
+    busy(true,f); $('#mtSttWrap').hidden=false; $('#mtGo').disabled=true; $('#mtAudio').disabled=true; mrail(3);
+    const prog=p=>{ $('#mtSttBar').style.width=(p.pct||0)+'%'; $('#mtSttMsg').textContent=p.msg||''; if(p.text) $('#mtNotes').value=p.text; $('#mtFileSt').textContent=p.stage==='run'?'글로 바꾸는 중…':(p.stage==='model'?'준비 중…':'읽는 중…'); };
     try{
       const text=await DsSTT.transcribe(f,prog);
-      $('#mtNotes').value=text; $('#mtSttBar').style.width='100%'; $('#mtSttMsg').textContent='글로 바꾸기 완료 — 이어서 회의록을 정리합니다';
-      $('#mtGo').disabled=false; await make();
-    }catch(err){ $('#mtSttMsg').textContent='⚠ '+err.message; $('#mtGo').disabled=false; }
+      $('#mtNotes').value=text; $('#mtSttBar').style.width='100%'; $('#mtSttMsg').textContent='글로 바꾸기 완료 — 이어서 회의록을 정리합니다'; $('#mtFileSt').textContent='회의록 정리 중…';
+      $('#mtGo').disabled=false; await make(); finish(!/⚠/.test($('#mtMsg').textContent),$('#mtMsg').textContent);
+    }catch(err){ $('#mtSttMsg').textContent='⚠ '+err.message; $('#mtGo').disabled=false; finish(false,err.message); }
     finally{ $('#mtAudio').disabled=false; $('#mtAudio').value=''; $('#mtSampleAudio').disabled=false; }
   }
+  const fillInfo=()=>{ $('#mtName').value='2026년 데이터기반행정 실태점검 대응 회의'; $('#mtDate').value=new Date().toISOString().slice(0,10); $('#mtTime').value='14:00'; $('#mtPlace').value='군청 3층 소회의실'; $('#mtDept').value='행정국 정보통신과';
+    $('#mtWho').value='정보통신과장, 정보통계팀장, 조호현 주무관, 기획예산실 담당, 민원과 담당'; $('#mtAgenda').value='실태점검 지표별 담당 배정\n공동 데이터 분석 과제 선정\n하반기 주민 정보화교육 일정'; mrail(2); };
+  $('#mtFill').onclick=()=>{ fillInfo(); toast?.('회의 정보를 예시로 채웠습니다 — 2단계에서 녹음을 올리거나 샘플 녹음을 눌러 보세요'); };
   $('#mtAudio').onchange=e=>runAudio(e.target.files[0]);
   $('#mtSampleAudio').onclick=async()=>{
     $('#mtSampleAudio').disabled=true; $('#mtMsg').textContent='샘플 녹음을 불러오는 중…';
-    try{ const b=await (await fetch('assets/sample_meeting.mp3')).blob(); if(!v('mtName')) $('#mtName').value='2026년 데이터기반행정 실태점검 대응 회의'; if(!v('mtWho')) $('#mtWho').value='정보통신과장, 정보통계팀장, 조호현 주무관'; if(!v('mtPlace')) $('#mtPlace').value='군청 3층 소회의실'; $('#mtMsg').textContent='';
-      await runAudio(new File([b],'샘플_회의녹음.mp3',{type:'audio/mpeg'})); }
+    try{ const b=await (await fetch('assets/sample_meeting.mp3')).blob(); if(!v('mtName')) fillInfo(); $('#mtMsg').textContent='';
+      const f=new File([b],'샘플_회의녹음.mp3',{type:'audio/mpeg'}); f.dur='5분 40초'; await runAudio(f); }
     catch(e){ $('#mtMsg').textContent='⚠ 샘플을 불러오지 못했습니다: '+e.message; $('#mtSampleAudio').disabled=false; }
   };
   $('#mtReset').onclick=()=>{ ['mtName','mtTime','mtPlace','mtWho','mtAgenda','mtNotes'].forEach(id=>$('#'+id).value=''); $('#minutesOut').hidden=true; $('#mtMsg').textContent=''; $('#mtSttWrap').hidden=true; $('#mtSttBar').style.width='0'; mrail(1); };

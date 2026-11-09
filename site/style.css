@@ -1886,3 +1886,20 @@ html[data-theme=dark] .lw-paper,body.dark .lw-paper{background:#fff;color:#111}
 .mt-part{margin:30px 0 12px;padding:14px 0 10px;border-top:2px solid #003087;text-align:center}
 .mt-part span{display:block;font-size:19px;font-weight:800;letter-spacing:8px;color:#14213d}
 .mt-part small{display:block;font-size:12px;color:#666;margin-top:4px}
+/* 단계 표시줄: 마지막 단계가 칸을 차지해 왼쪽으로 쏠리던 것 → 마지막은 글자 폭만, 선이 나머지를 고르게 채움 */
+.ru-rail li:last-child{flex:0 0 auto}
+.ru-rail{background:none;padding:12px 18px;border:1px solid var(--line);border-radius:14px;background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(8px);box-shadow:0 6px 18px rgba(30,60,120,.06)}
+/* 회의록 — 올린 파일 카드 · 자동 진행 안내 · 진행 중 잠금 */
+.mt-file{display:flex;align-items:center;gap:14px;padding:16px 20px;border:1.5px solid rgba(18,161,95,.45);border-radius:16px;background:rgba(18,161,95,.06)}
+.mt-fico{font-size:24px;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:#12a15f;flex:none}
+.mt-fn{flex:1;display:flex;flex-direction:column;gap:2px} .mt-fn b{font-size:15px} .mt-fn small{font-size:12.5px;color:var(--mut)}
+.mt-fst{font-size:13px;font-weight:700;color:#12a15f}
+.mt-run{display:flex;align-items:center;gap:14px;margin-top:12px;padding:14px 18px;border-radius:14px;background:linear-gradient(90deg,rgba(47,111,237,.10),rgba(47,111,237,.04));border:1px solid rgba(47,111,237,.3)}
+.mt-run>div{flex:1;display:flex;flex-direction:column;gap:3px} .mt-run b{font-size:14.5px;color:var(--acc)} .mt-run small{font-size:12.5px;color:var(--mut);line-height:1.5}
+.mt-run em{font-style:normal;font-variant-numeric:tabular-nums;font-weight:800;font-size:18px;color:var(--acc)}
+.mt-spin{width:26px;height:26px;border-radius:50%;border:3px solid rgba(47,111,237,.2);border-top-color:var(--acc);animation:mtSpin .9s linear infinite;flex:none}
+@keyframes mtSpin{to{transform:rotate(360deg)}}
+.mt-run.ok{background:rgba(18,161,95,.08);border-color:rgba(18,161,95,.4)} .mt-run.ok b,.mt-run.ok em{color:#12a15f} .mt-run.ok .mt-spin{display:none}
+.mt-run.err{background:rgba(232,89,12,.07);border-color:rgba(232,89,12,.4)} .mt-run.err b,.mt-run.err em{color:#e8590c} .mt-run.err .mt-spin{display:none}
+.mt-busy #mtS1 input,.mt-busy #mtS1 textarea,.mt-busy #mtS1 button,.mt-busy .mt-sample,.mt-busy #mtS3 .ru-bar,.mt-busy #mtNotes{pointer-events:none;opacity:.5}
+.mt-drop[hidden],.mt-file[hidden],.mt-run[hidden]{display:none}
