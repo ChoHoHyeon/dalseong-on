@@ -222,7 +222,7 @@ function setMode(m){ S.mode=m; document.body.dataset.mode=m; go(NAV[m][0].id); }
 function go(v){ const target=ALIAS[v]; const top=target||v; if(HOME_MENU.some(n=>n.view===top&&n.ready&&top!=='on')&&!HIT_SEEN[top]){ HIT_SEEN[top]=1; dsHit('use',top); } S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='rule'&&window.RULEDRAFT) RULEDRAFT.init(); if(top==='minutes'&&window.MINUTES) MINUTES.init(); if(top==='banner'&&window.BANNER) BANNER.init(); if(top==='card'&&window.CARDNEWS) CARDNEWS.init(); if(top==='movie'&&window.MOVIE) MOVIE.init(); if(top==='share'&&window.SHARE) SHARE.init(); if(top==='analyze'&&window.ANALYZE) ANALYZE.init(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='trip') loadTrip(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
 
 /* ── 홈 대시보드 ── */
-document.addEventListener('click',e=>{ const g=e.target.closest('[data-go]'); if(!g) return; const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });
+document.addEventListener('click',e=>{ if(e.target.id==='rcClose'||e.target.id==='rcModal'){ $('#rcModal').hidden=true; return; } const g=e.target.closest('[data-go]'); if(!g) return; if(g.tagName==='A') e.preventDefault(); const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });
 const PAL=['#2f6fed','#0fa876','#d98a00','#a04ccf'];
 function renderHome(){
   $('#heroDate').textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'})+' · 정보통신과 실험판 — 써보고 의견 주세요';
@@ -263,30 +263,52 @@ const MSGS=[
 function todayMsg(){ const d=new Date(), w='일월화수목금토'[d.getDay()]; const byDay=MSGS.filter(m=>m[0]===w); const rest=MSGS.filter(m=>!m[0]); const seed=Math.floor(d/864e5);
   return (byDay.length&&seed%2===0)?byDay[0][1]:rest[seed%rest.length][1]; }
 const MNAME={minutes:'회의록',press:'보도자료',card:'카드뉴스',meal:'급량비',trip:'출장비',family:'경조사 카드',banner:'현수막',movie:'홍보영상',analyze:'데이터 분석',rule:'조례·지침',share:'나눔터',on:'달성On 질문'};
+/* 최근 작업 — 이 브라우저(localStorage)에만 저장. 서버로 보내지 않는다 */
+const RC_KEY='dsOn.recent';
+const rcGet=()=>{ try{ return JSON.parse(localStorage.getItem(RC_KEY)||'[]'); }catch(e){ return []; } };
+window.dsSave=(view,title,text)=>{ try{ const L=rcGet().filter(x=>!(x.view===view&&x.title===title)); L.unshift({id:Date.now().toString(36),view,title:String(title||'').slice(0,60),text:String(text||'').slice(0,8000),at:Date.now()}); localStorage.setItem(RC_KEY,JSON.stringify(L.slice(0,8))); }catch(e){} };
+const ICON={minutes:'🎙',press:'📰',card:'📱',banner:'🎏',movie:'🎬',analyze:'📊',rule:'⚖️'};
+const ago=t=>{ const m=Math.round((Date.now()-t)/6e4); return m<1?'방금':m<60?m+'분 전':m<1440?Math.round(m/60)+'시간 전':Math.round(m/1440)+'일 전'; };
+function renderRecent(){
+  const L=rcGet();
+  $('#hmRecent').innerHTML=L.length?L.slice(0,5).map(x=>`<li data-rc="${x.id}"><i>${ICON[x.view]||'📝'}</i><div><b>${esc(x.title)}</b><small>${MNAME[x.view]||''} · ${ago(x.at)}</small></div><span>›</span></li>`).join('')
+    :`<li class="empty">아직 만든 결과물이 없어요. 회의록·보도자료·카드뉴스를 만들면 여기에 쌓여서 <b>새로고침해도 다시 볼 수 있어요</b>.</li>`;
+  $$('#hmRecent [data-rc]').forEach(li=>li.onclick=()=>{ const x=rcGet().find(y=>y.id===li.dataset.rc); if(!x) return;
+    $('#rcTitle').textContent=x.title; $('#rcMeta').textContent=`${MNAME[x.view]||''} · ${new Date(x.at).toLocaleString('ko-KR')}`; $('#rcText').textContent=x.text; $('#rcModal').hidden=false;
+    $('#rcCopy').onclick=()=>{ navigator.clipboard.writeText(x.text); toast('복사했습니다'); };
+    $('#rcGo').onclick=()=>{ $('#rcModal').hidden=true; setMode('staff'); go(x.view); };
+    $('#rcDel').onclick=()=>{ try{ localStorage.setItem(RC_KEY,JSON.stringify(rcGet().filter(y=>y.id!==x.id))); }catch(e){} $('#rcModal').hidden=true; renderRecent(); }; });
+}
+/* 이번 달 — 날짜에 맞춰 바뀌는 때맞춤 안내 */
+function calItems(){
+  const d=new Date(), D=d.getDate(), M=d.getMonth()+1, last=new Date(d.getFullYear(),M,0).getDate(), I=[];
+  if(D<=10) I.push(['meal','🍚',`${M-1||12}월분 급량비 정산하실 때예요`,'초과근무 확인서 PDF 하나면 집행대장까지']), I.push(['trip','🚗',`${M-1||12}월분 관내여비도 같이 정리하세요`,'출장내역서 PDF로 지급조서 자동']);
+  if(D>10&&D<=24) I.push(['press','📰','이달 행사가 있다면 홍보물을 미리','보도자료 → 카드뉴스 → 현수막 순서로']);
+  if(D>=last-6) I.push(['analyze','📊','월말 실적 정리 시즌','엑셀 올리고 "읍면별 합계"면 차트·해석 문장']);
+  if([3,6,9,12].includes(M)&&D>=15) I.push(['analyze','📈',`${M/3|0}분기 실적 보고 준비`,'분기 데이터로 추이 차트 만들기']);
+  if(M>=11) I.push(['rule','⚖️','연말 조례·지침 정비 시기','현행 조문만 붙여넣으면 신구조문대비표']);
+  I.push(['minutes','🎙','회의가 있었다면 녹음 파일만 올리세요','안건·결정사항·조치사항까지 자동 정리']);
+  return I.slice(0,3);
+}
 function renderUsage(){
-  const ready=HOME_MENU.filter(n=>n.ready).length;
-  const kpis=(w,t)=>[['이번 주 이용',(w?w.use:'–')+'회','전 직원 · 메뉴 열기 기준'],['이번 주 만든 초안',(w?w.gen:'–')+'건','회의록·보도자료·카드뉴스 등'],['누적 이용',(t?t.use.toLocaleString():'–')+'회','달성On 오픈 이후'],['쓸 수 있는 기능',ready+'개','메뉴에서 바로'],['설치·로그인','0','브라우저만 있으면 OK']]
+  const kpis=(w,t,top)=>[['이번 주 이용',(w?w.use:'–')+'회','전 직원 · 메뉴 열기 기준'],['이번 주 만든 초안',(w?w.gen:'–')+'건','회의록·보도자료·카드뉴스 등'],['누적 이용',(t?t.use.toLocaleString():'–')+'회','달성On 오픈 이후'],['이번 주 인기 1위',top&&top[0]?(ICON[top[0][0]]||'⭐')+' '+(MNAME[top[0][0]]||top[0][0]):'–',top&&top[0]?top[0][1]+'회 이용':'이번 주 첫 사용자가 되어 주세요']]
     .map(([k,v,s])=>`<div class="kpi"><small>${k}</small><b>${v}</b><span class="sub">${s}</span></div>`).join('');
   $('#homeKpis').innerHTML=kpis();
   $('#hmMsg').innerHTML=`<span class="tag">TODAY</span><b>${todayMsg()}</b>`;
-  // 이번 주 — 실제 집계
-  $('#hmWeek').innerHTML='<p class="hint">불러오는 중…</p>';
   fetch('/api/hits',{cache:'no-store'}).then(r=>r.json()).then(j=>{
-    $('#homeKpis').innerHTML=kpis(j.week,j.total);
-    const top=j.top||[], mx=top.length?top[0][1]:1, medal=['🥇','🥈','🥉','4','5'];
-    $('#hmWeek').innerHTML=`<div class="hw-nums"><div><b>${j.today.use}</b><span>오늘 이용</span></div><div><b>${j.week.gen}</b><span>이번 주 초안</span></div><div><b>${j.week.q}</b><span>이번 주 질문</span></div></div>
-      <div class="hw-top"><small>이번 주 인기 기능</small>${top.length?top.map(([m,n],i)=>`<div class="hw-r" data-go="staff:${m}"><i>${medal[i]}</i><span>${MNAME[m]||m}</span><em><u style="width:${Math.max(8,n/mx*100)}%"></u></em><b>${n}</b></div>`).join(''):'<p class="hint">이번 주 첫 사용자가 되어 주세요 🙂</p>'}</div>`;
+    $('#homeKpis').innerHTML=kpis(j.week,j.total,j.top);
     const ms=[100,500,1000,3000,5000,10000].filter(x=>j.total.use>=x).pop();
-    if(ms){ const k='dsOn.mile.'+ms; let seen=false; try{ seen=localStorage.getItem(k); localStorage.setItem(k,1); }catch(e){} { $('#hmMile').hidden=false; $('#hmMile').innerHTML=`🎉 달성On 누적 이용 <b>${ms.toLocaleString()}회</b> 돌파! 함께 써 주셔서 고맙습니다`; } }
-  }).catch(()=>{ $('#hmWeek').innerHTML='<p class="hint">집계를 불러오지 못했습니다</p>'; });
-  // 성장일기 — 공지의 '기능' 항목 + 나눔터 '반영됨'
-  const diary=NEWS.filter(n=>n[1]==='기능').map(n=>({d:n[0],t:n[2].replace(/<[^>]+>/g,''),k:'new'}));
-  const draw=extra=>{ const L=[...extra,...diary].sort((a,b)=>b.d.localeCompare(a.d)).slice(0,6);
-    $('#hmDiary').innerHTML=L.map(x=>`<li><i class="${x.k}">${x.k==='voice'?'💬':'✨'}</i><div><b>${esc(x.t)}</b><small>${x.d}${x.k==='voice'?' · 직원 의견 반영':' · 새 기능'}</small></div></li>`).join(''); };
-  draw([]);
-  fetch('/api/bugs',{cache:'no-store'}).then(r=>r.json()).then(j=>{ const v=(j.list||[]).filter(x=>x.where==='반영').map(x=>({d:x.at.slice(0,10).replace(/-/g,'.'),t:(x.text||'').split('\n')[0],k:'voice'})); if(v.length) draw(v); }).catch(()=>{});
-  // 기준·단가 띠
-  $('#hmStd').innerHTML='<span class="lbl">📌 자주 찾는 기준</span>'+[['관내 출장 4시간↑','20,000원','trip'],['4시간↓','10,000원','trip'],['공용차량','10,000원 / 0원','trip'],['급량비 1식','9,000원','meal']].map(([k,v,g])=>`<button data-go="staff:${g}">${k} <b>${v}</b></button>`).join('')+'<small>근거: 「지방공무원 여비 규정」 등</small>';
+    if(ms){ $('#hmMile').hidden=false; $('#hmMile').innerHTML=`🎉 달성On 누적 이용 <b>${ms.toLocaleString()}회</b> 돌파! 함께 써 주셔서 고맙습니다`; }
+  }).catch(()=>{});
+  renderRecent();
+  const d=new Date(); $('#hmCalNote').textContent=`${d.getMonth()+1}월 ${d.getDate()}일 기준`;
+  $('#hmCal').innerHTML=calItems().map(([v,i,t,s])=>`<li data-go="staff:${v}"><i>${i}</i><div><b>${t}</b><small>${s}</small></div><span>바로 가기 ›</span></li>`).join('');
+  $('#hmStd').innerHTML='<span class="lbl">📌 정산 기준</span>'+[['관내 출장 4시간↑','20,000원','trip'],['4시간↓','10,000원','trip'],['공용차량','10,000원 / 0원','trip'],['급량비 1식','9,000원','meal']].map(([k,v,g])=>`<button data-go="staff:${g}">${k} <b>${v}</b></button>`).join('');
+  // 내 자료는 어디로 가나요?
+  const SAFE=[['lock','🔒 이 PC 안에서만 처리','파일이 밖으로 나가지 않아요',[['meal','🍚 급량비'],['trip','🚗 출장비']]],
+              ['half','🔒 파일은 PC 안 · 💬 요약 글만 AI로','원본은 그대로 두고 필요한 글만 보내요',[['minutes','🎙 회의록 (녹음→글은 PC, 정리할 때 글만)'],['analyze','📊 데이터 분석 (열 이름·샘플 5행만)']]],
+              ['text','💬 입력한 글이 AI로 가요','비공개·개인정보는 넣지 마세요',[['press','📰 보도자료'],['card','📱 카드뉴스'],['banner','🎏 현수막'],['movie','🎬 홍보영상'],['rule','⚖️ 조례·지침'],['family','💐 경조사 카드'],['on','✦ 달성On 질문']]]];
+  $('#hmSafe').innerHTML=`<div class="sf-hd"><b>🛡 내 자료는 어디로 가나요?</b><small>메뉴마다 처리 방식이 달라요 — 한눈에 확인하고 안심하고 쓰세요</small></div><div class="sf-cols">${SAFE.map(([c,t,s,L])=>`<div class="sf ${c}"><b>${t}</b><small>${s}</small><div>${L.map(([v,n])=>`<button data-go="staff:${v}">${n}</button>`).join('')}</div></div>`).join('')}</div>`;
 }
 
 /* ── 안내 영상 목록 ──────────────────────────────────────────
@@ -567,6 +589,7 @@ function pressRender(o){
        ${o.subs.map(s=>`<div class="psub">▸ ${esc0(s)}</div>`).join('')}</div>
      <div class="pbody">${o.body.map(p=>`<p>${esc0(p)}</p>`).join('')}</div>`;
   $('#pressOut').hidden=false;
+  window.dsSave&&dsSave('press',o.title,[o.title,...o.subs.map(x=>'▸ '+x),'',...o.body].join('\n'));
   $('#pressOut').scrollIntoView({behavior:'smooth',block:'start'});
 }
 

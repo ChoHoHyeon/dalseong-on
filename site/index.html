@@ -14,7 +14,7 @@
 <!-- ═══════ 상단: 브랜드 · 상태 ═══════ -->
 <header class="top">
   <div class="brand"><div class="logo"><span>On</span></div><div class="brand-t"><b>달성On</b><small>달성군 AI 업무비서 · 시연판</small></div></div>
-  <div class="top-c slogan"><img src="assets/slogan.png" alt="군민이 빛나는 달성"></div>
+  <div class="top-c slogan"><a href="#" class="slogan-link" data-go="home:home" title="첫 화면으로" aria-label="첫 화면으로 가기"><img src="assets/slogan.png" alt="군민이 빛나는 달성"></a></div>
   <div class="top-r">
     <button class="ghost ic" id="btnNoti" title="공지·업데이트">🔔<span class="badge" id="notiN">3</span></button>
     <button class="ghost ic" id="btnBug" title="오류 신고 · 건의">🐞</button>
@@ -52,15 +52,15 @@
         <div class="card video"><h4>달성On 소개 영상 <small id="videoNote">16초</small></h4><div class="player" id="player"></div><p class="hint vcap" id="videoCap" style="margin-top:10px"></p></div>
       </div>
       <div class="home-usage">
-      <div class="kpis five" id="homeKpis"></div>
+      <div class="kpis four" id="homeKpis"></div>
       <div class="hm-fun">
         <div class="hm-mile" id="hmMile" hidden></div>
         <div class="hm-msg" id="hmMsg"></div>
         <div class="hm-row">
-          <div class="card hm-week"><h4>⚡ 이번 주 달성On <small id="hmWeekNote">전 직원 기준</small></h4><div id="hmWeek"></div></div>
-          <div class="card hm-diary"><h4>🌱 달성On 성장일기 <small>새 기능 · 반영된 의견</small><button class="ghost sm more" data-go="staff:share">의견 남기기 ›</button></h4><ul id="hmDiary"></ul></div>
+          <div class="card"><h4>🗂 내 최근 작업 <small>이 PC에만 저장 · 누르면 다시 보기</small></h4><ul class="hm-recent" id="hmRecent"></ul></div>
+          <div class="card"><h4>📅 지금 하실 때예요 <small id="hmCalNote"></small></h4><ul class="hm-cal" id="hmCal"></ul><div class="hm-std-line" id="hmStd"></div></div>
         </div>
-        <div class="hm-std-line" id="hmStd"></div>
+        <div class="hm-safe" id="hmSafe"></div>
       </div>
       </div>
     </section>
@@ -688,11 +688,11 @@
 
     <!-- 활용사례 나눔터 (세부 내역 추후 확정) -->
     <section class="view" data-view="share">
-      <div class="vh"><h2>제안·활용사례 나눔터</h2><p>달성On에 넣었으면 하는 기능, 고쳤으면 하는 점, 내가 이렇게 써서 해결한 이야기를 올리는 곳입니다. 올라온 제안은 검토해서 이 사이트에 바로 반영합니다.</p></div>
+      <div class="vh"><h2>제안·활용사례 나눔터</h2><p>달성On에 넣었으면 하는 기능, 고쳤으면 하는 점, 내가 이렇게 써서 해결한 이야기, 짧은 한마디까지 편하게 올리는 곳입니다. 올라온 제안은 검토해서 이 사이트에 바로 반영합니다.</p></div>
       <div class="sh-wrap">
         <div class="card pcard sh-form">
           <h4>올리기 <small>부서명만 적어 주세요 · 이름·연락처 불필요</small></h4>
-          <label class="pfull">유형<select id="shKind" class="psel"><option value="idea">💡 기능 제안 — 이런 게 있으면 좋겠어요</option><option value="improve">🔧 개선 의견 — 이건 이렇게 고쳐 주세요</option><option value="usecase">🙌 활용 사례 — 나는 이렇게 썼어요</option></select></label>
+          <label class="pfull">유형<select id="shKind" class="psel"><option value="idea">💡 기능 제안 — 이런 게 있으면 좋겠어요</option><option value="improve">🔧 개선 의견 — 이건 이렇게 고쳐 주세요</option><option value="usecase">🙌 활용 사례 — 나는 이렇게 썼어요</option><option value="voice">💬 한마디 — 짧은 의견·응원·불편</option></select></label>
           <label class="pfull" style="margin-top:8px">제목 <b class="req">*</b><input id="shTitle" maxlength="80"></label>
           <label class="pfull" style="margin-top:8px">내용 <small class="hint">선택 · 상황과 바라는 모습을 편하게</small><textarea id="shBody" rows="5" maxlength="900" placeholder="어떤 업무에서, 무엇이 불편했고, 어떻게 되면 좋을지"></textarea></label>
           <label class="pfull" style="margin-top:8px">부서 <small class="hint">선택</small><input id="shWho" maxlength="30" placeholder="예) 정보통신과"></label>
@@ -701,7 +701,7 @@
         </div>
         <div class="card sh-board">
           <h4>올라온 글 <small id="shCount"></small></h4>
-          <div class="sh-tabs" id="shTabs"><button class="on" data-k="all">전체</button><button data-k="idea">💡 기능 제안</button><button data-k="improve">🔧 개선 의견</button><button data-k="usecase">🙌 활용 사례</button></div>
+          <div class="sh-tabs" id="shTabs"><button class="on" data-k="all">전체</button><button data-k="idea">💡 기능 제안</button><button data-k="improve">🔧 개선 의견</button><button data-k="usecase">🙌 활용 사례</button><button data-k="voice">💬 한마디</button></div>
           <ul class="sh-list" id="shList"></ul>
         </div>
       </div>
@@ -804,5 +804,6 @@
 <script src="share.js"></script>
 <script src="analyze.js"></script>
 <script src="app.js"></script>
+<div class="rc-modal" id="rcModal" hidden><div class="rc-box"><div class="rc-hd"><b id="rcTitle"></b><small id="rcMeta"></small><button id="rcClose" aria-label="닫기">✕</button></div><pre id="rcText"></pre><div class="pact"><button id="rcCopy" class="p">복사</button><button id="rcGo">이 메뉴로 가기</button><button id="rcDel">목록에서 지우기</button></div></div></div>
 </body>
 </html>

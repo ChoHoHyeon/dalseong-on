@@ -132,7 +132,7 @@ function render(o,mode){
     <div class="rp-sec">${T||o.body.length?'4':'3'}. 부칙</div><div class="rp-cir" style="white-space:pre-wrap">${esc(o.buchik)}</div>
     ${o.check.length?`<div class="rp-check"><b>⚠ 담당자 확인 요청</b><ul>${o.check.map(c=>`<li>${esc(c)}</li>`).join('')}</ul></div>`:''}
   </div>`;
-  $('#ruleOut').hidden=false; $('#ruleOut').scrollIntoView({behavior:'smooth',block:'start'});
+  $('#ruleOut').hidden=false; window.dsSave&&dsSave('rule',o.title,plainText(o)); $('#ruleOut').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function plainText(o){ const L=[o.title,'','1. 이유',o.reason]; if(o.main.length){L.push('','2. 주요 내용',...o.main);} if(o.body.length){L.push('','조문',...o.body);} if(o.table.length){L.push('','신구조문대비표'); o.table.forEach(r=>L.push(`[${r.art}]`,'현행:',...r.old,'개정안:',...r.neu,''));} L.push('부칙',o.buchik); if(o.check.length) L.push('','※ 확인 요청',...o.check.map(c=>'- '+c)); return L.join('\n'); }
 async function copyTable(o){

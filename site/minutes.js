@@ -79,7 +79,7 @@ function render(o){
     ${etc&&etc.lines.some(l=>!/해당 없음/.test(l))?`<div class="mt-h">기타</div><div class="mt-body">${items(etc.lines)}</div>`:''}
     <div class="mt-foot"><span>작성 : ${esc(H.dept)}</span><span>${esc(fmtWhen(new Date().toISOString().slice(0,10),''))}</span></div>
   </div>`;
-  $('#minutesOut').hidden=false; $('#minutesOut').scrollIntoView({behavior:'smooth',block:'start'});
+  $('#minutesOut').hidden=false; window.dsSave&&dsSave('minutes',o.title,o.title+'\n\n'+o.body.join('\n')); $('#minutesOut').scrollIntoView({behavior:'smooth',block:'start'});
 }
 async function callModel(user){
   const S=window.S||{}; const payload=JSON.stringify({model:S.model||'claude-sonnet-4-5',max_tokens:3000,stream:true,system:SYS,messages:[{role:'user',content:user}]});

@@ -8,7 +8,7 @@
 "use strict";
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const KIND={idea:['💡 기능 제안','#1d5fd6','#eaf1ff'],improve:['🔧 개선 의견','#b45309','#fff4e0'],usecase:['🙌 활용 사례','#0b8a5c','#e6f6ec']};
+const KIND={idea:['💡 기능 제안','#1d5fd6','#eaf1ff'],improve:['🔧 개선 의견','#b45309','#fff4e0'],usecase:['🙌 활용 사례','#0b8a5c','#e6f6ec'],voice:['💬 한마디','#7048e8','#f1ecff']};
 const LS='dsOn.share.like'; let LIKES={}; try{ LIKES=JSON.parse(localStorage.getItem(LS)||'{}'); }catch(e){}
 const ST={list:[],filter:'all',busy:false};
 
@@ -44,7 +44,7 @@ function init(){
   if($('#shSend')._on) return; $('#shSend')._on=1;
   $('#shSend').onclick=submit;
   $('#shTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{ ST.filter=b.dataset.k; $('#shTabs').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); render(); });
-  $('#shKind').onchange=()=>{ const ph={idea:'예) 공문 받으면 요약해서 할 일만 뽑아 주는 기능',improve:'예) 급량비 계산 결과를 바로 복사할 수 있게',usecase:'예) 보도자료 초안을 10분 만에 뽑아서 과장님 검토까지 당일 끝냄'}; $('#shTitle').placeholder=ph[$('#shKind').value]; }; $('#shKind').onchange();
+  $('#shKind').onchange=()=>{ const ph={idea:'예) 공문 받으면 요약해서 할 일만 뽑아 주는 기능',improve:'예) 급량비 계산 결과를 바로 복사할 수 있게',usecase:'예) 보도자료 초안을 10분 만에 뽑아서 과장님 검토까지 당일 끝냄',voice:'예) 회의록 기능 덕분에 오늘 일찍 퇴근했어요 🙂'}; $('#shTitle').placeholder=ph[$('#shKind').value]; }; $('#shKind').onchange();
   load();
 }
 window.SHARE={init};
