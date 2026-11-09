@@ -1707,3 +1707,29 @@ body[data-theme=dark] .hero-float .fchip{background:var(--panel2);color:#cfe0ff;
 .ae-safe{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .ae-safe span{font-size:12px;color:var(--mut);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
 @media(max-width:860px){.ae-wrap{grid-template-columns:1fr}}
+
+/* 현수막 문구 직접 고치기 팝업(브라우저 기본 prompt 대신 화면 가운데) */
+.modal[hidden]{display:none}
+.bn-editbox{width:min(480px,100%)}
+.bn-editbox label{font-size:12.5px;font-weight:600;color:var(--mut);margin:0}
+.bn-editbox input{font-size:15px;padding:10px 12px}
+.bn-editbox .pact{justify-content:flex-end;margin-top:4px}
+
+/* 개인정보 가리기 */
+#mkDrop.over{outline:2px dashed var(--acc);outline-offset:-6px;background:rgba(47,111,237,.04)}
+.mk-rules{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 18px;margin-top:12px}
+.mk-rules>div{display:grid;grid-template-columns:96px 1fr 1fr;align-items:center;gap:8px;font-size:12.5px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
+.mk-rules span{color:var(--mut);font-weight:600} .mk-rules s{color:var(--mut);text-decoration-color:rgba(232,89,12,.6)} .mk-rules b{color:var(--acc)}
+.mk-sum{font-size:13px;color:var(--mut);margin:4px 0 10px} .mk-sum b{color:var(--tx)} .mk-sum .hl{color:#e8590c}
+.mk-tblwrap{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:12px}
+.mk-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.mk-tbl th{position:sticky;top:0;background:var(--panel);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);color:var(--mut);font-weight:600;white-space:nowrap}
+.mk-tbl td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
+.mk-tbl td small{display:block;font-size:11px;color:var(--mut)}
+.mk-tbl tr.on td:first-child{box-shadow:inset 3px 0 0 #e8590c}
+.mk-tbl select{height:30px;padding:0 8px;border-radius:8px;font-size:12.5px;width:auto}
+.mk-ex .mk-b{color:var(--mut)} .mk-ex b{color:var(--acc)}
+.mk-tbl.sm td{color:var(--tx)}
+.mk-stat{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
+.mk-chip{font-size:12.5px;background:rgba(18,161,95,.08);border:1px solid rgba(18,161,95,.25);border-radius:999px;padding:6px 12px} .mk-chip b{color:#12a15f}
+@media(max-width:1100px){.mk-rules{grid-template-columns:1fr}}

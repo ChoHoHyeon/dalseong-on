@@ -475,6 +475,53 @@
       <div id="famApp"></div>
     </section>
 
+    <!-- 개인정보 가리기 (mask.js · 브라우저 안에서만 처리) -->
+    <section class="view" data-view="mask">
+      <div class="vh"><h2>개인정보 가리기</h2><p>엑셀·CSV를 올리면 이름·주민번호·전화번호·주소 같은 개인정보 열을 찾아 <b>홍*동, 010-****-5678</b>처럼 가린 파일을 만들어 줍니다. 파일은 이 PC 브라우저 안에서만 처리되고 어디로도 보내지지 않습니다.</p></div>
+      <div class="card pcard" id="mkDrop">
+        <h4>파일 올리기 <small>xlsx · xls · csv (첫 번째 시트 · 첫 줄은 열 이름) · 끌어다 놓아도 됩니다</small></h4>
+        <div class="pact" style="margin-top:4px"><label class="filebtn">📂 파일 선택<input type="file" id="mkFile" accept=".xlsx,.xls,.csv"></label><button id="mkSample">예시 파일로 해보기</button><span class="hint" id="mkMsg"></span></div>
+      </div>
+      <div id="mkEmpty">
+        <div class="card flowcard">
+          <h4>이렇게 씁니다 <small>AI 없이 규칙으로 처리 · 외부 전송 없음</small></h4>
+          <ol class="flow3">
+            <li><span class="fnum">1</span><span class="fico" aria-hidden="true">📂</span><span class="ftx"><b>파일 올리기</b><small>민원대장·명단 등 엑셀 그대로</small></span></li>
+            <li class="farr" aria-hidden="true">→</li>
+            <li><span class="fnum">2</span><span class="fico" aria-hidden="true">🔍</span><span class="ftx"><b>자동으로 찾기</b><small>열 이름·값 형태로 개인정보 열 판단 · 직접 바꿀 수 있어요</small></span></li>
+            <li class="farr" aria-hidden="true">→</li>
+            <li><span class="fnum">3</span><span class="fico" aria-hidden="true">🛡️</span><span class="ftx"><b>가린 파일 받기</b><small>같은 형식으로 저장 · 가림내역 시트 포함</small></span></li>
+          </ol>
+        </div>
+        <div class="card ae-prev" id="mkPrevCard" role="button" tabindex="0" title="예시 파일로 바로 해보기">
+          <div class="ae-head"><h4>이렇게 가려져요 <small>누르면 가상 예시 파일로 실제 처리</small></h4><span class="ae-tag">예시</span></div>
+          <div class="mk-rules">
+            <div><span>👤 이름</span><s>홍길동</s><b>홍*동</b></div>
+            <div><span>🪪 주민번호</span><s>900101-1234567</s><b>900101-1******</b></div>
+            <div><span>📞 전화번호</span><s>010-1234-5678</s><b>010-****-5678</b></div>
+            <div><span>🏠 주소</span><s>달성군 화원읍 비슬로 123 101동</s><b>달성군 화원읍 비슬로 ***</b></div>
+            <div><span>✉️ 이메일</span><s>hong.gd@korea.kr</s><b>ho***@korea.kr</b></div>
+            <div><span>🚗 차량번호</span><s>12가3456</s><b>12가****</b></div>
+            <div><span>🏦 계좌번호</span><s>110-234-567890</s><b>********7890</b></div>
+            <div><span>📝 비고 글 속</span><s>회신 010-9876-5432</s><b>회신 010-****-5432</b></div>
+          </div>
+        </div>
+        <div class="ae-safe"><span>🔒 파일은 이 PC 브라우저 안에서만 처리</span><span>🤖 AI 모델로 보내지 않아요</span><span>👀 결과는 꼭 한 번 눈으로 확인하세요</span></div>
+      </div>
+      <div class="card pcard" id="mkStep" hidden>
+        <h4>찾은 결과 <small>판단·처리를 열마다 바꿀 수 있습니다</small></h4>
+        <div id="mkPlan"></div>
+        <div class="pact"><button id="mkGo" class="p">🛡️ 가리기</button><span class="hint">공개·배포용이면 이름 열은 「열 삭제」가 더 안전합니다</span></div>
+      </div>
+      <div class="card pout" id="mkOut" hidden>
+        <h4>가림 완료 <small>미리보기 6행</small></h4>
+        <div class="mk-stat" id="mkStat"></div>
+        <div class="mk-tblwrap" id="mkPrev"></div>
+        <div class="pact"><button id="mkDown" class="p">⬇ 가린 파일 받기</button><button id="mkAn">📊 이 파일로 데이터 분석하기</button></div>
+        <p class="hint">※ 자동 판단은 보조 수단입니다. 배포·공개 전에는 담당자가 결과를 반드시 확인하세요.</p>
+      </div>
+    </section>
+
     <!-- 데이터 분석하기 (세부 내역 추후 확정) -->
     <section class="view" data-view="analyze">
       <div class="vh"><h2>데이터 분석하기</h2><p>엑셀·CSV 파일을 올리고 보고 싶은 것을 한 줄로 물으면, 표와 차트, 보고서에 넣을 해석 문장까지 만들어 줍니다. 파일은 이 PC 안에서만 읽습니다.</p></div>
@@ -842,6 +889,7 @@
 <script src="cardnews.js"></script>
 <script src="movie.js"></script>
 <script src="share.js"></script>
+<script src="mask.js"></script>
 <script src="analyze.js"></script>
 <script src="cal.js"></script>
 <script src="app.js"></script>

@@ -102,7 +102,21 @@ function init(){
   ['bnSize','bnBg','bnHost'].forEach(id=>$('#'+id).onchange=()=>{ if(B.alts.length) draw(); });
   $('#bnBg').addEventListener('change',()=>{ $('#bnFileWrap').hidden=$('#bnBg').value!=='custom'; });
   $('#bnFile').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; B.custom=await loadImg(URL.createObjectURL(f)); if(B.alts.length) draw(); };
-  $('#bnEdit').onclick=()=>{ const a=B.alts[B.pick]; if(!a) return; const m=prompt('메인 문구',a.main); if(m===null) return; const s=prompt('서브 문구',a.sub||''); a.main=m; a.sub=s??a.sub; renderAlts(); draw(); };
+  $('#bnEdit').onclick=()=>{ const a=B.alts[B.pick]; if(!a) return;
+    let md=$('#bnEditPop');
+    if(!md){ md=document.createElement('div'); md.id='bnEditPop'; md.className='modal'; md.hidden=true;
+      md.innerHTML='<div class="box bn-editbox"><div class="box-h"><b>문구 직접 고치기</b><button class="x" data-x>✕</button></div>'
+        +'<label>메인 문구<input id="bnEdM" maxlength="40"></label><label>서브 문구<input id="bnEdS" maxlength="60"></label>'
+        +'<div class="pact"><button class="p" data-ok>적용</button><button data-x>취소</button></div></div>';
+      document.body.appendChild(md);
+      const close=()=>{ md.hidden=true; };
+      md.addEventListener('click',e=>{ if(e.target===md||e.target.closest('[data-x]')) close(); });
+      md.addEventListener('keydown',e=>{ if(e.key==='Escape') close(); if(e.key==='Enter'){ e.preventDefault(); md.querySelector('[data-ok]').click(); } });
+    }
+    $('#bnEdM').value=a.main||''; $('#bnEdS').value=a.sub||'';
+    md.querySelector('[data-ok]').onclick=()=>{ const m=$('#bnEdM').value.trim(); if(!m){ $('#bnEdM').focus(); return; } a.main=m; a.sub=$('#bnEdS').value.trim(); md.hidden=true; renderAlts(); draw(); };
+    md.hidden=false; setTimeout(()=>{ const i=$('#bnEdM'); i.focus(); i.select(); },30);
+  };
   $('#bnPng').onclick=()=>{ const a=document.createElement('a'); a.download=`현수막시안_${v('bnName').replace(/[\\/:*?"<>|]/g,'').slice(0,20)}.png`; a.href=$('#bnCanvas').toDataURL('image/png'); a.click(); };
   $('#bnSpec').onclick=()=>{ navigator.clipboard.writeText(spec()); toast?.('업체 전달용 사양을 복사했습니다'); };
   $('#bnSample').onclick=()=>{ $('#bnName').value='2026 비슬산 참꽃문화제'; $('#bnWhen').value='2026. 4. 18.(토) ~ 4. 26.(일)'; $('#bnPlace').value='비슬산 자연휴양림 일원'; $('#bnHost').value='달성군 · 달성문화재단'; $('#bnPoint').value='30년 만의 참꽃 만개, 가족 나들이'; $('#bnTone').value='친근'; $('#bnQty').value='20'; toast?.('예시를 채웠습니다 — 「문구·시안 만들기」를 눌러보세요'); };

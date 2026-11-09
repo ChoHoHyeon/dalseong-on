@@ -123,5 +123,5 @@ function init(){
   $('#anCopyS').onclick=()=>{ navigator.clipboard.writeText($('#anInsight').textContent); toast?.('해석 문장을 복사했습니다'); };
   $('#anType').onchange=()=>{ if(A.res){ A.res.p.chart=$('#anType').value; draw(A.res.p,A.res.data); } };
 }
-window.ANALYZE={init};
+window.ANALYZE={init,loadFile:async f=>{ init(); await readFile(f); summary(); $('#anOut').hidden=true; $('#anMsg').textContent='개인정보를 가린 파일을 불러왔습니다'; }};
 })();

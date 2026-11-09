@@ -7,7 +7,7 @@
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const S={ mode:'home', view:'home', ds:0, docs:[], meta:null, idx:null, layers:{1:true,2:true}, key:'', code:(localStorage.getItem('dOnCode')||''), model:'claude-sonnet-4-5', offline:false, server:false,
           hist:[], lastAnswer:null, lastCites:[], lastQ:'', stats:{q:0,cite:0,gen:0,hwpx:0,hits:{}}, busy:false, khist:[] };
-window.S=S;
+window.S=S; window.go=(...x)=>go(...x); window.toast=m=>toast(m);
 setTimeout(()=>{ const b=document.getElementById('boot'); if(b) b.querySelector('small').textContent='조금만 기다려 주세요 — 자료가 많아 처음엔 시간이 걸려요'; },5000);
 /* 전 직원 이용 집계 — 메뉴 이름·종류만 보낸다(누가 썼는지는 남기지 않음) */
 const HIT_SEEN={};
@@ -202,7 +202,8 @@ const HOME_MENU=[
   {mode:'staff',view:'movie',  icon:'🎬', label:'홍보영상\n만들기', ready:1},
   // (제외) 안내방송 만들기 — 메뉴 삭제
   // ── 찾아보기 · 나눔
-  {mode:'staff',view:'analyze',icon:'📊', label:'데이터\n분석하기', cls:'sep', ready:1},
+  {mode:'staff',view:'mask',   icon:'🛡️', label:'개인정보\n가리기', cls:'sep', ready:1},
+  {mode:'staff',view:'analyze',icon:'📊', label:'데이터\n분석하기', ready:1},
   // (제외) 지난 사례 찾아보기 — 온나라 공개문서 연계가 전제라 2단계로 이관, 메뉴 삭제
   {mode:'staff',view:'share',  icon:'💬', label:'질문·요청\n소통하기', ready:1},
 ];
@@ -243,7 +244,7 @@ document.addEventListener('click',e=>{ const b=e.target.closest('[data-chain]');
     if(to==='movie'){ set('mvSrc',full); }
     toast('보도자료 내용을 채워 두었어요 — 버튼만 누르세요'); },250); });
 function bootDone(){ const b=document.getElementById('boot'); if(!b||b._d) return; b._d=1; b.classList.add('out'); setTimeout(()=>b.remove(),450); }
-function go(v){ setTimeout(bootDone,60); const target=ALIAS[v]; const top=target||v; if(HOME_MENU.some(n=>n.view===top&&n.ready&&top!=='on')&&!HIT_SEEN[top]){ HIT_SEEN[top]=1; dsHit('use',top); } S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ if($('#guideChips')) $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); renderGuideFeat(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='rule'&&window.RULEDRAFT) RULEDRAFT.init(); if(top==='minutes'&&window.MINUTES) MINUTES.init(); if(top==='banner'&&window.BANNER) BANNER.init(); if(top==='card'&&window.CARDNEWS) CARDNEWS.init(); if(top==='movie'&&window.MOVIE) MOVIE.init(); if(top==='share'&&window.SHARE) SHARE.init(); if(top==='analyze'&&window.ANALYZE) ANALYZE.init(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='trip') loadTrip(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(['on','data','lib','stats','doc'].includes(top)){ if(top==='on'&&!S.idx) idxNote(true); ensureIndex().then(()=>idxNote(false)).catch(()=>idxNote(false,true)); } if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
+function go(v){ setTimeout(bootDone,60); const target=ALIAS[v]; const top=target||v; if(HOME_MENU.some(n=>n.view===top&&n.ready&&top!=='on')&&!HIT_SEEN[top]){ HIT_SEEN[top]=1; dsHit('use',top); } S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ if($('#guideChips')) $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); renderGuideFeat(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='rule'&&window.RULEDRAFT) RULEDRAFT.init(); if(top==='minutes'&&window.MINUTES) MINUTES.init(); if(top==='banner'&&window.BANNER) BANNER.init(); if(top==='card'&&window.CARDNEWS) CARDNEWS.init(); if(top==='movie'&&window.MOVIE) MOVIE.init(); if(top==='share'&&window.SHARE) SHARE.init(); if(top==='analyze'&&window.ANALYZE) ANALYZE.init(); if(top==='mask'&&window.MASK) MASK.init(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='trip') loadTrip(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(['on','data','lib','stats','doc'].includes(top)){ if(top==='on'&&!S.idx) idxNote(true); ensureIndex().then(()=>idxNote(false)).catch(()=>idxNote(false,true)); } if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
 
 /* ── 홈 대시보드 ── */
 document.addEventListener('click',e=>{ if(e.target.id==='rcClose'||e.target.id==='rcModal'){ $('#rcModal').hidden=true; return; } const g=e.target.closest('[data-go]'); if(!g) return; if(g.tagName==='A') e.preventDefault(); const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });
@@ -430,12 +431,12 @@ function todayMsg(){
   const pool=(special.length&&Math.random()<.6)?special:always;
   return pool[Math.floor(Math.random()*pool.length)].t;
 }
-const MNAME={minutes:'회의록',press:'보도자료',card:'카드뉴스',meal:'급량비',trip:'출장비',family:'경조사 카드',banner:'현수막',movie:'홍보영상',analyze:'데이터 분석',rule:'조례·지침',share:'질문·요청 소통하기',on:'AI에게 물어보기'};
+const MNAME={minutes:'회의록',press:'보도자료',card:'카드뉴스',meal:'급량비',trip:'출장비',family:'경조사 카드',banner:'현수막',movie:'홍보영상',mask:'개인정보 가리기',analyze:'데이터 분석',rule:'조례·지침',share:'질문·요청 소통하기',on:'AI에게 물어보기'};
 /* 최근 작업 — 이 브라우저(localStorage)에만 저장. 서버로 보내지 않는다 */
 const RC_KEY='dsOn.recent';
 const rcGet=()=>{ try{ return JSON.parse(localStorage.getItem(RC_KEY)||'[]'); }catch(e){ return []; } };
 window.dsSave=(view,title,text)=>{ try{ const L=rcGet().filter(x=>!(x.view===view&&x.title===title)); L.unshift({id:Date.now().toString(36),view,title:String(title||'').slice(0,60),text:String(text||'').slice(0,8000),at:Date.now()}); localStorage.setItem(RC_KEY,JSON.stringify(L.slice(0,8))); }catch(e){} };
-const ICON={minutes:'🎙',press:'📰',card:'📱',banner:'🎏',movie:'🎬',analyze:'📊',rule:'⚖️'};
+const ICON={minutes:'🎙',press:'📰',card:'📱',banner:'🎏',movie:'🎬',analyze:'📊',mask:'🛡️',rule:'⚖️'};
 const ago=t=>{ const m=Math.round((Date.now()-t)/6e4); return m<1?'방금':m<60?m+'분 전':m<1440?Math.round(m/60)+'시간 전':Math.round(m/1440)+'일 전'; };
 function rcOpen(x){
   $('#rcTitle').textContent=x.title; $('#rcMeta').textContent=`${MNAME[x.view]||''} · ${new Date(x.at).toLocaleString('ko-KR')}`; $('#rcText').textContent=x.text; $('#rcModal').hidden=false;
@@ -546,7 +547,7 @@ function mountGuideBtn(view){
   b.onclick=()=>openVideo(v); h2.appendChild(b);
 }
 /* 이용 안내 › 안내 영상 모음 */
-const GFEAT=[['minutes','🎙','회의가 끝났을 때','녹음 파일만 올리면','안건·결정·조치사항 회의록'],['press','📰','행사·사업을 알릴 때','계획서를 붙여넣으면','군 서식 보도자료(한글)'],['card','📱','SNS에 올릴 때','보도자료를 넣으면','카드뉴스 6장 + 해시태그'],['banner','🎏','현수막이 필요할 때','행사명·기간만 넣으면','문구 3안 + 시안 + 업체 사양서'],['movie','🎬','짧은 영상이 필요할 때','PDF·글을 넣으면','SNS용 자막 영상'],['meal','🍚','월초 급량비 정산','초과근무 확인서 PDF로','집행대장 · 엑셀'],['trip','🚗','관내여비 정산','출장내역서 PDF로','지급명세서 · 지급조서'],['family','💐','경조사가 생겼을 때','이름·문구만 넣으면','축하·위로 카드 이미지'],['analyze','📊','숫자로 보고할 때','엑셀 올리고 한 줄 질문','표 · 차트 · 해석 문장'],['rule','⚖️','조례·지침을 고칠 때','현행 조문 + 개정 요지','개정안 · 신구조문대비표'],['on','✦','규정이 궁금할 때','그냥 물어보면','조문 근거 붙은 답변']];
+const GFEAT=[['minutes','🎙','회의가 끝났을 때','녹음 파일만 올리면','안건·결정·조치사항 회의록'],['press','📰','행사·사업을 알릴 때','계획서를 붙여넣으면','군 서식 보도자료(한글)'],['card','📱','SNS에 올릴 때','보도자료를 넣으면','카드뉴스 6장 + 해시태그'],['banner','🎏','현수막이 필요할 때','행사명·기간만 넣으면','문구 3안 + 시안 + 업체 사양서'],['movie','🎬','짧은 영상이 필요할 때','PDF·글을 넣으면','SNS용 자막 영상'],['meal','🍚','월초 급량비 정산','초과근무 확인서 PDF로','집행대장 · 엑셀'],['trip','🚗','관내여비 정산','출장내역서 PDF로','지급명세서 · 지급조서'],['family','💐','경조사가 생겼을 때','이름·문구만 넣으면','축하·위로 카드 이미지'],['mask','🛡️','자료를 공개·배포할 때','엑셀만 올리면','이름·연락처 가린 파일'],['analyze','📊','숫자로 보고할 때','엑셀 올리고 한 줄 질문','표 · 차트 · 해석 문장'],['rule','⚖️','조례·지침을 고칠 때','현행 조문 + 개정 요지','개정안 · 신구조문대비표'],['on','✦','규정이 궁금할 때','그냥 물어보면','조문 근거 붙은 답변']];
 function renderGuideFeat(){ const el=$('#gdFeat'); if(!el) return; el.innerHTML=GFEAT.map(([v,i,w,h,r])=>`<button data-go="staff:${v}"><i>${i}</i><div><small>${w}</small><b>${h} <em>→</em> ${r}</b></div></button>`).join(''); }
 function renderVideoList(){
   const el=$('#videoList'); if(!el) return;
