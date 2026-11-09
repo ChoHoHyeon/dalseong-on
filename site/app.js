@@ -854,7 +854,9 @@ $$('#mVideo [data-close]').forEach(b=>b.onclick=closeVideo);
 $('#btnTheme').onclick=()=>{ const l=document.body.dataset.theme!=='light'; document.body.dataset.theme=l?'light':'dark'; $('#btnTheme').textContent=l?'🌙':'☀️'; try{localStorage.setItem('dOnTheme',l?'light':'dark');}catch(e){} };
 try{ const th=localStorage.getItem('dOnTheme'); if(th){ document.body.dataset.theme=th; $('#btnTheme').textContent=th==='light'?'🌙':'☀️'; } }catch(e){}
 
-init().catch(e=>{ addMsg('ai','자료 색인을 불러오지 못했습니다: '+e.message); });
+/* 페이지 맨 아래 부품(달력 입력창·최근 작업 창 등)까지 다 준비된 뒤 시작 */
+const START=()=>init().catch(e=>{ console.error(e); addMsg('ai','첫 화면을 그리지 못했습니다: '+e.message); });
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',START); else START();
 })();
 
 // 사이트를 열 때 AI 생성 함수를 미리 깨워 둔다 (Netlify 콜드스타트 → 경조사 카드에서 바로 눌러도 지연 없이)

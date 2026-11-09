@@ -49,7 +49,7 @@ function commit(){
 }
 function del(){ if(!C.edit) return; save(load().filter(x=>x.id!==C.edit)); hide(); render(); toast?.('일정을 지웠어요'); }
 function init(){
-  if(!$('#calGrid')) return; const t=new Date(); if(!C.y){ C.y=t.getFullYear(); C.m=t.getMonth(); }
+  if(!$('#calGrid')||!$('#calColors')) return; const t=new Date(); if(!C.y){ C.y=t.getFullYear(); C.m=t.getMonth(); }
   if(!$('#calGrid')._on){ $('#calGrid')._on=1;
     $('#calPrev').onclick=()=>{ if(--C.m<0){ C.m=11; C.y--; } render(); };
     $('#calNext').onclick=()=>{ if(++C.m>11){ C.m=0; C.y++; } render(); };
