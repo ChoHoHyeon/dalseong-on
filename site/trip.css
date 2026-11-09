@@ -1,15 +1,18 @@
-/* 출장비(관내여비) 계산하기 — 김광한 작성 화면을 달성On 안에 넣은 것. 모든 규칙은 #trip 안으로 한정 */
+/* 출장비(관내여비) 계산하기 — 김광한 작성 화면 원본 CSS. 규칙은 #trip 안으로만 한정(모양·글꼴·간격은 원본 그대로) */
+#trip{--bg: #eceef1; --panel: #fff; --line: #c9cdd3; --line2: #dfe2e6; --text: #222; --muted: #6b7178; --accent: #2f4a73; --accent-dark: #233a5c; --accent-text: #fff; --warn-line: #d99a3d; --warn-bg: #fdf7ec; --err-line: #c9483f; --err-bg: #fbefee; --ok-line: #4b8a5a; --ok-bg: #f1f7f2; --head: #f0f2f5; --sub: #f6f8fa; --off: #a3a8ae;}
 #trip .tsec{padding: 16px 20px 18px; border-bottom: 1px solid var(--line2);}
 #trip h3{font-size: 14px; margin: 0 0 12px; padding-left: 8px; border-left: 3px solid var(--accent); line-height: 1.3;}
 #trip .hint{color: var(--muted); font-size: 12px;}
 #trip .drop{border: 1px dashed #a9aeb5; background: #fafbfc; padding: 20px; text-align: center; color: var(--muted); cursor: pointer;}
 #trip .drop:hover, #trip .drop.over{border-color: var(--accent); background: #f3f6fa;}
+#trip .guide{display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0 0 10px; padding: 9px 12px; background: #f3f6fa; border: 1px solid #cfd8e3; border-left: 4px solid var(--accent);}
 #trip .guide .tag{padding: 1px 7px; background: var(--accent); color: #fff; font-size: 11px; font-weight: bold;}
 #trip .guide .path{display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px 4px;}
 #trip .guide .path b{padding: 1px 8px; background: #fff; border: 1px solid #b9c4d2; color: var(--accent-dark); font-size: 13px;}
 #trip .guide .path i{font-style: normal; color: #8a95a3; font-weight: bold;}
 #trip .guide .how{color: #333; font-size: 12.5px;}
 #trip .guide .how em{font-style: normal; font-weight: bold; color: var(--accent-dark);}
+#trip .btnlike{display: inline-block; margin-left: 2px; padding: 0 8px; border: 1px solid #9a9a9a; border-radius: 2px; background: linear-gradient(#ffffff, #e6e6e6); color: #333; font-size: 11px; line-height: 18px; vertical-align: 1px;}
 #trip .tabs{display: flex; padding: 0 20px; background: #f7f8fa; border-bottom: 1px solid var(--line);}
 #trip .tab{border: 0; border-bottom: 3px solid transparent; border-radius: 0; padding: 10px 18px 8px; font-size: 14px; background: none; color: var(--muted);}
 #trip .tab:hover{color: var(--text); border-color: transparent;}
@@ -39,15 +42,16 @@
 #trip .grid tr.sel td{background: #eef3fa;}
 #trip .grid td.num{text-align: right;}
 #trip .grid input[type=text], #trip .grid textarea.cell{width: 100%; border: 1px solid var(--line); border-radius: 2px; padding: 3px 5px; font: inherit;}
+#trip .grid textarea.cell{display: block; resize: none; overflow: hidden; line-height: 1.4; min-height: 0;}
 #trip .grid th.wide{min-width: 220px;}
 #trip .grid tbody tr{cursor: pointer;}
 #trip .form{display: grid; grid-template-columns: max-content minmax(0, 360px) max-content; gap: 8px 10px; align-items: center;}
 #trip .form input{padding: 4px 7px; font: inherit; border: 1px solid var(--line); border-radius: 2px; width: 100%;}
 #trip .form .hint{grid-column: 2 / 4; margin-top: -6px;}
 #trip .form button{justify-self: start; white-space: nowrap;}
-#trip .form .hint{grid-column: auto; margin-top: -4px;}
-#trip button{font: inherit; border: 1px solid #a9aeb5; background: linear-gradient(#fff, #eef0f2); color: #333; border-radius: 2px;
-    padding: 3px 11px; cursor: pointer;}
+@media (max-width: 640px){#trip .form{grid-template-columns: minmax(0, 1fr);}
+#trip .form .hint{grid-column: auto; margin-top: -4px;}}
+#trip button{font: inherit; border: 1px solid #a9aeb5; background: linear-gradient(#fff, #eef0f2); color: #333; border-radius: 2px; padding: 3px 11px; cursor: pointer;}
 #trip button:hover{border-color: #7d838a; background: #f4f5f7;}
 #trip button.primary{background: var(--accent); color: var(--accent-text); border-color: var(--accent-dark); padding: 6px 16px;}
 #trip button.primary:hover{background: var(--accent-dark);}
@@ -55,12 +59,14 @@
 #trip .actions{display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px;}
 #trip select{font: inherit; padding: 2px 4px; border: 1px solid var(--line); border-radius: 2px; background: #fff;}
 #trip input:focus, #trip select:focus, #trip textarea:focus{outline: 1px solid var(--accent); outline-offset: -1px; border-color: var(--accent);}
+#tripPrint{display: none; -webkit-print-color-adjust: exact; print-color-adjust: exact;}
 #tripPrint *{-webkit-print-color-adjust: exact; print-color-adjust: exact;}
 #tripPrint h3{text-align: center; font: 17pt "HY헤드라인M", "맑은 고딕", sans-serif; margin: 0 0 6px;}
 #tripPrint .cap{display: flex; justify-content: space-between; font-size: 8pt; margin-bottom: 1px;}
 #tripPrint table{border-collapse: collapse; width: 100%; font-size: 8pt; border: 1.5px solid #000;}
 #tripPrint th, #tripPrint td{border: .5px solid #555; padding: 2px 3px; text-align: center; height: 26px; white-space: nowrap;}
 #tripPrint td.fit{overflow: hidden; max-width: 0;}
+#tripPrint th{background: #ffffcc; font-weight: normal;}
 #tripPrint tr.sub td{background: #ccffff; height: 20px;}
 #tripPrint tr.sub td.days{font-weight: bold;}
 #tripPrint tr.total td{height: 20px;}
@@ -68,6 +74,7 @@
 #tripPrint td.left{text-align: left;}
 #tripPrint .foot{font-size: 8pt; margin-top: 10px; line-height: 2;}
 #tripPrint .foot div + div{padding-left: 4em;}
+#tripPrint .jo{border: 1.5px solid #000; font-family: "조선일보명조", "바탕", "Batang", serif;}
 #tripPrint .jo h3{font: 20pt "조선일보명조", "바탕", "Batang", serif; padding: 34px 0 30px; margin: 0;}
 #tripPrint .jo .info{display: flex; gap: 0 22%; font-size: 10pt; padding: 0 2px 6px;}
 #tripPrint .jo table{border: 0; border-top: 1.5px solid #000; font-size: 10pt;}
@@ -77,13 +84,16 @@
 #tripPrint .jo tr > :last-child{border-right: 0;}
 #tripPrint .jo tbody tr:last-child td{border-bottom: 0;}
 #tripPrint .jo tr.sum td{font-weight: bold;}
+#tripPrint .ledger{font-family: "HY견명조", "바탕", "Batang", serif; break-after: page;}
 #tripPrint .ledger:last-child{break-after: auto;}
+#tripPrint .ledger h3{font: bold 26pt "HY견명조", "바탕", "Batang", serif; letter-spacing: .35em; margin: 4mm 0 5mm;}
 #tripPrint .ledger table{border: 2px solid #000; font-size: 11pt;}
 #tripPrint .ledger th{background: #f7f7f7; font-weight: normal; height: 8mm; border-color: #000;}
 #tripPrint .ledger thead tr:last-child th{height: 6mm; border-bottom: 3px double #000;}
 #tripPrint .ledger td{height: 12.4mm; border-color: #000;}
 #tripPrint .ledger td.l{text-align: left;}
 #tripPrint .ledger td.r{text-align: right;}
+#tripPrint .mjo{border: 1px solid #000; width: 168mm; margin: 0 auto;}
 #tripPrint .mjo h3{font: 22pt "맑은 고딕", sans-serif; padding: 2mm 0 11mm; margin: 0;}
 #tripPrint .mjo .info{font-size: 11pt; padding: 0 3px 2mm;}
 #tripPrint .mjo table{border: 0; border-top: 1px solid #000; font-size: 11pt;}
@@ -93,12 +103,9 @@
 #tripPrint .mjo tr > :last-child{border-right: 0;}
 #tripPrint .mjo tbody tr:last-child td{border-bottom: 0;}
 #tripPrint .mjo tr.sum td{font-weight: bold;}
-#trip{font:13px/1.55 "맑은 고딕","Malgun Gothic",sans-serif;color:var(--text)}
-#trip .tsec{padding:16px 20px 18px;border-bottom:1px solid var(--line2);background:#fff}
-#trip .tsec:last-child{border-bottom:0}
-#trip h3{font-size:14px;margin:0 0 12px;padding-left:8px;border-left:3px solid var(--accent);line-height:1.3;font-weight:bold}
-#trip button{font:inherit;padding:5px 12px;border:1px solid var(--line);border-radius:3px;background:#fff;color:var(--text);cursor:pointer}
-#trip button:hover{border-color:var(--accent);color:var(--accent-dark)}
-#trip button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-#trip input,#trip select,#trip textarea{font:inherit}
+#trip input[type=text],#trip input:not([type]){font:inherit;padding:4px 7px;border:1px solid var(--line);border-radius:2px;background:#fff;color:var(--text);width:auto}
+#trip{font:13px/1.55 "맑은 고딕","Malgun Gothic",sans-serif;color:var(--text);background:var(--panel)}
+#trip .ttitle{font-size:16px;font-weight:bold;margin:0;padding:11px 20px;background:var(--accent);color:#fff;letter-spacing:-.2px}
+#trip .tsec{padding:16px 20px 18px;border-bottom:1px solid var(--line2)}
+#trip h3{font-size:14px;margin:0 0 12px;padding-left:8px;border-left:3px solid var(--accent);line-height:1.3;font-weight:bold;color:var(--text)}
 @media print{ body.trip-printing > *:not(#tripPrint){display:none !important} body.trip-printing #tripPrint{display:block;font-family:"맑은 고딕","Malgun Gothic",sans-serif;color:#000} }
