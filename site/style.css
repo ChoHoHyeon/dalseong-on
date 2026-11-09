@@ -231,7 +231,7 @@ b.big{font-size:18px;display:block;margin-bottom:6px}
 .main.composite .view{min-height:auto;flex:none} .main.composite .view.on+.view.on{margin-top:22px;padding-top:22px;border-top:1px dashed var(--line)} .main.composite .view.on+.view.on .vh h2{font-size:20px}
 
 /* ── 상단 슬로건(군 CI 원본) ── */
-.top-c.slogan{background:none;border:0;box-shadow:none;height:auto;padding:4px 10px;justify-content:center;border-radius:12px} .top-c.slogan img{height:30px;width:auto;display:block}
+.top-c.slogan{background:none;border:0;box-shadow:none;height:auto;padding:4px 10px;justify-content:center;border-radius:12px} .top-c.slogan img{height:36px;width:auto;display:block}
 body[data-theme=dark] .top-c.slogan img{filter:brightness(1.15)}
 
 /* ── 좌측 메뉴: 달성On 항목 · 새 대화 · 최근 대화 ── */
