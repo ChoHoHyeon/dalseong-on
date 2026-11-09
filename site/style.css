@@ -1647,3 +1647,9 @@ body[data-theme=dark] .hm-cal li.mine b{color:var(--tx)}body[data-theme=dark] .h
 .now-card .hm-cal li.row.none{cursor:default;opacity:.7}
 .now-card .hm-cal li.row.blank{cursor:default;border-bottom:1px dashed transparent}
 .now-card .hm-cal li.mine i{font-size:14px}
+.now-card .hm-cal li.sec:not(:first-child){margin-top:10px;border-top:1px solid var(--line);padding-top:12px}
+/* 달력이 줄 높이에 맞춰 칸을 늘이고 줄인다 */
+.hm-row>.cal-card{min-height:0;overflow:hidden}
+.cal-card .cal-grid{flex:1;grid-auto-rows:1fr;min-height:0}
+.cal-card .cd{min-height:0}
+.hm-col>.now-card{overflow:hidden}

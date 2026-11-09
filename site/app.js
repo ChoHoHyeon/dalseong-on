@@ -325,27 +325,33 @@ function calItems(){
 /* 지금 하실 때예요 = 달력에 적어 둔 일정(7일 안) + 날짜에 맞춘 안내 — 합쳐서 최대 4줄 */
 function renderNow(){
   const el=$('#hmCal'); if(!el) return;
-  const dd=n=>n===0?'오늘':n===1?'내일':'D-'+n;
+  const dd=n=>n===0?'오늘':n===1?'내일':'D-'+n, EV=3, RC=2;     // 내 일정 3줄 · 최근 작업 2줄 — 개수와 상관없이 자리 고정
   const all=(window.HOMECAL&&HOMECAL.upcoming)?HOMECAL.upcoming(7):[];
-  // ① 내 일정 — 늘 2줄 자리 (없으면 안내 1줄 + 빈 줄, 많으면 2개 + "+N")
-  const ev=all.slice(0,2); let h='<li class="sec">📌 내 일정 <small>7일 안</small>'+(all.length>2?`<em>+${all.length-2}</em>`:'')+'</li>';
+  const ev=all.slice(0,EV);
+  let h='<li class="sec">📌 내 일정 <small>7일 안</small>'+(all.length>EV?`<em>+${all.length-EV}</em>`:'')+'</li>';
   h+=ev.map(e=>{ const d=new Date(e.d+'T00:00:00'); return `<li class="row mine" data-ev="${e.id}"><i style="background:color-mix(in srgb,${e.c||'#1d5fd6'} 16%,#fff);color:${e.c||'#1d5fd6'}">●</i><div><b>${esc(e.title)}</b><small>${d.getMonth()+1}/${d.getDate()}${e.t?' '+e.t:''}${e.memo?' · '+esc(e.memo):''}</small></div><span class="dday${e.diff===0?' today':''}">${dd(e.diff)}</span></li>`; }).join('');
   if(!ev.length) h+='<li class="row none"><i>✍️</i><div><b>달력에 일정을 넣으면 여기 보여요</b><small>왼쪽 달력에서 날짜를 눌러 보세요</small></div></li>';
-  if(ev.length<2) h+='<li class="row blank"></li>';
-  // ② 지금 하실 일 — 늘 2줄
-  h+='<li class="sec">📅 지금 하실 때예요</li>';
-  h+=calItems().slice(0,2).map(([v,i,t,s])=>`<li class="row" data-go="staff:${v}"><i>${i}</i><div><b>${t}</b><small>${s}</small></div><span>바로 가기 ›</span></li>`).join('');
-  // ③ 내 최근 작업 — 늘 1줄
-  const R=rcGet(), r=R[0];
-  h+='<li class="sec">🗂 내 최근 작업 <small>이 PC에 저장</small>'+(R.length>1?`<button class="rc-more">전체 ${R.length}건 ›</button>`:'')+'</li>';
-  h+=r?`<li class="row" data-rc1="1"><i>${ICON[r.view]||'🗂'}</i><div><b>${esc(r.title)}</b><small>${MNAME[r.view]||''} · ${ago(r.at)}</small></div><span>다시 보기 ›</span></li>`
-      :'<li class="row none"><i>🗂</i><div><b>만든 결과가 여기 남아요</b><small>회의록·보도자료 등 — 새로고침해도 다시 볼 수 있어요</small></div></li>';
+  for(let k=Math.max(ev.length,1);k<EV;k++) h+='<li class="row blank"></li>';
+  const R=rcGet(), rs=R.slice(0,RC);
+  h+='<li class="sec">🗂 내 최근 작업 <small>이 PC에 저장</small>'+(R.length>RC?`<button class="rc-more">전체 ${R.length}건 ›</button>`:'')+'</li>';
+  h+=rs.map((r,k)=>`<li class="row" data-rc="${k}"><i>${ICON[r.view]||'🗂'}</i><div><b>${esc(r.title)}</b><small>${MNAME[r.view]||''} · ${ago(r.at)}</small></div><span>다시 보기 ›</span></li>`).join('');
+  if(!rs.length) h+='<li class="row none"><i>🗂</i><div><b>만든 결과가 여기 남아요</b><small>회의록·보도자료 등 — 새로고침해도 다시 볼 수 있어요</small></div></li>';
+  for(let k=Math.max(rs.length,1);k<RC;k++) h+='<li class="row blank"></li>';
   el.innerHTML=h;
   el.querySelectorAll('[data-ev]').forEach(li=>li.onclick=()=>HOMECAL.open(li.dataset.ev));
-  const r1=el.querySelector('[data-rc1]'); if(r1) r1.onclick=()=>rcOpen(r);
+  el.querySelectorAll('[data-rc]').forEach(li=>li.onclick=()=>rcOpen(rs[+li.dataset.rc]));
   const mo=el.querySelector('.rc-more'); if(mo) mo.onclick=e=>{ e.stopPropagation(); rcList(); };
 }
 window.addEventListener('dscal',()=>{ if(S.view==='home') renderNow(); });
+/* 홈 하단 줄(달력 + 오늘 챙길 것) 높이를 남은 화면 높이에 딱 맞춘다 → 스크롤 없이 한 페이지 */
+function fitHome(){
+  const m=$('#main'), row=document.querySelector('.hm-row'); if(!m||!row||S.view!=='home') return;
+  row.style.height=''; const top=row.getBoundingClientRect().top-m.getBoundingClientRect().top+m.scrollTop;
+  const pb=parseFloat(getComputedStyle(m).paddingBottom)||0, avail=Math.floor(m.clientHeight-top-pb-2);
+  const need=Math.max(380, document.querySelector('.now-card')?.scrollHeight||0);   // 이보다 작으면 줄이지 않고 스크롤 허용
+  if(avail>=need) row.style.height=avail+'px';
+}
+window.addEventListener('resize',()=>{ clearTimeout(window._fh); window._fh=setTimeout(fitHome,120); });
 function renderUsage(){
   const kpis=(w,t,top)=>[['이번 주 이용',(w?w.use:'–')+'회','전 직원 · 메뉴 열기 기준'],['이번 주 만든 초안',(w?w.gen:'–')+'건','회의록·보도자료·카드뉴스 등'],['누적 이용',(t?t.use.toLocaleString():'–')+'회','달성On 오픈 이후'],['이번 주 인기 1위',top&&top[0]?(ICON[top[0][0]]||'⭐')+' '+(MNAME[top[0][0]]||top[0][0]):'–',top&&top[0]?top[0][1]+'회 이용':'이번 주 첫 사용자가 되어 주세요']]
     .map(([k,v,s])=>`<div class="kpi"><small>${k}</small><b>${v}</b><span class="sub">${s}</span></div>`).join('');
@@ -358,8 +364,7 @@ function renderUsage(){
   }).catch(()=>{});
   if(window.HOMECAL) HOMECAL.init();
   const d=new Date(); $('#hmCalNote').textContent=`${d.getMonth()+1}월 ${d.getDate()}일 기준`;
-  renderNow();
-  $('#hmStd').innerHTML='<span class="lbl">📌 정산 기준</span>'+[['관내 출장 4시간↑','20,000원','trip'],['4시간↓','10,000원','trip'],['공용차량','10,000원 / 0원','trip'],['급량비 1식','9,000원','meal']].map(([k,v,g])=>`<button data-go="staff:${g}">${k} <b>${v}</b></button>`).join('');
+  renderNow(); requestAnimationFrame(()=>requestAnimationFrame(fitHome));
 }
 
 /* ── 안내 영상 목록 ──────────────────────────────────────────
