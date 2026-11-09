@@ -102,7 +102,7 @@ async function make(){
     const S=window.S||{};
     if((S.key||S.server)&&!S.offline){ C.data=await callModel(`장수: ${v('cnCount')||6}장(표지·마무리 포함)\n제목(참고): ${v('cnTitle')||'원문에서 뽑기'}\n문의처: ${v('cnContact')||'원문에 있으면 사용, 없으면 ○○'}\n원문:\n${v('cnSrc')}`); $('#cnMsg').textContent='완성 — 장을 눌러 문구를 고칠 수 있습니다.'; }
     else { await new Promise(r=>setTimeout(r,300)); C.data=offline(); $('#cnMsg').textContent='오프라인 시연 모드 — 모델 연결 시 원문을 읽어 장별 문구를 씁니다.'; }
-    C.cur=0; await renderAll(); $('#cnOut').scrollIntoView({behavior:'smooth',block:'start'}); if(window.S&&S.stats) S.stats.gen++;
+    C.cur=0; await renderAll(); $('#cnOut').scrollIntoView({behavior:'smooth',block:'start'}); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
   }catch(e){ $('#cnMsg').textContent='⚠ '+e.message; }
   finally{ C.busy=false; $('#cnGo').disabled=false; }
 }

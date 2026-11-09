@@ -107,7 +107,7 @@ async function run(){
     $('#anInsight').textContent='해석 문장 작성 중…';
     if((S.key||S.server)&&!S.offline){ const t=await callModel('지방자치단체 보고서용으로, 주어진 집계표를 근거로 해석 문장 2문장을 개조식이 아닌 평서문으로 씁니다. 숫자는 표에 있는 것만. 추측·원인 단정 금지.',`제목: ${p.title}\n집계(${p.group} / ${AGG[p.agg]}):\n${data.slice(0,30).map(d=>d[0]+': '+(+d[1].toFixed(2))).join('\n')}`,300); $('#anInsight').textContent=t.trim(); }
     else { const top=[...data].sort((a,b)=>b[1]-a[1])[0]; $('#anInsight').textContent=`${p.group} 기준 ${AGG[p.agg]}은(는) 「${top[0]}」이(가) ${(+top[1].toFixed(1)).toLocaleString()}(으)로 가장 큽니다. (오프라인 시연 — 모델 연결 시 해석 문장을 씁니다)`; }
-    $('#anMsg').textContent='완료 — 질문을 바꿔 다시 볼 수 있습니다.'; if(window.S&&S.stats) S.stats.gen++;
+    $('#anMsg').textContent='완료 — 질문을 바꿔 다시 볼 수 있습니다.'; if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
   }catch(e){ $('#anMsg').textContent='⚠ '+e.message; }
   finally{ A.busy=false; $('#anGo').disabled=false; }
 }

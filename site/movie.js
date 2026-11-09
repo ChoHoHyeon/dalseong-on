@@ -90,7 +90,7 @@ async function make(){
     const S=window.S||{};
     if((S.key||S.server)&&!S.offline){ V.data=await callModel(`총 길이: ${v('mvLen')||30}초\n화면: ${SIZES[v('mvSize')][2]}\n문의처: ${v('mvContact')||'문서에 있으면 사용'}\n문서 내용:\n${v('mvSrc').slice(0,6000)}`); $('#mvMsg').textContent='대본 완성 — 장면 문구를 고친 뒤 「영상 만들기」를 누르세요.'; }
     else { await new Promise(r=>setTimeout(r,300)); V.data=offline(); $('#mvMsg').textContent='오프라인 시연 모드 — 모델 연결 시 문서를 읽어 대본을 씁니다.'; }
-    renderScenes(); await preview(0); $('#mvOut').hidden=false; $('#mvVideoWrap').hidden=true; $('#mvOut').scrollIntoView({behavior:'smooth',block:'start'}); if(window.S&&S.stats) S.stats.gen++;
+    renderScenes(); await preview(0); $('#mvOut').hidden=false; $('#mvVideoWrap').hidden=true; $('#mvOut').scrollIntoView({behavior:'smooth',block:'start'}); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
   }catch(e){ $('#mvMsg').textContent='⚠ '+e.message; }
   finally{ V.busy=false; $('#mvGo').disabled=false; }
 }
@@ -110,7 +110,7 @@ async function record(){
   rec.stop(); await done;
   V.blob=new Blob(chunks,{type:mime.split(';')[0]}); const url=URL.createObjectURL(V.blob); const vid=$('#mvVideo'); vid.src=url; $('#mvVideoWrap').hidden=false; vid.play().catch(()=>{});
   $('#mvMsg').textContent=`완성 — ${V.ext.toUpperCase()} ${(V.blob.size/1048576).toFixed(1)}MB`+(V.ext==='webm'?' (이 브라우저는 mp4 저장을 지원하지 않아 webm으로 저장됩니다)':'');
-  V.busy=false; $('#mvRec').disabled=false; if(window.S&&S.stats) S.stats.gen++;
+  V.busy=false; $('#mvRec').disabled=false; if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
 }
 function init(){
   if($('#mvGo')._on) return; $('#mvGo')._on=1;

@@ -7,7 +7,10 @@
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const S={ mode:'home', view:'home', ds:0, docs:[], meta:null, idx:null, layers:{1:true,2:true}, key:'', code:(localStorage.getItem('dOnCode')||''), model:'claude-sonnet-4-5', offline:false, server:false,
           hist:[], lastAnswer:null, lastCites:[], lastQ:'', stats:{q:0,cite:0,gen:0,hwpx:0,hits:{}}, busy:false, khist:[] };
-window.S=S;  // 분리 모듈(meal/trip/family 등)에서 모델 연결 상태를 읽을 수 있게
+window.S=S;
+/* 전 직원 이용 집계 — 메뉴 이름·종류만 보낸다(누가 썼는지는 남기지 않음) */
+const HIT_SEEN={};
+window.dsHit=(k,m)=>{ try{ m=m||S.view||'etc'; fetch('/api/hits',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({k,m}),keepalive:true}).catch(()=>{}); }catch(e){} };  // 분리 모듈(meal/trip/family 등)에서 모델 연결 상태를 읽을 수 있게
 try{ const hh=JSON.parse(localStorage.getItem('dOnHits')||'{}'); if(hh&&typeof hh==='object') S.stats.hits=hh; }catch(e){}
 function saveHits(){ try{ localStorage.setItem('dOnHits',JSON.stringify(S.stats.hits)); }catch(e){} }
 
@@ -216,7 +219,7 @@ function renderNav(){
   const nc=$('#navClear'); if(nc) nc.onclick=()=>{ localStorage.removeItem('dOnRecent'); renderNav(); };
 }
 function setMode(m){ S.mode=m; document.body.dataset.mode=m; go(NAV[m][0].id); }
-function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='rule'&&window.RULEDRAFT) RULEDRAFT.init(); if(top==='minutes'&&window.MINUTES) MINUTES.init(); if(top==='banner'&&window.BANNER) BANNER.init(); if(top==='card'&&window.CARDNEWS) CARDNEWS.init(); if(top==='movie'&&window.MOVIE) MOVIE.init(); if(top==='share'&&window.SHARE) SHARE.init(); if(top==='analyze'&&window.ANALYZE) ANALYZE.init(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='trip') loadTrip(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
+function go(v){ const target=ALIAS[v]; const top=target||v; if(HOME_MENU.some(n=>n.view===top&&n.ready&&top!=='on')&&!HIT_SEEN[top]){ HIT_SEEN[top]=1; dsHit('use',top); } S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='rule'&&window.RULEDRAFT) RULEDRAFT.init(); if(top==='minutes'&&window.MINUTES) MINUTES.init(); if(top==='banner'&&window.BANNER) BANNER.init(); if(top==='card'&&window.CARDNEWS) CARDNEWS.init(); if(top==='movie'&&window.MOVIE) MOVIE.init(); if(top==='share'&&window.SHARE) SHARE.init(); if(top==='analyze'&&window.ANALYZE) ANALYZE.init(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='trip') loadTrip(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
 
 /* ── 홈 대시보드 ── */
 document.addEventListener('click',e=>{ const g=e.target.closest('[data-go]'); if(!g) return; const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });
@@ -252,25 +255,45 @@ function drawVideo(i){
 }
 
 /* 관리자 › 이용 통계·자료 현황 (KPI · 참조 순위 · 자료 구성 · 자치법규) */
+/* ── 홈 하단: 오늘의 한마디 · 이번 주(전 직원 실제 집계) · 성장일기 · 기준 띠 · 기념일 ── */
+const MSGS=[
+ ['월','한 주 시작! 잔일은 달성On에 맡기고 커피 한 잔 ☕'],['화','회의록, 아직도 직접 쓰세요? 녹음만 올리면 돼요 👀'],['수','벌써 수요일! 반은 왔어요 💪'],['목','보도자료 초안, 계획서 붙여넣기면 5분이에요 📰'],['금','오늘도 칼퇴를 향해! 🚀'],
+ ['','급량비 정산은 엑셀 올리고 클릭 한 번 🍚'],['','엑셀 올리고 "읍면별 합계"라고만 물어보세요 📊'],['','카드뉴스 6장, 디자이너 없이 10분 📱'],['','출장내역서 PDF 넣으면 관내여비 끝 🚗'],['','조례 개정? 현행 조문만 붙여넣으면 대비표가 나와요 ⚖️'],
+ ['','현수막 문구 3안, 고르기만 하세요 🎏'],['','"이런 기능 있으면 좋겠다" — 나눔터에 남기면 진짜 생겨요 💡'],['','오늘 한 일 중 반복되는 게 있다면, 그게 다음 기능이에요 ✨'],['','홍보영상도 문서 하나면 만들어져요 🎬'],['','경조사 카드, 마음만 준비하세요 💐']];
+function todayMsg(){ const d=new Date(), w='일월화수목금토'[d.getDay()]; const byDay=MSGS.filter(m=>m[0]===w); const rest=MSGS.filter(m=>!m[0]); const seed=Math.floor(d/864e5);
+  return (byDay.length&&seed%2===0)?byDay[0][1]:rest[seed%rest.length][1]; }
+const MNAME={minutes:'회의록',press:'보도자료',card:'카드뉴스',meal:'급량비',trip:'출장비',family:'경조사 카드',banner:'현수막',movie:'홍보영상',analyze:'데이터 분석',rule:'조례·지침',share:'나눔터',on:'달성On 질문'};
 function renderUsage(){
-  // 상단 숫자 — 가볍게: 쓸 수 있는 기능 수 · 이번 브라우저 사용량
-  const ready=HOME_MENU.filter(n=>n.ready).length, st=S.stats||{};
-  $('#homeKpis').innerHTML=[['쓸 수 있는 기능',ready+'개','메뉴에서 바로'],['만든 초안',(st.gen||0)+'건','이 브라우저 기준'],['한글 파일',(st.hwpx||0)+'건','내려받은 hwpx'],['질문',(st.q||0)+'건','달성On 사용하기'],['설치·로그인','0','브라우저만 있으면 OK']]
+  const ready=HOME_MENU.filter(n=>n.ready).length;
+  const kpis=(w,t)=>[['이번 주 이용',(w?w.use:'–')+'회','전 직원 · 메뉴 열기 기준'],['이번 주 만든 초안',(w?w.gen:'–')+'건','회의록·보도자료·카드뉴스 등'],['누적 이용',(t?t.use.toLocaleString():'–')+'회','달성On 오픈 이후'],['쓸 수 있는 기능',ready+'개','메뉴에서 바로'],['설치·로그인','0','브라우저만 있으면 OK']]
     .map(([k,v,s])=>`<div class="kpi"><small>${k}</small><b>${v}</b><span class="sub">${s}</span></div>`).join('');
-  // ② 이렇게 써보세요 — 메뉴별 한 줄 팁
-  const TIPS=[['minutes','🎙','회의 끝나면 녹음 파일만 올리세요','회의록 양식까지 알아서'],['press','📰','계획서 붙여넣으면 보도자료 초안','군 서식 한글 파일로'],['card','📱','보도자료 → 카드뉴스 6장','그림·해시태그까지'],['meal','🍚','급량비는 엑셀 올리고 클릭 한 번','지급명세서 자동'],['trip','🚗','출장내역서 PDF 넣으면 관내여비 끝','지급조서까지'],['analyze','📊','엑셀 올리고 "읍면별 합계"','차트·해석 문장'],['banner','🎏','행사명만 넣으면 현수막 문구 3안','업체 사양서까지'],['rule','⚖️','현행 조문 붙여넣고 개정 요지만','신구조문대비표 자동']];
-  $('#hmTips').innerHTML=TIPS.map(([v,i,t,s])=>`<button data-go="staff:${v}"><i>${i}</i><b>${t}</b><small>${s}</small></button>`).join('');
-  // ③ 자주 찾는 기준·단가 — 달성On 계산에 쓰는 값
-  let meal=9000; try{ meal=(window.MEAL&&MEAL.price&&MEAL.price())||9000; }catch(e){}
-  const STD=[['관내 출장(4시간 이상)','20,000원','공용차량 이용 시 10,000원','trip'],['관내 출장(4시간 미만)','10,000원','공용차량 이용 시 0원','trip'],['급량비 1인 1식',meal.toLocaleString()+'원','급량비 계산하기 기준 단가','meal'],['관외 출장','별도 계산','일비·식비·숙박비 — 여비 규정 확인','on']];
-  $('#hmStd').innerHTML=STD.map(([k,v,s,go])=>`<li data-go="staff:${go}"><div><b>${k}</b><small>${s}</small></div><em>${v}</em></li>`).join('')+'<li class="hm-std-note">※ 근거: 「지방공무원 여비 규정」·달성군 여비 조례 등. 바뀐 기준은 나눔터로 알려 주세요.</li>';
+  $('#homeKpis').innerHTML=kpis();
+  $('#hmMsg').innerHTML=`<span class="tag">TODAY</span><b>${todayMsg()}</b>`;
+  // 이번 주 — 실제 집계
+  $('#hmWeek').innerHTML='<p class="hint">불러오는 중…</p>';
+  fetch('/api/hits',{cache:'no-store'}).then(r=>r.json()).then(j=>{
+    $('#homeKpis').innerHTML=kpis(j.week,j.total);
+    const top=j.top||[], mx=top.length?top[0][1]:1, medal=['🥇','🥈','🥉','4','5'];
+    $('#hmWeek').innerHTML=`<div class="hw-nums"><div><b>${j.today.use}</b><span>오늘 이용</span></div><div><b>${j.week.gen}</b><span>이번 주 초안</span></div><div><b>${j.week.q}</b><span>이번 주 질문</span></div></div>
+      <div class="hw-top"><small>이번 주 인기 기능</small>${top.length?top.map(([m,n],i)=>`<div class="hw-r" data-go="staff:${m}"><i>${medal[i]}</i><span>${MNAME[m]||m}</span><em><u style="width:${Math.max(8,n/mx*100)}%"></u></em><b>${n}</b></div>`).join(''):'<p class="hint">이번 주 첫 사용자가 되어 주세요 🙂</p>'}</div>`;
+    const ms=[100,500,1000,3000,5000,10000].filter(x=>j.total.use>=x).pop();
+    if(ms){ const k='dsOn.mile.'+ms; let seen=false; try{ seen=localStorage.getItem(k); localStorage.setItem(k,1); }catch(e){} { $('#hmMile').hidden=false; $('#hmMile').innerHTML=`🎉 달성On 누적 이용 <b>${ms.toLocaleString()}회</b> 돌파! 함께 써 주셔서 고맙습니다`; } }
+  }).catch(()=>{ $('#hmWeek').innerHTML='<p class="hint">집계를 불러오지 못했습니다</p>'; });
+  // 성장일기 — 공지의 '기능' 항목 + 나눔터 '반영됨'
+  const diary=NEWS.filter(n=>n[1]==='기능').map(n=>({d:n[0],t:n[2].replace(/<[^>]+>/g,''),k:'new'}));
+  const draw=extra=>{ const L=[...extra,...diary].sort((a,b)=>b.d.localeCompare(a.d)).slice(0,6);
+    $('#hmDiary').innerHTML=L.map(x=>`<li><i class="${x.k}">${x.k==='voice'?'💬':'✨'}</i><div><b>${esc(x.t)}</b><small>${x.d}${x.k==='voice'?' · 직원 의견 반영':' · 새 기능'}</small></div></li>`).join(''); };
+  draw([]);
+  fetch('/api/bugs',{cache:'no-store'}).then(r=>r.json()).then(j=>{ const v=(j.list||[]).filter(x=>x.where==='반영').map(x=>({d:x.at.slice(0,10).replace(/-/g,'.'),t:(x.text||'').split('\n')[0],k:'voice'})); if(v.length) draw(v); }).catch(()=>{});
+  // 기준·단가 띠
+  $('#hmStd').innerHTML='<span class="lbl">📌 자주 찾는 기준</span>'+[['관내 출장 4시간↑','20,000원','trip'],['4시간↓','10,000원','trip'],['공용차량','10,000원 / 0원','trip'],['급량비 1식','9,000원','meal']].map(([k,v,g])=>`<button data-go="staff:${g}">${k} <b>${v}</b></button>`).join('')+'<small>근거: 「지방공무원 여비 규정」 등</small>';
 }
 
 /* ── 안내 영상 목록 ──────────────────────────────────────────
    영상이 늘어나면 이 배열에 한 줄만 더하면 된다. 넘김 단추는 개수에 맞춰 저절로 생긴다.
    file 대신 yt(유튜브 ID)를 적어도 된다. */
 const VIDEOS=[
-  {title:'달성On 소개',        sub:'무엇을 해 주는지 29초로',   len:'29초',   home:true,
+  {title:'달성On 소개',        sub:'무엇을 해 주는지 16초로',   len:'16초',   home:true,
    file:'assets/intro.mp4',  poster:'assets/intro_poster.jpg'},
   {title:'급량비 계산하기',     sub:'확인서 PDF 하나로 집행대장까지', len:'1분 13초', view:'meal',
    file:'assets/meal_guide.mp4', poster:'assets/meal_guide_poster.jpg'}
@@ -306,7 +329,7 @@ function renderVideoList(){
 }
 const VIDEO_FILE='assets/intro.mp4';  // (옛 설정 — VIDEOS 를 씁니다)
 const VIDEO_ID='OVZoYQeUFIQ';  // 유튜브 영상 ID를 넣으면 안내 영상이 재생됨, 비우면 포스터 표시
-const NEWS=[['2026.09.11','기능','🍚 <b>급량비 계산하기</b> — 오늘부터 사용할 수 있습니다','좌측 메뉴 「급량비 계산하기」에서 <b>새올 초과근무 확인서 PDF 하나만 올리면</b> 됩니다.<br><br>· 「지방자치단체 회계관리에 관한 훈령」(제416호) <b>급량비 기준에 따라 지급 대상을 판정</b>합니다 — 휴일·대체공휴일, 조기출근 사전신청까지 대조합니다<br>· 식당 이름만 적고 <b>「금액 자동계산」 → 「가맹업소명 배치하기」</b>를 누르면 일자별로 나뉘어 들어갑니다. 금액은 <b>9,000원 단위로 딱 떨어지게</b> 맞춰 줍니다<br>· <b>기존 집행대장 서식 그대로</b> 인쇄됩니다 (A4 가로 · 한 쪽 12건 · 결재란 포함). 엑셀 파일로도 내려받을 수 있습니다<br>· 2026년 8월 정보통신과 <b>54식 486,000원</b>으로 검증했고 기존 수기 집계와 일치했습니다<br><br><b>※ 확인서는 스캔하지 마시고</b> 새올 화면에서 「인쇄 → PDF로 저장」한 파일을 올려 주세요. 스캔본은 그림이라 내용을 읽을 수 없습니다.<br>※ 올린 파일은 <b>브라우저 안에서만 처리</b>되며 외부로 전송되지 않습니다.<br>※ 제외 대상은 자동 판단되지만 <b>결재 전 최종 확인은 담당자</b>가 합니다 — 규정상 「실제 근무 여부를 객관적 사실로 확인한 후 집행」해야 합니다.<br><br>시범 단계입니다. <b>처음 쓰실 때는 이미 지급이 끝난 지난 달로 한 번 돌려보시고</b> 기존 집계와 맞는지 확인해 주세요. 문의: 정보통신과 053-668-2454'],['2026.09.10','기능','📰 <b>보도자료 작성하기</b> — 오늘부터 사용할 수 있습니다','좌측 메뉴 「보도자료 작성하기」에서 <b>바로 쓰실 수 있습니다.</b><br><br>· <b>행사·사업명</b>과 <b>주요 내용</b>만 적으면 보도자료 초안이 만들어집니다 (계획서·기안문을 그대로 붙여넣거나 파일로 올려도 됩니다)<br>· 달성군이 실제로 발행한 <b>보도자료 600건</b>의 문체·구성을 따라 씁니다<br>· <b>홍보협력과 제출 서식 그대로</b> 한글 파일로 내려받습니다 — 표·글꼴·여백까지 동일<br>· 일시·장소·담당자를 비워 두면 <b>○○월 ○○일</b>처럼 빨간색으로 표시되니 나중에 채워 넣으시면 됩니다<br><br>※ 초안은 참고용입니다. <b>사실관계·수치·인용문은 반드시 확인 후</b> 배포해 주세요.'],['2026.09.10','자료','달성군 자치법규 <b>전량 색인</b> — 조례·규칙·훈령·예규 644건','법제처 「국가법령정보 공동활용」 API와 자치법규정보시스템(ELIS)을 통해 <b>대구광역시 달성군 자치법규 644건(9,739개 조문)</b>을 전부 색인했습니다.<br>· 조례 479건 · 규칙 95건 · <b>훈령 52건</b> · <b>예규 18건</b><br>· 이전: 7건 24개 조문(예시) → 현재: <b>644건 9,739개 조문(전량)</b><br>· 법규별 <b>소관부서</b>(60개 부서)와 시행일자를 함께 저장하여 「담당 부서 찾기」 근거로 사용합니다<br>· 위임전결 규정, 계약심사 업무처리 규정 등 <b>내부 훈령·예규까지 조문 단위로 검색</b>됩니다<br>· 모두 공개 자료이며, 조문 원문을 근거로 인용합니다'],['2026.09.10','공지','부군수 보고 결과 — 직원용 우선 도입 확정','① 우선 <b>직원용</b>으로 도입하여 전 직원이 자유롭게 사용할 수 있도록 구축<br>② 2027년 사업비 <b>20백만원</b> 범위에서 추진<br>③ 도입 후 <b>이용 활성화 상황을 지켜본 뒤</b>, 향후 <b>군민 대상(민원 안내) 서비스로 확장</b>할 수 있는 구조로 설계<br>※ 군민용 챗봇은 이번 단계에서 제외하되, 확장 가능한 구조는 유지합니다.'],['2026.09.10','공지','부군수 보고 일정 안내','2026. 9. 9.(수) 부군수님께서 <b>행정용 생성형 AI 도입에 관한 검토</b>를 지시하셨습니다.<br>하루 뒤인 <b>2026. 9. 10.(목) 17:00</b> 부군수님께 검토 결과를 보고하는 일정이 잡혔습니다.<br>보고 결과는 위 <b>「부군수 보고 결과 — 직원용 우선 도입 확정」</b> 공지를 봐 주세요.'],['2026.09.09','공지','달성On 시연판 이용 안내','시연판은 달성군 자치법규 전량과 공공데이터 6종, 예시 자료(민원안내 10건·내부지침 5건)를 포함합니다. 답변은 참고용이며 최종 판단은 담당자가 합니다. 문의: 정보통신과 053-668-2454'],['2026.09.09','기능','「달성군」 홈 대시보드 · 이용 안내 · 공지 화면 추가'],['2026.09.09','기능','달성On/직원용/관리자 3개 탭 구조로 개편, 우측 AI 대화 패널'],['2026.09.09','기능','한글 문서 생성 화면(문서 종류 · 서식 미리보기) 신설'],['2026.09.09','자료','민원안내 10건(예시) · 내부지침 5건(예시) 등록'],['2026.09.08','자료','2026.7.10 공포 조례·규칙 7건 색인(24개 조문·별표)'],['2026.09.08','자료','공공데이터 6종 1,107행 연결 (경로당·판매소·도서관·대형폐기물·봉투가격·무료급식소)'],['2026.09.08','기능','달성On 시연판 최초 공개']];
+const NEWS=[['2026.11.09','기능','🎙 <b>회의록 정리하기</b> — 녹음 파일만 올리면 회의록까지','회의 녹음(mp3·m4a·wav)을 올리면 <b>이 PC 안에서</b> 글로 바꾸고 안건·결정사항·조치사항으로 정리합니다. 샘플 녹음으로 바로 해볼 수 있습니다.'],['2026.11.09','기능','📊 <b>데이터 분석하기</b> — 엑셀 올리고 한 줄로 물어보세요','엑셀·CSV를 올리고 "읍면별 합계"처럼 물으면 표·차트·해석 문장이 나옵니다. 파일은 PC 밖으로 나가지 않습니다.'],['2026.11.09','기능','📱 <b>카드뉴스</b>·🎏 <b>현수막</b>·🎬 <b>홍보영상</b> 만들기 오픈','보도자료·계획서를 넣으면 카드뉴스 6장(테마 일러스트 포함), 현수막 문구 3안과 시안, SNS용 짧은 홍보영상을 만듭니다.'],['2026.11.09','기능','⚖️ <b>조례·지침 초안 만들기</b> — 신구조문대비표 자동','현행 조문과 개정 요지만 넣으면 개정안·대비표·확인 요청 사항까지 정리합니다.'],['2026.11.09','기능','💡 <b>제안·활용사례 나눔터</b> 오픈','"이런 기능 있으면 좋겠다"를 남겨 주세요. 검토해서 이 사이트에 반영하고 성장일기에 올립니다.'],['2026.09.11','기능','🍚 <b>급량비 계산하기</b> — 오늘부터 사용할 수 있습니다','좌측 메뉴 「급량비 계산하기」에서 <b>새올 초과근무 확인서 PDF 하나만 올리면</b> 됩니다.<br><br>· 「지방자치단체 회계관리에 관한 훈령」(제416호) <b>급량비 기준에 따라 지급 대상을 판정</b>합니다 — 휴일·대체공휴일, 조기출근 사전신청까지 대조합니다<br>· 식당 이름만 적고 <b>「금액 자동계산」 → 「가맹업소명 배치하기」</b>를 누르면 일자별로 나뉘어 들어갑니다. 금액은 <b>9,000원 단위로 딱 떨어지게</b> 맞춰 줍니다<br>· <b>기존 집행대장 서식 그대로</b> 인쇄됩니다 (A4 가로 · 한 쪽 12건 · 결재란 포함). 엑셀 파일로도 내려받을 수 있습니다<br>· 2026년 8월 정보통신과 <b>54식 486,000원</b>으로 검증했고 기존 수기 집계와 일치했습니다<br><br><b>※ 확인서는 스캔하지 마시고</b> 새올 화면에서 「인쇄 → PDF로 저장」한 파일을 올려 주세요. 스캔본은 그림이라 내용을 읽을 수 없습니다.<br>※ 올린 파일은 <b>브라우저 안에서만 처리</b>되며 외부로 전송되지 않습니다.<br>※ 제외 대상은 자동 판단되지만 <b>결재 전 최종 확인은 담당자</b>가 합니다 — 규정상 「실제 근무 여부를 객관적 사실로 확인한 후 집행」해야 합니다.<br><br>시범 단계입니다. <b>처음 쓰실 때는 이미 지급이 끝난 지난 달로 한 번 돌려보시고</b> 기존 집계와 맞는지 확인해 주세요. 문의: 정보통신과 053-668-2454'],['2026.09.10','기능','📰 <b>보도자료 작성하기</b> — 오늘부터 사용할 수 있습니다','좌측 메뉴 「보도자료 작성하기」에서 <b>바로 쓰실 수 있습니다.</b><br><br>· <b>행사·사업명</b>과 <b>주요 내용</b>만 적으면 보도자료 초안이 만들어집니다 (계획서·기안문을 그대로 붙여넣거나 파일로 올려도 됩니다)<br>· 달성군이 실제로 발행한 <b>보도자료 600건</b>의 문체·구성을 따라 씁니다<br>· <b>홍보협력과 제출 서식 그대로</b> 한글 파일로 내려받습니다 — 표·글꼴·여백까지 동일<br>· 일시·장소·담당자를 비워 두면 <b>○○월 ○○일</b>처럼 빨간색으로 표시되니 나중에 채워 넣으시면 됩니다<br><br>※ 초안은 참고용입니다. <b>사실관계·수치·인용문은 반드시 확인 후</b> 배포해 주세요.'],['2026.09.10','자료','달성군 자치법규 <b>전량 색인</b> — 조례·규칙·훈령·예규 644건','법제처 「국가법령정보 공동활용」 API와 자치법규정보시스템(ELIS)을 통해 <b>대구광역시 달성군 자치법규 644건(9,739개 조문)</b>을 전부 색인했습니다.<br>· 조례 479건 · 규칙 95건 · <b>훈령 52건</b> · <b>예규 18건</b><br>· 이전: 7건 24개 조문(예시) → 현재: <b>644건 9,739개 조문(전량)</b><br>· 법규별 <b>소관부서</b>(60개 부서)와 시행일자를 함께 저장하여 「담당 부서 찾기」 근거로 사용합니다<br>· 위임전결 규정, 계약심사 업무처리 규정 등 <b>내부 훈령·예규까지 조문 단위로 검색</b>됩니다<br>· 모두 공개 자료이며, 조문 원문을 근거로 인용합니다'],['2026.09.09','공지','달성On 시연판 이용 안내','시연판은 달성군 자치법규 전량과 공공데이터 6종, 예시 자료(민원안내 10건·내부지침 5건)를 포함합니다. 답변은 참고용이며 최종 판단은 담당자가 합니다. 문의: 정보통신과 053-668-2454'],['2026.09.09','기능','「달성군」 홈 대시보드 · 이용 안내 · 공지 화면 추가'],['2026.09.09','기능','달성On/직원용/관리자 3개 탭 구조로 개편, 우측 AI 대화 패널'],['2026.09.09','기능','한글 문서 생성 화면(문서 종류 · 서식 미리보기) 신설'],['2026.09.09','자료','민원안내 10건(예시) · 내부지침 5건(예시) 등록'],['2026.09.08','자료','2026.7.10 공포 조례·규칙 7건 색인(24개 조문·별표)'],['2026.09.08','자료','공공데이터 6종 1,107행 연결 (경로당·판매소·도서관·대형폐기물·봉투가격·무료급식소)'],['2026.09.08','기능','달성On 시연판 최초 공개']];
 function renderNews(){ $('#newsList').innerHTML=NEWS.map(([d,t,s])=>`<li><span class="d">${d}</span><span class="t">${t}</span>${s}</li>`).join(''); }
 
 /* ── 우측 AI 대화 ── */
@@ -319,7 +342,7 @@ $('#btnClear').onclick=resetChat;
 $('#btnFold').onclick=()=>{ document.body.dataset.chat='off'; $('#btnUnfold').hidden=false; };
 $('#btnUnfold').onclick=()=>{ document.body.dataset.chat='on'; $('#btnUnfold').hidden=true; };
 async function ask(q){
-  S.busy=true; $('#btnSend').disabled=true; $('#onCol').classList.remove('empty'); addMsg('user',q); S.stats.q++;
+  S.busy=true; $('#btnSend').disabled=true; $('#onCol').classList.remove('empty'); addMsg('user',q); S.stats.q++; window.dsHit&&dsHit('q','on');
   const filter=d=>{ if(d.type==='internal') return S.layers[2]; return S.layers[1]; };
   let hits=rerank(q,search(expand(q),{filter,k:8})); const ci=countIntent(q); if(!ci&&!relevant(q,hits)) hits=[];
   if(ci){ const agg=S.docs.find(d=>d.source===ci.ds&&d.title.endsWith('읍면별 집계')); if(agg&&!hits.some(h=>h.doc===agg)) hits.unshift({doc:agg,score:99}); }
@@ -603,7 +626,7 @@ async function makePress(){
       $('#pfMsg').textContent='오프라인 시연 모드 — 모델 연결 시 실제 문체로 작성됩니다.';
     }
     pressRender(PS.out);
-    S.stats.gen++;
+    S.stats.gen++,window.dsHit&&dsHit('gen');
   }catch(err){ $('#pfMsg').textContent='⚠ '+err.message; }
   finally{ PS.busy=false; $('#pfGo').disabled=false; }
 }

@@ -49,13 +49,18 @@
       </div>
       <div class="portal-grid">
         <div class="card board"><h4>공지사항 <small>최근 5건</small><button class="ghost sm more" data-go="home:news">전체 보기 ›</button></h4><ul class="board-list" id="boardList"></ul></div>
-        <div class="card video"><h4>달성On 소개 영상 <small id="videoNote">29초</small></h4><div class="player" id="player"></div><p class="hint vcap" id="videoCap" style="margin-top:10px"></p></div>
+        <div class="card video"><h4>달성On 소개 영상 <small id="videoNote">16초</small></h4><div class="player" id="player"></div><p class="hint vcap" id="videoCap" style="margin-top:10px"></p></div>
       </div>
       <div class="home-usage">
       <div class="kpis five" id="homeKpis"></div>
-      <div class="home-grid two">
-        <div class="card"><h4>이렇게 써보세요 <small>눌러서 바로 가기</small></h4><div class="hm-tips" id="hmTips"></div></div>
-        <div class="card"><h4>자주 찾는 기준·단가 <small>달성On 계산 기준</small></h4><ul class="hm-std" id="hmStd"></ul></div>
+      <div class="hm-fun">
+        <div class="hm-mile" id="hmMile" hidden></div>
+        <div class="hm-msg" id="hmMsg"></div>
+        <div class="hm-row">
+          <div class="card hm-week"><h4>⚡ 이번 주 달성On <small id="hmWeekNote">전 직원 기준</small></h4><div id="hmWeek"></div></div>
+          <div class="card hm-diary"><h4>🌱 달성On 성장일기 <small>새 기능 · 반영된 의견</small><button class="ghost sm more" data-go="staff:share">의견 남기기 ›</button></h4><ul id="hmDiary"></ul></div>
+        </div>
+        <div class="hm-std-line" id="hmStd"></div>
       </div>
       </div>
     </section>
