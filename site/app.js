@@ -174,7 +174,7 @@ const HOME_MENU=[
   {mode:'staff',view:'minutes',icon:'🎙', label:'회의록\n정리하기'},
   // ── 직원 생활 (개인 업무·경조사)
   {mode:'staff',view:'meal',   icon:'🍚', label:'급량비\n계산하기', cls:'sep', ready:1},
-  {mode:'staff',view:'trip',   icon:'🚗', label:'출장비\n계산하기'},
+  {mode:'staff',view:'trip',   icon:'🚗', label:'출장비(관내여비)\n계산하기', ready:1},
   {mode:'staff',view:'family', icon:'💐', label:'경조사 카드\n만들기', ready:1},
   // ── 알리기 · 홍보물 만들기
   {mode:'staff',view:'press',  icon:'📰', label:'보도자료\n작성하기', cls:'sep', ready:1},
@@ -206,7 +206,7 @@ function renderNav(){
     const recent=loadRecent();
     html=item(HOME_MENU.find(n=>n.view==='on'))+`<li class="newchat" id="navNew">＋ 새 대화</li>`
       +(recent.length?`<li class="rh"><span>최근 대화</span><button class="rclear" id="navClear" title="전체 삭제">전체 삭제</button></li>`+recent.map(q=>`<li class="rc" data-q="${q.replace(/"/g,'&quot;')}" title="${q.replace(/"/g,'&quot;')}"><span>${q}</span><button class="rx" data-del="${q.replace(/"/g,'&quot;')}" title="삭제">✕</button></li>`).join(''):'');
-  } else html=HOME_MENU.map(item).join('');
+  } else html=HOME_MENU.filter(n=>n.ready||n.cls==='admin'||n.mode==='admin').map(item).join('');   // 출품판: 지금 쓸 수 있는 메뉴만(준비 중 메뉴는 로드맵으로)
   html+=MINOR.map(item).join('');
   $('#nav').innerHTML=html;
   $$('#nav li[data-view]').forEach(li=>li.onclick=()=>{ if(S.mode!==li.dataset.mode){ S.mode=li.dataset.mode; document.body.dataset.mode=S.mode; } go(li.dataset.view); });
