@@ -184,9 +184,9 @@ const HOME_MENU=[
   {mode:'staff',view:'movie',  icon:'🎬', label:'홍보영상\n만들기', ready:1},
   // (제외) 안내방송 만들기 — 메뉴 삭제
   // ── 찾아보기 · 나눔
-  {mode:'staff',view:'analyze',icon:'📊', label:'데이터\n분석하기', cls:'sep'},
-  {mode:'staff',view:'past',   icon:'🔎', label:'지난 사례\n찾아보기'},
-  {mode:'staff',view:'share',  icon:'💡', label:'활용사례\n나눔터'},
+  {mode:'staff',view:'analyze',icon:'📊', label:'데이터\n분석하기', cls:'sep', ready:1},
+  // (제외) 지난 사례 찾아보기 — 온나라 공개문서 연계가 전제라 2단계로 이관, 메뉴 삭제
+  {mode:'staff',view:'share',  icon:'💡', label:'제안·활용사례\n나눔터', ready:1},
 ];
 const MINOR=[
   {mode:'home', view:'guide',icon:'📖', label:'이용 안내', cls:'minor'},
@@ -200,7 +200,7 @@ function loadRecent(){ try{ return JSON.parse(localStorage.getItem('dOnRecent')|
 function pushRecent(q){ const r=loadRecent().filter(x=>x!==q); r.unshift(q); localStorage.setItem('dOnRecent',JSON.stringify(r.slice(0,12))); }
 function renderNav(){
   const inOn=S.mode==='staff'&&ON_VIEWS.includes(S.view);
-  const item=n=>{ const on=n.mode==='admin'?S.mode==='admin':(S.mode===n.mode&&S.view===n.view); return `<li data-mode="${n.mode}" data-view="${n.view}" class="${n.cls||''} ${n.ready?'rdy':''} ${on?'on':''}"><i>${n.icon}</i><b>${n.label.replace(/\n/g,'<br>')}</b>${n.ready?'<em class="dot" title="지금 쓸 수 있습니다"></em>':''}</li>`; };
+  const item=n=>{ const on=n.mode==='admin'?S.mode==='admin':(S.mode===n.mode&&S.view===n.view); return `<li data-mode="${n.mode}" data-view="${n.view}" class="${n.cls||''} ${n.ready?'rdy':''} ${on?'on':''}"><i>${n.icon}</i><b>${n.label.replace(/\n/g,'<br>')}</b></li>`; };
   let html='';
   if(inOn){
     const recent=loadRecent();
@@ -216,13 +216,13 @@ function renderNav(){
   const nc=$('#navClear'); if(nc) nc.onclick=()=>{ localStorage.removeItem('dOnRecent'); renderNav(); };
 }
 function setMode(m){ S.mode=m; document.body.dataset.mode=m; go(NAV[m][0].id); }
-function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='rule'&&window.RULEDRAFT) RULEDRAFT.init(); if(top==='minutes'&&window.MINUTES) MINUTES.init(); if(top==='banner'&&window.BANNER) BANNER.init(); if(top==='card'&&window.CARDNEWS) CARDNEWS.init(); if(top==='movie'&&window.MOVIE) MOVIE.init(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='trip') loadTrip(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
+function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='rule'&&window.RULEDRAFT) RULEDRAFT.init(); if(top==='minutes'&&window.MINUTES) MINUTES.init(); if(top==='banner'&&window.BANNER) BANNER.init(); if(top==='card'&&window.CARDNEWS) CARDNEWS.init(); if(top==='movie'&&window.MOVIE) MOVIE.init(); if(top==='share'&&window.SHARE) SHARE.init(); if(top==='analyze'&&window.ANALYZE) ANALYZE.init(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='trip') loadTrip(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
 
 /* ── 홈 대시보드 ── */
 document.addEventListener('click',e=>{ const g=e.target.closest('[data-go]'); if(!g) return; const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });
 const PAL=['#2f6fed','#0fa876','#d98a00','#a04ccf'];
 function renderHome(){
-  $('#heroDate').textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'})+' · 정보통신과 시연판';
+  $('#heroDate').textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'})+' · 정보통신과 실험판 — 써보고 의견 주세요';
   const cls={'공지':'notice','자료':'data','기능':''};
   $('#boardList').innerHTML=NEWS.slice(0,5).map(([d,t,s,body],i)=>`<li class="${i<2?'new':''}"><span class="t ${cls[t]||''}">${t}</span><b>${s}</b><span class="d">${d}</span><div class="body">${body||s}</div></li>`).join('');
   $$('#boardList li').forEach(li=>li.onclick=()=>li.classList.toggle('open'));
@@ -253,20 +253,23 @@ function drawVideo(i){
 
 /* 관리자 › 이용 통계·자료 현황 (KPI · 참조 순위 · 자료 구성 · 자치법규) */
 function renderUsage(){
-  const c=S.meta.counts, total=c.law+c.minwon+c.data+c.internal;
-  $('#homeKpis').innerHTML=[['연결 자료',total.toLocaleString()+'건','4개 유형 · 3층 구조'],['자치법규',S.meta.law_sources.length+'건',c.law+'개 조문·별표'],['공공데이터',S.meta.datasets.length+'종',c.data.toLocaleString()+'행'],['민원 안내',c.minwon+'건','예시 · 홈페이지 기준'],['이번 세션',S.stats.q+'건 질의',`근거 인용 ${S.stats.cite} · 한글 ${S.stats.hwpx}`]].map(([a,b,s])=>`<div class="kpi"><small>${a}</small><b>${b}</b><span class="sub">${s}</span></div>`).join('');
-  // 많이 참조된 자료 (누적, 없으면 시연 예시)
-  let top=Object.entries(S.stats.hits).sort((x,y)=>y[1]-x[1]).slice(0,8); let note='이용 누적 · 이 브라우저 기준';
-  if(!top.length){ note='시연 예시 순위 (질문하면 실제 누적으로 바뀜)'; top=[['대구광역시 달성군 체육시설 관리·운영 조례 일부개정조례 [별표 5] 사용료의 감면(제14조 관련)',42],['연가 신청 및 승인 절차',37],['대형폐기물 배출 신고',31],['수의계약 한도 및 절차',28],['대구광역시 달성군 거리공연 활성화 및 지원 조례 제4조(지원사업)',22],['경로당 현황 읍면별 집계',19],['개인정보 파일 취급 및 외부 반출 금지',15],['종량제봉투 가격',12]]; }
-  const mx=top[0][1]; $('#topNote').textContent=note;
-  $('#topUsed').innerHTML=top.map(([t,n],i)=>{ const d=S.docs.find(x=>x.title===t); const ty=d?typeName(d.type):''; return `<li><span class="n">${i+1}</span><div><b title="${t}">${t.replace('대구광역시 달성군 ','')}</b><small>${ty}${d&&d.access==='staff'?' · 직원 전용':''}</small></div><span class="bar"><i style="width:${Math.max(24,Math.round(n/mx*90))}px"></i>${n}회</span></li>`; }).join('');
-  // 자료 구성 도넛 (출처 기준)
-  const parts=[['자치법규',c.law,S.meta.law_sources.length+'건 조례·규칙'],['공공데이터',c.data,S.meta.datasets.length+'종 데이터셋'],['민원안내',c.minwon,'예시 안내'],['내부지침',c.internal,'직원 전용']]; const psum=parts.reduce((p,x)=>p+x[1],0); let acc=0; const R=54,cx=70,cy=70,circ=2*Math.PI*R;
-  let d=`<svg viewBox="0 0 140 140" role="img" aria-label="자료 출처 구성">`; parts.forEach(([n,v],k)=>{ const f=v/psum; d+=`<circle r="${R}" cx="${cx}" cy="${cy}" fill="none" stroke="${PAL[k]}" stroke-width="18" stroke-dasharray="${Math.max(0,f*circ-2)} ${circ}" stroke-dashoffset="${-acc*circ}" transform="rotate(-90 ${cx} ${cy})"><title>${n} ${v}건</title></circle>`; acc+=f; });
-  d+=`<text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor">${psum.toLocaleString()}</text><text x="${cx}" y="${cy+14}" text-anchor="middle" font-size="10" fill="currentColor" opacity=".6">색인 문서</text></svg>`;
-  $('#chartDonut').innerHTML=`<div class="donut-wrap">${d}<ul>${parts.map(([n,v,s],k)=>`<li><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${PAL[k]};margin-right:6px"></i>${n}<br><small style="margin-left:16px">${s}</small></span><b>${v.toLocaleString()}건</b></li>`).join('')}</ul></div>`;
-  // 최근 자치법규
-  $('#lawList').innerHTML=(S.meta.law_recent||[]).map(L=>`<li><i></i><div>${shortNm(L.n)}<small>${L.d?L.d+' · ':''}${L.c}개 조문 색인 · 시행 ${dstr(L.e)}</small></div></li>`).join('');
+  // 상단 숫자 — 가볍게: 쓸 수 있는 기능 수 · 이번 브라우저 사용량
+  const ready=HOME_MENU.filter(n=>n.ready).length, st=S.stats||{};
+  $('#homeKpis').innerHTML=[['쓸 수 있는 기능',ready+'개','메뉴에서 바로'],['만든 초안',(st.gen||0)+'건','이 브라우저 기준'],['한글 파일',(st.hwpx||0)+'건','내려받은 hwpx'],['질문',(st.q||0)+'건','달성On 사용하기'],['설치·로그인','0','브라우저만 있으면 OK']]
+    .map(([k,v,s])=>`<div class="kpi"><small>${k}</small><b>${v}</b><span class="sub">${s}</span></div>`).join('');
+  // ① 최근 제안·반영 — 나눔터 글 그대로
+  $('#hmSug').innerHTML='<li class="sh-empty">불러오는 중…</li>';
+  fetch('/api/bugs',{cache:'no-store'}).then(r=>r.json()).then(j=>{ const K={idea:'💡',improve:'🔧',usecase:'🙌'}; const L=(j.list||[]).filter(x=>K[x.kind]).slice(0,6);
+    $('#hmSug').innerHTML=L.length?L.map(x=>`<li data-go="staff:share"><span>${K[x.kind]}</span><b>${esc((x.text||'').split('\n')[0])}</b><em class="${x.where==='반영'?'ok':x.where==='검토'?'rv':''}">${x.where==='반영'?'반영됨':x.where==='검토'?'검토 중':'접수'}</em></li>`).join('')
+      :'<li class="sh-empty" data-go="staff:share">아직 올라온 제안이 없어요. 이런 기능 있으면 좋겠다 싶은 게 있으면 남겨 주세요 🙂</li>'; })
+    .catch(()=>{ $('#hmSug').innerHTML='<li class="sh-empty" data-go="staff:share">제안 목록을 불러오지 못했습니다 — 나눔터에서 확인해 주세요</li>'; });
+  // ② 이렇게 써보세요 — 메뉴별 한 줄 팁
+  const TIPS=[['minutes','🎙','회의 끝나면 녹음 파일만 올리세요','회의록 양식까지 알아서'],['press','📰','계획서 붙여넣으면 보도자료 초안','군 서식 한글 파일로'],['card','📱','보도자료 → 카드뉴스 6장','그림·해시태그까지'],['meal','🍚','급량비는 엑셀 올리고 클릭 한 번','지급명세서 자동'],['trip','🚗','출장내역서 PDF 넣으면 관내여비 끝','지급조서까지'],['analyze','📊','엑셀 올리고 "읍면별 합계"','차트·해석 문장'],['banner','🎏','행사명만 넣으면 현수막 문구 3안','업체 사양서까지'],['rule','⚖️','현행 조문 붙여넣고 개정 요지만','신구조문대비표 자동']];
+  $('#hmTips').innerHTML=TIPS.map(([v,i,t,s])=>`<button data-go="staff:${v}"><i>${i}</i><b>${t}</b><small>${s}</small></button>`).join('');
+  // ③ 자주 찾는 기준·단가 — 달성On 계산에 쓰는 값
+  let meal=9000; try{ meal=(window.MEAL&&MEAL.price&&MEAL.price())||9000; }catch(e){}
+  const STD=[['관내 출장(4시간 이상)','20,000원','공용차량 이용 시 10,000원','trip'],['관내 출장(4시간 미만)','10,000원','공용차량 이용 시 0원','trip'],['급량비 1인 1식',meal.toLocaleString()+'원','급량비 계산하기 기준 단가','meal'],['관외 출장','별도 계산','일비·식비·숙박비 — 여비 규정 확인','on']];
+  $('#hmStd').innerHTML=STD.map(([k,v,s,go])=>`<li data-go="staff:${go}"><div><b>${k}</b><small>${s}</small></div><em>${v}</em></li>`).join('')+'<li class="hm-std-note">※ 근거: 「지방공무원 여비 규정」·달성군 여비 조례 등. 바뀐 기준은 나눔터로 알려 주세요.</li>';
 }
 
 /* ── 안내 영상 목록 ──────────────────────────────────────────

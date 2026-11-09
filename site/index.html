@@ -34,12 +34,18 @@
 
     <!-- 홈 · 대시보드 -->
     <section class="view" data-view="home">
-      <div class="hero">
-        <div><small id="heroDate"></small><h2>달성군 AI 업무비서 <b>달성On</b></h2>
-          <p class="lead">달성군 조례·지침·공공데이터를 근거로 답하고, 그 답을 <b>달성군 서식 한글 파일</b>로 바로 만들어 주는 AI 창구</p>
-          <p class="sub">업무망 새올 배너에서 바로 접속 · 자료에 없으면 AI가 직접 답변 · 자료 갱신 한 번이면 전 직원 반영</p>
+      <div class="hero hero-light">
+        <div class="hero-txt"><small id="heroDate"></small>
+          <h2>오늘도 수고 많아요 <span class="wave">👋</span><br>잔일은 <b>달성On</b>이 덜어드릴게요</h2>
+          <p class="lead">회의 녹음 올리면 회의록이 되고, 보도자료·카드뉴스·현수막 문구는 5분이면 나오고, 급량비·출장비는 클릭 한 번. 로그인도 설치도 없어요.</p>
+          <div class="hero-chips">
+            <button data-go="staff:minutes">🎙 회의록 정리</button><button data-go="staff:press">📰 보도자료</button><button data-go="staff:card">📱 카드뉴스</button><button data-go="staff:meal">🍚 급량비</button><button data-go="staff:trip">🚗 출장비</button><button data-go="staff:on">✦ 뭐든 물어보기</button>
+          </div>
         </div>
-        <div class="hero-art" aria-hidden="true"><span class="hero-cap">비슬산 참꽃군락 · 달성군</span></div>
+        <div class="hero-art hero-art-light" aria-hidden="true">
+          <div class="bub b1">📝 → 📄</div><div class="bub b2">🎙 → 📋</div><div class="bub b3">⚡ 5분</div>
+          <span class="hero-cap">직원 누구나 · 가볍게 써보는 AI 도구 모음</span>
+        </div>
       </div>
       <div class="portal-grid">
         <div class="card board"><h4>공지사항 <small>최근 5건</small><button class="ghost sm more" data-go="home:news">전체 보기 ›</button></h4><ul class="board-list" id="boardList"></ul></div>
@@ -48,9 +54,9 @@
       <div class="home-usage">
       <div class="kpis five" id="homeKpis"></div>
       <div class="home-grid">
-        <div class="card"><h4>많이 참조된 자료 <small id="topNote">이용 누적 · 이 브라우저 기준</small></h4><ol class="rank" id="topUsed"></ol></div>
-        <div class="card"><h4>연결 자료 구성 <small>색인 문서 기준</small></h4><div id="chartDonut"></div></div>
-        <div class="card"><h4>최근 개정 자치법규 <small>시행일 기준</small></h4><ul class="timeline" id="lawList"></ul></div>
+        <div class="card"><h4>최근 제안·반영 <small>나눔터</small><button class="ghost sm more" data-go="staff:share">올리기 ›</button></h4><ul class="hm-sug" id="hmSug"></ul></div>
+        <div class="card"><h4>이렇게 써보세요 <small>눌러서 바로 가기</small></h4><div class="hm-tips" id="hmTips"></div></div>
+        <div class="card"><h4>자주 찾는 기준·단가 <small>달성On 계산 기준</small></h4><ul class="hm-std" id="hmStd"></ul></div>
       </div>
       </div>
     </section>
@@ -456,10 +462,26 @@
 
     <!-- 데이터 분석하기 (세부 내역 추후 확정) -->
     <section class="view" data-view="analyze">
-      <div class="vh"><h2>데이터 분석하기</h2><p>군 공공데이터를 읍·면별로 집계하고 표·그래프로 정리하는 화면입니다.</p></div>
-      <div class="card soon-card"><h4>준비 중 <small>메뉴 자리만 잡아둔 화면입니다</small></h4>
-        <ul class="soon-list"><li><b>읍·면별 집계 및 비교</b></li><li><b>기간별 추이 확인</b></li><li><b>분석 결과를 문서·이미지로 내보내기</b></li></ul>
-        <p class="hint" style="margin-top:12px">세부 기능·화면 구성은 협의 후 확정합니다.</p></div>
+      <div class="vh"><h2>데이터 분석하기</h2><p>엑셀·CSV 파일을 올리고 보고 싶은 것을 한 줄로 물으면, 표와 차트, 보고서에 넣을 해석 문장까지 만들어 줍니다. 파일은 이 PC 안에서만 읽습니다.</p></div>
+      <div class="card pcard">
+        <h4>파일 올리기 <small>xlsx · xls · csv (첫 번째 시트)</small></h4>
+        <div class="pact" style="margin-top:4px"><label class="filebtn">📂 파일 선택<input type="file" id="anFile" accept=".xlsx,.xls,.csv"></label><button id="anSample">예시 데이터로 해보기</button><span class="hint" id="anMsg"></span></div>
+        <div id="anSum"></div>
+        <div id="anAsk" hidden>
+          <div class="an-q"><input id="anQ" placeholder="예) 읍면별 접수건수 합계 / 월별 추이 / 민원종류별 평균 처리일수"><button id="anGo" class="p">분석하기</button></div>
+          <div class="an-chips" id="anChips"></div>
+          <p class="hint">※ 모델에는 열 이름과 샘플 5행만 전달되고, 집계·차트는 이 브라우저가 직접 계산합니다. 개인정보가 담긴 파일은 올리지 마세요.</p>
+        </div>
+      </div>
+      <div class="card pout" id="anOut" hidden>
+        <h4>분석 결과 <small>숫자는 브라우저가 원본에서 직접 계산</small></h4>
+        <div class="an-wrap">
+          <div><div class="an-stage"><canvas id="anChart"></canvas></div>
+            <div class="pact" style="margin-top:8px"><button id="anPng" class="p">🖼 차트 PNG</button><label class="an-type">차트<select id="anType" class="psel"><option value="bar">막대</option><option value="line">선</option><option value="pie">원</option></select></label></div></div>
+          <div><div class="an-ins"><b>해석</b><p id="anInsight"></p><button id="anCopyS">문장 복사</button></div>
+            <div id="anTable" class="an-tblwrap"></div><div class="pact" style="margin-top:6px"><button id="anCopyT">표 복사 (엑셀·한글용)</button></div></div>
+        </div>
+      </div>
     </section>
 
     <!-- 보도자료 작성하기 (세부 내역 추후 확정) -->
@@ -591,7 +613,7 @@
             <label>색 테마<select id="cnTheme" class="psel"></select></label>
             <label>문의처<input id="cnContact" placeholder="예) 문의 정보통신과 053)668-2454"></label>
           </div>
-          <p class="hint" style="margin-top:10px">※ 사진 없이 글자·색으로만 구성하는 <b>텍스트형 카드뉴스</b>입니다. 사진형은 2단계(군 보유 사진 라이브러리 연계)에서 검토.</p>
+          <p class="hint" style="margin-top:10px">※ 그림은 <b>달성군 테마 일러스트 12종</b>(한 스타일) 중 내용에 맞는 것을 자동으로 고르고, 결과 화면에서 바꾸거나 AI로 새로 그릴 수 있습니다.</p>
         </fieldset>
         </div>
         <div class="pact"><button id="cnGo" class="p">카드뉴스 만들기</button><button id="cnSample">예시로 채우기</button><button id="cnReset">비우기</button><span class="hint" id="cnMsg"></span></div>
@@ -603,6 +625,8 @@
           <div class="cn-stage"><canvas id="cnMain"></canvas></div>
           <div class="cn-edit">
             <div class="cn-nav"><button id="cnPrev">‹ 이전</button><b id="cnCurNo"></b><button id="cnNext">다음 ›</button></div>
+            <label>그림 (전체 카드에 적용)<select id="cnArt" class="psel"></select></label>
+            <div class="cn-ai"><input id="cnAiPrompt" placeholder="AI로 새로 그릴 때 주제 (비우면 표지 내용으로)"><button id="cnAi">✨ AI로 새로 그리기</button></div>
             <label>제목<input id="cnEditHead"></label>
             <label>본문 <small class="hint">한 줄에 한 문장</small><textarea id="cnEditBody" rows="4"></textarea></label>
             <div class="pact" style="margin-top:6px"><button id="cnApply" class="p">이 장 고치기</button><button id="cnPng">이 장 PNG</button><button id="cnAll">전체 PNG 저장</button></div>
@@ -658,20 +682,25 @@
       </div>
     </section>
 
-    <!-- 지난 사례 찾아보기 (2단계 · 공문서 개방 후) -->
-    <section class="view" data-view="past">
-      <div class="vh"><h2>지난 사례 찾아보기</h2><p>비슷한 사업을 예전에 어느 부서가 어떻게 했는지 찾아 주는 화면입니다.</p></div>
-      <div class="card soon-card"><h4>준비 중 <small>공개 공문서 연계 후 사용 가능(2단계)</small></h4>
-        <ul class="soon-list"><li><b>사업 키워드로 지난 공문 찾기</b> (문서번호·시행일자·시행부서)</li><li><b>담당 부서 찾기</b> — 이 업무가 어느 과 소관인지 확인</li><li><b>지난 계획서를 근거로 올해 문서 초안 만들기</b></li></ul>
-        <p class="hint" style="margin-top:12px">※ 담당자 성명·직통번호는 인사이동으로 금방 달라지고 개인정보 쟁점이 있어, <b>부서 단위</b>로만 안내합니다. 온나라 공개 공문서 연계가 전제되는 기능입니다.</p></div>
-    </section>
-
     <!-- 활용사례 나눔터 (세부 내역 추후 확정) -->
     <section class="view" data-view="share">
-      <div class="vh"><h2>활용사례 나눔터</h2><p>다른 직원이 달성On을 어떻게 써서 무엇을 해결했는지 모아 보는 게시판입니다.</p></div>
-      <div class="card soon-card"><h4>준비 중 <small>메뉴 자리만 잡아둔 화면입니다</small></h4>
-        <ul class="soon-list"><li><b>답변 화면에서 「이 사례 공유하기」 한 번으로 등록</b> — 별도 글쓰기 없이 질문과 결과가 그대로 올라감</li><li><b>「도움됐어요」가 많은 질문 자동 노출</b> — 글을 쓰지 않아도 좋은 사례가 쌓이는 구조</li><li><b>부서·업무 유형별 모아보기</b> (기획 · 회계 · 민원 · 홍보 · 시설 등)</li><li><b>이달의 활용사례</b> — 정보통신과 선정, 초기 마중물</li></ul>
-        <p class="hint" style="margin-top:12px">※ 등록 전 <b>개인정보·비공개 자료 자동 점검</b>을 거칩니다. 주민등록번호·연락처·성명 등이 포함되거나 비공개 문서를 근거로 만든 답변은 공유되지 않습니다. 공유 여부는 언제나 작성자 선택이며 기본값은 비공개입니다.</p></div>
+      <div class="vh"><h2>제안·활용사례 나눔터</h2><p>달성On에 넣었으면 하는 기능, 고쳤으면 하는 점, 내가 이렇게 써서 해결한 이야기를 올리는 곳입니다. 올라온 제안은 검토해서 이 사이트에 바로 반영합니다.</p></div>
+      <div class="sh-wrap">
+        <div class="card pcard sh-form">
+          <h4>올리기 <small>부서명만 적어 주세요 · 이름·연락처 불필요</small></h4>
+          <label class="pfull">유형<select id="shKind" class="psel"><option value="idea">💡 기능 제안 — 이런 게 있으면 좋겠어요</option><option value="improve">🔧 개선 의견 — 이건 이렇게 고쳐 주세요</option><option value="usecase">🙌 활용 사례 — 나는 이렇게 썼어요</option></select></label>
+          <label class="pfull" style="margin-top:8px">제목 <b class="req">*</b><input id="shTitle" maxlength="80"></label>
+          <label class="pfull" style="margin-top:8px">내용 <small class="hint">선택 · 상황과 바라는 모습을 편하게</small><textarea id="shBody" rows="5" maxlength="900" placeholder="어떤 업무에서, 무엇이 불편했고, 어떻게 되면 좋을지"></textarea></label>
+          <label class="pfull" style="margin-top:8px">부서 <small class="hint">선택</small><input id="shWho" maxlength="30" placeholder="예) 정보통신과"></label>
+          <div class="pact" style="margin-top:10px"><button id="shSend" class="p">📮 올리기</button><span class="hint" id="shMsg"></span></div>
+          <p class="hint" style="margin-top:8px">※ 개인정보·비공개 자료는 올리지 마세요. 접수 → 검토 중 → 반영됨 순서로 표시되고, 반영된 기능은 공지사항에도 올립니다.</p>
+        </div>
+        <div class="card sh-board">
+          <h4>올라온 글 <small id="shCount"></small></h4>
+          <div class="sh-tabs" id="shTabs"><button class="on" data-k="all">전체</button><button data-k="idea">💡 기능 제안</button><button data-k="improve">🔧 개선 의견</button><button data-k="usecase">🙌 활용 사례</button></div>
+          <ul class="sh-list" id="shList"></ul>
+        </div>
+      </div>
     </section>
 
     <!-- 관리자 · 이용통계 -->
@@ -768,6 +797,8 @@
 <script src="banner.js"></script>
 <script src="cardnews.js"></script>
 <script src="movie.js"></script>
+<script src="share.js"></script>
+<script src="analyze.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
