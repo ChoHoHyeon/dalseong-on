@@ -272,7 +272,7 @@ const ago=t=>{ const m=Math.round((Date.now()-t)/6e4); return m<1?'방금':m<60?
 function renderRecent(){
   const L=rcGet();
   $('#hmRecent').innerHTML=L.length?L.slice(0,5).map(x=>`<li data-rc="${x.id}"><i>${ICON[x.view]||'📝'}</i><div><b>${esc(x.title)}</b><small>${MNAME[x.view]||''} · ${ago(x.at)}</small></div><span>›</span></li>`).join('')
-    :`<li class="empty">아직 만든 결과물이 없어요. 회의록·보도자료·카드뉴스를 만들면 여기에 쌓여서 <b>새로고침해도 다시 볼 수 있어요</b>.</li>`;
+    :`<li class="empty"><span>🗂</span><b>아직 만든 결과물이 없어요</b><small>회의록·보도자료·카드뉴스를 만들면 여기에 쌓여서<br>새로고침해도 다시 볼 수 있어요</small></li>`;
   $$('#hmRecent [data-rc]').forEach(li=>li.onclick=()=>{ const x=rcGet().find(y=>y.id===li.dataset.rc); if(!x) return;
     $('#rcTitle').textContent=x.title; $('#rcMeta').textContent=`${MNAME[x.view]||''} · ${new Date(x.at).toLocaleString('ko-KR')}`; $('#rcText').textContent=x.text; $('#rcModal').hidden=false;
     $('#rcCopy').onclick=()=>{ navigator.clipboard.writeText(x.text); toast('복사했습니다'); };

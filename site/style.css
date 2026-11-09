@@ -1507,3 +1507,8 @@ body[data-theme=dark] .cd .n{color:#dfe6f3}
 .cal-up{min-height:calc(3 * 38px + 2 * 6px + 12px);justify-content:flex-start}
 .cal-up li{min-height:38px;box-sizing:border-box}
 .cal-up li.none{display:flex;align-items:center;justify-content:center;flex:1}
+/* 빈 상태를 가볍게 — 흰 상자 대신 점선 안내 */
+.cal-up li.none{background:transparent;box-shadow:none;border:1.5px dashed #c9d4e6;color:#7a869c}
+.hm-recent li.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;height:100%;min-height:120px;background:transparent;border:1.5px dashed #d6dde9;border-radius:12px;cursor:default}
+.hm-recent li.empty span{font-size:26px;opacity:.6}.hm-recent li.empty b{font-size:13.5px;color:#4b5873;white-space:normal}.hm-recent li.empty small{font-size:12px;line-height:1.5}
+.hm-col>.card:last-child .hm-recent{display:flex;flex-direction:column}
