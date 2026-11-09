@@ -206,7 +206,7 @@ function renderNav(){
     const recent=loadRecent();
     html=item(HOME_MENU.find(n=>n.view==='on'))+`<li class="newchat" id="navNew">＋ 새 대화</li>`
       +(recent.length?`<li class="rh"><span>최근 대화</span><button class="rclear" id="navClear" title="전체 삭제">전체 삭제</button></li>`+recent.map(q=>`<li class="rc" data-q="${q.replace(/"/g,'&quot;')}" title="${q.replace(/"/g,'&quot;')}"><span>${q}</span><button class="rx" data-del="${q.replace(/"/g,'&quot;')}" title="삭제">✕</button></li>`).join(''):'');
-  } else html=HOME_MENU.filter(n=>n.ready||n.cls==='admin'||n.mode==='admin').map(item).join('');   // 출품판: 지금 쓸 수 있는 메뉴만(준비 중 메뉴는 로드맵으로)
+  } else html=HOME_MENU.map(item).join('');
   html+=MINOR.map(item).join('');
   $('#nav').innerHTML=html;
   $$('#nav li[data-view]').forEach(li=>li.onclick=()=>{ if(S.mode!==li.dataset.mode){ S.mode=li.dataset.mode; document.body.dataset.mode=S.mode; } go(li.dataset.view); });
@@ -216,7 +216,7 @@ function renderNav(){
   const nc=$('#navClear'); if(nc) nc.onclick=()=>{ localStorage.removeItem('dOnRecent'); renderNav(); };
 }
 function setMode(m){ S.mode=m; document.body.dataset.mode=m; go(NAV[m][0].id); }
-function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
+function go(v){ const target=ALIAS[v]; const top=target||v; S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='trip') loadTrip(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
 
 /* ── 홈 대시보드 ── */
 document.addEventListener('click',e=>{ const g=e.target.closest('[data-go]'); if(!g) return; const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });
@@ -780,3 +780,15 @@ init().catch(e=>{ addMsg('ai','자료 색인을 불러오지 못했습니다: '+
 
 // 사이트를 열 때 AI 생성 함수를 미리 깨워 둔다 (Netlify 콜드스타트 → 경조사 카드에서 바로 눌러도 지연 없이)
 try{ fetch("/api/card",{method:"POST",headers:{"content-type":"application/json"},body:"{\"ping\":1}"}).catch(()=>{}); fetch("/api/card-run",{method:"POST",headers:{"content-type":"application/json"},body:"{\"id\":\"warm\"}"}).catch(()=>{}); }catch(e){}
+
+
+/* ---------- 출장비(관내여비) 계산하기: 필요한 라이브러리(약 3.6MB)는 메뉴를 처음 열 때만 읽는다 ---------- */
+let TRIP_LOADED=null;
+function loadTrip(){
+  if(TRIP_LOADED) return TRIP_LOADED;
+  const files=['vendor/xlsx.full.min.js','vendor/pdf.min.js','vendor/pdf.worker.min.js','vendor/exceljs.min.js','vendor/html2canvas.min.js','vendor/jspdf.umd.min.js','trip.js'];
+  const one=src=>new Promise((ok,no)=>{ const el=document.createElement('script'); el.src=src; el.onload=ok; el.onerror=()=>no(new Error(src)); document.head.appendChild(el); });
+  const msg=document.querySelector('#trip #readMsg'); if(msg) msg.innerHTML='<div class="msg">출장비 계산 모듈을 불러오는 중…</div>';
+  TRIP_LOADED=files.reduce((p,f)=>p.then(()=>one(f)),Promise.resolve()).then(()=>{ if(msg) msg.innerHTML=''; }).catch(e=>{ TRIP_LOADED=null; if(msg) msg.innerHTML='<div class="msg err">모듈을 불러오지 못했습니다: '+e.message+'</div>'; });
+  return TRIP_LOADED;
+}
