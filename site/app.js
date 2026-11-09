@@ -831,7 +831,7 @@ function updPill(){ const on=(S.key||S.server)&&!S.offline; $('#pillModel').clas
 $('#accessCode').value=S.code; $('#accessCode').onchange=e=>{ S.code=e.target.value.trim(); localStorage.setItem('dOnCode',S.code); probeServer();
 };
 /* 접속 IP 표시 — 서버 함수(/api/whoami)에서 받아옴. 못 받으면 '–' 그대로 */
-fetch('/api/whoami',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{ if(j&&j.ip){ $('#userIp').textContent=j.ip; $('#userChip').title='지금 접속한 IP: '+j.ip+' (실제 구축 시 새올 인증 사용자 정보로 대체)'; } }).catch(()=>{});
+fetch('/api/whoami',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{ if(j&&j.ip){ $('#userIp').textContent=j.ip; const sm=document.querySelector('#userChip small'); if(sm) sm.hidden=true; $('#userChip').title='지금 접속한 IP: '+j.ip+' (실제 구축 시 새올 인증 사용자 정보로 대체)'; } }).catch(()=>{});
 /* 서버 프록시(Netlify Function) 사용 가능 여부 확인 — 키가 서버에 있으면 화면에서 키 입력 불필요 */
 function probeServer(){ fetch('/api/chat',{method:'POST',headers:{'content-type':'application/json','x-access-code':S.code||''},body:'{"ping":1}'}).then(r=>r.ok?r.json():null).then(j=>{ S.server=!!(j&&j.ok&&j.codeOk); S.serverGate=!!(j&&j.gate); updPill(); }).catch(()=>{ S.server=false; updPill(); }); }
 probeServer();

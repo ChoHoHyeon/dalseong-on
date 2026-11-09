@@ -1653,3 +1653,4 @@ body[data-theme=dark] .hm-cal li.mine b{color:var(--tx)}body[data-theme=dark] .h
 .cal-card .cal-grid{flex:1;grid-auto-rows:1fr;min-height:0}
 .cal-card .cd{min-height:0}
 .hm-col>.now-card{overflow:hidden}
+#userChip small[hidden]{display:none}
