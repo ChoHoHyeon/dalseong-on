@@ -192,8 +192,14 @@
         <fieldset class="pbox req-box">
           <legend>꼭 입력해 주세요</legend>
           <label class="pfull"><span class="cap">회의명 <b class="req">*</b></span><input id="mtName" placeholder="예) 2026년 ○○ 추진 회의"></label>
-          <label class="pfull"><span class="cap">회의 메모·녹취 내용 <b class="req">*</b> <small class="hint">발언 순서대로 대충 적은 메모면 충분합니다</small></span>
-            <textarea id="mtNotes" rows="10" placeholder="과장: 11월 말 제출이니 담당 이번 주에 정하자&#10;팀장: 2지표는 결재만 남음, 다음 주 월요일 상신&#10;…"></textarea></label>
+          <div class="stt-box">
+            <div class="stt-head"><b>🎙 회의 녹음 파일 올리기</b> <span class="stt-badge">이 PC 안에서만 처리 · 외부 전송 없음</span></div>
+            <label class="filebtn big">📂 녹음 파일 선택 (mp3 · m4a · wav · webm)<input type="file" id="mtAudio" accept="audio/*,.m4a,.mp3,.wav,.webm,.ogg,.aac"></label>
+            <div class="stt-prog" id="mtSttWrap" hidden><div class="bar"><i id="mtSttBar"></i></div><span id="mtSttMsg"></span></div>
+            <p class="hint">올리면 글로 바꾼 뒤 <b>바로 회의록까지 정리</b>합니다. 음성인식은 브라우저 안에서 돌아가며(처음 한 번 모델 약 250MB 내려받음) 녹음 10분에 보통 2~6분 걸립니다.</p>
+          </div>
+          <label class="pfull"><span class="cap">회의 메모·녹취 내용 <small class="hint">녹음이 없으면 메모를 직접 붙여넣어도 됩니다 · 변환된 글은 여기서 고칠 수 있습니다</small></span>
+            <textarea id="mtNotes" rows="8" placeholder="과장: 11월 말 제출이니 담당 이번 주에 정하자&#10;팀장: 2지표는 결재만 남음, 다음 주 월요일 상신&#10;…"></textarea></label>
         </fieldset>
         <fieldset class="pbox opt-box">
           <legend>선택 입력 <span class="optnote">비우면 <b class="miss">○○</b>로 표시됩니다</span></legend>
@@ -205,7 +211,7 @@
           </div>
           <label class="pfull">참석자<input id="mtWho" placeholder="예) 정보통신과장, 정보통계팀장, ○○○ 주무관"></label>
           <label class="pfull">안건 <small class="hint">한 줄에 하나, 비우면 메모에서 파악</small><textarea id="mtAgenda" rows="3"></textarea></label>
-          <p class="hint" style="margin-top:8px">※ 녹음 파일 변환은 넣지 않았습니다(외부 전송 문제). 비공개 사항·개인정보가 담긴 내용은 입력하지 마세요.</p>
+          <p class="hint" style="margin-top:8px">※ 녹음·메모는 이 PC 안에서 글로 바뀌고, 정리 단계에서 글(텍스트)만 모델에 전달됩니다. 비공개 사항·개인정보가 담긴 회의는 사용하지 마세요.</p>
         </fieldset>
         </div>
         <div class="pact"><button id="mtGo" class="p">회의록 정리하기</button><button id="mtSample">예시로 채우기</button><button id="mtReset">비우기</button><span class="hint" id="mtMsg"></span></div>
@@ -540,18 +546,83 @@
 
     <!-- 홍보 현수막 제작하기 (세부 내역 추후 확정) -->
     <section class="view" data-view="banner">
-      <div class="vh"><h2>홍보 현수막 제작하기</h2><p>문구와 배경 사진을 골라 업체에 넘길 현수막 시안을 만들어 주는 화면입니다.</p></div>
-      <div class="card soon-card"><h4>준비 중 <small>메뉴 자리만 잡아둔 화면입니다</small></h4>
-        <ul class="soon-list"><li><b>행사명·기간·주최 입력 → 현수막 문구 자동 작성</b> (글자 수·가독성 고려)</li><li><b>군 보유 홍보사진 라이브러리에서 배경 선택</b> (비슬산 참꽃 · 사문진 나루터 등 인쇄용 고해상도)</li><li><b>업체 전달용 시안 내려받기 — PPT(편집 가능) + PNG(미리보기)</b></li></ul>
-        <p class="hint" style="margin-top:12px">※ 현수막은 실물 인쇄물이라 높은 해상도가 필요합니다. 배경을 AI로 새로 만들지 않고 <b>군이 보유한 고해상도 사진</b>을 쓰는 방식으로 검토합니다. 세부 기능·화면 구성은 협의 후 확정합니다.</p></div>
-</section>
+      <div class="vh"><h2>홍보 현수막 제작하기</h2><p>행사명·기간·장소만 넣으면 현수막 문구 3안을 만들고 실제 규격 비율로 시안을 그려 줍니다. 시안 PNG와 업체 전달용 사양서까지 한 번에 — 제작은 업체가, 문구·시안 확정은 여기서.</p></div>
+      <div class="card pcard">
+        <h4>문구·시안 만들기 <small>규격 비율 그대로 · 군 CI 원본 사용</small></h4>
+        <div class="pcols">
+        <fieldset class="pbox req-box">
+          <legend>꼭 입력해 주세요</legend>
+          <label class="pfull"><span class="cap">행사·사업명 <b class="req">*</b></span><input id="bnName" placeholder="예) 2026 비슬산 참꽃문화제"></label>
+          <div class="pgrid pgrid2">
+            <label>기간·일시<input id="bnWhen" placeholder="예) 2026. 4. 18. ~ 4. 26."></label>
+            <label>장소<input id="bnPlace" placeholder="예) 비슬산 자연휴양림 일원"></label>
+            <label>주최·주관<input id="bnHost" placeholder="달성군"></label>
+            <label>어조<select id="bnTone" class="psel"><option value="친근">친근(군민 참여 행사)</option><option value="격식">격식(공고·안내)</option></select></label>
+          </div>
+          <label class="pfull">강조할 점 <small class="hint">선택</small><input id="bnPoint" placeholder="예) 무료 · 가족 나들이 · 선착순 100명"></label>
+        </fieldset>
+        <fieldset class="pbox opt-box">
+          <legend>규격 · 배경</legend>
+          <div class="pgrid pgrid2">
+            <label>규격<select id="bnSize" class="psel"></select></label>
+            <label>배경<select id="bnBg" class="psel"></select></label>
+            <label>수량(장)<input id="bnQty" placeholder="예) 20"></label>
+            <label>담당 연락처<input id="bnPic" placeholder="예) 문화체육과 ○○○ ☎ 668-○○○○"></label>
+          </div>
+          <div class="pfile" id="bnFileWrap" hidden><label class="filebtn">📷 내 사진 올리기<input type="file" id="bnFile" accept="image/*"></label><span class="hint">현수막은 인쇄물이라 가로 3000px 이상 사진을 권장합니다</span></div>
+          <p class="hint" style="margin-top:10px">※ 배경 사진은 AI로 만들지 않고 <b>군 보유 사진</b>이나 직접 올린 사진만 씁니다(저작권·해상도). 지정게시대 게시는 「달성군 옥외광고물 관리 조례」에 따라 별도 신청.</p>
+        </fieldset>
+        </div>
+        <div class="pact"><button id="bnGo" class="p">문구·시안 만들기</button><button id="bnSample">예시로 채우기</button><button id="bnReset">비우기</button><span class="hint" id="bnMsg"></span></div>
+      </div>
+      <div class="card pout" id="bnOut" hidden>
+        <h4>문구 3안 <small>하나를 고르면 시안이 바뀝니다 · 직접 고칠 수도 있습니다</small></h4>
+        <div class="bn-alts" id="bnAlts"></div>
+        <div class="bn-stage"><canvas id="bnCanvas"></canvas></div>
+        <div class="pact"><button id="bnPng" class="p">🖼 시안 PNG 내려받기</button><button id="bnSpec">📋 업체 전달용 사양 복사</button><button id="bnEdit">문구 직접 고치기</button><button id="bnAgain">문구 다시 만들기</button></div>
+        <p class="hint" style="margin-top:8px">※ 시안은 문구·배치 확인용(가로 2400px)입니다. 실제 인쇄 원고는 업체가 사양서와 시안을 보고 제작합니다.</p>
+      </div>
+    </section>
 
     <!-- SNS 카드뉴스 제작하기 (세부 내역 추후 확정) -->
     <section class="view" data-view="card">
-      <div class="vh"><h2>카드뉴스 제작하기</h2><p>알릴 내용을 인스타그램·블로그에 올릴 카드뉴스 여러 장으로 만들어 주는 화면입니다.</p></div>
-      <div class="card soon-card"><h4>준비 중 <small>메뉴 자리만 잡아둔 화면입니다</small></h4>
-        <ul class="soon-list"><li><b>보도자료·공고문 붙여넣기 → 5~8장 카드로 자동 분할</b> (표지·본문·마무리 구성)</li><li><b>채널별 규격 자동 맞춤</b> (인스타 1:1·4:5 / 스토리 9:16 / 블로그 가로형)</li><li><b>해시태그·게시글 문구 함께 생성 · PNG + PPT 내려받기</b></li></ul>
-        <p class="hint" style="margin-top:12px">※ 인포그래픽 제작하기와 같은 템플릿 엔진을 사용합니다(수치·문구를 정해진 틀에 배치). 세부 기능·화면 구성은 협의 후 확정합니다.</p></div>
+      <div class="vh"><h2>카드뉴스 제작하기</h2><p>보도자료·공고문을 붙여넣으면 표지–본문–마무리 카드로 나눠 문구를 쓰고, 정해진 틀에 배치해 바로 그려 줍니다. 장별로 고쳐서 PNG로 내려받고 게시글 문구·해시태그까지 함께.</p></div>
+      <div class="card pcard">
+        <h4>카드뉴스 만들기 <small>정해진 틀에 배치 · 디자이너 없이 10분</small></h4>
+        <div class="pcols">
+        <fieldset class="pbox req-box">
+          <legend>꼭 입력해 주세요</legend>
+          <label class="pfull"><span class="cap">알릴 내용 <b class="req">*</b> <small class="hint">보도자료·공고문·계획서 본문을 그대로 붙여넣기</small></span><textarea id="cnSrc" rows="9" placeholder="보도자료 전문을 붙여넣으세요. 달성On이 장별로 나눠 짧은 문장으로 다시 씁니다."></textarea></label>
+        </fieldset>
+        <fieldset class="pbox opt-box">
+          <legend>선택 입력</legend>
+          <label class="pfull">제목(참고)<input id="cnTitle" placeholder="비우면 원문에서 뽑습니다"></label>
+          <div class="pgrid pgrid2">
+            <label>장수<select id="cnCount" class="psel"><option>5</option><option selected>6</option><option>7</option><option>8</option></select></label>
+            <label>규격<select id="cnSize" class="psel"></select></label>
+            <label>색 테마<select id="cnTheme" class="psel"></select></label>
+            <label>문의처<input id="cnContact" placeholder="예) 문의 정보통신과 053)668-2454"></label>
+          </div>
+          <p class="hint" style="margin-top:10px">※ 사진 없이 글자·색으로만 구성하는 <b>텍스트형 카드뉴스</b>입니다. 사진형은 2단계(군 보유 사진 라이브러리 연계)에서 검토.</p>
+        </fieldset>
+        </div>
+        <div class="pact"><button id="cnGo" class="p">카드뉴스 만들기</button><button id="cnSample">예시로 채우기</button><button id="cnReset">비우기</button><span class="hint" id="cnMsg"></span></div>
+      </div>
+      <div class="card pout" id="cnOut" hidden>
+        <h4>카드 미리보기 <small>장을 누르면 크게 보이고 문구를 고칠 수 있습니다</small></h4>
+        <div class="cn-thumbs" id="cnSlides"></div>
+        <div class="cn-wrap">
+          <div class="cn-stage"><canvas id="cnMain"></canvas></div>
+          <div class="cn-edit">
+            <div class="cn-nav"><button id="cnPrev">‹ 이전</button><b id="cnCurNo"></b><button id="cnNext">다음 ›</button></div>
+            <label>제목<input id="cnEditHead"></label>
+            <label>본문 <small class="hint">한 줄에 한 문장</small><textarea id="cnEditBody" rows="4"></textarea></label>
+            <div class="pact" style="margin-top:6px"><button id="cnApply" class="p">이 장 고치기</button><button id="cnPng">이 장 PNG</button><button id="cnAll">전체 PNG 저장</button></div>
+            <label style="margin-top:10px">게시글 문구 · 해시태그<textarea id="cnCaption" rows="4"></textarea></label>
+            <div class="pact" style="margin-top:6px"><button id="cnCopy">게시글 복사</button><button id="cnAgain">다시 생성</button></div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- 홍보영상 만들기 (세부 내역 추후 확정) -->
@@ -667,7 +738,10 @@
 <script src="meal.js"></script>
 <script src="family.js"></script>
 <script src="rule.js"></script>
+<script src="stt.js"></script>
 <script src="minutes.js"></script>
+<script src="banner.js"></script>
+<script src="cardnews.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

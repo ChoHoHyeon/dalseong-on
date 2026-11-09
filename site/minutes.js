@@ -112,7 +112,20 @@ function init(){
     $('#mtNotes').value='과장: 11월 말 제출이니 지표별 담당 이번 주 안에 정하자. 1-1 개방은 조호현, 2지표 품질은 정보통계팀장이 맡는 걸로.\n팀장: 2-3 조치 결과는 이미 12개 시스템 최종진단 끝났고 결재만 남음. 다음 주 월요일까지 상신.\n기획예산실: 공동분석 과제는 인구이동이랑 상권 데이터 두 개 후보인데 경북 쪽이랑 협의 필요. 12월 초까지 결정.\n조호현: 정보화교육 하반기는 수요조사 14일까지 받고 과목 확정. 강사 섭외는 11월 셋째 주.\n민원과: 키오스크 교육은 민원실 장비 쓰면 되니 장소 협조 가능.\n과장: 다음 회의는 11월 24일 같은 시간.';
     toast?.('예시를 채웠습니다 — 「회의록 정리하기」를 눌러보세요');
   };
-  $('#mtReset').onclick=()=>{ ['mtName','mtTime','mtPlace','mtWho','mtAgenda','mtNotes'].forEach(id=>$('#'+id).value=''); $('#minutesOut').hidden=true; $('#mtMsg').textContent=''; };
+  /* 녹음 파일 → 글 → 바로 정리 */
+  $('#mtAudio').onchange=async e=>{
+    const f=e.target.files[0]; if(!f) return; if(!window.DsSTT){ $('#mtMsg').textContent='음성인식 모듈을 불러오지 못했습니다.'; return; }
+    if(!v('mtName')) $('#mtName').value=f.name.replace(/\.[^.]+$/,'');
+    $('#mtSttWrap').hidden=false; $('#mtGo').disabled=true; $('#mtAudio').disabled=true;
+    const prog=p=>{ $('#mtSttBar').style.width=(p.pct||0)+'%'; $('#mtSttMsg').textContent=p.msg||''; if(p.text) $('#mtNotes').value=p.text; };
+    try{
+      const text=await DsSTT.transcribe(f,prog);
+      $('#mtNotes').value=text; $('#mtSttBar').style.width='100%'; $('#mtSttMsg').textContent='글로 바꾸기 완료 — 이어서 회의록을 정리합니다';
+      $('#mtGo').disabled=false; await make();
+    }catch(err){ $('#mtSttMsg').textContent='⚠ '+err.message; $('#mtGo').disabled=false; }
+    finally{ $('#mtAudio').disabled=false; $('#mtAudio').value=''; }
+  };
+  $('#mtReset').onclick=()=>{ ['mtName','mtTime','mtPlace','mtWho','mtAgenda','mtNotes'].forEach(id=>$('#'+id).value=''); $('#minutesOut').hidden=true; $('#mtMsg').textContent=''; $('#mtSttWrap').hidden=true; $('#mtSttBar').style.width='0'; };
 }
 window.MINUTES={init};
 })();

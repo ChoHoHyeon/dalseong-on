@@ -1253,3 +1253,31 @@ body[data-theme=dark] .bugnote{background:rgba(217,138,0,.14);color:#f0d9a6;bord
 .rp-tbl pre{font:inherit;white-space:pre-wrap;word-break:keep-all;margin:0;line-height:1.6}
 .rp-check{margin-top:16px;padding:10px 14px;border:1px solid #f0b429;background:#fff8e1;border-radius:8px;font-size:12.5px}
 .rp-check ul{margin:6px 0 0 18px;padding:0}
+
+/* ── 현수막·카드뉴스 ── */
+.bn-alts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:8px 0 12px}
+.bn-alts .alt{display:flex;flex-direction:column;gap:4px;text-align:left;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel)}
+.bn-alts .alt.on{outline:2px solid #2f6fed;outline-offset:-1px}
+.bn-alts .alt b{font-size:15px}.bn-alts .alt span{font-size:12.5px;color:var(--mut)}.bn-alts .alt small{font-size:11.5px;color:#8a94a6}
+.bn-stage{background:#e9edf3;border-radius:12px;padding:14px;overflow:auto}
+.bn-stage canvas{display:block;max-width:100%;max-height:520px;margin:0 auto;box-shadow:0 2px 10px rgba(0,0,0,.18);background:#fff}
+.cn-thumbs{display:flex;gap:8px;overflow-x:auto;padding:6px 2px 10px}
+.cn-thumb{height:96px;width:auto;border-radius:6px;cursor:pointer;flex:0 0 auto;box-shadow:0 1px 4px rgba(0,0,0,.2);opacity:.75}
+.cn-thumb.on{opacity:1;outline:3px solid #2f6fed}
+.cn-wrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(260px,.9fr);gap:16px;align-items:start}
+.cn-stage{background:#e9edf3;border-radius:12px;padding:14px}
+.cn-stage canvas{display:block;max-width:100%;max-height:560px;margin:0 auto;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.cn-edit label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:var(--mut);margin-top:8px}
+.cn-nav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cn-nav button{border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+@media (max-width:900px){.bn-alts{grid-template-columns:1fr}.cn-wrap{grid-template-columns:1fr}}
+
+/* ── 회의 녹음 → 글 ── */
+.stt-box{border:1.5px dashed #2f6fed;border-radius:12px;padding:12px 14px;margin:4px 0 12px;background:rgba(47,111,237,.04)}
+.stt-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;font-size:14px}
+.stt-badge{font-size:11.5px;font-weight:700;color:#0b6b3a;background:#e6f6ec;border-radius:999px;padding:3px 9px}
+.filebtn.big{display:block;text-align:center;padding:12px;font-size:14px;font-weight:700;border-radius:10px;background:#2f6fed;color:#fff;cursor:pointer}
+.filebtn.big input{display:none}
+.stt-prog{margin-top:10px;font-size:12.5px;color:var(--mut)}
+.stt-prog .bar{height:8px;border-radius:999px;background:#e3e8f2;overflow:hidden;margin-bottom:5px}
+.stt-prog .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2f6fed,#48c9b0);transition:width .4s}

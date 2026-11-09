@@ -90,7 +90,11 @@ function parse(t,mode){
     else if(sec==='check') o.check.push(s.replace(/^[-·•]\s*/,''));
   });
   const trim=a=>{ while(a.length&&!a[a.length-1].trim()) a.pop(); return a; };
-  o.table.forEach(r=>{ trim(r.old); trim(r.neu); }); trim(o.body);
+  o.table.forEach(r=>{ trim(r.old); trim(r.neu);
+    ['old','neu'].forEach(k=>{ let a=r[k].filter((l,i,arr)=>!(/^\s*<\s*(신\s*설|삭\s*제)\s*>\s*$/.test(l)&&arr.length>1));   // 본문이 있는데 끝에 <신 설> 표식만 따로 붙은 경우 제거
+      if(a.length&&!/^\s*(제\d+조|<)/.test(a[0])) a=[r.art, ...a];                                                      // 조 제목(제n조(…))을 각 칸 첫 줄에
+      r[k]=a; }); });
+  trim(o.body);
   o.check=o.check.filter(x=>x&&!/^없음/.test(x));
   return o;
 }
