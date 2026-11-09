@@ -165,6 +165,7 @@ function render(o,mode){
       <p class="lw-buchik">부      칙</p>
       <div class="lw-body">${lawHtml(o.buchik.split('\n'))}</div>
     </div>
+    ${mode==='new'?compareHtml(U.struct,o):''}
     ${o.check.length?`<div class="rp-check"><b>⚠ 담당자 확인 요청</b><ul>${o.check.map(c=>`<li>${esc(c)}</li>`).join('')}</ul></div>`:''}
     <details class="lw-extra"><summary>📎 부속 자료 초안 — ${mode==='amend'?'개정 이유 · 주요 내용 · 신구조문대비표':'제정 이유'} <small>(별도 문서 서식은 추후 확정)</small></summary>
       <div class="rp">
@@ -267,7 +268,7 @@ async function findRefs(mode,name,gist){
       else step('cur','done',own.length?`⚠ 비슷한 달성군 조례 있음: ${own.slice(0,2).map(x=>x.name).join(' · ')} — 「고치기」가 맞는지 확인하세요`:'같은 내용의 달성군 조례 없음'); }
     catch(e){ step('cur','skip','확인 못 함'); }
     step('read','run');
-    for(const x of [...R.ordins.slice(0,3),...R.laws.slice(0,1)]){ try{ const b=await lawApi(`target=${R.laws.includes(x)?'law':'ordin'}&mst=${x.mst}`); R.texts.push({name:fullName(x),text:b.text.slice(0,4000)}); step('read','run',`${R.texts.length}건 읽음`); }catch(e){} }
+    for(const x of [...R.ordins.slice(0,3),...R.laws.slice(0,1)]){ try{ const b=await lawApi(`target=${R.laws.includes(x)?'law':'ordin'}&mst=${x.mst}`); R.texts.push({name:fullName(x),org:x.org||'',law:R.laws.includes(x),titles:artTitles(b.text),text:b.text.slice(0,4000)}); step('read','run',`${R.texts.length}건 읽음`); }catch(e){} }
     step('read','done',R.texts.length?R.texts.map(x=>x.name).join(' · '):'본문을 읽지 못함');
     R.via='api'; return R;
   }
@@ -287,6 +288,29 @@ async function findRefs(mode,name,gist){
   $('#ruRefs').innerHTML=`<p class="hint">⚠ 법령 검색에 연결하지 못했습니다 (${esc(R.apiErr||'')}). ${searchLinks(baseName(name))}</p>`;
   R.via='none'; return R;
 }
+/* 조문 구성 비교: 참고 조례들의 조 제목을 모아 몇 곳에 공통으로 있는지 센다 */
+function artTitles(t){ return [...String(t).matchAll(/제\d+조(?:의\d+)?\s*\(([^)]+)\)/g)].map(m=>m[1].trim()).filter(x=>!/^삭제/.test(x)); }
+function normT(t){ return String(t).replace(/\s|ㆍ|·|,/g,'').replace(/^(공공데이터|데이터)(의)?/,'').replace(/(에관한사항|등)$/,'').replace(/적용범위/,'적용범위').replace(/^(군수|도지사|시장|구청장|지방자치단체|자치단체장)의?책무/,'책무').replace(/^(조례|규칙)?시행규칙$|^규칙$|^시행세칙$/,'시행규칙').replace(/위원회의?설치및구성|위원회설치/,'위원회설치'); }
+function structOf(R){
+  const refs=(R.texts||[]).filter(x=>!x.law&&x.titles&&x.titles.length); if(refs.length<2) return null;
+  const M=new Map();
+  refs.forEach((r,i)=>{ const seen=new Set(); r.titles.forEach(t=>{ const k=normT(t); if(!k||seen.has(k)) return; seen.add(k); if(!M.has(k)) M.set(k,{label:t,k,in:new Set()}); M.get(k).in.add(i); }); });
+  const rows=[...M.values()].map(x=>({...x,n:x.in.size})).sort((a,b)=>b.n-a.n);
+  const avg=Math.round(refs.reduce((a,r)=>a+r.titles.length,0)/refs.length);
+  return {refs,rows,avg,common:rows.filter(x=>x.n>=2)};
+}
+function hasT(list,k){ return list.some(t=>{ const a=normT(t); return a===k||(a.length>=2&&k.length>=2&&(a.includes(k)||k.includes(a))); }); }
+function compareHtml(st,o){
+  if(!st) return ''; const mine=artTitles(lawLines(o,U.mode).join('\n'));
+  const short=r=>(r.org||r.name).replace(/^(대구광역시|경기도|경상북도|경상남도|전라남도|전라북도|전북특별자치도|충청남도|충청북도|강원특별자치도|제주특별자치도)\s+/,'').slice(0,8)||'참고';
+  const rows=st.rows.filter(x=>x.n>=2||hasT(mine,x.k)).concat(mine.filter(t=>!st.rows.some(x=>x.k===normT(t)||hasT([t],x.k))).map(t=>({label:t,k:normT(t),in:new Set(),n:0,only:1})));
+  const miss=st.common.filter(x=>!hasT(mine,x.k));
+  return `<div class="ru-cmp"><b>📋 비슷한 조례와 조문 구성 비교</b> <small>참고 조례 ${st.refs.length}건 · 평균 ${st.avg}개 조 / 이번 초안 ${mine.length}개 조${miss.length?` · <span class="miss">공통 조문 중 빠진 것 ${miss.length}개</span>`:' · 공통 조문 모두 포함'}</small>
+    <div class="ru-cmpwrap"><table><thead><tr><th>조문</th>${st.refs.map(r=>`<th title="${esc(r.name)}">${esc(short(r))}</th>`).join('')}<th class="me">이번 초안</th></tr></thead><tbody>
+    ${rows.map(x=>{ const m=hasT(mine,x.k)||x.only; return `<tr class="${!m&&x.n>=2?'miss':''}"><td>${esc(x.label)}${x.only?' <i>추가</i>':''}</td>${st.refs.map((r,i)=>`<td>${x.in.has(i)?'●':''}</td>`).join('')}<td class="me">${m?'✔':(x.n>=2?'빠짐':'')}</td></tr>`; }).join('')}
+    </tbody></table></div></div>`;
+}
+
 function refsHtml(R){
   if(!R||(!R.laws.length&&!R.ordins.length)) return '';
   const li=(x,t)=>`<li><a href="${esc(x.url||'#')}" target="_blank" rel="noopener">${esc(fullName(x))}</a>${x.articles||x.points?`<small>${esc(x.articles||x.points)}</small>`:''}</li>`;
@@ -312,12 +336,15 @@ async function make(){
         R.laws.length?'[상위 법령]\n'+R.laws.map(x=>`- ${x.name}${x.articles?' : '+x.articles:''}`).join('\n'):'',
         R.ordins.length?'[다른 지자체 비슷한 조례]\n'+R.ordins.map(x=>`- ${fullName(x)}${x.points?' : '+x.points:''}`).join('\n'):'',
         ...R.texts.map(x=>`[참고 본문 — ${x.name}]\n${x.text}`)].filter(Boolean).join('\n\n');
+      const st=structOf(R); U.struct=st;
+      const stTxt=st?`\n[참고 조례 조문 구성 — ${st.refs.length}개 조례 중 몇 곳에 있는지]\n`+st.rows.slice(0,30).map(x=>`- ${x.label} (${x.n}/${st.refs.length})`).join('\n')
+        +`\n※ 2곳 이상에 공통으로 있는 조문은 담당자 내용과 무관하지 않은 한 빠짐없이 넣으세요(목적·정의·적용 범위·다른 조례와의 관계·책무·계획·책임관·위원회·위탁·평가 및 포상·시행규칙 등). 넣지 않기로 한 공통 조문은 확인요청에 "제외: 조문명 — 이유"로 적으세요. 조문 수는 참고 조례 평균(약 ${st.avg}개) 수준으로 쓰세요.`:'';
       const u=[`<작성 요청>`,`작업: ${mode==='amend'?'일부개정(개정문 + 신구조문대비표)':'제정 조례·지침 초안'}`,`자치법규 이름: ${name}`,
         ($('#ruBase').value||'').trim()?`담당자가 알려준 상위 법령: ${$('#ruBase').value.trim()}`:'',
         mode==='amend'?(cur?`현행 조문:\n${cur}`:'현행 조문: (없음 — 개정 대상 조문을 추정하지 말고 확인요청에 적을 것)'):'',
         `담당자가 넣고 싶은 내용(문장 그대로 — 이것이 초안의 기준):\n${gist}`,`</작성 요청>`,
-        ref?`\n<참고 자료 — 검색으로 찾은 것>\n${ref}\n</참고 자료>\n※ 담당자 내용을 기준으로 쓰고, 참고 자료는 조문 체계·표현·위임근거 확인에만 쓰세요. 참고 자료에 없는 상위 법령 조문 번호는 지어내지 말고 「○○법」 제○조로 비워 두세요. 다른 지자체 조문을 그대로 베끼지 말고 달성군 실정에 맞게 쓰세요.`:''].filter(Boolean).join('\n');
-      const text=await callModel(sys(mode),u,{max:4000,onText:t=>step('write','run',`${t.length}자 작성 중`)}); U.out=parse(text,mode);
+        ref?`\n<참고 자료 — 검색으로 찾은 것>\n${ref}${mode==='new'?stTxt:''}\n</참고 자료>\n※ 담당자 내용을 기준으로 쓰고, 참고 자료는 조문 체계·표현·위임근거 확인에만 쓰세요. 참고 자료에 없는 상위 법령 조문 번호는 지어내지 말고 「○○법」 제○조로 비워 두세요. 다른 지자체 조문을 그대로 베끼지 말고 달성군 실정에 맞게 쓰세요.`:''].filter(Boolean).join('\n');
+      const text=await callModel(sys(mode),u,{max:8000,onText:t=>step('write','run',`${t.length}자 작성 중`)}); U.out=parse(text,mode);
       if(!U.out.title||(!U.out.table.length&&!U.out.body.length&&!U.out.amend.length)) throw new Error('응답 형식을 읽지 못했습니다. 다시 생성해 주세요.');
       step('write','done','완료');
       $('#ruMsg').textContent='작성 완료 — 위임근거·상위 법령·용어는 법무 검토 전 담당자가 확인하세요.';

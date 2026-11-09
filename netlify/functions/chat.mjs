@@ -17,7 +17,7 @@ export default async (req) => {
   try { body = await req.json(); } catch { return new Response("Bad Request", { status: 400 }); }
   const payload = {
     model: body.model || "claude-sonnet-4-5",
-    max_tokens: Math.min(body.max_tokens || 1200, 4000),
+    max_tokens: Math.min(body.max_tokens || 1200, 8000),
     stream: true,
     system: String(body.system || "").slice(0, 8000),
     messages: (body.messages || []).slice(-8),
