@@ -13,6 +13,21 @@ const DEF='#1d5fd6';
 const HOL={'2026-01-01':'신정','2026-02-16':'설날','2026-02-17':'설날','2026-02-18':'설날','2026-03-01':'삼일절','2026-03-02':'대체공휴일','2026-05-05':'어린이날','2026-05-24':'부처님오신날','2026-05-25':'대체공휴일','2026-06-03':'지방선거','2026-06-06':'현충일','2026-08-15':'광복절','2026-08-17':'대체공휴일','2026-09-24':'추석','2026-09-25':'추석','2026-09-26':'추석','2026-10-03':'개천절','2026-10-05':'대체공휴일','2026-10-09':'한글날','2026-12-25':'성탄절',
   '2027-01-01':'신정','2027-02-06':'설날','2027-02-07':'설날','2027-02-08':'설날','2027-02-09':'대체공휴일','2027-03-01':'삼일절','2027-05-05':'어린이날','2027-05-13':'부처님오신날','2027-06-06':'현충일','2027-08-15':'광복절','2027-08-16':'대체공휴일','2027-09-14':'추석','2027-09-15':'추석','2027-09-16':'추석','2027-10-03':'개천절','2027-10-04':'대체공휴일','2027-10-09':'한글날','2027-10-11':'대체공휴일','2027-12-25':'성탄절'};
 const C={y:0,m:0,edit:null,day:null};
+/* 물방울 소리 — 파일 없이 브라우저에서 합성 (짧은 '뾱') · 소리 끄기는 이 PC에 기억 */
+let AC=null; const SND_KEY='dsOn.calSound';
+const soundOn=()=>{ try{ return localStorage.getItem(SND_KEY)!=='off'; }catch(e){ return true; } };
+function plop(pitch){
+  if(!soundOn()) return;
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume();
+    const t=AC.currentTime, o=AC.createOscillator(), g=AC.createGain(), f=AC.createBiquadFilter();
+    const base=(pitch||1)*(520+Math.random()*80);
+    o.type='sine'; o.frequency.setValueAtTime(base,t); o.frequency.exponentialRampToValueAtTime(base*2.3,t+.07); o.frequency.exponentialRampToValueAtTime(base*1.6,t+.14);
+    f.type='lowpass'; f.frequency.value=2600;
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.28,t+.012); g.gain.exponentialRampToValueAtTime(.0001,t+.17);
+    o.connect(f).connect(g).connect(AC.destination); o.start(t); o.stop(t+.2);
+  }catch(e){}
+}
 const load=()=>{ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(e){ return []; } };
 const save=L=>{ try{ localStorage.setItem(KEY,JSON.stringify(L)); }catch(e){ toast?.('이 브라우저는 저장을 막고 있어요'); } };
 const ymd=(y,m,d)=>`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -31,6 +46,7 @@ function render(){ try{ window.dispatchEvent(new Event('dscal')); }catch(e){}
   }
   $('#calGrid').innerHTML=h;
   $('#calGrid').querySelectorAll('.cd[data-d]').forEach(el=>{
+    el.onpointerdown=()=>plop(el.classList.contains('today')?1.25:1);
     el.onclick=e=>{ const ev=e.target.closest('.ev'); if(ev) openEdit(ev.dataset.id); else openDay(el.dataset.d); };
     el.onkeydown=e=>{ if(e.key==='Enter') openDay(el.dataset.d); };
   });
@@ -44,13 +60,15 @@ function hide(){ $('#calPop').hidden=true; }
 function commit(){
   const title=($('#calIn').value||'').trim(); if(!title){ $('#calIn').focus(); return; }
   const L=load(), o={id:C.edit||Date.now().toString(36),d:$('#calDate').value||C.day,t:$('#calTime').value,title:title.slice(0,40),memo:($('#calMemo').value||'').slice(0,200),c:C.c};
-  const i=L.findIndex(x=>x.id===o.id); if(i>=0) L[i]=o; else L.push(o); save(L); hide();
+  const i=L.findIndex(x=>x.id===o.id); if(i>=0) L[i]=o; else L.push(o); save(L); hide(); plop(1.5);
   const nd=new Date(o.d+'T00:00:00'); C.y=nd.getFullYear(); C.m=nd.getMonth(); render(); toast?.(i>=0?'일정을 고쳤어요':'일정을 넣었어요');
 }
 function del(){ if(!C.edit) return; save(load().filter(x=>x.id!==C.edit)); hide(); render(); toast?.('일정을 지웠어요'); }
 function init(){
   if(!$('#calGrid')||!$('#calColors')) return; const t=new Date(); if(!C.y){ C.y=t.getFullYear(); C.m=t.getMonth(); }
   if(!$('#calGrid')._on){ $('#calGrid')._on=1;
+    ['calPrev','calNext','calToday'].forEach(id=>$('#'+id).addEventListener('pointerdown',()=>plop(.8)));
+    const sb=$('#calSnd'); if(sb){ const upd=()=>{ sb.textContent=soundOn()?'🔈':'🔇'; sb.title=soundOn()?'물방울 소리 끄기':'물방울 소리 켜기'; }; upd(); sb.onclick=()=>{ try{ localStorage.setItem(SND_KEY,soundOn()?'off':'on'); }catch(e){} upd(); plop(1); }; }
     $('#calPrev').onclick=()=>{ if(--C.m<0){ C.m=11; C.y--; } render(); };
     $('#calNext').onclick=()=>{ if(++C.m>11){ C.m=0; C.y++; } render(); };
     $('#calToday').onclick=()=>{ const n=new Date(); C.y=n.getFullYear(); C.m=n.getMonth(); render(); };
