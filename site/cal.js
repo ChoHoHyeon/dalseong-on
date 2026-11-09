@@ -34,13 +34,6 @@ function render(){
     el.onclick=e=>{ const ev=e.target.closest('.ev'); if(ev) openEdit(ev.dataset.id); else openDay(el.dataset.d); };
     el.onkeydown=e=>{ if(e.key==='Enter') openDay(el.dataset.d); };
   });
-  // 다가오는 일정
-  const up=L.filter(e=>e.d>=td).sort((a,b)=>(a.d+(a.t||'')).localeCompare(b.d+(b.t||''))).slice(0,3);
-  $('#calUp').innerHTML=up.length?up.map(e=>{ const dd=new Date(e.d+'T00:00:00'), diff=Math.round((dd-new Date(td+'T00:00:00'))/864e5);
-    return `<li data-id="${e.id}"><i style="background:${e.c||DEF}"></i><b>${esc(e.title)}</b><small>${dd.getMonth()+1}/${dd.getDate()}${e.t?' '+e.t:''}</small><em>${diff===0?'오늘':'D-'+diff}</em></li>`; }).join('')
-    :'';
-  $('#calUp').hidden=!up.length;
-  $('#calUp').querySelectorAll('li[data-id]').forEach(li=>li.onclick=()=>openEdit(li.dataset.id));
 }
 function openDay(d){ C.edit=null; C.day=d; fill({title:'',t:'',memo:'',c:DEF}); $('#calDel').hidden=true; $('#calPopTitle').textContent=label(d)+' 일정 추가'; show(); }
 function openEdit(id){ const e=load().find(x=>x.id===id); if(!e) return; C.edit=id; C.day=e.d; fill(e); $('#calDel').hidden=false; $('#calPopTitle').textContent=label(e.d)+' 일정'; show(); }

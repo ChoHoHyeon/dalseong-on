@@ -34,7 +34,7 @@ h4{font-size:13px;font-weight:700;color:var(--mut);letter-spacing:.3px;margin-bo
 .tag.rag{background:rgba(15,168,118,.12);color:var(--ok)} .tag.gen{background:rgba(217,138,0,.12);color:var(--warn)}
 
 /* ── 상단 ── */
-.top{height:64px;display:grid;grid-template-columns:1fr auto 1fr;column-gap:16px;align-items:center;padding:0 20px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.55);backdrop-filter:blur(14px);z-index:5}
+.top{height:59px;display:grid;grid-template-columns:1fr auto 1fr;column-gap:16px;align-items:center;padding:0 20px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.55);backdrop-filter:blur(14px);z-index:5}
 body[data-theme=dark] .top{background:rgba(11,18,32,.6)}
 .brand{display:inline-flex;justify-self:start;width:fit-content;max-width:100%;align-items:center;gap:11px;cursor:pointer;border-radius:12px;padding:4px 10px 4px 4px;margin-left:-4px;transition:.15s} .brand:hover{background:rgba(47,111,237,.08)}
 .logo{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#4f8cff,#35d39b);display:grid;place-items:center;font-weight:800;color:#06101f;box-shadow:0 6px 18px rgba(79,140,255,.35)}
