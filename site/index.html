@@ -842,46 +842,61 @@
       </div>
     </section>
 
-    <!-- 홍보영상 만들기 (세부 내역 추후 확정) -->
+    <!-- 홍보영상 만들기 (movie.js · 대본 Claude → 장면 그림 gpt-image → 움직이는 영상 fal Wan → 자막·편집 브라우저) -->
     <section class="view" data-view="movie">
-      <div class="vh"><h2>홍보영상 만들기</h2><p>계획서·보도자료 PDF를 올리거나 내용을 붙여넣으면, 달성On이 읽고 SNS 홍보용 짧은 영상 대본을 써서 가로·세로·길이에 맞춰 영상으로 만들어 줍니다. 모두 이 브라우저 안에서 그려집니다.</p></div>
+      <div class="vh"><h2>홍보영상 만들기</h2><p>계획서·보도자료를 붙여넣거나 파일을 올리면 AI가 SNS용 30초 세로 영상(릴스·쇼츠)을 만들어 줍니다.<br>대본·장면 그림·움직이는 영상·자막까지 한 번에 — 자막만 고쳐서 다시 합칠 수도 있습니다.</p></div>
+      <div class="card flowcard">
+        <h4>이렇게 씁니다 <small>3단계면 끝납니다</small></h4>
+        <ol class="flow3">
+          <li><span class="fnum">1</span><span class="fico" aria-hidden="true">📋</span>
+            <span class="ftx"><b>알릴 내용 넣기</b><small>작성하거나 파일 업로드</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">2</span><span class="fico" aria-hidden="true">🎬</span>
+            <span class="ftx"><b>「영상 만들기」 누르기</b><small>대본·장면 그림·움직이는 영상·자막까지 자동</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">3</span><span class="fico" aria-hidden="true">⬇️</span>
+            <span class="ftx"><b>확인하고 내려받기</b><small>자막 고쳐 다시 합치기 · mp4 저장</small></span></li>
+        </ol>
+      </div>
       <div class="card pcard">
-        <h4>대본 만들기 <small>문서 → 장면별 자막 → 영상</small></h4>
+        <h4>홍보영상 만들기 <small>SNS 세로 9:16 · 30초</small></h4>
         <div class="pcols">
         <fieldset class="pbox req-box">
           <legend>필수 입력</legend>
-          <div class="pfile" style="margin-bottom:8px"><label class="filebtn">📎 문서 올리기 (PDF · txt)<input type="file" id="mvFile" accept=".pdf,.txt,.md,.csv"></label><span class="hint">계획서·보도자료·공고문 PDF면 됩니다 (글자 PDF만, 스캔본 제외)</span></div>
-          <label class="pfull"><span class="cap">내용 <b class="req">*</b> <small class="hint">문서를 올리면 자동으로 채워집니다 · 직접 붙여넣어도 됩니다</small></span><textarea id="mvSrc" rows="8" placeholder="홍보할 사업·행사의 계획서나 보도자료 내용"></textarea></label>
+          <label class="pfull"><span class="cap">알릴 내용 <b class="req">*</b> <small class="hint">계획서·보도자료·공고문 본문을 그대로 붙여넣기</small></span><textarea id="mvSrc" rows="9" placeholder="홍보할 사업·행사의 계획서나 보도자료 내용을 붙여넣으세요. AI가 읽고 장면 대본을 씁니다."></textarea></label>
+          <div class="pfile"><label class="filebtn">📎 파일 추가<input type="file" id="mvFile" multiple accept=".hwpx,.hwp,.docx,.pdf,.txt,.md,.htm,.html"></label><span class="hint" id="mvFileList">파일을 올리면 내용을 읽어 위 칸에 채웁니다 (한글 hwpx·워드·PDF·텍스트) · 직접 붙여넣어도 됩니다</span></div>
         </fieldset>
         <fieldset class="pbox opt-box">
-          <legend>영상 설정</legend>
-          <div class="pgrid pgrid2">
-            <label>화면<select id="mvSize" class="psel"></select></label>
-            <label>길이<select id="mvLen" class="psel"><option>15</option><option selected>30</option><option>45</option><option>60</option></select></label>
-            <label>배경<select id="mvBg" class="psel"><option value="photo">군 보유 사진(비슬산)</option><option value="color">색 테마만</option><option value="custom">내 사진(여러 장)</option></select></label>
-            <label>색 테마<select id="mvTheme" class="psel"></select></label>
+          <legend>선택 입력</legend>
+          <div class="mv-purpose" id="mvPurpose" role="radiogroup" aria-label="영상 용도">
+            <button type="button" data-v="auto" class="on"><i>✨</i><b>AI가 판단</b><small>내용을 읽고 알맞게</small></button>
+            <button type="button" data-v="recruit"><i>📣</i><b>모집·신청</b><small>교육·참가자·지원사업</small></button>
+            <button type="button" data-v="event"><i>🎉</i><b>행사·축제</b><small>축제·공연·체험</small></button>
+            <button type="button" data-v="policy"><i>📋</i><b>정책·사업 안내</b><small>제도·혜택·변경</small></button>
+            <button type="button" data-v="news"><i>🏆</i><b>성과·소식</b><small>수상·실적·준공</small></button>
+            <button type="button" data-v="campaign"><i>🦺</i><b>생활정보·캠페인</b><small>안전·재난·계도</small></button>
           </div>
-          <div class="pfile" id="mvPhotoWrap" hidden style="margin-top:8px"><label class="filebtn">📷 사진 올리기 (최대 8장)<input type="file" id="mvPhotos" accept="image/*" multiple></label><span class="hint" id="mvPhotoMsg">장면마다 번갈아 배경으로 씁니다</span></div>
-          <label class="pfull" style="margin-top:8px">문의처(마지막 장면)<input id="mvContact" placeholder="예) 문의 정보통신과 053)668-2454"></label>
-          <p class="hint" style="margin-top:8px">※ 자막형 영상입니다. 나레이션·배경음악은 내부 음성서버·무료 음원 확보 후 2단계. 사진은 AI 생성 없이 군 보유·직접 올린 사진만 씁니다.</p>
         </fieldset>
         </div>
-        <div class="pact"><button id="mvGo" class="p">대본 만들기</button><button id="mvSample">예시로 채우기</button><button id="mvReset">비우기</button><span class="hint" id="mvMsg"></span></div>
+        <div class="pact"><button id="mvGo" class="p">🎬 영상 만들기</button><button type="button" id="mvSampleFile">📎 샘플 계획서 업로드하기</button><button id="mvReset">비우기</button><span class="hint" id="mvMsg"></span></div>
       </div>
       <div class="card pout" id="mvOut" hidden>
-        <h4>장면 대본 <small id="mvTotal"></small></h4>
-        <div class="mv-wrap">
-          <div>
-            <div class="mv-scenes" id="mvScenes"></div>
-            <div class="pact" style="margin-top:10px"><button id="mvRec" class="p">🎬 영상 만들기</button><button id="mvAgain">대본 다시 쓰기</button></div>
-            <label class="pfull" style="margin-top:10px">게시글 문구 · 해시태그<textarea id="mvCaption" rows="3"></textarea></label>
-            <div class="pact" style="margin-top:6px"><button id="mvCopy">게시글 복사</button></div>
+        <h4>영상 미리보기 <small id="mvTotal"></small></h4>
+        <div class="mv-wrap2">
+          <div class="mv-stage2">
+            <div class="mv-view"><canvas id="mvCanvas" width="720" height="1280"></canvas><video id="mvVideo" controls playsinline hidden></video>
+              <div class="mv-prog" id="mvProg" hidden></div></div>
           </div>
-          <div>
-            <div class="mv-stage"><canvas id="mvCanvas"></canvas></div>
-            <div id="mvVideoWrap" hidden><video id="mvVideo" controls playsinline style="width:100%;border-radius:10px;margin-top:10px"></video>
-              <div class="pact" style="margin-top:8px"><button id="mvDl" class="p">⬇ 영상 내려받기</button></div></div>
-            <p class="hint" style="margin-top:6px">장면 줄을 누르면 미리보기가 바뀝니다. 「영상 만들기」는 실제 길이만큼(30초면 30초) 그리면서 녹화합니다.</p>
+          <div class="mv-side">
+            <div class="cn-box cn-sum" id="mvSum"></div>
+            <div class="cn-box mv-edit">
+              <div class="mv-edit-h"><b>장면 자막</b><small>고친 뒤 「자막 다시 합치기」</small></div>
+              <div class="mv-scenes2" id="mvScenes"></div>
+              <button type="button" id="mvRemix" class="cn-redo">🔄 고친 자막으로 다시 합치기</button>
+            </div>
+            <div class="cn-box cn-save mv-save">
+              <button type="button" id="mvDl" class="cn-sv p"><i>⬇</i><span><b>영상 저장</b><small id="mvDlSub">mp4 · 세로 9:16</small></span></button>
+            </div>
           </div>
         </div>
       </div>

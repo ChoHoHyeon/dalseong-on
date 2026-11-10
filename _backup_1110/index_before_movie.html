@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>달성On · 달성군 직원 AI 업무도우미</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Black+Han+Sans&family=Gowun+Dodum&family=Jua&family=Nanum+Gothic:wght@700;800&family=Nanum+Pen+Script&family=Sunflower:wght@500;700&display=swap">
+<script src="vendor/jszip.min.js"></script>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="trip.css">
+</head>
+<body data-mode="home" data-theme="light" data-view="home">
+<div id="boot"><div class="boot-in"><div class="boot-logo">On</div><b>달성<span>On</span></b><small>자료를 불러오는 중이에요…</small><i class="boot-bar"><u></u></i></div></div>
+
+<!-- ═══════ 상단: 브랜드 · 상태 ═══════ -->
+<header class="top">
+  <div class="brand"><div class="logo"><span>On</span></div><div class="brand-t"><b>달성On</b><small>달성군 직원 AI 업무도우미 · 시범 운영</small></div></div>
+  <div class="top-c slogan"><a href="#" class="slogan-link" data-go="home:home" title="첫 화면으로" aria-label="첫 화면으로 가기"><img src="assets/slogan.png" alt="군민이 빛나는 달성"></a></div>
+  <div class="top-r">
+    <button class="ghost ic" id="btnNoti" title="공지·업데이트">🔔<span class="badge" id="notiN">3</span></button>
+    <button class="ghost ic" id="btnBug" title="오류·불편 신고 (지금 보는 화면이 함께 적혀요 · 처리 상태는 질문·요청 소통하기에서)">🐞</button>
+    <button class="ghost ic" id="btnTheme" title="밝게/어둡게">🌙</button>
+    <div class="user" id="userChip" title="접속 IP (실제 구축 시 새올 인증 사용자 정보로 대체)"><span class="uav">🖥</span><div><b id="userIp">–</b><small>접속 IP</small></div></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- ═══════ 좌측: 통합 메뉴 (달성On · 직원용 · 관리자) ═══════ -->
+  <aside class="nav"><ul id="nav"></ul>
+    <div class="nav-foot"><small id="navFoot"></small><small class="nf2">문의 정보통신과 ☎ 668-2454</small></div>
+  </aside>
+
+  <!-- ═══════ 메인: 기능 화면 ═══════ -->
+  <main class="main" id="main">
+
+    <!-- 홈 · 대시보드 -->
+    <section class="view" data-view="home">
+      <div class="hero hero-light">
+        <div class="hero-txt"><small id="heroDate" hidden></small>
+          <h2>오늘도 수고 많아요 <span class="wave">👋</span><br>잔일은 <b>달성On</b>이 덜어드릴게요</h2>
+          <p class="lead">반복되는 일은 맡기고, 중요한 일에 집중하세요.</p>
+        </div>
+        <div class="hero-art hero-art-light hero-float">
+          <button class="fchip f1" data-go="staff:minutes">🎙 회의록</button><button class="fchip f2" data-go="staff:press">📰 보도자료</button><button class="fchip f3" data-go="staff:card">📱 카드뉴스</button><button class="fchip f4" data-go="staff:meal">🍚 급량비</button><button class="fchip f5" data-go="staff:on">✦ 물어보기</button>
+        </div>
+      </div>
+      <div class="portal-grid">
+        <div class="card board"><h4>공지사항 <small>최근 5건</small><button class="ghost sm more" data-go="home:news">전체 보기 ›</button></h4><ul class="board-list" id="boardList"></ul></div>
+        <div class="card video"><h4>🎬 영상으로 보기 <small id="videoNote">16초</small></h4><div class="player" id="player"></div><p class="hint vcap" id="videoCap" style="margin-top:10px"></p></div>
+      </div>
+      <div class="home-usage">
+      <div class="kpis four" id="homeKpis"></div>
+      <div class="hm-fun">
+        <div class="hm-mile" id="hmMile" hidden></div>
+        <div class="hm-msg" id="hmMsg"></div>
+        <div class="hm-row">
+          <div class="card cal-card">
+            <div class="cal-hd"><button id="calPrev" class="cal-nav" aria-label="이전 달">‹</button><b id="calTitle"></b><button id="calNext" class="cal-nav" aria-label="다음 달">›</button><button id="calToday" class="cal-tbtn">오늘</button><button id="calSnd" class="cal-tbtn" aria-label="물방울 소리">🔈</button><small>날짜를 눌러 일정 넣기 · 이 PC에 저장</small></div>
+            <div class="cal-wk"><span class="sun">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="sat">토</span></div>
+            <div class="cal-grid" id="calGrid"></div>
+          </div>
+          <div class="hm-col">
+            <div class="card now-card"><h4>오늘 챙길 것 <small id="hmCalNote"></small></h4><ul class="hm-cal" id="hmCal"></ul></div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- 홈 · 이용 안내 -->
+    <section class="view" data-view="guide">
+      <div class="vh"><h2>이용 안내</h2><p>처음 오셨나요? 3단계면 충분해요. 설치·로그인 없이 브라우저만 있으면 됩니다.</p></div>
+      <div class="gd-steps">
+        <div><i>1</i><b>왼쪽 메뉴에서 할 일 고르기</b><small>회의록·보도자료·정산 등 지금 하려는 일</small></div>
+        <div><i>2</i><b>파일 올리거나 몇 줄 적기</b><small>녹음·PDF·엑셀을 올리거나 요지만 · 「예시로 채우기」로 먼저 체험</small></div>
+        <div><i>3</i><b>결과 확인하고 가져가기</b><small>복사 · 한글 파일 · PNG · 엑셀 — 마지막 확인은 담당자가</small></div>
+      </div>
+      <div class="card"><h4>이럴 땐 이 메뉴 <small>누르면 바로 이동</small></h4><div class="gd-feat" id="gdFeat"></div></div>
+      <div class="card"><h4>자주 묻는 질문</h4><div class="gd-faq">
+          <details><summary>내 자료가 밖으로 나가나요?</summary><p><b>급량비·출장비</b>는 이 PC 안에서만 처리돼요. <b>회의록·데이터 분석</b>은 녹음·엑셀 원본은 PC에 두고 필요한 글만 AI로 보내고, <b>보도자료·카드뉴스 등 글쓰기 메뉴</b>는 입력한 글이 AI로 가요. 비공개·개인정보는 넣지 마세요.</p></details>
+          
+          <details><summary>결과를 그대로 써도 되나요?</summary><p>초안입니다. 날짜·수치·이름·인용문은 꼭 확인한 뒤 쓰세요. 비어 있는 값은 <b>○○</b>로 표시됩니다.</p></details>
+          <details><summary>만든 결과가 사라졌어요</summary><p>홈의 <b>내 최근 작업</b>에 최근 결과 8건이 이 PC에 남아 있어요. 누르면 다시 보고 복사할 수 있습니다.</p></details>
+          <details><summary>PDF를 못 읽는다고 나와요</summary><p>스캔본(그림)은 글자를 읽을 수 없어요. 새올·인사랑 화면에서 「인쇄 → PDF로 저장」한 파일을 올려 주세요.</p></details>
+          <details><summary>한글 파일 서식이 달라요</summary><p>달성군 보고서·보도자료 서식을 따릅니다. 다른 서식이 필요하면 질문·요청 소통하기에 남겨 주세요.</p></details>
+          <details><summary>이런 기능도 있으면 좋겠어요</summary><p>왼쪽 <b>질문·요청 소통하기</b>에 남겨 주시면 검토해서 반영하고 공지로 알려 드립니다.</p></details>
+        </div></div>
+      <div class="card vlist-card"><h4>안내 영상 <small>누르면 재생</small></h4><div class="vlist" id="videoList"></div></div>
+    </section>
+
+    <!-- 홈 · 서비스 구성 -->
+    <section class="view" data-view="flow">
+      <div class="vh"><h2>서비스 구성</h2><p>달성군 자료·검색 엔진 위에 생성형 AI를 연결한 직원용 업무비서 구조입니다. 모델은 교체 가능(업무망 서버 모델 → 행안부 온AI API 개방 시 전환).</p></div>
+      <div class="arch">
+        <div class="arch-col"><h5>사용자</h5><div class="ab g"><i>🏛</i><b>내부 직원</b><small>본청·읍면·사업소 · 업무망 새올 배너</small></div><div class="ab p"><i>🛠</i><b>관리자</b><small>정보통신과 · 자료 등록·통계</small></div></div>
+        <div class="arch-arrow">⇄</div>
+        <div class="arch-col"><h5>달성On 엔진 (자체 서버)</h5><div class="ab b big"><b>검색 + 생성형 AI</b><small>자료에 있으면 근거 인용 · 없으면 AI 직접 답변</small><div class="mods"><span>권한별 자료 층</span><span>근거 카드</span><span>hwpx 생성 ★</span><span>이용 통계</span><span>모델 교체</span></div></div><div class="ab d"><i>🗄️</i><b>달성군 자료</b><small>자치법규 · 업무지침 · 공공데이터 · (2단계) 공문서</small></div></div>
+        <div class="arch-arrow">⇄</div>
+        <div class="arch-col"><h5>제공</h5><div class="ab g"><b>직원</b><small>조례·지침 근거 답변 · 품의서·보고서 한글 파일 · 읍면별 데이터</small></div><div class="ab p"><b>관리자</b><small>자료 한 번 갱신 → 전 직원 반영 · 부서별 이용통계</small></div></div>
+      </div>
+      <div class="card"><h4>타 지자체 대비 차별점</h4><div class="diff-grid" id="diffGrid"></div></div>
+    </section>
+
+    <!-- 홈 · 공지·업데이트 -->
+    <section class="view" data-view="news">
+      <div class="vh"><h2>공지 · 업데이트</h2><p>새 기능과 자료 갱신 소식입니다.</p></div>
+      <div class="card"><ul class="timeline big" id="newsList"></ul></div>
+    </section>
+
+    <!-- 홈 · 문의·지원 -->
+    <section class="view" data-view="contact">
+      <div class="vh"><h2>문의 · 지원</h2><p>달성On 운영·자료 등록·오류 신고는 정보통신과로 연락 주세요.</p></div>
+      <div class="contact-grid">
+        <div class="card"><h4>운영 부서</h4><b class="big">달성군 정보통신과</b><p class="hint">데이터기반행정 · 공공데이터 담당<br>☎ 053-668-2454 · ✉ 98turtle@korea.kr</p></div>
+        <div class="card"><h4>자료 등록 요청</h4><p class="hint">부서 지침·서식·FAQ를 달성On에 올리고 싶으면 파일과 열람 범위(전 직원/부서)를 알려주세요. 등록 후 전 직원 답변에 즉시 반영됩니다.</p></div>
+        <div class="card"><h4>오류·개선 제안</h4><p class="hint">잘못된 결과는 우측 상단 <b>🐞</b> 단추로, 기능 제안·짧은 의견은 왼쪽 <b>질문·요청 소통하기</b>에 남겨 주세요.</p></div>
+      </div>
+    </section>
+
+    <!-- 직원 · 질의응답(근거) -->
+    <!-- 달성On · 생성형 AI 대화 (클로드식 단일 컬럼) -->
+    <section class="view on-page" data-view="on">
+      <div class="on-col empty" id="onCol">
+        <div class="on-empty" id="onEmpty"><h1>안녕하세요, <b>달성On</b>입니다</h1><p>달성군 조례·지침·공공데이터를 근거로 답하고, 답변을 군 서식 한글 파일로 만들어 드립니다</p></div>
+        <div class="msgs" id="msgs"></div>
+        <form class="on-box" id="form"><textarea id="q" rows="1" placeholder="무엇이든 물어보세요"></textarea>
+          <div class="bar"><small class="hintline">Enter 전송 · Shift+Enter 줄바꿈</small><button type="submit" class="send" id="btnSend" aria-label="전송">↑</button></div></form>
+        <div class="chips big on-chips" id="qaChips"></div>
+        <p class="foot">답변은 참고용 · 최종 판단은 담당자 · 질문 글은 AI 모델로 전달되니 개인정보·비공개 내용은 넣지 마세요</p>
+      </div>
+      <div hidden id="legacy"><div id="pillModel"><span id="pillTxt"></span></div><div id="qaEmpty"></div><div id="qaRes"><b id="qaQ"></b><span id="qaTag"></span><small id="evNote"></small><div id="ev"></div><button id="qaToDoc"></button><button id="qaCopy"></button></div><button id="btnClear"></button><button id="btnFold"></button><small id="chatSub"></small></div>
+    </section>
+
+    <!-- 직원 · 한글 문서 생성 -->
+    <section class="view" data-view="doc">
+      <div class="vh"><h2>한글 문서 생성 <span class="star">★ 달성군만의 기능</span></h2><p>답변이나 직접 쓴 내용을 <b>달성군 표준 서식 한글(hwpx)</b> 파일로 만듭니다. 챗GPT·온AI·타 지자체 도구는 텍스트만 제공합니다.</p></div>
+      <div class="doc-grid">
+        <div class="card">
+          <label>문서 종류<select id="docKind"><option value="review">검토보고(1장)</option><option value="pumui">품의서</option><option value="memo">업무연락 메모</option></select></label>
+          <label>제목<input id="hTitle" placeholder="예) 거리공연 지원사업 검토"></label>
+          <label>부제<input id="hSub" value="달성군 AI 업무비서(달성On) 생성 초안"></label>
+          <label>작성일 / 부서<input id="hDate"></label>
+          <label>검토 요청(질문)<input id="hQ" placeholder="마지막 질문이 자동 입력됩니다"></label>
+          <label>본문 <small>■ 항목 · ❍ 내용 · - 설명 · ※ 비고 기호로 계층 구분 (수정 가능)</small><textarea id="hBody" rows="14" placeholder="오른쪽 대화창에서 답변을 받으면 자동으로 채워집니다. 직접 입력해도 됩니다."></textarea></label>
+          <label class="chk"><input type="checkbox" id="hCite" checked> 근거 자료 목록을 문서 끝에 포함</label>
+          <div class="row end"><button class="ghost" id="hFill">마지막 답변 불러오기</button><button class="primary" id="btnHwpxGo">한글 파일 생성 · 다운로드</button></div>
+        </div>
+        <div class="card preview">
+          <h4>서식 미리보기 <small>달성군 보고서 서식(■ □ ❍ - ※)</small></h4>
+          <div class="paper" id="paper"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 직원 · 자료함 -->
+    <section class="view" data-view="lib">
+      <div class="vh"><h2>자료함</h2><p>AI가 참조하는 달성군 자료입니다. 관리자가 한 번 등록하면 전 직원 답변에 즉시 반영됩니다.</p></div>
+      <div class="layers-grid" id="layers">
+        <div class="lc on" data-layer="1"><b>1층 · 공개자료</b><span class="cnt" id="c1">–</span><small>자치법규 · 민원안내 · 공공데이터 — 전 직원</small></div>
+        <div class="lc on" data-layer="2"><b>2층 · 내부지침</b><span class="cnt" id="c2">–</span><small>복무 · 회계 · 계약 · 개인정보 · 보안 — 직원 전용</small></div>
+        <div class="lc lock" data-layer="3"><b>3층 · 공문서</b><span class="cnt">🔒</span><small>온나라 문서 · 사업계획 — 2단계, 권한 체계 마련 후</small></div>
+      </div>
+      <div class="card"><h4>자료 목록 <small>현재 색인 기준</small></h4><table class="tbl" id="libTbl"></table></div>
+    </section>
+
+    <!-- 직원 · 데이터 조회 -->
+    <section class="view" data-view="data">
+      <div class="vh"><h2 id="dataTitle">데이터 조회</h2><p>달성군 공공데이터를 읍·면별로 집계하고 검색합니다. 대화창에서 "다사읍 경로당 몇 개소?"처럼 물어도 같은 데이터로 답합니다.</p></div>
+      <div class="row rw"><div class="seg2" id="dsSeg"></div><input id="dsSearch" placeholder="이름·주소로 검색" style="max-width:280px"></div>
+      <div class="data-grid">
+        <div class="card"><h4>읍·면별 개소 수</h4><div class="bars" id="dsBars"></div></div>
+        <div class="card grow"><h4 id="dsListTitle">목록</h4><div class="scroll"><table class="tbl" id="dsTbl"></table></div></div>
+      </div>
+    </section>
+
+    <!-- 결과보고서 작성하기 (세부 내역 추후 확정) -->
+    <!-- 조례·지침 초안 만들기 (세부 내역 추후 확정) -->
+    <section class="view ru-view" data-view="rule">
+      <div class="vh"><h2>조례·지침 초안 만들기</h2><p>넣고 싶은 내용을 문장으로 적으면 — 관련 법령과 다른 지자체 조례를 먼저 찾아 읽은 뒤, 실제 조례안 서식으로 초안을 씁니다.</p></div>
+      <ol class="ru-rail" id="ruRail">
+        <li data-s="1" class="on"><i>1</i><span>유형 선택</span></li>
+        <li data-s="2"><i>2</i><span>내용 입력</span></li>
+        <li data-s="3"><i>3</i><span>법령·조례 검색</span></li>
+        <li data-s="4"><i>4</i><span>조례안 확인</span></li>
+      </ol>
+      <input type="hidden" id="ruMode" value="new">
+
+      <div class="card ru-card" id="ruS1">
+        <div class="ru-sh"><i>1</i><div><b>무엇을 하시나요?</b><small>새로 만드는지, 이미 있는 달성군 조례를 고치는지에 따라 진행 방식이 달라집니다</small></div></div>
+        <div class="ru-modes">
+          <button type="button" class="ru-mode on" data-mode="new"><span class="ru-mi">📜</span><span class="ru-mt"><b>새로 만들기 <em>제정</em></b><small>아직 없는 조례·지침을 처음 만듭니다</small><span class="ru-flow">관련 법령 → 다른 지자체 조례 참고 → 조문 체계 초안</span></span><span class="ru-ck">✓</span></button>
+          <button type="button" class="ru-mode" data-mode="amend"><span class="ru-mi">✏️</span><span class="ru-mt"><b>고치기 <em>일부개정</em></b><small>이미 있는 달성군 조례를 고칩니다</small><span class="ru-flow">현행 조례 불러오기 → 개정문 · 신구조문대비표</span></span><span class="ru-ck">✓</span></button>
+        </div>
+      </div>
+
+      <div class="card ru-card" id="ruS2">
+        <div class="ru-sh"><i>2</i><div><b>내용 적기</b><small>이름과 넣고 싶은 내용만 적으면 됩니다 — 문장으로 편하게</small></div></div>
+        <div class="ru-form">
+          <label class="ru-f"><span class="ru-lb" id="ruNameCap">만들 조례·지침 이름 <b class="req">*</b> <small id="ruNameHint">가제여도 됩니다</small></span>
+            <span class="ru-namerow"><input id="ruName" placeholder="예) 달성군 공공데이터 품질관리 조례"><button type="button" id="ruFind" hidden>🔍 달성군 조례 찾기</button></span></label>
+          <div id="ruPick" class="ru-pick" hidden></div>
+          <details class="ru-cur" id="ruCurWrap" hidden><summary><span>📄 현행 조문</span> <small id="ruCurState">— 「달성군 조례 찾기」로 불러오거나 직접 붙여넣기</small></summary>
+            <textarea id="ruCur" rows="8" placeholder="제5조(○○) ① 군수는 …&#10;② …"></textarea></details>
+          <label class="ru-f"><span class="ru-lb" id="ruGistCap">넣고 싶은 내용 <b class="req">*</b> <small>이 문장을 기준으로 조문을 씁니다</small></span><textarea id="ruGist" rows="6"></textarea></label>
+          <details class="ru-opt"><summary>＋ 상위 법령을 이미 알고 있다면 (선택)</summary>
+            <label class="ru-f"><input id="ruBase" placeholder="예) 「공공데이터의 제공 및 이용 활성화에 관한 법률」 제12조 — 비워 두면 자동으로 찾습니다"></label>
+          </details>
+        </div>
+        <div class="ru-bar"><button id="ruGo" class="ru-go">초안 만들기 <span>→</span></button><button id="ruSample" class="ru-sub">예시로 채우기</button><button id="ruReset" class="ru-sub">비우기</button><span class="hint" id="ruMsg"></span></div>
+        <p class="ru-note">법령·조례 검색은 국가법령정보센터(law.go.kr) Open API를 씁니다 · 자치법규정보시스템 자료 포함. 초안 작성까지만 지원하며 법제심사·조례규칙심의회·의회 의결 절차는 그대로입니다.</p>
+      </div>
+
+      <div class="card ru-card" id="ruSteps" hidden>
+        <div class="ru-sh"><i>3</i><div><b>관련 법령·조례 찾고 읽기</b><small id="ruStepNote">순서대로 찾고 읽은 뒤 씁니다 · 1분 안팎 걸립니다</small></div></div>
+        <ol class="ru-steps" id="ruStepList"></ol>
+        <div id="ruRefs"></div>
+      </div>
+
+      <div class="card ru-card" id="ruleOut" hidden>
+        <div class="ru-sh"><i>4</i><div><b>조례안 확인</b><small>법무 검토 전 담당자 확인용 초안입니다</small></div>
+          <div class="ru-shact"><button id="ruHwpx" class="ru-go sm">📄 한글 파일</button><button id="ruCopy" class="ru-sub">조례안 복사</button><button id="ruAgain" class="ru-sub">다시 생성</button></div></div>
+        <div class="pv rpwrap" id="ruleView"></div>
+      </div>
+    </section>
+
+    <!-- 회의록 정리하기 (세부 내역 추후 확정) -->
+    <section class="view ru-view" data-view="minutes">
+      <div class="vh"><h2>회의록 정리하기</h2><p>회의 제목을 적고 녹음 파일을 올리면 — 이 PC 안에서 글로 바꾼 뒤, 안건별 논의·결정사항·후속조치가 정리된 회의록을 만듭니다.</p></div>
+      <ol class="ru-rail" id="mtRail">
+        <li data-s="1" class="on"><i>1</i><span>회의 정보</span></li>
+        <li data-s="2"><i>2</i><span>녹음 올리기</span></li>
+        <li data-s="3"><i>3</i><span>글로 바꾸기</span></li>
+        <li data-s="4"><i>4</i><span>회의록 확인</span></li>
+      </ol>
+
+      <div class="mt-row">
+      <div class="card ru-card" id="mtS1">
+        <div class="ru-sh mt-sh1"><i>1</i><div class="mt-h1"><b>회의 정보</b><button type="button" id="mtFill" class="ru-sub mt-fill">✨ 예시로 채우기</button></div></div>
+        <div class="ru-form">
+          <label class="ru-f"><span class="ru-lb">회의 제목 <b class="req">*</b></span><input id="mtName" placeholder="예) 2026년 데이터기반행정 실태점검 대응 회의"></label>
+          <div class="mt-optbox">
+            <div class="mt-optt">선택 입력 <small>비워 두면 녹음에서 파악합니다</small></div>
+            <div class="mt-grid3">
+              <label class="ru-f"><span class="ru-lb">일자</span><input id="mtDate" type="date"></label>
+              <label class="ru-f"><span class="ru-lb">시각</span><input id="mtTime" placeholder="예) 14:00"></label>
+              <label class="ru-f"><span class="ru-lb">장소</span><input id="mtPlace" placeholder="예) 군청 3층 소회의실"></label>
+            </div>
+            <label class="ru-f"><span class="ru-lb">참석자</span><input id="mtWho" placeholder="예) 정보통신과장, 정보통계팀장, ○○○ 주무관"></label>
+            <input type="hidden" id="mtDept" value="행정국 정보통신과"><input type="hidden" id="mtAgenda" value="">
+          </div>
+        </div>
+      </div>
+
+      <div class="card ru-card" id="mtS2">
+        <div class="ru-sh"><i>2</i><div><b>녹음 올리기</b><small>올리면 글로 바꾸고 회의록까지 자동으로 정리합니다</small></div></div>
+        <label class="mt-drop" id="mtDrop"><span class="mt-dico">🎙️</span><span class="mt-dtx"><b>녹음 파일 선택 · 끌어다 놓기</b><small>mp3 · m4a · wav · webm · ogg<br>🔒 녹음 파일은 이 PC 밖으로 나가지 않아요 · 정리에는 글만 전달</small></span><span class="mt-dbtn">파일 고르기</span><input type="file" id="mtAudio" accept="audio/*,.m4a,.mp3,.wav,.webm,.ogg,.aac"></label>
+        <div class="mt-file" id="mtFile" hidden><span class="mt-fico">🎵</span><div class="mt-fn"><b id="mtFileName"></b><small id="mtFileInfo"></small></div><span class="mt-fst" id="mtFileSt">올라감 ✓</span></div>
+        <div class="mt-run" id="mtRun" hidden><span class="mt-spin"></span><div><b id="mtRunH">자동으로 정리하고 있어요</b><small id="mtRunS">녹음 → 글로 바꾸기 → 회의록 정리 순서로 끝까지 진행됩니다. 5분 녹음 기준 4~5분 걸려요. 끝날 때까지 이 화면에서 기다려 주세요.</small></div><em id="mtRunT">0:00</em></div>
+        <div class="mt-sample"><button id="mtSampleAudio" class="ru-sub mt-sbtn">📎 샘플 녹음 파일 업로드하기 <small>5분 40초</small></button><audio id="mtSamplePlayer" controls preload="none" src="assets/sample_meeting.mp3"></audio></div>
+      </div>
+
+      </div>
+
+      <div class="card ru-card" id="mtS3">
+        <div class="ru-sh"><i>3</i><div><b>글로 바꾼 내용</b><small>녹음을 올리면 여기에 글이 채워집니다 · 녹음 대신 메모를 붙여넣어도 되고, 틀린 글자는 직접 고쳐도 됩니다</small></div></div>
+        <div class="stt-prog mt-prog" id="mtSttWrap" hidden><div class="bar"><i id="mtSttBar"></i></div><span id="mtSttMsg"></span></div>
+        <textarea id="mtNotes" rows="8" class="mt-notes" placeholder="과장: 11월 말 제출이니 담당 이번 주에 정하자&#10;팀장: 2지표는 결재만 남음, 다음 주 월요일 상신&#10;…"></textarea>
+        <div class="ru-bar"><button id="mtGo" class="ru-go">회의록 정리하기 <span>→</span></button><button id="mtSample" class="ru-sub">메모 예시 넣기</button><button id="mtReset" class="ru-sub">비우기</button><span class="hint" id="mtMsg"></span></div>
+        <p class="ru-note">녹음은 이 PC 안에서 글로 바뀌고, 정리 단계에서 글(텍스트)만 모델에 전달됩니다. 비공개 사항·개인정보가 담긴 회의는 사용하지 마세요.</p>
+      </div>
+
+      <div class="card ru-card" id="minutesOut" hidden>
+        <div class="ru-sh"><i>4</i><div><b>회의록 확인</b><small>결정사항·담당·기한은 참석자 확인 후 확정하세요</small></div>
+          <div class="ru-shact"><button id="mtHwpx" class="ru-go sm">📄 한글 파일</button><button id="mtCopy" class="ru-sub">복사</button><button id="mtAgain" class="ru-sub">다시 정리</button></div></div>
+        <div class="pv mtwrap" id="minutesView"></div>
+      </div>
+    </section>
+
+
+    <!-- 특근매식비 정산하기 -->
+    <section class="view" data-view="meal">
+      <div class="vh"><h2>급량비 계산하기</h2><p>새올 「초과근무 확인서」를 올리면 급량비(특근매식비) 지급 대상을 규정에 따라 판정하고 집행대장까지 만들어 주는 화면입니다.</p></div>
+
+      <div class="card flowcard">
+        <h4>이렇게 씁니다 <small>세 단계면 끝납니다</small></h4>
+        <ol class="flow3">
+          <li><span class="fnum">1</span><span class="fico" aria-hidden="true">📄</span>
+            <span class="ftx"><b>확인서 올리기</b><small>새올 PDF 그대로 · 규정에 따라 바로 판정</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">2</span><span class="fico" aria-hidden="true">🍚</span>
+            <span class="ftx"><b>결제할 식당 적기</b><small>이름 적고 엔터 · 금액은 자동 · 여러 곳이면 추가</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">3</span><span class="fico" aria-hidden="true">🖨</span>
+            <span class="ftx"><b>배치하기 → 인쇄</b><small>가맹업소명 자동 배치 · 집행대장 A4 한 장</small></span></li>
+        </ol>
+        <p class="flownote">※ 제외 대상은 자동 판단되지만, <b>결재 전 최종 확인은 담당자가</b> 합니다 —
+          규정상 「실제 근무 여부를 객관적 사실로 확인한 후 집행」해야 합니다.</p>
+      </div>
+
+
+
+      <div id="mealBody"></div>
+
+      <details class="card lawcard foldcard" hidden>
+        <summary><b>📖 근거 규정</b><small>이 화면이 따르는 기준 · 훈령 제416호</small></summary>
+        <div class="foldbody">
+        <p class="lawref"><b>「지방자치단체 회계관리에 관한 훈령」</b> (행정안전부훈령 제416호, 2026. 1. 2. 시행)<br>
+          [별표2] 세출예산 성질별 분류에 따른 집행기준 → 201 일반운영비 › 201-01 사무관리비 › <b>마. 급량비</b>
+          <span class="lawdate">규정 확인일 2026. 9. 11.</span></p>
+
+        <blockquote class="lawq"><b>지급 대상</b> — “정규근무시간 개시 <b>최소 1시간 전에 출근</b>하여 근무하거나,
+          <b>근무종료 후 최소 1시간 이상</b> 근무하는 자 또는 <b>휴일에 최소 1시간 이상</b> 근무하는 자”</blockquote>
+        <blockquote class="lawq"><b>제외 대상</b> — “시간외근무수당을 지급받고 있는 자 중에서 <b>교대근무자</b>,
+          <b>야간근무수당·휴일근무수당 지급대상자</b>, 「공무원 여비 규정」에 따라 <b>식비를 지급받은 자</b>는 제외”</blockquote>
+        <blockquote class="lawq"><b>단가·집행</b> — “1인당 1식 급식단가는 <b>9,000원 이내</b>에서 집행한다” ·
+          지방자치단체구매카드 사용 원칙(불가 시 계좌이체, 현금 직접지급 금지) ·
+          “실제 근무를 하였는지 <b>객관적인 사실(초과근무실적, 출퇴근 인증내역, PC접속기록 등)을 확인 후</b> 집행”</blockquote>
+
+        <h5 class="lawh">판정 기준 — 이렇게 계산합니다</h5>
+        <table class="lawtbl">
+          <tr><th>정규근무시간</th><td>09:00 ~ 18:00 <span class="mut">(설정에서 변경 가능)</span></td></tr>
+          <tr><th>평일</th><td><b>퇴근 19:00 이후</b> (근무종료 18:00 + 1시간) <b>또는 출근 08:00 이전</b> (개시 09:00 − 1시간)<br>
+            <span class="mut">규정이 “1시간 <b>이상</b>”이므로 19:00 정각·08:00 정각도 충족으로 봅니다</span></td></tr>
+          <tr><th>휴일</th><td>(퇴근 − 출근) <b>60분 이상</b></td></tr>
+          <tr><th>조기출근</th><td>출근 08:00 이전 + 초과근무 등록이 <b>당일 09:00 이전</b>(또는 전날)</td></tr>
+          <tr><th>지급 단위</th><td><b>1인 1일 1식</b> — 같은 날 기록이 여러 건이어도 1식</td></tr>
+          <tr><th>단가</th><td>1인 1식 <b>9,000원</b> — 기준파일의 <b>시행일별 단가 이력</b>에서 대상 연월에 맞는 값을 자동 적용
+            <span class="mut">(훈령 제352호, 2024. 6. 1. 개정으로 8,000원 → 9,000원)</span></td></tr>
+          <tr><th>공휴일</th><td>기준파일의 연도별 목록에서 자동 적용 <span class="mut">(대체공휴일·선거일 포함)</span></td></tr>
+        </table>
+
+        <h5 class="lawh">주의 — 이렇게 판정하면 틀립니다</h5>
+        <ul class="lawul">
+          <li><b>「수당시간(분)」으로 판정하지 않습니다.</b> 평일 시간외근무수당은 <b>1시간을 공제</b>하고 산정되므로,
+            수당시간이 60분 미만이어도 실제 근무는 1시간을 넘길 수 있습니다.
+            <span class="mut">예) 09:00~19:56 근무 → 수당시간 56분, 실제 초과근무 116분 → <b>지급 대상</b></span></li>
+          <li><b>요일만 보고 휴일을 판정하지 않습니다.</b> 토·일요일 외에 <b>공휴일·대체공휴일</b>을 함께 봅니다.
+            <span class="mut">예) 2026. 8. 17.(월)은 광복절(8/15 토) 대체공휴일 → 4시간 근무로 지급 대상</span></li>
+          <li><b>확인서에 실린 건만 처리합니다.</b> 새올에서 신청·승인·정산을 마친 결과이므로 사전신청 여부를 다시 판단하지 않습니다.</li>
+        </ul>
+
+        <h5 class="lawh">제외 대상 — 자동으로 빠집니다</h5>
+        <table class="lawtbl">
+          <tr><th>교대근무자<br>야간·휴일수당<br>지급대상자</th>
+            <td>상시 야간·휴일수당을 받는 직종을 말하며, 부서마다 고정된 명단입니다. <b>설정에 한 번 적으면 계속 자동 제외</b>됩니다.<br>
+              <span class="mut">일반 직원이 휴일에 근무한 경우는 해당하지 않습니다 — 그렇게 보면 휴일 근무가 전부 제외되어 규정 취지에 맞지 않습니다.</span></td></tr>
+          <tr><th>출장 식비<br>수령자</th>
+            <td>새올 <b>출장 내역 PDF를 올리면</b> 해당 날짜만 자동 제외됩니다.</td></tr>
+        </table>
+        <p class="lawp" style="margin-top:10px">격자의 <b>「제」</b>가 자동 제외된 건입니다. 마우스를 올리면 사유가 나오고, 눌러서 되살릴 수 있습니다.</p>
+
+        <h5 class="lawh">개인정보</h5>
+        <p class="lawp">올린 PDF는 <b>이 컴퓨터 안에서만</b> 처리되며 어디로도 전송되지 않습니다.
+          가맹업소 <b>대표자 성명·계좌번호는 입력하지 마세요.</b></p>
+
+        <p class="lawwarn">⚠ <b>규정은 개정될 수 있습니다.</b> 위 내용은 2026. 9. 11. 기준이며,
+          집행 전 국가법령정보센터에서 현행 [별표2]를 확인하시고 <code>data/meal_config.json</code>을 갱신해 주세요.</p>
+      </div>
+      </details>
+
+      <details class="card scopecard foldcard" hidden>
+        <summary><b>ℹ 이 화면의 범위</b><small>지금은 시범 화면입니다 · 2027년 본 구축과 비교</small></summary>
+        <div class="foldbody">
+        <p class="scopelead">아래 표의 <b>왼쪽</b>이 지금 보고 계신 화면입니다. 판정 로직과 서식은 실제와 같지만,
+          <b>혼자 돌아가는 웹페이지</b>라 업무시스템과 연결되어 있지 않습니다.
+          오른쪽이 2027년 본 구축에서 달라지는 부분입니다.</p>
+        <table class="scopetbl">
+          <thead><tr><th style="width:120px">항목</th><th>지금 (시범·비예산)</th><th>2027년 본 구축</th></tr></thead>
+          <tbody>
+            <tr><td>자료 입력</td>
+              <td>새올에서 PDF를 <b>내려받아 사람이 올림</b></td>
+              <td><b>새올 연계로 초과근무 내역 직접 조회</b> — 업로드 단계 소멸</td></tr>
+            <tr><td>설정 보관</td>
+              <td><b>쓰는 사람 브라우저에만</b> 저장. PC·브라우저 바꾸면 사라짐</td>
+              <td><b>계정·부서 단위로 서버 보관</b> — 어느 자리에서 열어도 동일</td></tr>
+            <tr><td>기준값 관리</td>
+              <td>단가·공휴일을 <b>담당자가 기준파일(<code>meal_config.json</code>)로 갱신</b><br>
+                <span class="mut">훈령 개정을 놓치면 전 부서가 틀린 단가로 집행</span></td>
+              <td><b>중앙에서 한 번만 수정 → 전 부서 자동 반영</b><br>
+                공휴일은 <b>공공데이터포털 「한국천문연구원 특일 정보」 API</b>를 서버가 연 1회 조회해 자동 갱신<br>
+                <span class="mut">대체공휴일·임시공휴일 포함 · 담당자가 손댈 일 없음</span></td></tr>
+            <tr><td>가맹업소·금액</td>
+              <td>결제 후 <b>상호만 적으면</b> 집행대장에 반영</td>
+              <td><b>e호조 카드 사용내역과 자동 대조</b> — 적을 일도 없음</td></tr>
+            <tr><td>제외 대상</td>
+              <td>교대근무자 명단 + <b>출장 내역 PDF로 자동 제외</b><br>
+                <span class="mut">출장 내역을 매달 받아 와야 함</span></td>
+              <td><b>새올 출장·수당 데이터와 자동 교차</b> — 올릴 일도 사라짐</td></tr>
+            <tr><td>지출결의</td>
+              <td>집행대장을 <b>인쇄해 별도 기안</b></td>
+              <td><b>기안까지 연계</b> — 첨부 자동 구성</td></tr>
+            <tr><td>기록·감사</td>
+              <td>남지 않음</td>
+              <td><b>누가 언제 무엇을 왜 제외했는지 이력 보관</b></td></tr>
+            <tr><td>이용 범위</td>
+              <td>인터넷망 시범 주소 · <b>정보통신과 내부 확인용</b></td>
+              <td><b>업무망 설치</b> · 전 부서 이용 · 새올 인증 연계</td></tr>
+            <tr><td>운영·장애</td>
+              <td>담당자가 개인적으로 손봄 · <b>보장 없음</b></td>
+              <td><b>유지관리 체계</b> 아래 운영 · 규정 개정 시 반영 책임 명확</td></tr>
+          </tbody>
+        </table>
+        <p class="scopenote"><b>왜 지금 상태로는 확산할 수 없는가</b> — 왼쪽은 한 사람이 만들어 한 부서에서 시험해 보는 수준입니다.
+          전 부서가 실제 예산을 집행하는 데 쓰려면 <b>새올·e호조 연계(기관 협의·연계 승인)</b>,
+          <b>업무망 설치와 보안성 검토</b>, <b>인증 연계</b>, <b>규정 개정 반영과 장애 대응을 책임지는 유지관리 체계</b>가 필요하며,
+          이는 개인이 만드는 웹페이지로 대체할 수 없는 영역입니다.
+          특히 <b>잘못 계산된 급량비는 곧바로 예산 집행 오류</b>가 되므로, 기준값 관리와 이력 보관에 책임 주체가 있어야 합니다.</p>
+        <p class="scopenote2">이 시범 화면의 목적은 <b>「자동화가 실제로 가능한가」를 눈으로 확인</b>하고,
+          본 구축에 필요한 <b>판정 조건과 예외 사항을 미리 확정</b>하는 데 있습니다.
+          2026년 8월 실적 54건으로 검증한 결과 기존 수기 집계와 <b>100% 일치</b>했습니다.</p>
+      </div>
+      </details>
+
+
+
+    </section>
+
+
+    <!-- 출장비 계산하기 (세부 내역 추후 확정) -->
+    <section class="view" data-view="trip">
+      <div class="vh"><h2>출장비(관내) 계산하기</h2><p>인사랑 「출장내역조회」에서 받은 출장내역서 PDF를 올리면 4시간 기준·공용차량 여부를 판정해 관내여비 지급명세서·지급조서를 엑셀·PDF로 만듭니다. 파일은 이 PC 밖으로 나가지 않습니다.</p></div>
+
+      <div class="card flowcard">
+        <h4>이렇게 씁니다 <small>세 단계면 끝납니다</small></h4>
+        <ol class="flow3">
+          <li><span class="fnum">1</span><span class="fico" aria-hidden="true">📄</span>
+            <span class="ftx"><b>출장내역서 올리기</b><small>인사랑 출장내역조회 PDF 그대로 · 여러 명이면 한꺼번에</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">2</span><span class="fico" aria-hidden="true">🚗</span>
+            <span class="ftx"><b>내용 확인</b><small>4시간 기준 · 공용차량 여부 자동 판정 · 관외 출장은 자동 제외</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">3</span><span class="fico" aria-hidden="true">🖨</span>
+            <span class="ftx"><b>명세서·지급조서 받기</b><small>관내여비 지급명세서 · 지급조서 엑셀·PDF</small></span></li>
+        </ol>
+        <p class="flownote">※ 금액은 출장내역서의 시간·차량 정보로 자동 계산되지만, <b>지급 전 최종 확인은 담당자가</b> 합니다 —
+          출장 사실과 공용차량 사용 여부는 결재된 출장 기록과 대조하세요.</p>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden"><div id="trip"><div class="ttitle">관내여비 자동 작성</div>
+<div class="tsec">
+    <h3>공통 정보</h3>
+    <div class="form">
+      <label for="team">팀 이름</label><input id="team"><button id="saveTeam">팀 이름 저장</button>
+      <span class="hint">예) 전산 → 제목·파일명에 “(전산)”, 지급조서에 “부서명 : 정보통신과(전산)”</span>
+      <label for="dept">부서명</label><input id="dept"><button id="saveDept">부서명 저장</button>
+      <span class="hint">예) 정보통신과 → 지급조서 “부서명 :” 줄</span>
+      <label for="phone">전화번호</label><input id="phone"><button id="savePhone">전화번호 저장</button>
+      <span class="hint">예) 668-0000 → 관내여비 지급조서에 “전화 : 668-0000”</span>
+    </div>
+  </div>
+
+  
+  <div class="tsec">
+    <h3>1. 출장내역서 PDF 불러오기</h3>
+    <div class="guide">
+      <span class="tag">받는 곳</span>
+      <span class="path"><b>인사랑</b><i>›</i><b>출장관리</b><i>›</i><b>출장내역조회</b></span>
+      <span class="how">기간, 구분, 팀명 선택 후 <span class="btnlike">내역출력</span></span>
+    </div>
+    <div id="drop" class="drop">여기에 출장내역서 PDF를 끌어다 놓거나 클릭해서 고르세요<br>
+      <span class="hint">여러 명이면 PDF 여러 개를 한꺼번에 고르면 됩니다 · 파일은 이 PC 밖으로 나가지 않습니다</span></div>
+    <input type="file" id="file" accept=".pdf,application/pdf" multiple hidden>
+    <p class="mldemo"><button type="button" class="ru-sub mt-sbtn" id="tripSample">📎 샘플 출장내역서 업로드하기</button>
+      <small>2026년 10월 · 4명 8건 · 이름은 <b>홍길동·김철수</b> 등 가명입니다</small></p>
+    <div id="readMsg"></div>
+  </div>
+
+  <div class="tsec" id="step2" hidden>
+    <h3>2. 내용 확인</h3>
+    <div class="bar">
+      <label>작성 월 <select id="month"></select></label>
+      <span class="hint">출장지·출장목적은 고칠 수 있고, 체크를 풀면 명세서에서 빠집니다.</span>
+    </div>
+    <div id="warnings"></div>
+    <div class="scroll" style="margin-top:8px">
+      <table class="grid">
+        <thead><tr>
+          <th>포함</th><th>직급</th><th>성명</th><th>일자</th><th>출장시간</th><th class="wide">출장지</th><th class="wide">출장목적</th>
+          <th>4시간<br>이상</th><th>4시간<br>미만</th><th>공용차량</th><th>금액</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="bar" style="justify-content:flex-end; margin-top:8px">
+      <span class="hint">사람 순서: 행을 클릭해 고르고</span>
+      <button id="up">위로</button><button id="down">아래로</button>
+    </div>
+  </div>
+
+  <div class="tsec" id="step4" hidden>
+    <h3>3. 관내여비 지급명세서</h3>
+    <div class="form">
+      <label for="checkDate">출장명령 대조일자</label><input id="checkDate"><span></span>
+      <label for="checker">확인자</label><input id="checker"><button id="saveChecker">확인자 저장</button>
+      <span class="hint">예) 정보통신과   전산팀장   홍길동 → 명세서에 “확인자 : 입력값 (인)”</span>
+    </div>
+    <div class="actions">
+      <button class="primary" id="xlsxBtn">명세서 엑셀 내려받기</button>
+      <button class="primary" id="printBtn">명세서 인쇄 / PDF로 저장</button>
+    </div>
+    <div class="hint" style="margin-top:6px">PDF는 인쇄 창에서 대상(프린터)을 “PDF로 저장”으로 고르면 됩니다.</div>
+    <div id="genMsg"></div>
+  </div>
+
+  <div class="tsec" id="step5" hidden>
+    <h3>4. 관내여비 지급조서</h3>
+    <div class="hint" style="margin-bottom:8px">은행·계좌번호는 사람별로 이 브라우저에 저장되어 다음 달에도 자동으로 들어갑니다.
+      금액이 0원인 사람(공용차량 사용·4시간 미만만 있는 경우)은 조서에서 빠집니다.</div>
+    <div class="scroll">
+      <table class="grid" style="min-width:700px">
+        <thead><tr><th>연번</th><th>직급</th><th>성명</th><th>금액</th><th>은행</th><th>계좌번호</th><th>비고</th></tr></thead>
+        <tbody id="joRows"></tbody>
+      </table>
+    </div>
+    <div class="actions">
+      <button class="primary" id="joXlsxBtn">조서 엑셀 내려받기</button>
+      <button class="primary" id="joPrintBtn">조서 인쇄 / PDF로 저장</button>
+    </div>
+    <div id="joMsg"></div>
+  </div>
+  
+      </div></div>
+      <div id="tripPrint"></div><style id="pageSize"></style>
+      <p class="hint" style="margin-top:8px">근거 : 「지방공무원 여비 규정」·달성군 공무원 여비 조례(관내 출장 4시간 기준: 4시간 이상 20,000원 · 미만 10,000원 · 공용차량 이용 시 10,000원/0원). 급량비는 「급량비 계산하기」에서 따로 처리합니다. 최종 확인은 담당자가 합니다. · 제작 김광한(팀원)</p>
+    </section>
+
+    <!-- 경조사 카드 만들기 (기획 중 · 시안 09_경조사 카드 폴더) -->
+    <section class="view" data-view="family">
+      <div class="vh"><h2>경조사 카드 만들기</h2><p>사진과 내용만 넣으면 새올 「군 경조사」에 올릴 <b>카드</b>가 만들어집니다. 결혼 · 부고 · 감사 인사 3종.</p></div>
+      <div class="card flowcard">
+        <h4>이렇게 씁니다 <small>3단계면 끝납니다</small></h4>
+        <ol class="flow3">
+          <li><span class="fnum">1</span><span class="fico" aria-hidden="true">📷</span>
+            <span class="ftx"><b>사진 올리기</b><small>없어도 됩니다 · AI 일러스트로 바꿀 수도 있어요</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">2</span><span class="fico" aria-hidden="true">✍️</span>
+            <span class="ftx"><b>내용 입력</b><small>적는 대로 카드에 바로 반영 · 「샘플 채우기」로 체험</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">3</span><span class="fico" aria-hidden="true">⬇️</span>
+            <span class="ftx"><b>카드 내려받기</b><small>새올 「군 경조사」에 이미지로 올리면 끝</small></span></li>
+        </ol>
+      </div>
+      <div id="famApp"></div>
+    </section>
+
+    <!-- 개인정보 가리기 (mask.js · 브라우저 안에서만 처리) -->
+    <section class="view" data-view="mask">
+      <div class="vh"><h2>개인정보 가리기</h2><p>엑셀·CSV를 올리면 이름·주민번호·전화번호·주소 같은 개인정보 열을 찾아 <b>홍*동, 010-****-5678</b>처럼 가린 파일을 만들어 줍니다. 파일은 이 PC 브라우저 안에서만 처리되고 어디로도 보내지지 않습니다.</p></div>
+      <div class="card pcard" id="mkDrop">
+        <h4>파일 올리기 <small>xlsx · xls · csv (첫 번째 시트 · 첫 줄은 열 이름) · 끌어다 놓아도 됩니다</small></h4>
+        <div class="pact" style="margin-top:4px"><label class="filebtn">📂 파일 선택<input type="file" id="mkFile" accept=".xlsx,.xls,.csv"></label><button id="mkSample">예시 파일로 해보기</button><span class="hint" id="mkMsg"></span></div>
+      </div>
+      <div id="mkEmpty">
+        <div class="card flowcard">
+          <h4>이렇게 씁니다 <small>AI 없이 규칙으로 처리 · 외부 전송 없음</small></h4>
+          <ol class="flow3">
+            <li><span class="fnum">1</span><span class="fico" aria-hidden="true">📂</span><span class="ftx"><b>파일 올리기</b><small>민원대장·명단 등 엑셀 그대로</small></span></li>
+            <li class="farr" aria-hidden="true">→</li>
+            <li><span class="fnum">2</span><span class="fico" aria-hidden="true">🔍</span><span class="ftx"><b>자동으로 찾기</b><small>열 이름·값 형태로 개인정보 열 판단 · 직접 바꿀 수 있어요</small></span></li>
+            <li class="farr" aria-hidden="true">→</li>
+            <li><span class="fnum">3</span><span class="fico" aria-hidden="true">🛡️</span><span class="ftx"><b>가린 파일 받기</b><small>같은 형식으로 저장 · 가림내역 시트 포함</small></span></li>
+          </ol>
+        </div>
+        <div class="card ae-prev" id="mkPrevCard" role="button" tabindex="0" title="예시 파일로 바로 해보기">
+          <div class="ae-head"><h4>이렇게 가려져요 <small>누르면 가상 예시 파일로 실제 처리</small></h4><span class="ae-tag">예시</span></div>
+          <div class="mk-rules">
+            <div><span>👤 이름</span><s>홍길동</s><b>홍*동</b></div>
+            <div><span>🪪 주민번호</span><s>900101-1234567</s><b>900101-1******</b></div>
+            <div><span>📞 전화번호</span><s>010-1234-5678</s><b>010-****-5678</b></div>
+            <div><span>🏠 주소</span><s>달성군 화원읍 비슬로 123 101동</s><b>달성군 화원읍 비슬로 ***</b></div>
+            <div><span>✉️ 이메일</span><s>hong.gd@korea.kr</s><b>ho***@korea.kr</b></div>
+            <div><span>🚗 차량번호</span><s>12가3456</s><b>12가****</b></div>
+            <div><span>🏦 계좌번호</span><s>110-234-567890</s><b>********7890</b></div>
+            <div><span>📝 비고 글 속</span><s>회신 010-9876-5432</s><b>회신 010-****-5432</b></div>
+          </div>
+        </div>
+        <div class="ae-safe"><span>🔒 파일은 이 PC 브라우저 안에서만 처리</span><span>🤖 AI 모델로 보내지 않아요</span><span>👀 결과는 꼭 한 번 눈으로 확인하세요</span></div>
+      </div>
+      <div class="card pcard" id="mkStep" hidden>
+        <h4>찾은 결과 <small>판단·처리를 열마다 바꿀 수 있습니다</small></h4>
+        <div id="mkPlan"></div>
+        <div class="pact"><button id="mkGo" class="p">🛡️ 가리기</button><span class="hint">공개·배포용이면 이름 열은 「열 삭제」가 더 안전합니다</span></div>
+      </div>
+      <div class="card pout" id="mkOut" hidden>
+        <h4>가림 완료 <small>미리보기 6행</small></h4>
+        <div class="mk-stat" id="mkStat"></div>
+        <div class="mk-tblwrap" id="mkPrev"></div>
+        <div class="pact"><button id="mkDown" class="p">⬇ 가린 파일 받기</button><button id="mkAn">📊 이 파일로 데이터 분석하기</button></div>
+        <p class="hint">※ 자동 판단은 보조 수단입니다. 배포·공개 전에는 담당자가 결과를 반드시 확인하세요.</p>
+      </div>
+    </section>
+
+    <!-- 데이터 분석하기 (세부 내역 추후 확정) -->
+    <section class="view" data-view="analyze">
+      <div class="vh"><h2>데이터 분석하기</h2><p>엑셀·CSV 파일을 올리고 보고 싶은 것을 한 줄로 물으면, 표와 차트, 보고서에 넣을 해석 문장까지 만들어 줍니다. 파일은 이 PC 안에서만 읽습니다.</p></div>
+      <div class="card pcard">
+        <h4>파일 올리기 <small>xlsx · xls · csv (첫 번째 시트)</small></h4>
+        <div class="pact" style="margin-top:4px"><label class="filebtn">📂 파일 선택<input type="file" id="anFile" accept=".xlsx,.xls,.csv"></label><button id="anSample">예시 데이터로 해보기</button><span class="hint" id="anMsg"></span></div>
+        <div id="anSum"></div>
+        <div id="anAsk" hidden>
+          <div class="an-q"><input id="anQ" placeholder="예) 읍면별 접수건수 합계 / 월별 추이 / 민원종류별 평균 처리일수"><button id="anGo" class="p">분석하기</button></div>
+          <div class="an-chips" id="anChips"></div>
+          <p class="hint">※ 모델에는 열 이름과 샘플 5행만 전달되고, 집계·차트는 이 브라우저가 직접 계산합니다. 개인정보가 담긴 파일은 올리지 마세요.</p>
+        </div>
+      </div>
+      <div id="anEmpty">
+        <div class="card flowcard">
+          <h4>이렇게 씁니다 <small>파일 하나, 질문 한 줄이면 끝</small></h4>
+          <ol class="flow3">
+            <li><span class="fnum">1</span><span class="fico" aria-hidden="true">📂</span><span class="ftx"><b>파일 올리기</b><small>엑셀·CSV 그대로 · 열 이름을 자동으로 읽어요</small></span></li>
+            <li class="farr" aria-hidden="true">→</li>
+            <li><span class="fnum">2</span><span class="fico" aria-hidden="true">💬</span><span class="ftx"><b>한 줄로 묻기</b><small>“읍면별 접수건수 합계” 처럼 말하듯이</small></span></li>
+            <li class="farr" aria-hidden="true">→</li>
+            <li><span class="fnum">3</span><span class="fico" aria-hidden="true">📊</span><span class="ftx"><b>표·차트·해석</b><small>복사해서 보고서에 바로 붙여넣기</small></span></li>
+          </ol>
+        </div>
+        <div class="card ae-prev" id="anPrev" role="button" tabindex="0" title="예시 데이터로 바로 해보기">
+          <div class="ae-head"><h4>이런 결과가 나와요 <small>예시 화면 · 누르면 예시 데이터로 실제 분석</small></h4><span class="ae-tag">예시</span></div>
+          <div class="ae-q">💬 읍면별 민원 접수건수 합계</div>
+          <div class="ae-wrap">
+            <div class="ae-chart"><div class="ae-bar"><span class="ae-l">화원읍</span><span class="ae-t"><i style="width:92%"></i></span><span class="ae-v">276</span></div><div class="ae-bar"><span class="ae-l">다사읍</span><span class="ae-t"><i style="width:84%"></i></span><span class="ae-v">252</span></div><div class="ae-bar"><span class="ae-l">논공읍</span><span class="ae-t"><i style="width:61%"></i></span><span class="ae-v">183</span></div><div class="ae-bar"><span class="ae-l">유가읍</span><span class="ae-t"><i style="width:55%"></i></span><span class="ae-v">165</span></div><div class="ae-bar"><span class="ae-l">현풍읍</span><span class="ae-t"><i style="width:47%"></i></span><span class="ae-v">141</span></div><div class="ae-bar"><span class="ae-l">옥포읍</span><span class="ae-t"><i style="width:38%"></i></span><span class="ae-v">114</span></div></div>
+            <div class="ae-ins"><b>해석</b><p>화원읍 접수건수가 가장 많고, 상위 2개 읍(화원·다사)이 전체의 절반 이상(57%)을 차지합니다. 인구 밀집 지역에 민원이 집중되는 경향이 보입니다.</p>
+              <div class="ae-btns"><span>🖼 차트 PNG</span><span>문장 복사</span><span>표 복사</span></div></div>
+          </div>
+        </div>
+        <div class="ae-safe"><span>🔒 파일은 이 PC 브라우저 안에서만 읽어요</span><span>🧮 숫자는 원본에서 직접 계산</span><span>🙅 개인정보 파일은 올리지 마세요</span></div>
+      </div>
+      <div class="card pout" id="anOut" hidden>
+        <h4>분석 결과 <small>숫자는 브라우저가 원본에서 직접 계산</small></h4>
+        <div class="an-wrap">
+          <div><div class="an-stage"><canvas id="anChart"></canvas></div>
+            <div class="pact" style="margin-top:8px"><button id="anPng" class="p">🖼 차트 PNG</button><label class="an-type">차트<select id="anType" class="psel"><option value="bar">막대</option><option value="line">선</option><option value="pie">원</option></select></label></div></div>
+          <div><div class="an-ins"><b>해석</b><p id="anInsight"></p><button id="anCopyS">문장 복사</button></div>
+            <div id="anTable" class="an-tblwrap"></div><div class="pact" style="margin-top:6px"><button id="anCopyT">표 복사 (엑셀·한글용)</button></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 보도자료 작성하기 (세부 내역 추후 확정) -->
+    <section class="view" data-view="press">
+      <div class="vh"><h2>보도자료 작성하기</h2><p>입력한 내용을 달성군 보도자료 서식에 맞춰 초안으로 만들어 주는 화면입니다.</p></div>
+      <div class="card flowcard">
+        <h4>이렇게 씁니다 <small>3단계면 끝납니다</small></h4>
+        <ol class="flow3">
+          <li><span class="fnum">1</span><span class="fico" aria-hidden="true">✍️</span>
+            <span class="ftx"><b>핵심 내용 입력</b><small>행사·사업명과 주요 내용만 · 계획서를 붙여넣거나 올려도 됩니다</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">2</span><span class="fico" aria-hidden="true">✨</span>
+            <span class="ftx"><b>달성On이 초안 작성</b><small>실제 발행 보도자료 <b>600건</b>의 문체·구성을 따라 씁니다</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">3</span><span class="fico" aria-hidden="true">📄</span>
+            <span class="ftx"><b>한글 파일 내려받기</b><small>군 보도자료 서식 그대로 · 표·글꼴·여백까지 동일</small></span></li>
+        </ol>
+        <p class="flownote">※ <b>마지막 확인은 담당자가</b> 합니다. 초안은 참고용이며, 사실관계·수치·인용문은 반드시 검토 후 배포하세요.</p>
+      </div>
+
+      <div class="card pcard">
+        <h4>보도자료 초안 만들기 <small id="pfLearn">달성군 보도자료 색인 기준</small></h4>
+
+        <div class="pcols">
+        <fieldset class="pbox req-box">
+          <legend>필수 입력</legend>
+          <label class="pfull"><span class="cap">행사·사업명 <b class="req">*</b></span>
+            <input id="pfName" placeholder="예) 반부패·청렴 특별교육"></label>
+          <label class="pfull"><span class="cap">주요 내용 <b class="req">*</b></span>
+            <textarea id="pfBody" rows="9" placeholder="누가·무엇을·왜·어떻게 — 아는 만큼만 적으시면 됩니다.&#10;추진계획서나 기안문 내용을 그대로 붙여넣어도 됩니다."></textarea></label>
+          <div class="pfile">
+            <label class="filebtn">📎 파일 추가<input type="file" id="pfFile" multiple accept=".txt,.md,.csv,.json,.htm,.html,.hwpx,.hwp,.docx,.pdf,.jpg,.jpeg,.png"></label>
+            <span class="hint" id="pfFileList">계획서·기안문·사진을 여러 개 올릴 수 있습니다 — 모두 읽어 함께 반영합니다 (한글 hwpx·워드·PDF·텍스트·이미지)</span>
+          </div>
+        </fieldset>
+
+        <fieldset class="pbox opt-box">
+          <legend>선택 입력</legend>
+          <div class="pgrid pgrid2">
+            <label>일시<input id="pfWhen" placeholder="예) 2026. 9. 9.(수) 14:00"></label>
+            <label>장소<input id="pfWhere" placeholder="예) 군청 군민소통관"></label>
+            <label>담당부서<input id="pfDept" placeholder="예) 법무감사실"></label>
+            <label>제공일자<input id="pfDate" type="date"></label>
+            <label>팀장<input id="pfLead" placeholder="예) 홍길동"></label>
+            <label>담당자<input id="pfPic" placeholder="예) 김달성"></label>
+            <label>전화<input id="pfTel" placeholder="예) 053)668-0000"></label>
+          </div>
+          <label class="pfull"><span class="cap">인용문 <small class="hint">비워두면 군수 말씀을 문맥에 맞게 만들어 드립니다</small></span>
+            <textarea id="pfQuote" rows="2" placeholder='예) 최재훈 달성군수 — "앞으로도 ~하겠다"'></textarea></label>
+        </fieldset>
+        </div>
+
+        <div class="pact">
+          <button id="pfGo" class="p">보도자료 초안 만들기</button>
+          <button id="pfSample">예시로 채우기</button>
+          <button id="pfReset">비우기</button>
+          <span class="hint" id="pfMsg"></span>
+        </div>
+      </div>
+
+      <div class="card pout" id="pressOut" hidden>
+        <h4>생성된 초안 <small>담당자 검토 후 사용하세요</small></h4>
+        <div class="pact pp-acts">
+          <button id="pfHwpx" class="p">📄 한글 파일로 내려받기</button>
+          <button id="pfPrev">🔍 미리보기</button>
+          <button id="pfCopy">복사</button>
+          <button id="pfAgain">다시 생성</button>
+        </div>
+        <div class="pp-wrap" id="pressView" title="누르면 크게 봅니다"></div>
+        <p class="hint" style="margin-top:8px">※ 한글 파일과 같은 서식으로 보여 줍니다 — A4 · 제목 HY헤드라인M 22pt · 부제 한컴바탕확장 15pt 진하게 · 본문 한컴바탕확장 15pt(줄간격 160%)</p>
+        <div class="nx-card">
+          <div class="nx-h"><b>다음 단계</b><span>이 보도자료 내용 그대로 홍보물을 이어서 만듭니다</span></div>
+          <div class="nx-row">
+            <button data-chain="card" class="nx-item"><i>📱</i><span><b>카드뉴스</b><small>표지·본문·마무리 카드로 나눠 제작</small></span><em>→</em></button>
+            <button data-chain="banner" class="nx-item"><i>🎏</i><span><b>홍보 현수막</b><small>현수막 문구 3안과 규격 시안</small></span><em>→</em></button>
+            <button data-chain="movie" class="nx-item"><i>🎬</i><span><b>홍보영상</b><small>장면별 대본과 짧은 영상</small></span><em>→</em></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 홍보 현수막 제작하기 (세부 내역 추후 확정) -->
+    <section class="view" data-view="banner">
+      <div class="vh"><h2>홍보 현수막 제작하기</h2><p>행사명·기간·장소만 넣으면 현수막 문구 3안을 만들고 실제 규격 비율로 시안을 그려 줍니다. 시안 PNG를 내려받아 업체에 그대로 전달하면 됩니다.</p></div>
+      <div class="card flowcard">
+        <h4>이렇게 씁니다 <small>3단계면 끝납니다</small></h4>
+        <ol class="flow3">
+          <li><span class="fnum">1</span><span class="fico" aria-hidden="true">✍️</span>
+            <span class="ftx"><b>행사 정보 입력</b><small>행사명·기간·장소만 적으면 됩니다</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">2</span><span class="fico" aria-hidden="true">🎏</span>
+            <span class="ftx"><b>문구 3안 고르기</b><small>고르는 대로 실제 규격 비율 시안이 바뀝니다</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">3</span><span class="fico" aria-hidden="true">⬇️</span>
+            <span class="ftx"><b>시안 내려받기</b><small>시안 PNG를 업체에 그대로 전달</small></span></li>
+        </ol>
+      </div>
+      <div class="card pcard">
+        <h4>문구·시안 만들기 <small>규격 비율 그대로 · 군 CI 원본 사용</small></h4>
+        <div class="pcols">
+        <fieldset class="pbox req-box">
+          <legend>필수 입력</legend>
+          <label class="pfull"><span class="cap">행사·사업명 <b class="req">*</b></span><input id="bnName" placeholder="예) 2026 비슬산 참꽃문화제"></label>
+          <div class="pgrid pgrid2">
+            <label>기간·일시<input id="bnWhen" placeholder="예) 2026. 4. 18. ~ 4. 26."></label>
+            <label>장소<input id="bnPlace" placeholder="예) 비슬산 자연휴양림 일원"></label>
+            <label>주최·주관<input id="bnHost" placeholder="달성군"></label>
+            <label>어조<select id="bnTone" class="psel"><option value="친근">친근(군민 참여 행사)</option><option value="격식">격식(공고·안내)</option></select></label>
+          </div>
+          <label class="pfull"><span class="cap">강조할 점 <small class="hint">선택 · 쉼표로 여러 개</small></span><input id="bnPoint" placeholder="예) 무료 · 가족 나들이 · 선착순 100명"></label>
+        </fieldset>
+        <fieldset class="pbox opt-box bn-opt">
+          <legend>선택 입력</legend>
+          <div class="bn-sec"><span class="cap">배경</span>
+            <select id="bnBg" class="psel" hidden></select>
+            <div class="bn-bgs" id="bnBgs">
+              <button type="button" class="bn-bg ai" data-bg="ai"><i>🎨</i><span><b>AI 배경</b><small>행사에 맞게 AI가 그림</small></span></button>
+              <button type="button" class="bn-bg" data-bg="custom"><i>📷</i><span><b>내 사진</b><small>직접 올린 사진으로</small></span></button>
+            </div>
+            <div class="pfile" id="bnFileWrap" hidden><label class="filebtn">📷 사진 올리기<input type="file" id="bnFile" accept="image/*"></label><span class="hint">가로 3000px 이상 권장</span></div>
+          </div>
+          <div class="bn-sec"><span class="cap">크기</span>
+            <div class="bn-dim"><label><em>가로</em><input id="bnW" inputmode="numeric" value="500"><i>cm</i></label><span>×</span><label><em>세로</em><input id="bnH" inputmode="numeric" value="90"><i>cm</i></label></div>
+            <div class="bn-quick"><small>자주 쓰는 크기</small><span id="bnPresets"></span></div>
+          </div>
+          <div class="bn-sec"><span class="cap">로고</span>
+            <div class="bn-logorow"><div class="bn-chips" id="bnLogo"></div><label class="bn-addlogo">＋ 로고 추가<input type="file" id="bnAddLogo" accept="image/png,image/jpeg,image/svg+xml,image/*" multiple hidden></label></div>
+            <p class="bn-note">다른 기관 로고는 「＋ 로고 추가」로 올리세요 <span id="bnExtraList"></span></p>
+          </div>
+        </fieldset>
+        </div>
+        <div class="pact"><button id="bnGo" class="p">문구·시안 만들기</button><button id="bnSample">예시로 채우기</button><button id="bnReset">비우기</button><span class="hint" id="bnMsg"></span></div>
+      </div>
+      <div class="card pout" id="bnOut" hidden>
+        <h4>문구 3안 <small>배경을 그리는 동안 둘러보고 마음에 드는 안을 고르세요</small></h4>
+        <div class="bn-alts" id="bnAlts"></div>
+        <div class="bn-tip"><span>✋ 시안 속 <b>문구와 로고를 직접 눌러서</b> 옮기고 고칠 수 있습니다</span><button type="button" id="bnResetPos">↺ 처음 배치로</button></div>
+        <div class="bn-stage"><div class="bn-cwrap"><canvas id="bnCanvas"></canvas><div class="bn-ov" id="bnOv"></div></div><div class="bn-aiload" id="bnAiLoad" hidden></div></div>
+        <div class="bn-prop" id="bnProp" hidden></div>
+        <div class="pact"><button id="bnPng" class="p">🖼 시안 PNG 내려받기</button><button id="bnAiRedo">🎨 AI 배경 다시 그리기</button></div>
+      </div>
+    </section>
+
+    <!-- SNS 카드뉴스 제작하기 (세부 내역 추후 확정) -->
+    <section class="view" data-view="card">
+      <div class="vh"><h2>카드뉴스 제작하기</h2><p>보도자료·공고문을 붙여넣거나 파일을 올리면 표지–본문–마무리 카드로 나눠 문구를 쓰고, AI가 디자인과 그림까지 만들어 줍니다.<br>카드별로 고쳐서 이미지 파일로 내려받으면 됩니다.</p></div>
+      <div class="card flowcard">
+        <h4>이렇게 씁니다 <small>3단계면 끝납니다</small></h4>
+        <ol class="flow3">
+          <li><span class="fnum">1</span><span class="fico" aria-hidden="true">📋</span>
+            <span class="ftx"><b>알릴 내용 넣기</b><small>작성하거나 파일 업로드</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">2</span><span class="fico" aria-hidden="true">📱</span>
+            <span class="ftx"><b>「카드뉴스 만들기」 누르기</b><small>표지·본문·마무리 문구와 AI 그림까지 자동</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">3</span><span class="fico" aria-hidden="true">⬇️</span>
+            <span class="ftx"><b>고쳐서 내려받기</b><small>장별 PNG · 게시글 문구·해시태그까지</small></span></li>
+        </ol>
+      </div>
+      <div class="card pcard">
+        <h4>카드뉴스 만들기 <small>정해진 틀에 배치 · 디자이너 없이 10분</small></h4>
+        <div class="pcols">
+        <fieldset class="pbox req-box">
+          <legend>필수 입력</legend>
+          <label class="pfull"><span class="cap">알릴 내용 <b class="req">*</b> <small class="hint">보도자료·공고문·계획서 본문을 그대로 붙여넣기</small></span><textarea id="cnSrc" rows="9" placeholder="보도자료 전문을 붙여넣으세요. 달성On이 장별로 나눠 짧은 문장으로 다시 씁니다."></textarea></label>
+          <div class="pfile"><label class="filebtn">📎 파일 추가<input type="file" id="cnFile" multiple accept=".hwpx,.hwp,.docx,.pdf,.txt,.md,.htm,.html"></label><span class="hint" id="cnFileList">파일을 올리면 내용을 읽어 위 칸에 채웁니다 (한글 hwpx·워드·PDF·텍스트) · 직접 붙여넣어도 됩니다</span></div>
+        </fieldset>
+        <fieldset class="pbox opt-box">
+          <legend>선택 입력</legend>
+          <label class="pfull">제목(참고)<input id="cnTitle" placeholder="비우면 원문에서 뽑습니다"></label>
+          <div class="pgrid pgrid2">
+            <label>장수<select id="cnCount" class="psel"><option>5</option><option selected>6</option><option>7</option><option>8</option></select></label>
+            <label>규격<select id="cnSize" class="psel"></select></label>
+            <label>디자인<select id="cnLayout" class="psel"><option value="auto">✨ AI 추천</option><option value="left">왼쪽형</option><option value="center">가운데형</option><option value="bottom">하단 제목형</option></select></label>
+            <label>색 테마<select id="cnTheme" class="psel"></select></label>
+            <label>글씨체<select id="cnFont" class="psel"><option value="auto">✨ AI 추천</option><option value="pre">기본 고딕</option><option value="ng">나눔고딕</option><option value="bhs">굵은 제목체</option><option value="bagel">베이글</option><option value="gd">고운돋움</option><option value="jua">주아체</option></select></label>
+            <label>로고<select id="cnLogo" class="psel"><option value="ci">군 CI</option><option value="slogan">슬로건</option><option value="both">CI + 슬로건</option><option value="none">없음</option></select></label>
+            <input id="cnContact" type="hidden">
+          </div>
+        </fieldset>
+        </div>
+        <div class="pact"><button id="cnGo" class="p">카드뉴스 만들기</button><button type="button" id="cnSampleFile">📎 샘플 계획서 업로드하기</button><button id="cnReset">비우기</button><span class="hint" id="cnMsg"></span></div>
+      </div>
+      <div class="card pout" id="cnOut" hidden>
+        <h4>카드 미리보기 <small>카드를 누르면 크게 보이고, 오른쪽에서 그 카드 문구를 고칩니다</small></h4>
+        <div class="cn-top"><div class="cn-thumbs" id="cnSlides"></div><div class="cn-box cn-sum" id="cnSum"></div></div>
+        <div hidden><select id="cnArt"></select><button id="cnAi"></button><textarea id="cnCaption"></textarea><button id="cnCopy"></button></div>
+        <div class="cn-wrap">
+          <div class="cn-stage"><div class="cn-view"><canvas id="cnMain"></canvas><button type="button" class="cn-arr l" id="cnArrL" aria-label="이전 카드">‹</button><button type="button" class="cn-arr r" id="cnArrR" aria-label="다음 카드">›</button><div class="cn-dots" id="cnDots"></div></div><div class="bn-aiload" id="cnAiLoad" hidden></div></div>
+          <div class="cn-edit">
+            <div class="cn-box">
+            <div class="cn-nav"><button id="cnPrev">‹ 이전</button><b id="cnCurNo"></b><button id="cnNext">다음 ›</button></div>
+            <label id="cnBigWrap">강조 문구<input id="cnEditBig" maxlength="12"></label>
+            <label>제목<input id="cnEditHead"></label>
+            <label><span>본문 <small class="hint" style="display:inline">(한 줄에 한 문장)</small></span><textarea id="cnEditBody" rows="4"></textarea></label>
+            <div class="cn-common"><label>머리글 <small class="cn-lock" id="cnLock1"></small><input id="cnTop" value="달성군 소식"></label><label>바닥글 <small class="cn-lock" id="cnLock2"></small><input id="cnFoot" value="대구광역시 달성군" placeholder="비우면 표시 안 함"></label></div>
+            <button type="button" id="cnRedo" class="cn-redo">🔄 현재 카드만 AI로 다시 만들기</button>
+            </div>
+            <div class="cn-box cn-save">
+              <button type="button" id="cnPng" class="cn-sv"><i>⬇</i><span><b>현재 카드 저장</b><small id="cnSvOne">지금 보고 있는 1장 · 이미지 파일</small></span></button>
+              <button type="button" id="cnAll" class="cn-sv p"><i>⬇</i><span><b>전체 저장</b><small id="cnSvAll">모든 장을 한 번에 · 이미지 파일</small></span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 홍보영상 만들기 (세부 내역 추후 확정) -->
+    <section class="view" data-view="movie">
+      <div class="vh"><h2>홍보영상 만들기</h2><p>계획서·보도자료 PDF를 올리거나 내용을 붙여넣으면, 달성On이 읽고 SNS 홍보용 짧은 영상 대본을 써서 가로·세로·길이에 맞춰 영상으로 만들어 줍니다. 모두 이 브라우저 안에서 그려집니다.</p></div>
+      <div class="card pcard">
+        <h4>대본 만들기 <small>문서 → 장면별 자막 → 영상</small></h4>
+        <div class="pcols">
+        <fieldset class="pbox req-box">
+          <legend>필수 입력</legend>
+          <div class="pfile" style="margin-bottom:8px"><label class="filebtn">📎 문서 올리기 (PDF · txt)<input type="file" id="mvFile" accept=".pdf,.txt,.md,.csv"></label><span class="hint">계획서·보도자료·공고문 PDF면 됩니다 (글자 PDF만, 스캔본 제외)</span></div>
+          <label class="pfull"><span class="cap">내용 <b class="req">*</b> <small class="hint">문서를 올리면 자동으로 채워집니다 · 직접 붙여넣어도 됩니다</small></span><textarea id="mvSrc" rows="8" placeholder="홍보할 사업·행사의 계획서나 보도자료 내용"></textarea></label>
+        </fieldset>
+        <fieldset class="pbox opt-box">
+          <legend>영상 설정</legend>
+          <div class="pgrid pgrid2">
+            <label>화면<select id="mvSize" class="psel"></select></label>
+            <label>길이<select id="mvLen" class="psel"><option>15</option><option selected>30</option><option>45</option><option>60</option></select></label>
+            <label>배경<select id="mvBg" class="psel"><option value="photo">군 보유 사진(비슬산)</option><option value="color">색 테마만</option><option value="custom">내 사진(여러 장)</option></select></label>
+            <label>색 테마<select id="mvTheme" class="psel"></select></label>
+          </div>
+          <div class="pfile" id="mvPhotoWrap" hidden style="margin-top:8px"><label class="filebtn">📷 사진 올리기 (최대 8장)<input type="file" id="mvPhotos" accept="image/*" multiple></label><span class="hint" id="mvPhotoMsg">장면마다 번갈아 배경으로 씁니다</span></div>
+          <label class="pfull" style="margin-top:8px">문의처(마지막 장면)<input id="mvContact" placeholder="예) 문의 정보통신과 053)668-2454"></label>
+          <p class="hint" style="margin-top:8px">※ 자막형 영상입니다. 나레이션·배경음악은 내부 음성서버·무료 음원 확보 후 2단계. 사진은 AI 생성 없이 군 보유·직접 올린 사진만 씁니다.</p>
+        </fieldset>
+        </div>
+        <div class="pact"><button id="mvGo" class="p">대본 만들기</button><button id="mvSample">예시로 채우기</button><button id="mvReset">비우기</button><span class="hint" id="mvMsg"></span></div>
+      </div>
+      <div class="card pout" id="mvOut" hidden>
+        <h4>장면 대본 <small id="mvTotal"></small></h4>
+        <div class="mv-wrap">
+          <div>
+            <div class="mv-scenes" id="mvScenes"></div>
+            <div class="pact" style="margin-top:10px"><button id="mvRec" class="p">🎬 영상 만들기</button><button id="mvAgain">대본 다시 쓰기</button></div>
+            <label class="pfull" style="margin-top:10px">게시글 문구 · 해시태그<textarea id="mvCaption" rows="3"></textarea></label>
+            <div class="pact" style="margin-top:6px"><button id="mvCopy">게시글 복사</button></div>
+          </div>
+          <div>
+            <div class="mv-stage"><canvas id="mvCanvas"></canvas></div>
+            <div id="mvVideoWrap" hidden><video id="mvVideo" controls playsinline style="width:100%;border-radius:10px;margin-top:10px"></video>
+              <div class="pact" style="margin-top:8px"><button id="mvDl" class="p">⬇ 영상 내려받기</button></div></div>
+            <p class="hint" style="margin-top:6px">장면 줄을 누르면 미리보기가 바뀝니다. 「영상 만들기」는 실제 길이만큼(30초면 30초) 그리면서 녹화합니다.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 질문·요청 소통하기 -->
+    <section class="view" data-view="share">
+      <div class="vh"><h2>질문·요청 소통하기</h2><p>"이런 거 만들어 주세요"부터 궁금한 점, 내가 써 본 이야기까지 편하게 남겨 주세요. 올라온 요청은 검토해서 달성On에 바로 반영하고 공지로 알려 드립니다.</p></div>
+      <div class="sh-wrap">
+        <div class="card pcard sh-form">
+          <h4>남기기 <small>부서명만 적어 주세요 · 이름·연락처 불필요</small></h4>
+          <label class="pfull">유형<select id="shKind" class="psel"><option value="idea">💡 만들어 주세요 — 이런 기능이 있으면 좋겠어요</option><option value="ask">❓ 질문·문의 — 이건 어떻게 써요?</option><option value="usecase">🙌 이렇게 썼어요 — 써 보니 이렇게 편했어요</option><option value="improve">🔧 개선 의견 — 이건 이렇게 고쳐 주세요</option><option value="voice">💬 한마디 — 짧은 의견·응원</option></select></label>
+          <label class="pfull" style="margin-top:8px">제목 <b class="req">*</b><input id="shTitle" maxlength="80"></label>
+          <label class="pfull" style="margin-top:8px">내용 <small class="hint">선택 · 상황과 바라는 모습을 편하게</small><textarea id="shBody" rows="5" maxlength="900" placeholder="어떤 업무에서, 무엇이 불편했고, 어떻게 되면 좋을지"></textarea></label>
+          <label class="pfull" style="margin-top:8px">부서 <small class="hint">선택</small><input id="shWho" maxlength="30" placeholder="예) 정보통신과"></label>
+          <div class="pact" style="margin-top:10px"><button id="shSend" class="p">📮 남기기</button><span class="hint" id="shMsg"></span></div>
+          <p class="hint" style="margin-top:8px">※ 개인정보·비공개 자료는 올리지 마세요. 접수 → 검토 중 → 반영됨 순서로 표시되고, 반영된 기능은 공지사항에도 올립니다.<br>※ 화면이 이상하거나 오류가 나면 어느 화면에서든 우측 상단 <b>🐞</b>을 누르세요 — 여기 「🐞 오류·불편」에 함께 쌓입니다.</p>
+        </div>
+        <div class="card sh-board">
+          <h4>올라온 글 <small id="shCount"></small></h4>
+          <div class="sh-tabs" id="shTabs"><button class="on" data-k="all">전체</button><button data-k="idea">💡 만들어 주세요</button><button data-k="ask">❓ 질문·문의</button><button data-k="usecase">🙌 이렇게 썼어요</button><button data-k="improve">🔧 개선 의견</button><button data-k="voice">💬 한마디</button><button data-k="bug">🐞 오류·불편</button></div>
+          <ul class="sh-list" id="shList"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 관리자 · 이용통계 -->
+    <section class="view" data-view="stats">
+      <div class="vh"><h2>이용 통계</h2><p>전 직원이 메뉴를 열고 초안을 만든 횟수를 집계합니다. 누가 썼는지는 저장하지 않고 날짜·메뉴·종류의 숫자만 남깁니다.</p></div>
+      <div class="kpis four" id="adKpis"></div>
+      <div class="ad-grid">
+        <div class="card"><h4>이번 주 메뉴별 이용 <small>월요일부터</small></h4><div id="adTop"></div></div>
+        <div class="card"><h4>이 브라우저(관리자 PC) <small>이번 접속</small></h4>
+          <div class="kpis"><div class="kpi"><small>질의</small><b id="kQ">0</b></div><div class="kpi"><small>근거 인용 답변</small><b id="kCite">0</b></div><div class="kpi"><small>초안</small><b id="kGen">0</b></div><div class="kpi"><small>한글 파일</small><b id="kHwpx">0</b></div></div>
+          <h4 style="margin-top:14px">자주 찾은 자료</h4><ol class="toplist" id="topDocs"><li class="muted">아직 질의가 없습니다</li></ol></div>
+      </div>
+    </section>
+
+    <!-- 관리자 · 자료 갱신 -->
+    <section class="view" data-view="update">
+      <div class="vh"><h2>자료 갱신</h2><p>자료를 한 번 등록·갱신하면 전 직원 화면에 즉시 반영됩니다. 개인 계정·개인 PC에 묶이지 않는 <b>군 정보시스템</b> 방식입니다.</p></div>
+      <div class="card"><table class="tbl" id="adminSrc"></table></div>
+    </section>
+
+    <!-- 관리자 · 모델 설정 -->
+    <section class="view" data-view="model">
+      <div class="vh"><h2>답변 모델 설정</h2><p>시범 운영 중에는 브라우저에서 모델 API를 직접 호출합니다(키는 메모리에만 보관). 실제 구축 시 업무망 서버의 모델 또는 행안부 온AI API로 교체하며 화면·자료는 그대로 유지됩니다.</p></div>
+      <div class="card narrow">
+        <p class="hint">기본은 <b>서버 프록시</b>입니다 — API 키는 Netlify 환경변수(ANTHROPIC_API_KEY)에만 있고 화면·코드에 없습니다. 아래 키 칸은 서버 설정 전 임시 시험용입니다.</p>
+        <label>접속 코드 <small>서버에 ACCESS_CODE를 설정한 경우 · 이 브라우저에 저장</small><input id="accessCode" type="password" placeholder="설정했으면 입력" autocomplete="off"></label>
+        <label>(임시) Anthropic API 키 직접 입력 <small>브라우저 메모리에만 · 새로고침 시 사라짐</small><input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
+        <label>모델<input id="model" value="claude-sonnet-4-5" list="models"><datalist id="models"><option value="claude-sonnet-4-5"><option value="claude-haiku-4-5"><option value="claude-opus-4-1"></datalist></label>
+        <label class="chk"><input type="checkbox" id="offline"> 오프라인 모드(검색 결과만으로 답변 구성)</label>
+        <p class="hint">현재 상태: <b id="adminModel">–</b></p>
+      </div>
+    </section>
+
+    <!-- 관리자 · 오류 신고함 -->
+    <section class="view" data-view="bugs">
+      <div class="vh"><h2>오류 신고 · 질문·요청 소통하기 관리</h2><p>직원이 우측 상단 <b>🐞</b> 단추로 보낸 신고와 질문·요청 소통하기에 올린 제안·사례·한마디가 여기에 쌓입니다. 처리한 건은 정보통신과에서 확인 후 안내합니다.</p></div>
+      <div class="row end bugtop">
+        <span class="hint" id="bugMeta">불러오는 중…</span>
+        <button class="ghost" id="bugReload">↻ 새로고침</button>
+      </div>
+      <div class="ad-code"><label>관리자 코드 <input id="adCode" type="password" placeholder="Netlify ADMIN_CODE 값"></label><span class="hint">입력하면 질문·요청 소통하기 글의 상태(접수 → 검토 중 → 반영됨)를 바꾸고 지울 수 있습니다. 이 PC에만 기억합니다.</span></div>
+      <div class="buglist" id="bugList"></div>
+    </section>
+  </main>
+
+  <!-- ═══════ 우측: AI 대화 패널 ═══════ -->
+
+  <button id="btnUnfold" hidden></button>
+</div>
+
+<!-- 설정(빠른 접근) -->
+<div class="modal" id="mVideo" hidden><div class="box vbox"><div class="box-h"><b id="mVideoTitle">이용 안내</b><small id="mVideoSub" class="hint"></small><button class="x" data-close>✕</button></div><div class="player vmodal" id="mVideoBody"></div></div></div>
+<div class="modal" id="mSet" hidden><div class="box"><div class="box-h"><b>⚙ 설정</b><button class="x" data-close>✕</button></div><p class="hint">모델·API 키 설정은 <b>관리자 › 모델 설정</b>에 있습니다.</p><div class="row end"><button class="primary" id="goModel">모델 설정으로</button></div></div></div>
+
+<!-- 오류 신고 · 건의 -->
+<div class="modal" id="mBug" hidden><div class="box bugbox">
+  <div class="box-h"><b>🐞 오류 신고 · 건의</b><button class="x" data-close>✕</button></div>
+  <p class="hint bughint">쓰시다 이상한 점이나 불편한 점을 <b>짧게 적어 주시면</b> 됩니다.
+    길게 안 쓰셔도 됩니다 — 어느 화면에서 무엇이 이상했는지만 있으면 충분합니다.</p>
+  <label class="buglab"><span>어느 화면인가요?</span>
+    <select id="bugWhere"></select></label>
+  <label class="buglab"><span>어떤 내용인가요?</span>
+    <div class="bugkind">
+      <button type="button" class="bk on" data-k="오류">오류가 났어요</button>
+      <button type="button" class="bk" data-k="결과이상">결과가 이상해요</button>
+      <button type="button" class="bk" data-k="불편">쓰기 불편해요</button>
+      <button type="button" class="bk" data-k="건의">이런 게 있으면</button>
+    </div></label>
+  <label class="buglab"><span>내용</span>
+    <textarea id="bugText" rows="5" placeholder="예) 8월 확인서를 올렸는데 30일이 빠져서 나옵니다.&#10;예) 인쇄하면 표가 두 장으로 나뉩니다."></textarea></label>
+  <label class="buglab"><span>연락처 <small>(선택 — 답을 드려야 할 때만)</small></span>
+    <input id="bugWho" placeholder="예) 정보통신과 홍길동 · 2454"></label>
+  <p class="bugnote">📮 <b>제출하기</b>를 누르면 정보통신과로 바로 접수됩니다.
+    접수된 내용은 <b>관리자 › 오류 신고함</b>에서 볼 수 있습니다.
+    급하시면 <b>053-668-2454</b> 로 전화 주셔도 됩니다.</p>
+  <div class="row end bugrow">
+    <span class="bugok" id="bugOk" hidden></span>
+    <button class="ghost" id="bugCopy" hidden>📋 대신 복사하기</button>
+    <button class="ghost" data-close>닫기</button>
+    <button class="primary" id="bugSend">📮 제출하기</button>
+  </div>
+</div></div>
+
+<!-- 첫 안내 -->
+<div class="modal" id="mIntro" hidden><div class="box intro">
+  <div class="logo big"><span>On</span></div>
+  <h2>반가워요, <b>달성On</b>이에요 👋</h2>
+  <p>달성군 직원 누구나 가볍게 쓰는 AI 업무도우미입니다. 왼쪽 메뉴에서 하고 싶은 일을 고르면 돼요.</p>
+  <ul class="intro-list"><li>🎙 녹음 올리면 <b>회의록</b>, 📰 계획서 붙여넣으면 <b>보도자료</b></li><li>🍚 PDF 하나로 <b>급량비·출장비</b> 정산, 📊 엑셀 올리면 <b>차트·해석</b></li><li>✦ 궁금한 건 <b>AI에게 물어보기</b>에서 조례·규정 근거와 함께</li></ul>
+  <p class="hint">설치·로그인 없이 브라우저만 있으면 됩니다. 결과는 초안이니 마지막 확인은 담당자가 해 주세요.</p>
+  <button class="primary" data-close>시작하기</button>
+</div></div>
+
+<script src="llm.js"></script>
+<script src="hwpx.js"></script>
+<script src="meal.js"></script>
+<script src="family.js"></script>
+<script src="rule.js"></script>
+<script src="stt.js"></script>
+<script src="minutes.js"></script>
+<script src="banner.js"></script>
+<script src="cardnews.js"></script>
+<script src="movie.js"></script>
+<script src="share.js"></script>
+<script src="mask.js"></script>
+<script src="analyze.js"></script>
+<script src="cal.js"></script>
+<script src="app.js"></script>
+<div class="rc-modal" id="rcModal" hidden><div class="rc-box"><div class="rc-hd"><b id="rcTitle"></b><small id="rcMeta"></small><button id="rcClose" aria-label="닫기">✕</button></div><pre id="rcText"></pre><div class="pact"><button id="rcCopy" class="p">복사</button><button id="rcGo">이 메뉴로 가기</button><button id="rcDel">목록에서 지우기</button></div></div></div>
+<div class="cal-pop" id="calPop" hidden><div class="cal-box"><b id="calPopTitle"></b>
+<input id="calIn" maxlength="40" placeholder="일정 (예: 정보화교육 수요조사 마감)"><div class="cal-r"><input id="calDate" type="date"><input id="calTime" type="time"></div>
+<textarea id="calMemo" rows="2" maxlength="200" placeholder="메모 (선택)"></textarea><div class="cal-colors" id="calColors"></div>
+<div class="pact"><button id="calSave" class="p">저장</button><button id="calCancel">취소</button><button id="calDel" class="danger" hidden>삭제</button></div></div></div>
+</body>
+</html>

@@ -97,7 +97,7 @@ async function drawSlide(canvas,s,i,total){
     if(AP==='side'){ const sx=Math.round(W*0.6); ctx.fillStyle=g; ctx.fillRect(0,0,sx,H*0.045); if(art){ artBox=[sx,0,W-sx,H]; cover(art,sx,0,W-sx,H,0.62); } else { ctx.fillStyle=g; ctx.fillRect(sx,0,W-sx,H); } }
     else if(AP==='top'&&art){ artBox=[0,0,W,H*0.34]; cover(art,0,0,W,H*0.34,0.72); ctx.fillStyle=g; ctx.fillRect(0,H*0.34,W,H*0.012); }
     else { ctx.fillStyle=g; ctx.fillRect(0,0,W,H*0.045);
-      if(art&&AP==='right'){ const aw=U*0.4, ah=aw, ax=W-aw-pad*0.6, ay=H-ah-pad*1.6; artBox=[ax,ay,aw,ah]; ctx.save(); ctx.globalAlpha=.95; ctx.beginPath(); ctx.roundRect(ax,ay,aw,ah,U*0.03); ctx.clip(); ctx.drawImage(art,ax,ay,aw,ah); ctx.restore(); } }
+      if(art&&AP==='right'){ const aw=U*(H/W>1.4?0.62:0.4), ah=aw, ax=W-aw-pad*0.6, ay=H-ah-pad*1.6; artBox=[ax,ay,aw,ah]; ctx.save(); ctx.globalAlpha=.95; ctx.beginPath(); ctx.roundRect(ax,ay,aw,ah,U*0.03); ctx.clip(); ctx.drawImage(art,ax,ay,aw,ah); ctx.restore(); } }
   }else if(art){
     cover(art,0,0,W,H); const og=ctx.createLinearGradient(0,0,0,H);
     if(L==='bottom'){ og.addColorStop(0,grad[0]+'55'); og.addColorStop(0.45,grad[0]+'22'); og.addColorStop(0.7,grad[0]+'cc'); og.addColorStop(1,grad[0]+'f5'); }
@@ -162,7 +162,7 @@ async function drawSlide(canvas,s,i,total){
       }
       return yy; };
     let k=WIDE?1.2:1; while(k>0.55&&run(k,true)>limit) k-=0.05; y=run(k,false);
-    if(artBottomH&&art){ const ah=artBottomH, aw=Math.min(W-pad*2,ah*(art.width/art.height)), ax=(W-aw)/2, ay=H-pad-H*0.085-ah; ctx.save(); ctx.globalAlpha=.95; ctx.beginPath(); ctx.roundRect(ax,ay,aw,ah,U*0.03); ctx.clip(); const r=Math.max(aw/art.width,ah/art.height); ctx.drawImage(art,ax+(aw-art.width*r)/2,ay+(ah-art.height*r)*0.72,art.width*r,art.height*r); ctx.restore(); }
+    if(artBottomH&&art){ const asp=art.width/art.height, room=H-pad-H*0.085-(y+U*0.05); let ah=Math.max(artBottomH,Math.min(room,H*0.55)), aw=Math.min(W-pad*2,ah*asp); ah=aw/asp; if(ah<artBottomH){ ah=artBottomH; } const ax=(W-aw)/2, ay=H-pad-H*0.085-ah;   /* 아래 그림: 글 아래 남는 자리만큼 키운다(세로형에서 가운데가 비지 않게) */ ctx.save(); ctx.globalAlpha=.95; ctx.beginPath(); ctx.roundRect(ax,ay,aw,ah,U*0.03); ctx.clip(); const r=Math.max(aw/art.width,ah/art.height); ctx.drawImage(art,ax+(aw-art.width*r)/2,ay+(ah-art.height*r)*0.72,art.width*r,art.height*r); ctx.restore(); }
   }
   // 로고(선택 입력 「로고」): 모든 장 같은 자리(왼쪽 아래)·같은 크기, 원본 그대로
   const lk=v('cnLogo')||'ci'; C.logos=C.logos||{}; const need=lk==='both'?['ci','slogan']:lk==='none'?[]:[lk];
