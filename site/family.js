@@ -213,7 +213,7 @@ function build(){
     <div class="card fam2-card"><div class="fam-pvwrap"><div class="fam-preview" id="famPreview"></div><div class="fam-load" id="famLoad" hidden><div class="spin"></div><b id="famLoadT">AI가 그리는 중…</b><small id="famLoadS">기다리는 동안 내용을 입력해 주세요</small></div></div>
      <div class="row rw fam2-bar"><span class="hint" id="famNote"></span><span class="row" id="famAiChips" style="gap:4px;margin:0"></span><span style="flex:1"></span><a href="#" id="famPickTgl" hidden style="display:none">기본 디자인</a><a href="#" id="famShowTxt" hidden style="display:none">게시글</a></div>
      <div class="fam3-frames strip" id="f_frames" hidden></div>
-     <div id="famTextWrap" hidden><input id="famTitle" readonly hidden style="display:none"><div class="fam-copy col"><textarea id="famBody" rows="14" readonly></textarea><button class="ghost sm" data-copy="famBody">복사</button></div></div>
+     <div id="famTextWrap" hidden><input id="famTitle" readonly hidden style="display:none"><div class="fam-copy col"><textarea id="famBody" rows="14" readonly></textarea></div></div>
      </div>
    </div></div>`;
   $$('#famKinds button').forEach(b=>b.onclick=()=>{ $$('#famKinds button').forEach(x=>x.classList.toggle('on',x===b)); F.kind=b.dataset.k; resetKind(); });
