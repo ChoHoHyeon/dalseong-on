@@ -2222,3 +2222,7 @@ body[data-theme=dark] .bn-prop.float #bpText,body[data-theme=dark] .bn-prop.floa
 .cn-stage{align-items:flex-start!important;justify-content:center}
 .cn-view{margin-top:0}
 .cn-arr{top:50%}
+
+/* 카드 미리보기: 오른쪽 편집창 높이에 맞춰 늘이지 않는다 — 16:9에서 회색 영역이 길어지고 카드마다 화살표가 움직이던 문제 */
+.cn-wrap{align-items:start!important}
+.cn-stage{align-self:start}
