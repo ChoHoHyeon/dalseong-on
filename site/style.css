@@ -1958,3 +1958,7 @@ body[data-theme=dark] .ru-card .pv.mtwrap,body[data-theme=dark] .lw-paper{backgr
 .mlquick .qchip{height:34px;padding:0 14px;border-radius:999px;border:1.5px solid rgba(47,111,237,.4);background:rgba(47,111,237,.06);color:var(--acc);font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
 .mlquick .qchip:hover{background:var(--acc);color:#fff;border-color:var(--acc);transform:translateY(-1px)}
 .mlquick .qauto{font-size:12px;color:#12a15f;font-weight:600;margin-left:4px}
+/* 출장비: #trip 안 버튼 기본 서식을 이기도록 샘플 버튼만 다른 메뉴와 같은 모양으로 */
+#trip button#tripSample{height:40px;padding:0 16px;border:1px solid rgba(47,111,237,.45);border-radius:10px;background:var(--panel,#fff);font:inherit;font-size:13px;font-weight:700;color:var(--acc,#2f6fed);cursor:pointer;box-shadow:none}
+#trip button#tripSample:hover{border-color:var(--acc,#2f6fed);background:rgba(47,111,237,.06)}
+#trip .mldemo{margin:10px 0 4px}

@@ -242,7 +242,7 @@ function bindOrient(){ const ori=$('#f_orient'); if(!ori) return; $$('#f_orient 
 function panelPhoto(){
   const m=$('#famMain');
   m.innerHTML=`<h4>① 사진 <small>없어도 됩니다 — 없으면 꽃 배경 디자인으로 만듭니다</small></h4>
-   <div class="row rw"><label class="filebtn">📷 사진 올리기<input type="file" id="f_photo" accept="image/*"></label><button class="ghost" id="f_sample" type="button">샘플 사진</button><span class="hint" id="f_photoNote">${F.photo?'':'브라우저 안에서만 처리됩니다 · 끌어다 놓아도 됩니다'}</span></div>
+   <div class="row rw"><label class="filebtn">📷 사진 올리기<input type="file" id="f_photo" accept="image/*"></label><button class="ghost" id="f_sample" type="button">📎 샘플 사진 업로드하기</button><span class="hint" id="f_photoNote">${F.photo?'':'브라우저 안에서만 처리됩니다 · 끌어다 놓아도 됩니다'}</span></div>
    <div class="fam3-body" id="f_drop">
     <div class="fam3-pics" id="f_pics"></div>
     <div class="fam3-empty" ${F.photo?'hidden':''}><div class="fam3-drop-ico">📷</div><small>사진을 올리면 여기에 보입니다</small></div>
@@ -288,7 +288,7 @@ async function makeIllust(style){
   if(F.illusts.length>=ILL_MAX){ toastF(`일러스트는 ${ILL_MAX}장까지 만들 수 있습니다 — 위에서 마음에 드는 것을 골라 주세요`); const n=$('#famAiNote'); if(n) n.textContent=`일러스트 ${ILL_MAX}장 한도`; return; }
   const label={water:'수채',chic:'화보풍',line:'라인'}[style]+' 일러스트'; const slot={src:'',label,pending:true}; F.illusts.push(slot); renderPics();
   loading(true,`🎨 ${label} 그리는 중…`,'보통 30~40초 · 완성되면 왼쪽 후보에 추가되고 오른쪽에 크게 보입니다');
-  try{ const img=await aiJob({prompt:ILL_PROMPT[style], photo:F.photo, size:'auto'}); slot.src=img; slot.pending=false; F.pic=img; F.picKind='illust'; F.frames=[]; F.frame=null; F.aiStarted=null; renderPics(); refresh(); }
+  try{ const img=await aiJob({prompt:ILL_PROMPT[style], photo:F.photo, size:'auto'}); slot.src=img; slot.pending=false; F.pic=img; F.picKind='illust'; F.frames=[]; F.frame=null; F.aiStarted=null; renderPics(); if(F.step>0){ ensureFrames(); if($('#f_frames')) renderFrames(); } refresh(); }
   catch(e){ F.illusts=F.illusts.filter(x=>x!==slot); renderPics(); const n=$('#famAiNote'); if(n) n.textContent='일러스트 실패: '+e.message.slice(0,160); }
   finally{ loading(false); }
 }
