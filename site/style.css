@@ -2130,3 +2130,11 @@ body[data-theme=dark] .bn-tip>span{color:#cfe0ff;background:linear-gradient(100d
 .bn-prop.float .bn-chips button.on{background:#2f6fed;color:#fff;border-color:#2f6fed}
 body[data-theme=dark] .bn-prop.float{background:#1c2b4a;border-color:#3b5a99}
 body[data-theme=dark] .bn-prop.float #bpText,body[data-theme=dark] .bn-prop.float .bn-chips button,body[data-theme=dark] .bn-prop.float .bn-fs,body[data-theme=dark] .bn-prop.float .bn-fs button,body[data-theme=dark] .bn-prop.float #bpPt,body[data-theme=dark] .bn-prop.float .bp-unit,body[data-theme=dark] .bn-prop.float .bp-reset{background:#0f1a30}
+.bn-ly .bn-del{display:none;position:absolute;right:-12px;top:-30px;width:24px;height:24px;border-radius:50%;background:#e0483d;color:#fff;font-size:16px;line-height:23px;text-align:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.bn-ly.on .bn-del{display:block}
+/* 문구 3안 카드: 시안에 들어가는 글(위) / AI 설명(아래, 구분선) */
+.bn-alts .alt{position:relative}
+.bn-alts .alt-n{font-style:normal;position:absolute;right:10px;top:9px;font-size:11px;font-weight:700;color:var(--mut);background:rgba(30,60,120,.07);padding:1px 7px;border-radius:999px}
+.bn-alts .alt.on .alt-n{background:#2f6fed;color:#fff}
+.bn-alts .alt-why{display:block;margin-top:8px;padding-top:7px;border-top:1px dashed var(--line);color:var(--mut);font-size:11.5px;line-height:1.5}
+.bn-alts .alt b{padding-right:34px} .bn-alts .alt span{color:var(--tx);font-size:13px}

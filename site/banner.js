@@ -153,22 +153,27 @@ function overlay(){   // 상자는 지우지 않고 위치·선택만 고친다 
   ov.querySelectorAll('.bn-ly').forEach(el=>{ if(!L[el.dataset.k]) el.remove(); });
   ['logo',...XK(),'host','sub','main'].forEach(k=>{ let el=ov.querySelector(`.bn-ly[data-k="${k}"]`);
     if(!L[k]||!L[k].bb){ if(el) el.remove(); return; }
-    if(!el){ el=document.createElement('div'); el.className='bn-ly'; el.dataset.k=k; el.innerHTML=`<span class="bn-tag">${lname(k)}</span><i class="hd nw"></i><i class="hd ne"></i><i class="hd sw"></i><i class="hd se"></i>`; ov.appendChild(el); }
+    if(!el){ el=document.createElement('div'); el.className='bn-ly'; el.dataset.k=k; el.innerHTML=`<span class="bn-tag">${lname(k)}</span>${L[k].type==='img'?'<b class="bn-del" title="이 로고 빼기 (Delete)">×</b>':''}<i class="hd nw"></i><i class="hd ne"></i><i class="hd sw"></i><i class="hd se"></i>`; ov.appendChild(el); }
     const [x,y,w,h]=L[k].bb; Object.assign(el.style,{left:p(x/L.W),top:p(y/L.H),width:p(w/L.W),height:p(h/L.H)}); el.classList.toggle('on',B.sel===k); });
 }
 function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 function renderAlts(){
-  $('#bnAlts').innerHTML=B.alts.map((a,i)=>`<button class="alt${i===B.pick?' on':''}" data-i="${i}"><b>${a.main}</b><span>${a.sub||''}</span><small>${a.why||''}</small></button>`).join('');
+  $('#bnAlts').innerHTML=B.alts.map((a,i)=>`<button class="alt${i===B.pick?' on':''}" data-i="${i}"><em class="alt-n">${i+1}안</em><b>${a.main}</b><span>${a.sub||''}</span>${a.why?`<small class="alt-why">💡 ${a.why}</small>`:''}</button>`).join('');
   $('#bnAlts').querySelectorAll('.alt').forEach(b=>b.onclick=()=>{ B.pick=+b.dataset.i; renderAlts(); pickAlt(); });
 }
 /* 다른 안을 고르면: 아직 손대지 않았으면 새로 배치, 손댔으면 위치·크기는 두고 글만 바꾼다 */
 function shrinkFit(){ const L=B.L; ['main','sub','host'].forEach(k=>{ const ly=L[k]; if(!ly.text) return; const w=textW(ly.text,ly.role,ly.size,ly.font), max=L.W*0.92; if(w>max) ly.size=Math.floor(ly.size*max/w); const n=ly.text.split('\n').length, hmax=L.H*(k==='main'?0.62:0.3); if(n*ly.size*LH>hmax) ly.size=Math.floor(hmax/(n*LH)); }); }   // 글이 길어져 폭·높이를 넘으면 그만큼만 줄인다
 function pickAlt(){ if(!B.L||!B.dirty){ B.L=null; return draw(); } const a=B.alts[B.pick]; B.L.main.text=B.L.vert?a.main.split(/\s+/).join('\n'):a.main; B.L.sub.text=a.sub||''; if(!B.L.sub.size) B.L.sub.size=Math.round(B.L.H*0.1); shrinkFit(); draw(); }
 /* ── AI 배경: 행사 분위기에 맞는 글자 없는 배경 그림 (gpt-image, 서버 /api/card) ── */
-function aiPrompt(vert){
+/* 다시 그리기마다 화풍·시간대·구도를 바꿔 넣는다 (같은 글만 보내면 비슷한 그림이 반복되므로) */
+const AI_STYLE=['clean bright modern poster illustration','soft watercolor painting','flat vector illustration with simple shapes','realistic landscape photograph look','paper-cut layered art','warm gouache poster painting','dreamy pastel illustration','bold graphic poster with gradients'];
+const AI_TIME=['bright daytime','golden hour sunset','clear blue morning','soft evening twilight','sunny afternoon'];
+const AI_COMP=['wide panoramic view','scenery framed on the left and right edges','symbols arranged along the bottom','distant landscape with open sky','close-up seasonal elements at the corners'];
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function aiPrompt(vert,redo){
   return `A ${vert?'tall vertical':'wide horizontal'} background artwork for an outdoor public event banner of Dalseong-gun, Daegu, South Korea.
 Event: "${v('bnName')}". Place: "${v('bnPlace')||'Dalseong-gun'}". Mood keywords: "${v('bnPoint')||''}".
-Show scenery and symbols that match the event theme (Korean landscape, seasonal nature, local atmosphere) in a clean, bright, modern poster illustration style.
+Show scenery and symbols that match the event theme (Korean landscape, seasonal nature, local atmosphere) in a ${redo?pick(AI_STYLE):'clean, bright, modern poster illustration'} style, ${redo?pick(AI_TIME)+', '+pick(AI_COMP):'bright daytime'}. ${redo?'Make it clearly different from a typical version of this scene.':''}
 IMPORTANT: absolutely no text, no letters, no numbers, no logos, no signs, no watermarks. Keep the ${vert?'upper and middle':'center'} area calm and simple with low detail so large text can be overlaid later. No people's faces in close-up.`;
 }
 let _aiT=null;
@@ -180,7 +185,7 @@ async function aiBg(force){
   if(B.ai&&B.aiKey===key&&!force){ aiLoad(false); return draw(); }
   const S=window.S||{}; B.aiBusy=true; aiLoad(); const btn=$('#bnAiRedo'); if(btn) btn.disabled=true;
   try{
-    const r=await fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':S.code||''},body:JSON.stringify({action:'start',prompt:aiPrompt(vert),photo:null,size:vert?'1024x1536':'1536x1024',expect:[]})});
+    const r=await fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':S.code||''},body:JSON.stringify({action:'start',prompt:aiPrompt(vert,force||!!B.ai),photo:null,size:vert?'1024x1536':'1536x1024',expect:[]})});
     const j=await r.json(); if(!r.ok||!j.id) throw new Error(j.error||('오류 '+r.status));
     const t0=Date.now(); let job=null;
     while(Date.now()-t0<180000){ await new Promise(res=>setTimeout(res,1500)); const q=await fetch('/api/card?id='+j.id,{headers:{'x-access-code':S.code||''}}); job=await q.json(); if(job.status==='done'||job.status==='error') break; }
@@ -240,7 +245,8 @@ function init(){
   prop.addEventListener('pointerdown',e=>{ const h=e.target.closest('.bp-h'); if(!h||e.target.closest('button')) return; e.preventDefault(); const r=prop.getBoundingClientRect(), dx=e.clientX-r.left, dy=e.clientY-r.top;
     const mv=ev=>{ pman=[Math.max(0,Math.min(innerWidth-r.width,ev.clientX-dx)),Math.max(0,Math.min(innerHeight-40,ev.clientY-dy))]; propPlace(); }; const up=()=>{ removeEventListener('pointermove',mv); removeEventListener('pointerup',up); };
     addEventListener('pointermove',mv); addEventListener('pointerup',up); });
-  window.propShow=k=>{ if(!B.L||!k){ prop.hidden=true; pman=null; return; } const was=prop.hidden; prop.hidden=false; if(was) pman=null; const ly=B.L[k]; requestAnimationFrame(()=>propPlace());
+  window.propShow=k=>{ if(!B.L||!k){ prop.hidden=true; pman=null; return; } const was=prop.hidden; prop.hidden=false; if(was) pman=null; const ly=B.L[k]; if(ly.type!=='text'){ prop.hidden=true; return; }   // 로고는 편집 창 없이 시안에서 바로 (추가 로고는 상자의 ×로 빼기)
+    requestAnimationFrame(()=>propPlace());
     if(ly.type==='img'){ prop.innerHTML=`<div class="bp-h"><b>추가 로고</b><span>끌어서 옮기고, 모서리 ●로 크기 조절</span><button type="button" class="bp-del">🗑 이 로고 빼기</button><button type="button" class="bp-x" title="선택 해제">✕</button></div>`;
       prop.querySelector('.bp-del').onclick=()=>removeExtra(k); prop.querySelector('.bp-x').onclick=()=>{ B.sel=null; overlay(); prop.hidden=true; }; return; }
     if(k==='logo'){ prop.innerHTML=`<div class="bp-h"><b>로고</b><span>끌어서 옮기고, 모서리 ●로 크기 조절</span></div>`; return; }
@@ -274,7 +280,7 @@ function init(){
   const sz=k=>isImg(B.L[k])?B.L[k].h:B.L[k].size;
   const setSz=(k,n)=>{ if(isImg(B.L[k])){ const r=n/B.L[k].h; B.L[k].h=n; if(B.L[k].w) B.L[k].w*=r; } else B.L[k].size=n; };
   const sched=()=>{ if(!raf) raf=requestAnimationFrame(()=>{ raf=0; paint(); }); };
-  ov.addEventListener('pointerdown',e=>{ e._bnOv=true; const box=e.target.closest('.bn-ly'); if(!box){ B.sel=null; overlay(); propShow(null); return; }
+  ov.addEventListener('pointerdown',e=>{ e._bnOv=true; if(e.target.classList.contains('bn-del')){ e.preventDefault(); return removeExtra(e.target.closest('.bn-ly').dataset.k); } const box=e.target.closest('.bn-ly'); if(!box){ B.sel=null; overlay(); propShow(null); return; }
     const k=box.dataset.k, p=toCanvas(e), ly=B.L[k]; if(B.sel!==k) propShow(k); B.sel=k; e.preventDefault(); ov.setPointerCapture(e.pointerId);
     if(e.target.classList.contains('hd')){ act={mode:'size',k,s0:sz(k),d0:Math.max(8,Math.hypot(p[0]-ly.cx,p[1]-ly.cy))}; }
     else { const now=Date.now(); if(B.L[k].type==='text'&&lastTap.k===k&&now-lastTap.t<400){ lastTap={}; act=null; overlay(); return openEdit(k); } lastTap={k,t:now}; act={mode:'move',k,p0:p,c0:[ly.cx,ly.cy],moved:false}; }
