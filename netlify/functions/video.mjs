@@ -5,7 +5,7 @@
 //  GET  /api/video?rid=...                          → {status:'queued'|'running'|'done'|'error', url?}
 //  GET  /api/video?file=<fal 영상 주소>              → 영상 파일 중계(브라우저가 직접 못 받을 때만)
 // 키는 Netlify 환경변수 FAL_KEY 에만 존재(브라우저·GitHub 노출 없음). 원본 문서는 보내지 않는다 — AI가 그린 그림 1장 + 움직임 설명 한 줄만.
-// 선택: FAL_VIDEO_MODEL(기본 Wan 2.2 Turbo i2v) · VIDEO_DAY_LIMIT(하루 사이트 전체 비상 상한, 기본 30) · VIDEO_ADMIN_CODE(한도 없는 관리자 코드) · ACCESS_CODE
+// 선택: FAL_VIDEO_MODEL(기본 Wan 2.2 Turbo i2v) · VIDEO_DAY_LIMIT(사이트 전체 하루 상한 — 기본 없음) · VIDEO_ADMIN_CODE(한도 없는 관리자 코드) · ACCESS_CODE
 import { getStore } from "@netlify/blobs";
 import { originOk, guard } from "../lib/guard.mjs";
 
@@ -19,7 +19,7 @@ const FILE_OK = /^https:\/\/([a-z0-9-]+\.)*(fal\.media|fal\.run|fal\.ai)\/|^http
 export default async (req) => {
   const key = process.env.FAL_KEY || process.env.Fal_Key || process.env.fal_key;   // 환경변수 이름 대소문자 차이 허용
   const model = process.env.FAL_VIDEO_MODEL || "fal-ai/wan/v2.2-a14b/image-to-video/turbo";
-  const limit = Math.max(0, +(process.env.VIDEO_DAY_LIMIT || 30));   // 사이트 전체 비상 상한(하루 30편 ≈ $12) — 평소에는 1인 5편 한도가 먼저 걸린다
+  const limit = process.env.VIDEO_DAY_LIMIT ? Math.max(0, +process.env.VIDEO_DAY_LIMIT) : Infinity;   // 사이트 전체 한도는 두지 않는다(잔액 소진 시 충전). 필요하면 환경변수로만 켠다
   const adminCode = process.env.ADMIN_CODE || process.env.VIDEO_ADMIN_CODE;                // 관리자(시험용) 코드 — 관리자 › 모델 설정 「접속 코드」에 넣으면 하루 한도 없이 만든다
   const isAdmin = !!adminCode && (req.headers.get("x-admin-code") === adminCode || req.headers.get("x-access-code") === adminCode);
   const gate = process.env.ACCESS_CODE;
@@ -61,7 +61,7 @@ export default async (req) => {
   if (!originOk(req)) return json({ error: "달성On 화면에서만 사용할 수 있습니다" }, 403);
   let b; try { b = await req.json(); } catch { return json({ error: "Bad Request" }, 400); }
   const day = await st.get("d:" + today(), { type: "json" }) || { n: 0 };
-  if (b.ping) return json({ ok: true, hasKey: !!key, model, limit, used: day.n, codeOk, admin: isAdmin });
+  if (b.ping) return json({ ok: true, hasKey: !!key, model, limit: Number.isFinite(limit) ? limit : null, used: day.n, codeOk, admin: isAdmin });
   if (!codeOk) return json({ error: "접속 코드가 맞지 않습니다" }, 401);
   if (!key) return json({ error: "nokey" }, 503);
 

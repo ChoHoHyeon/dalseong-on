@@ -185,7 +185,7 @@ async function make(){
     // ③ 움직이는 영상 접수권(하루 한도) 먼저 받기
     let ticket=null, admin=false;
     if(online){ try{ admin=!!(await (await fetch('/api/video',{method:'POST',headers:{'content-type':'application/json','x-access-code':code(),'x-admin-code':adc()},body:'{"ping":1}'})).json()).admin; }catch(e){} }   /* 관리자 코드면 하루 한도 없음 */
-    if(online&&!admin&&quotaLocal()>=USER_LIMIT) note+=`이 브라우저의 오늘 AI 영상 ${USER_LIMIT}편을 다 써서 그림에 움직임을 넣어 만들었습니다. `;
+    if(online&&!admin&&(V.lite||quotaLocal()>=USER_LIMIT)) note+=`이 브라우저의 오늘 AI 영상 ${USER_LIMIT}편을 다 써서 그림에 움직임을 넣어 만들었습니다. `;
     else if(online){ try{ const r=await fetch('/api/video',{method:'POST',headers:{'content-type':'application/json','x-access-code':code(),'x-admin-code':adc()},body:JSON.stringify({action:'start'})}); const j=await r.json();
         if(r.ok&&j.ticket){ ticket=j.ticket; if(!admin) quotaUse(); } else if(j.error==='mine') note+=`오늘 AI 영상 ${j.limit}편을 다 써서 그림에 움직임을 넣어 만들었습니다. `; else if(j.error==='limit') note+='오늘 달성On 전체 AI 영상 한도가 차서 그림에 움직임을 넣어 만들었습니다. '; else if(j.error==='nokey') note+='움직이는 영상 기능이 아직 연결되지 않아 그림에 움직임을 넣어 만들었습니다. '; else note+='움직이는 영상을 접수하지 못해 그림에 움직임을 넣어 만들었습니다. '; }catch(e){ note+='움직이는 영상을 접수하지 못했습니다. '; } }
     // ②→③ 장면마다 그림이 나오는 즉시 그 장면 영상을 맡긴다 (4장면 동시 진행 — 기다리는 시간 단축)
@@ -210,7 +210,12 @@ async function remix(){ if(!V.data||V.busy) return; V.busy=true; $('#mvRemix').d
 
 function init(){
   if($('#mvGo')._on) return; $('#mvGo')._on=1;
-  $('#mvGo').onclick=make; $('#mvRemix').onclick=remix; quotaShow();
+  $('#mvGo').onclick=async()=>{ if(V.busy) return; if(!v('mvSrc')) return make();
+    /* 오늘 5편을 다 쓴 사람이면 먼저 묻는다 (관리자는 묻지 않음) */
+    let admin=false; try{ admin=!!(await (await fetch('/api/video',{method:'POST',headers:{'content-type':'application/json','x-access-code':code(),'x-admin-code':adc()},body:'{"ping":1}'})).json()).admin; }catch(e){}
+    if(!admin&&quotaLocal()>=USER_LIMIT){ if(!await askLite()) return; V.lite=true; } else V.lite=false;
+    make(); };
+  $('#mvRemix').onclick=remix; quotaShow();
   $('#mvFont').innerHTML=Object.entries(MFONTS).map(([k,[l,f,w]])=>`<button type="button" data-v="${k}" class="${k===V.font?'on':''}" style="font-family:'${f}',Pretendard;font-weight:${w}">${l}</button>`).join('');
   $('#mvFont').onclick=async e=>{ const b=e.target.closest('button'); if(!b||V.busy) return; V.font=b.dataset.v; $('#mvFont').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
     if(!V.data) return; const f=MFONTS[V.font]; try{ await document.fonts.load(`${f[2]} 40px "${f[1]}"`,'가나다'); }catch(err){}
@@ -237,5 +242,11 @@ async function mvPeek(t,msg){ if(!V.data) return; V.logo=V.logo||await loadImg('
 async function quotaShow(){ const el=$('#mvQuota'); if(!el) return; try{ const j=await (await fetch('/api/video',{method:'POST',headers:{'content-type':'application/json','x-access-code':code(),'x-admin-code':adc()},body:'{"ping":1}'})).json();
     if(!j.hasKey){ el.hidden=true; return; } if(j.admin){ el.textContent='🛠 관리자 · 한도 없음'; el.className='mv-quota adm'; el.hidden=false; return; }
     const left=Math.max(0,USER_LIMIT-quotaLocal()); el.textContent=left>0?`🎬 오늘 남은 AI 영상 ${left}편`:'오늘 AI 영상 한도를 다 썼습니다 · 간이 영상으로 만들어집니다'; el.className='mv-quota'+(left>0?'':' none'); el.hidden=false; }catch(e){ el.hidden=true; } }
+function askLite(){ return new Promise(ok=>{ let md=$('#mvLite'); if(!md){ md=document.createElement('div'); md.id='mvLite'; md.className='modal'; md.innerHTML=`<div class="box mv-lite"><div class="box-h"><b>🎬 오늘 AI 영상을 모두 만드셨어요</b><button class="x" data-x>✕</button></div>
+    <p>움직이는 AI 영상은 <b>한 사람당 하루 ${USER_LIMIT}편</b>까지 만들 수 있습니다.</p>
+    <p class="mv-lite-alt">대신 <b>AI가 그린 장면 그림에 천천히 확대·이동하는 움직임</b>을 넣은 <b>간이 영상</b>으로는 지금 바로 만들 수 있어요. 대본·자막·마무리는 똑같습니다.</p>
+    <div class="pact"><button class="p" data-ok>간이 영상으로 만들기</button><button data-x>내일 다시 하기</button></div></div>`; document.body.appendChild(md); }
+  const done=r=>{ md.hidden=true; md.onclick=null; ok(r); };
+  md.onclick=e=>{ if(e.target.closest('[data-ok]')) done(true); else if(e.target===md||e.target.closest('[data-x]')) done(false); }; md.hidden=false; }); }
 window.MOVIE={init};
 })();
