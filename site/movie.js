@@ -12,7 +12,8 @@
 const $=s=>document.querySelector(s);
 const W=720,H=1280, T_HOOK=3, T_SC=5, T_END=4;          // 3 + 5×4 + 4 = 27초
 const USER_LIMIT=5;                                     // 이 브라우저 하루 AI 영상 편수 (사이트 전체 한도도 5편)
-const V={font:'pre',busy:false,data:null,imgs:[],clips:[],blob:null,ext:'mp4',logo:null,purpose:'auto'};
+const V={font:'pre',logoKind:'ci',logoScenes:false,   /* 로고는 마지막 장면에만 군 CI 원본 */
+ busy:false,data:null,imgs:[],clips:[],blob:null,ext:'mp4',logo:null,purpose:'auto'};
 const PUR={ recruit:['📣','모집·신청'], event:['🎉','행사·축제'], policy:['📋','안내·공지'], news:['🏆','성과·소식'], campaign:['🦺','생활정보·캠페인'] };
 const TONE={ bright:'밝고 경쾌', calm:'차분·신뢰' }, STYLE={ illust:'일러스트', photo:'실사풍' };
 const PAL={ navy:['#0b2a6b','#1b4db3','#ffd166'], green:['#145a32','#27ae60','#f9e79f'], orange:['#c0392b','#e67e22','#fff3c4'], mint:['#0f6b78','#2bb3a3','#fdfefe'], purple:['#3b2a7a','#6c4cd1','#ffd6f0'] };
@@ -103,7 +104,11 @@ function cover(ctx,src,sw,sh,z=1,dx=0,dy=0){ const r=Math.max(W/sw,H/sh)*z; cons
 function bgGrad(ctx,p){ const g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,p[0]); g.addColorStop(1,p[1]); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
 function shade(ctx,from=0.45){ const g=ctx.createLinearGradient(0,H*from,0,H); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(5,12,35,.82)'); ctx.fillStyle=g; ctx.fillRect(0,H*from,W,H*(1-from)); }
 function tag(ctx,text,p,a){ ctx.save(); ctx.globalAlpha=a; ctx.font=F(700,24); const w=ctx.measureText(text).width+36; ctx.fillStyle=p[2]; ctx.beginPath(); ctx.roundRect(48,70,w,46,23); ctx.fill(); ctx.fillStyle=p[0]; ctx.textBaseline='middle'; ctx.textAlign='left'; ctx.fillText(text,66,94); ctx.restore(); }
-function logoCorner(ctx,a=1){ if(!V.logo) return; const lh=44, lw=V.logo.width*lh/V.logo.height; ctx.save(); ctx.globalAlpha=a; ctx.fillStyle='rgba(255,255,255,.95)'; ctx.beginPath(); ctx.roundRect(W-48-lw-16,62,lw+16,lh+16,10); ctx.fill(); ctx.drawImage(V.logo,W-48-lw-8,70,lw,lh); ctx.restore(); }
+/* 로고: 군 CI·슬로건 원본 그대로(흰 바탕 위). 종류는 오른쪽 「로고」에서, 장면마다 작게 넣을지는 체크로 */
+const logoImgs=()=>({ci:[V.logo],slogan:[V.slogan],both:[V.logo,V.slogan]}[V.logoKind]||[V.logo]).filter(Boolean);
+function logoRow(ctx,cx,cy,lh,a,pad){ const ims=logoImgs(); if(!ims.length) return; const gap=lh*0.35, ws=ims.map(im=>im.width*lh/im.height), tw=ws.reduce((x,y)=>x+y,0)+gap*(ims.length-1);
+  ctx.save(); ctx.globalAlpha=a; ctx.fillStyle='rgba(255,255,255,.96)'; ctx.beginPath(); ctx.roundRect(cx-tw/2-pad,cy-lh/2-pad,tw+pad*2,lh+pad*2,pad*0.9); ctx.fill(); let x=cx-tw/2; ims.forEach((im,k)=>{ ctx.drawImage(im,x,cy-lh/2,ws[k],lh); x+=ws[k]+gap; }); ctx.restore(); return tw; }
+function logoCorner(ctx,a=1){ if(!V.logoScenes) return; const ims=logoImgs(); if(!ims.length) return; const lh=40, tw=ims.map(im=>im.width*lh/im.height).reduce((x,y)=>x+y,0)+lh*0.35*(ims.length-1); logoRow(ctx,W-48-tw/2-8,70+lh/2+8,lh,a,9); }
 /* 자막: 큰 글씨는 튀어나오고(back), 작은 글씨는 아래에서 올라온다 */
 function caption(ctx,s,t,p,dur){ const out=Math.min(1,(dur-t)/0.35); ctx.save(); ctx.textAlign='center'; ctx.textBaseline='alphabetic';
   let y=H-150;
@@ -124,12 +129,12 @@ function drawScene(ctx,i,t,d,p){ const c=V.clips[i], im=V.imgs[i];
   else if(im){ const z=1.04+0.10*(t/T_SC), dx=(i%2?-1:1)*18*(t/T_SC); cover(ctx,im,im.width,im.height,z,dx,-10*(t/T_SC)); }   // 움직이는 영상이 없을 때: 천천히 확대·이동
   else bgGrad(ctx,p);
   if(t<0.25){ ctx.fillStyle=`rgba(255,255,255,${0.35*(1-t/0.25)})`; ctx.fillRect(0,0,W,H); }   // 장면 전환 플래시
-  shade(ctx,0.42); caption(ctx,d.scenes[i],t,p,T_SC); tag(ctx,`${i+1} / 4`,p,1); logoCorner(ctx,1); }
+  shade(ctx,0.42); caption(ctx,d.scenes[i],t,p,T_SC); logoCorner(ctx,1); }   /* 장면 번호(1/4)는 영상에 넣지 않는다 */
 function drawEnd(ctx,t,d,p){ bgGrad(ctx,p); ctx.save(); ctx.globalAlpha=.08; ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(W*0.85,H*0.18+Math.sin(t)*14,260,0,7); ctx.fill(); ctx.beginPath(); ctx.arc(W*0.1,H*0.85,200,0,7); ctx.fill(); ctx.restore();
   ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
   const k=back((t-0.1)/0.55); ctx.globalAlpha=Math.min(1,k); ctx.font=F(900,74,true); ctx.fillStyle='#fff'; const hl=wrap(ctx,d.end.head,W-110); hl.forEach((l,i)=>{ ctx.save(); ctx.translate(W/2,H*0.36+i*90); ctx.scale(0.8+0.2*Math.min(1,k),0.8+0.2*Math.min(1,k)); ctx.fillText(l,0,0); ctx.restore(); });
   const a=ease((t-0.6)/0.5); ctx.globalAlpha=a; ctx.fillStyle=p[2]; ctx.fillRect(W/2-50,H*0.36+hl.length*90-20,100,7); ctx.font=F(600,38); ctx.fillStyle='#fff'; wrap(ctx,d.end.sub||'',W-140).forEach((l,i)=>ctx.fillText(l,W/2,H*0.36+hl.length*90+44+i*54));
-  if(V.logo){ const b=back((t-1.0)/0.6); ctx.globalAlpha=Math.min(1,Math.max(0,b)); const lh=96, lw=V.logo.width*lh/V.logo.height; ctx.fillStyle='rgba(255,255,255,.96)'; ctx.beginPath(); ctx.roundRect(W/2-lw/2-26,H*0.72-26,lw+52,lh+52,22); ctx.fill(); ctx.drawImage(V.logo,W/2-lw/2,H*0.72,lw,lh); }
+  { const b=back((t-1.0)/0.6); logoRow(ctx,W/2,H*0.72+48,V.logoKind==='both'?80:96,Math.min(1,Math.max(0,b)),26); }
   ctx.globalAlpha=ease((t-1.3)/0.5); ctx.font=F(700,30); ctx.fillStyle='rgba(255,255,255,.85)'; ctx.fillText('대구광역시 달성군',W/2,H*0.72+150);
   ctx.restore(); }
 function frameAt(ctx,el){ const d=V.data, p=PAL[d.palette]||PAL.navy; ctx.clearRect(0,0,W,H);
@@ -160,7 +165,7 @@ function renderSide(){ const d=V.data; const p=PAL[d.palette]||PAL.navy;
   const item=(l,val,sw)=>`<div class="sv"><em>${l}</em><b>${sw||''}${val}</b></div>`;
   $('#mvSum').innerHTML=`<div class="sh"><span>✨</span><b>AI가 고른 구성</b></div><div class="sg">${item('용도',PUR[d.purpose][1]+(V.purpose!=='auto'?'':''))}${item('분위기',TONE[d.tone])}${item('화풍',STYLE[d.style])}${item('색',['남색','녹색','주황','민트','보라'][Object.keys(PAL).indexOf(d.palette)]||'남색',`<i class="sw" style="background:linear-gradient(135deg,${p[0]},${p[1]})"></i>`)}</div>`;
   const rows=[['훅',d.hook,'hook'],...d.scenes.map((s,i)=>[`장면 ${i+1}`,s,i]),['마무리',d.end,'end']];
-  $('#mvScenes').innerHTML=rows.map(([l,s,k])=>`<div class="mv-row" data-k="${k}"><span class="mv-no">${l}</span><input class="mv-h" value="${(s.head||'').replace(/"/g,'&quot;')}" maxlength="16" placeholder="큰 자막">${k!=='hook'&&k!=='end'?`<input class="mv-big" value="${(s.big||'').replace(/"/g,'&quot;')}" placeholder="강조 숫자" maxlength="10">`:''}<input class="mv-s" value="${(s.sub||'').replace(/"/g,'&quot;')}" maxlength="34" placeholder="작은 자막"></div>`).join('');
+  $('#mvScenes').innerHTML=rows.map(([l,s,k])=>`<div class="mv-row" data-k="${k}"><span class="mv-no">${l}</span><input class="mv-h" value="${(s.head||'').replace(/"/g,'&quot;')}" maxlength="16" placeholder="큰 자막">${k!=='hook'&&k!=='end'?`<input class="mv-big" value="${(s.big||'').replace(/"/g,'&quot;')}" placeholder="큰 숫자 (선택)" title="장면에서 제목 위에 크게 노란 글씨로 띄울 숫자·날짜 (예: 320명, 무료, 11.14까지) — 비우면 표시 안 함" maxlength="10">`:''}<input class="mv-s" value="${(s.sub||'').replace(/"/g,'&quot;')}" maxlength="34" placeholder="작은 자막"></div>`).join('');
   $('#mvScenes').querySelectorAll('.mv-row').forEach(el=>{ const k=el.dataset.k, s=k==='hook'?d.hook:k==='end'?d.end:d.scenes[+k];
     el.querySelector('.mv-h').oninput=e=>{ s.head=e.target.value; }; el.querySelector('.mv-s').oninput=e=>{ s.sub=e.target.value; }; const b=el.querySelector('.mv-big'); if(b) b.oninput=e=>{ s.big=e.target.value; };
     el.onclick=()=>{ const t=k==='hook'?1.5:k==='end'?T_HOOK+T_SC*4+2:T_HOOK+(+k)*T_SC+2.5; const c=$('#mvCanvas'); c.hidden=false; $('#mvVideo').hidden=true; $('#mvVideo').pause(); frameAt(c.getContext('2d'),t); }; });
@@ -173,7 +178,7 @@ async function make(){
   $('#mvSum').innerHTML='<div class="sh"><span>✨</span><b>AI가 고른 구성</b></div><div class="mv-wait">대본을 쓰고 있습니다…</div>'; $('#mvScenes').innerHTML=''; $('#mvOut').scrollIntoView({behavior:'smooth',block:'start'});
   let note='';
   try{
-    V.logo=V.logo||await loadImg('assets/dalseong_ci.png');
+    V.logo=V.logo||await loadImg('assets/dalseong_ci.png'); V.slogan=V.slogan||await loadImg('assets/slogan.png');
     const online=(S.key||S.server)&&!S.offline;
     prog(0,'',V._t0); $('#mvMsg').textContent='AI가 영상을 만들고 있습니다 — 보통 2~4분 걸립니다.';
     V.data=online?await script():offline(); renderSide();
@@ -219,13 +224,14 @@ function init(){
       catch(err){ done.push(`⚠ ${f.name} — ${err.message}`); } }
     L.textContent=done.join(' · ')+' — 아래 「영상 만들기」를 누르세요'; };
   $('#mvFile').onchange=e=>{ const fs=[...e.target.files]; e.target.value=''; readFiles(fs); };
-  let _sb=null; const preload=()=>{ if(!_sb) _sb=fetch('assets/sample_edu_plan.pdf').then(r=>r.blob()).catch(()=>null);
+  let _sb=null; const preload=()=>{ if(!_sb) _sb=fetch('assets/sample_ai_challenge.md').then(r=>r.blob()).catch(()=>null);
     if(!window.pdfjsLib&&!document.querySelector('script[src="vendor/pdf.min.js"]')){ const sc=document.createElement('script'); sc.src='vendor/pdf.min.js'; sc.onload=()=>{ try{ pdfjsLib.GlobalWorkerOptions.workerSrc='vendor/pdf.worker.min.js'; }catch(e){} }; document.head.appendChild(sc); } };
   setTimeout(preload,800);
-  $('#mvSampleFile').onclick=async()=>{ const btn=$('#mvSampleFile'); if(btn.disabled) return; btn.disabled=true; const t0=btn.textContent; btn.textContent='⏳ 샘플 계획서 읽는 중…';
-    try{ preload(); const b=await _sb; if(!b) throw 0; $('#mvSrc').value=''; await readFiles([new File([b],'2026년 군민 정보화교육 추진 계획(샘플).pdf',{type:'application/pdf'})]); }catch(e){ $('#mvFileList').textContent='⚠ 샘플 파일을 불러오지 못했습니다'; _sb=null; } finally{ btn.disabled=false; btn.textContent=t0; } };
+  $('#mvSampleFile').onclick=async()=>{ const btn=$('#mvSampleFile'); if(btn.disabled) return; btn.disabled=true; const t0=btn.textContent; btn.textContent='⏳ 샘플 파일 읽는 중…';
+    try{ preload(); const b=await _sb; if(!b) throw 0; $('#mvSrc').value=''; await readFiles([new File([b],'2026 공공 AI 대전환 챌린지 참가 안내(샘플).md',{type:'text/markdown'})]); }catch(e){ $('#mvFileList').textContent='⚠ 샘플 파일을 불러오지 못했습니다'; _sb=null; } finally{ btn.disabled=false; btn.textContent=t0; } };
   $('#mvDl').onclick=()=>{ if(!V.blob) return; const a=document.createElement('a'); a.href=URL.createObjectURL(V.blob); a.download=`달성군_홍보영상_${(V.data?.title||'영상').replace(/[\\/:*?"<>|]/g,'').slice(0,24)}.${V.ext}`; a.click(); };
-  $('#mvReset').onclick=()=>{ if(V.busy) return; $('#mvSrc').value=''; $('#mvFileList').textContent='파일을 올리면 내용을 읽어 위 칸에 채웁니다 (한글 hwpx·워드·PDF·텍스트) · 직접 붙여넣어도 됩니다'; V.data=null; V.blob=null; $('#mvOut').hidden=true; $('#mvMsg').textContent=''; };
+  $('#mvReset').onclick=()=>{ if(V.busy) return; $('#mvSrc').value=''; $('#mvFileList').textContent='파일을 올리거나 이 상자에 끌어다 놓으면 내용을 읽어 위 칸에 채웁니다 (한글 hwpx·워드·PDF·텍스트)'; V.data=null; V.blob=null; $('#mvOut').hidden=true; $('#mvMsg').textContent=''; };
 }
+async function mvPeek(t,msg){ if(!V.data) return; V.logo=V.logo||await loadImg('assets/dalseong_ci.png'); V.slogan=V.slogan||await loadImg('assets/slogan.png'); const c=$('#mvCanvas'); c.hidden=false; $('#mvVideo').pause(); $('#mvVideo').hidden=true; frameAt(c.getContext('2d'),t); $('#mvMsg').textContent=msg+' — 「고친 자막으로 다시 합치기」를 누르면 영상에 들어갑니다.'; }
 window.MOVIE={init};
 })();

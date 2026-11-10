@@ -2,6 +2,7 @@
 //  POST /api/hits {k:'use'|'gen'|'q', m:'meal'}  : 1건 더하기 (누가 썼는지는 저장하지 않음 — 날짜·메뉴·종류 숫자만)
 //  GET  /api/hits                               : 이번 주(월~일) 합계 · 메뉴별 순위 · 오늘 · 누적
 import { getStore } from "@netlify/blobs";
+import { originOk } from "../lib/guard.mjs";
 export const config = { path: "/api/hits" };
 const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { "content-type": "application/json", "cache-control": "no-store" } });
 const kst = (d = new Date()) => new Date(d.getTime() + 9 * 3600e3);              // 한국 시간
@@ -12,6 +13,7 @@ const M = /^[a-z]{2,12}$/;
 export default async (req) => {
   const st = getStore({ name: "hits", consistency: "strong" });
   if (req.method === "POST") {
+    if (!originOk(req)) return json({ error: "origin" }, 403);   // 다른 곳에서 숫자를 부풀리지 못하게
     let b; try { b = await req.json(); } catch { return json({ error: "bad" }, 400); }
     const k = K.has(b.k) ? b.k : null, m = M.test(b.m || "") ? b.m : "etc";
     if (!k) return json({ error: "k" }, 400);

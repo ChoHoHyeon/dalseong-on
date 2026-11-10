@@ -7,6 +7,7 @@
 // 키는 Netlify 환경변수 FAL_KEY 에만 존재(브라우저·GitHub 노출 없음). 원본 문서는 보내지 않는다 — AI가 그린 그림 1장 + 움직임 설명 한 줄만.
 // 선택: FAL_VIDEO_MODEL(기본 Wan 2.2 Turbo i2v) · VIDEO_DAY_LIMIT(하루 전체 편수, 기본 5) · VIDEO_ADMIN_CODE(한도 없는 관리자 코드) · ACCESS_CODE
 import { getStore } from "@netlify/blobs";
+import { originOk } from "../lib/guard.mjs";
 
 export const config = { path: "/api/video" };
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
@@ -57,6 +58,7 @@ export default async (req) => {
   }
 
   if (req.method !== "POST") return json({ error: "Method Not Allowed" }, 405);
+  if (!originOk(req)) return json({ error: "달성On 화면에서만 사용할 수 있습니다" }, 403);
   let b; try { b = await req.json(); } catch { return json({ error: "Bad Request" }, 400); }
   const day = await st.get("d:" + today(), { type: "json" }) || { n: 0 };
   if (b.ping) return json({ ok: true, hasKey: !!key, model, limit, used: day.n, codeOk, admin: isAdmin });

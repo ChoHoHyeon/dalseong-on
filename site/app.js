@@ -1092,7 +1092,7 @@ async function loadBugs(){
   const wrap=$('#bugList'), meta=$('#bugMeta'); if(!wrap) return;
   wrap.innerHTML='<p class="hint">불러오는 중…</p>'; meta.textContent='';
   try{
-    const r=await fetch('/api/bugs',{cache:'no-store'});
+    const r=await fetch('/api/bugs',{cache:'no-store',headers:{'x-admin-code':adCode()}});   /* 관리자 코드가 맞으면 보낸 사람 이름을 가리지 않고 받는다 */
     if(!r.ok) throw new Error(r.status);
     const {list=[]}=await r.json();
     if(!list.length){ wrap.innerHTML='<p class="hint">아직 접수된 내용이 없습니다.</p>'; meta.textContent='0건'; return; }
@@ -1144,3 +1144,17 @@ function loadTrip(){
   TRIP_LOADED=files.reduce((p,f)=>p.then(()=>(f==='trip.js'&&window.pdfjsLib&&(window.pdfjsLib.GlobalWorkerOptions.workerSrc='vendor/pdf.worker.min.js'),one(f))),Promise.resolve()).then(()=>{ if(msg) msg.innerHTML=''; }).catch(e=>{ TRIP_LOADED=null; if(msg) msg.innerHTML='<div class="msg err">모듈을 불러오지 못했습니다: '+e.message+'</div>'; });
   return TRIP_LOADED;
 }
+/* 파일 끌어다 놓기 — 「파일 추가」 단추가 있는 입력 상자 어디에나 파일을 놓으면 그 단추로 올린 것과 똑같이 처리한다 (모든 메뉴 공통) */
+(function(){
+  const boxOf=e=>{ const b=e.target.closest&&e.target.closest('.pbox,.pcard,fieldset'); if(!b) return null; const inp=b.querySelector('input[type=file]'); return inp?{b,inp}:null; };
+  let cur=null;
+  document.addEventListener('dragover',e=>{ if(![...(e.dataTransfer?.types||[])].includes('Files')) return; const t=boxOf(e); if(!t) return; e.preventDefault(); e.dataTransfer.dropEffect='copy'; if(cur!==t.b){ cur&&cur.classList.remove('dropon'); cur=t.b; cur.classList.add('dropon'); } });
+  document.addEventListener('dragleave',e=>{ if(cur&&!cur.contains(e.relatedTarget)){ cur.classList.remove('dropon'); cur=null; } });
+  document.addEventListener('drop',e=>{ const t=boxOf(e); cur&&cur.classList.remove('dropon'); cur=null; if(!t||!e.dataTransfer?.files?.length) return; e.preventDefault();
+    const acc=(t.inp.accept||'').split(',').map(x=>x.trim().toLowerCase()).filter(Boolean);
+    const ok=[...e.dataTransfer.files].filter(f=>!acc.length||acc.some(a=>a.startsWith('.')?f.name.toLowerCase().endsWith(a):a.endsWith('/*')?f.type.startsWith(a.slice(0,-1)):f.type===a));
+    if(!ok.length){ toast('이 칸에 올릴 수 없는 파일 형식입니다'); return; }
+    const dt=new DataTransfer(); (t.inp.multiple?ok:ok.slice(0,1)).forEach(f=>dt.items.add(f)); t.inp.files=dt.files; t.inp.dispatchEvent(new Event('change',{bubbles:true})); });
+  window.addEventListener('dragover',e=>{ if([...(e.dataTransfer?.types||[])].includes('Files')) e.preventDefault(); });   /* 엉뚱한 곳에 놓아도 브라우저가 파일을 열어 버리지 않게 */
+  window.addEventListener('drop',e=>{ if(!e.defaultPrevented&&e.dataTransfer?.files?.length) e.preventDefault(); });
+})();

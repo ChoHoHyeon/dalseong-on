@@ -45,7 +45,9 @@ function bodyText(j) {
     .replace(/([^\n])(?=[가-하]\.\s)/g, (s, a) => (/[다.]$/.test(a) ? a + "\n    " : s));
 }
 
+import { guard } from "../lib/guard.mjs";
 export default async (req) => {
+  { const g = await guard(req, "law", 800); if (g) return g; }
   const oc = process.env.LAW_OC;
   if (!oc) return J({ error: "LAW_OC 환경변수가 없습니다 (Netlify › Environment variables)" }, 503);
   const u = new URL(req.url);

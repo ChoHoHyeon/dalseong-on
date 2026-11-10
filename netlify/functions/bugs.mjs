@@ -3,6 +3,9 @@
 //  GET  /api/bugs  : 접수된 목록 (누구나 조회)
 // 개인정보는 담지 않는다 — 연락처 칸은 선택이며 「부서·이름·내선」 정도만 적도록 안내한다.
 import { getStore } from "@netlify/blobs";
+import { guard, originOk } from "../lib/guard.mjs";
+// 공개 목록에서는 이름을 가린다(홍길동 → 홍*동). 관리자 코드가 맞으면 그대로.
+const maskName = (w) => String(w || "").split(/\s+/).map((t, i, a) => i === a.length - 1 && /^[가-힣]{2,4}$/.test(t) && !/(과|팀|실|읍|면|소|원|청|국|단)$/.test(t) ? t[0] + "*".repeat(t.length - 2 || 1) + (t.length > 2 ? t.slice(-1) : "") : t).join(" ");
 
 export const config = { path: "/api/bugs" };
 
@@ -20,10 +23,13 @@ export default async (req) => {
 
   if (req.method === "GET") {
     const list = (await store.get(KEY, { type: "json" })) || [];
-    return json({ ok: true, list });
+    const code = process.env.ADMIN_CODE || process.env.VIDEO_ADMIN_CODE || process.env.ACCESS_CODE;
+    const admin = !!code && req.headers.get("x-admin-code") === code;
+    return json({ ok: true, admin, list: admin ? list : list.map(x => ({ ...x, who: maskName(x.who) })) });
   }
 
   if (req.method === "POST") {
+    if (!originOk(req)) return json({ error: "달성On 화면에서만 사용할 수 있습니다" }, 403);
     let b;
     try { b = await req.json(); } catch { return json({ error: "형식이 올바르지 않습니다" }, 400); }
 
@@ -36,6 +42,7 @@ export default async (req) => {
       return json({ ok: true, likes: list[i].likes });
     }
 
+    { const g = await guard(req, "bugs", 40); if (g) return g; }   // 글 올리기: 같은 곳에서 하루 40건까지
     const text = cut(b.text, 1000).trim();
     if (!text) return json({ error: "내용을 적어 주세요" }, 400);
 
@@ -57,7 +64,7 @@ export default async (req) => {
 
   // 관리자: 상태 바꾸기(접수 → 검토 → 반영) · 지우기 — ADMIN_CODE(없으면 ACCESS_CODE) 환경변수와 같은 코드를 보낸 요청만
   if (req.method === "PATCH" || req.method === "DELETE") {
-    const code = process.env.ADMIN_CODE || process.env.ACCESS_CODE;
+    const code = process.env.ADMIN_CODE || process.env.VIDEO_ADMIN_CODE || process.env.ACCESS_CODE;
     if (!code) return json({ error: "서버에 ADMIN_CODE 환경변수가 없습니다 (Netlify › Environment variables)" }, 500);
     if (req.headers.get("x-admin-code") !== code) return json({ error: "관리자 코드가 맞지 않습니다" }, 401);
     let b; try { b = await req.json(); } catch { return json({ error: "형식이 올바르지 않습니다" }, 400); }

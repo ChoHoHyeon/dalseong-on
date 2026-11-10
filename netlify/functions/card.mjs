@@ -5,6 +5,7 @@
 // 키는 Netlify 환경변수 OPENAI_API_KEY 에만 존재. 브라우저·GitHub에 노출되지 않는다.
 // 선택: OPENAI_IMAGE_MODEL(기본 gpt-image-2) · OPENAI_VERIFY_MODEL(기본 gpt-4.1-mini) · ACCESS_CODE(시연용 잠금)
 import { getStore } from "@netlify/blobs";
+import { guard } from "../lib/guard.mjs";
 
 export const config = { path: "/api/card" };
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
@@ -35,6 +36,7 @@ export default async (req) => {
   if (!codeOk) return json({ error: "접속 코드가 맞지 않습니다 (관리자 › 모델 설정)" }, 401);
   if (!key) return json({ error: "서버에 OPENAI_API_KEY 환경변수가 없습니다 (Netlify › Site configuration › Environment variables)" }, 500);
   if (b.action !== "start") return json({ error: "action" }, 400);
+  { const g = await guard(req, "card", 60); if (g) return g; }   // 그림 생성: 같은 곳에서 하루 60장까지
 
   const prompt = String(b.prompt || "").slice(0, 6000);
   if (!prompt) return json({ error: "prompt" }, 400);

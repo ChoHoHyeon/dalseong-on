@@ -1,7 +1,9 @@
 // 달성On — Anthropic API 프록시 (Netlify Functions 2.0, 스트리밍)
 // 키는 Netlify 환경변수 ANTHROPIC_API_KEY 에만 존재. 브라우저·GitHub에는 절대 노출되지 않음.
 // 선택: ACCESS_CODE 환경변수를 두면 같은 코드를 보낸 요청만 허용 (시연용 간단 잠금)
+import { guard } from "../lib/guard.mjs";
 export const config = { path: "/api/chat" };
+const MODELS = ["claude-sonnet-4-5", "claude-haiku-4-5"];   // 비싼 모델은 서버에서 막는다
 
 export default async (req) => {
   if (req.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
@@ -12,11 +14,12 @@ export default async (req) => {
   let probe = null; try { probe = await req.clone().json(); } catch {}
   if (probe && probe.ping) return new Response(JSON.stringify({ ok: true, gate: !!gate, codeOk }), { headers: { "content-type": "application/json" } });
   if (!codeOk) return new Response(JSON.stringify({ error: "접속 코드가 맞지 않습니다 (관리자 › 모델 설정)" }), { status: 401, headers: { "content-type": "application/json" } });
+  const g = await guard(req, "chat", 400); if (g) return g;
 
   let body;
   try { body = await req.json(); } catch { return new Response("Bad Request", { status: 400 }); }
   const payload = {
-    model: body.model || "claude-sonnet-4-5",
+    model: MODELS.includes(body.model) ? body.model : "claude-sonnet-4-5",
     max_tokens: Math.min(body.max_tokens || 1200, 8000),
     stream: true,
     system: String(body.system || "").slice(0, 8000),
