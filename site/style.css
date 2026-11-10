@@ -2152,3 +2152,5 @@ body[data-theme=dark] .bn-prop.float #bpText,body[data-theme=dark] .bn-prop.floa
 .cn-cap button{height:40px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-weight:700;cursor:pointer;white-space:nowrap;color:var(--tx)}
 .cn-bar .cn-artsel{white-space:nowrap}
 .pcols .opt-box>label.pfull:has(#cnTitle){margin-top:10px}   /* 카드뉴스: 제목칸이 아래로 밀리지 않게 */
+/* 카드뉴스 파일 줄: 샘플 버튼과 파일 추가 버튼 높이 맞춤 */
+.pfile:has(#cnSampleFile) #cnSampleFile,.pfile:has(#cnSampleFile) label.filebtn{height:38px;box-sizing:border-box;display:inline-flex;align-items:center;padding:0 16px;margin:0;font-size:13px;line-height:1}

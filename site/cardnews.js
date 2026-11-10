@@ -155,7 +155,13 @@ function init(){
     L.textContent=done.join(' · ')+' — 아래 「카드뉴스 만들기」를 누르세요'; };
   $('#cnFile').onchange=e=>{ const fs=[...e.target.files]; e.target.value=''; readFiles(fs); };
   // 샘플 계획서(실명·결재·예산 정보를 뺀 시연용 PDF)를 실제 파일처럼 올린다
-  $('#cnSampleFile').onclick=async()=>{ try{ const b=await (await fetch('assets/sample_edu_plan.pdf')).blob(); $('#cnSrc').value=''; $('#cnTitle').value=''; await readFiles([new File([b],'2026년 군민 정보화교육 추진 계획(샘플).pdf',{type:'application/pdf'})]); if(!v('cnContact')) $('#cnContact').value='문의 정보통신과 053)668-0000'; }catch(e){ $('#cnFileList').textContent='⚠ 샘플 파일을 불러오지 못했습니다'; } };
+  // 메뉴에 들어오면 샘플 파일과 PDF 읽기 도구를 미리 받아 둔다 (처음 누를 때 멈춘 듯 보이지 않게)
+  let _sampleBlob=null; const preload=()=>{ if(!_sampleBlob) _sampleBlob=fetch('assets/sample_edu_plan.pdf').then(r=>r.blob()).catch(()=>null);
+    if(!window.pdfjsLib&&!document.querySelector('script[src="vendor/pdf.min.js"]')){ const sc=document.createElement('script'); sc.src='vendor/pdf.min.js'; sc.onload=()=>{ try{ pdfjsLib.GlobalWorkerOptions.workerSrc='vendor/pdf.worker.min.js'; }catch(e){} }; document.head.appendChild(sc); } };
+  setTimeout(preload,800);
+  $('#cnSampleFile').onclick=async()=>{ const btn=$('#cnSampleFile'); if(btn.disabled) return; btn.disabled=true; const t0=btn.textContent; btn.textContent='⏳ 샘플 계획서 읽는 중…'; $('#cnFileList').textContent='샘플 계획서를 올리고 내용을 읽고 있습니다…';
+    await new Promise(r=>setTimeout(r,30));
+    try{ preload(); const b=await _sampleBlob; if(!b) throw 0; $('#cnSrc').value=''; $('#cnTitle').value=''; await readFiles([new File([b],'2026년 군민 정보화교육 추진 계획(샘플).pdf',{type:'application/pdf'})]); if(!v('cnContact')) $('#cnContact').value='문의 정보통신과 053)668-0000'; }catch(e){ $('#cnFileList').textContent='⚠ 샘플 파일을 불러오지 못했습니다'; _sampleBlob=null; } finally{ btn.disabled=false; btn.textContent=t0; } };
   $('#cnGo').onclick=make; $('#cnAgain').onclick=make;
   ['cnSize','cnTheme'].forEach(id=>$('#'+id).onchange=()=>{ if(C.data) renderAll(); });
   $('#cnSize').addEventListener('change',()=>{ if(C.data&&v('cnArt')==='ai'&&C.art){ C.art=null; aiArt(false); } });   // 비율이 바뀌면 그 비율로 다시 그린다
@@ -165,7 +171,7 @@ function init(){
   $('#cnPng').onclick=()=>{ if(C.data) dl($('#cnMain'),`카드뉴스_${C.cur+1}.png`); };
   $('#cnAll').onclick=async()=>{ if(!C.data) return; const t=document.createElement('canvas'); for(let i=0;i<C.data.slides.length;i++){ await drawSlide(t,C.data.slides[i],i,C.data.slides.length); dl(t,`카드뉴스_${String(i+1).padStart(2,'0')}.png`); await new Promise(r=>setTimeout(r,350)); } toast?.(`${C.data.slides.length}장을 내려받았습니다`); };
   $('#cnCopy').onclick=()=>{ navigator.clipboard.writeText($('#cnCaption').value); toast?.('게시글 문구를 복사했습니다'); };
-  $('#cnSample').onclick=()=>{ $('#cnTitle').value='하반기 정보화교육 수강생 모집'; $('#cnCount').value='6'; $('#cnContact').value='문의 정보통신과 053)668-2454';
+  if($('#cnSample')) $('#cnSample').onclick=()=>{ $('#cnTitle').value='하반기 정보화교육 수강생 모집'; $('#cnCount').value='6'; $('#cnContact').value='문의 정보통신과 053)668-2454';
     $('#cnSrc').value='달성군은 디지털 취약계층의 정보 격차 해소를 위해 2026년 하반기 주민 정보화교육 수강생을 모집한다.\n교육은 11월 17일부터 12월 19일까지 8주간 군청 정보화교육장과 읍·면 주민자치센터에서 운영된다.\n과정은 스마트폰 활용(사진·카카오톡·모바일 신분증), 키오스크 실습(무인주문·민원발급), 생성형 AI 기초(검색·문서 작성) 3개로, 과정별 주 2회 2시간씩 진행된다.\n모집 인원은 과정별 20명, 총 120명이며 달성군민이면 누구나 신청할 수 있다. 수강료는 무료다.\n신청은 11월 14일까지 읍·면 행정복지센터 방문 또는 전화로 하면 된다.\n군 관계자는 "어르신도 키오스크와 스마트폰을 어렵지 않게 쓸 수 있도록 실습 위주로 운영하겠다"고 말했다.';
     toast?.('예시를 채웠습니다 — 「카드뉴스 만들기」를 눌러보세요'); };
   $('#cnReset').onclick=()=>{ ['cnTitle','cnContact','cnSrc'].forEach(id=>$('#'+id).value=''); $('#cnFileList').textContent='파일을 올리면 내용을 읽어 위 칸에 채웁니다 (한글 hwpx·워드·PDF·텍스트) · 직접 붙여넣어도 됩니다'; C.data=null; C.art=null; cnLoad(false); $('#cnOut').hidden=true; $('#cnMsg').textContent=''; };
