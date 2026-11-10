@@ -2122,3 +2122,11 @@ body[data-theme=dark] .bn-tip>span{color:#cfe0ff;background:linear-gradient(100d
 .bn-prop.float .bp-row>em{width:40px}
 .bn-prop.float #bpFont{gap:4px} .bn-prop.float #bpFont button{height:28px;padding:0 9px;font-size:12.5px}
 .bn-prop.float .bp-h b{font-size:13px} .bn-prop.float .bp-h span{font-size:12px}
+/* 편집 창 색: 페이지(흰색)와 구분되는 연한 하늘색 · 입력 칸은 흰색 유지 */
+.bn-prop.float{background:#e6efff;border-color:#9dbcf5}
+.bn-prop.float .bp-h{border-bottom-color:#c3d6fa}
+.bn-prop.float .bp-h span,.bn-prop.float .bp-row>em,.bn-prop.float .bp-cm{color:#4a5f86}
+.bn-prop.float #bpText,.bn-prop.float .bn-chips button,.bn-prop.float .bn-fs,.bn-prop.float .bn-fs button,.bn-prop.float #bpPt,.bn-prop.float .bp-unit,.bn-prop.float .bp-reset,.bn-prop.float .bp-del{background:#fff}
+.bn-prop.float .bn-chips button.on{background:#2f6fed;color:#fff;border-color:#2f6fed}
+body[data-theme=dark] .bn-prop.float{background:#1c2b4a;border-color:#3b5a99}
+body[data-theme=dark] .bn-prop.float #bpText,body[data-theme=dark] .bn-prop.float .bn-chips button,body[data-theme=dark] .bn-prop.float .bn-fs,body[data-theme=dark] .bn-prop.float .bn-fs button,body[data-theme=dark] .bn-prop.float #bpPt,body[data-theme=dark] .bn-prop.float .bp-unit,body[data-theme=dark] .bn-prop.float .bp-reset{background:#0f1a30}
