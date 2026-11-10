@@ -11,7 +11,7 @@
 "use strict";
 const $=s=>document.querySelector(s);
 const W=720,H=1280, T_HOOK=3, T_SC=5, T_END=4;          // 3 + 5×4 + 4 = 27초
-const USER_LIMIT=5;                                     // 이 브라우저 하루 AI 영상 편수 (사이트 전체 한도도 5편)
+const USER_LIMIT=5;                                     // 1인 하루 AI 영상 편수 (서버도 접속 위치별로 같이 센다)
 const V={font:'pre',logoKind:'ci',logoScenes:false,   /* 로고는 마지막 장면에만 군 CI 원본 */
  busy:false,data:null,imgs:[],clips:[],blob:null,ext:'mp4',logo:null,purpose:'auto'};
 const PUR={ recruit:['📣','모집·신청'], event:['🎉','행사·축제'], policy:['📋','안내·공지'], news:['🏆','성과·소식'], campaign:['🦺','생활정보·캠페인'] };
@@ -187,7 +187,7 @@ async function make(){
     if(online){ try{ admin=!!(await (await fetch('/api/video',{method:'POST',headers:{'content-type':'application/json','x-access-code':code(),'x-admin-code':adc()},body:'{"ping":1}'})).json()).admin; }catch(e){} }   /* 관리자 코드면 하루 한도 없음 */
     if(online&&!admin&&quotaLocal()>=USER_LIMIT) note+=`이 브라우저의 오늘 AI 영상 ${USER_LIMIT}편을 다 써서 그림에 움직임을 넣어 만들었습니다. `;
     else if(online){ try{ const r=await fetch('/api/video',{method:'POST',headers:{'content-type':'application/json','x-access-code':code(),'x-admin-code':adc()},body:JSON.stringify({action:'start'})}); const j=await r.json();
-        if(r.ok&&j.ticket){ ticket=j.ticket; if(!admin) quotaUse(); } else if(j.error==='limit') note+=`오늘 AI 영상 한도(전체 ${j.limit}편)를 다 써서 그림에 움직임을 넣어 만들었습니다. `; else if(j.error==='nokey') note+='움직이는 영상 기능이 아직 연결되지 않아 그림에 움직임을 넣어 만들었습니다. '; else note+='움직이는 영상을 접수하지 못해 그림에 움직임을 넣어 만들었습니다. '; }catch(e){ note+='움직이는 영상을 접수하지 못했습니다. '; } }
+        if(r.ok&&j.ticket){ ticket=j.ticket; if(!admin) quotaUse(); } else if(j.error==='mine') note+=`오늘 AI 영상 ${j.limit}편을 다 써서 그림에 움직임을 넣어 만들었습니다. `; else if(j.error==='limit') note+='오늘 달성On 전체 AI 영상 한도가 차서 그림에 움직임을 넣어 만들었습니다. '; else if(j.error==='nokey') note+='움직이는 영상 기능이 아직 연결되지 않아 그림에 움직임을 넣어 만들었습니다. '; else note+='움직이는 영상을 접수하지 못해 그림에 움직임을 넣어 만들었습니다. '; }catch(e){ note+='움직이는 영상을 접수하지 못했습니다. '; } }
     // ②→③ 장면마다 그림이 나오는 즉시 그 장면 영상을 맡긴다 (4장면 동시 진행 — 기다리는 시간 단축)
     let ni=0, nc=0, failI=0, failC=0; const st=()=>prog(ni<4?1:2,ni<4?`${ni}/4`:`${nc}/4`,V._t0); st();
     V.imgs=[null,null,null,null]; V.clips=[null,null,null,null];
@@ -202,7 +202,7 @@ async function make(){
     prog(3,'',V._t0); await compose(); prog(-1);
     $('#mvMsg').textContent=(note||'완성됐습니다 — ')+'오른쪽에서 자막을 고치고 다시 합치거나 영상으로 저장하세요.';
     window.dsSave&&dsSave('movie',V.data.title||'홍보영상',[`[훅] ${V.data.hook.head} ${V.data.hook.sub||''}`,...V.data.scenes.map((x,i)=>`[장면${i+1}] ${x.big?x.big+' · ':''}${x.head} — ${x.sub||''}`),`[마무리] ${V.data.end.head} ${V.data.end.sub||''}`].join('\n'));
-    if(S.stats) S.stats.gen++, window.dsHit&&dsHit('gen');
+    if(S.stats) S.stats.gen++, window.dsHit&&dsHit('gen'); quotaShow();
   }catch(e){ prog(-1); $('#mvMsg').textContent='⚠ '+e.message; if(!V.data) $('#mvOut').hidden=true; }
   finally{ V.busy=false; $('#mvGo').disabled=false; $('#mvRemix').disabled=false; }
 }
@@ -210,7 +210,7 @@ async function remix(){ if(!V.data||V.busy) return; V.busy=true; $('#mvRemix').d
 
 function init(){
   if($('#mvGo')._on) return; $('#mvGo')._on=1;
-  $('#mvGo').onclick=make; $('#mvRemix').onclick=remix;
+  $('#mvGo').onclick=make; $('#mvRemix').onclick=remix; quotaShow();
   $('#mvFont').innerHTML=Object.entries(MFONTS).map(([k,[l,f,w]])=>`<button type="button" data-v="${k}" class="${k===V.font?'on':''}" style="font-family:'${f}',Pretendard;font-weight:${w}">${l}</button>`).join('');
   $('#mvFont').onclick=async e=>{ const b=e.target.closest('button'); if(!b||V.busy) return; V.font=b.dataset.v; $('#mvFont').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
     if(!V.data) return; const f=MFONTS[V.font]; try{ await document.fonts.load(`${f[2]} 40px "${f[1]}"`,'가나다'); }catch(err){}
@@ -233,5 +233,9 @@ function init(){
   $('#mvReset').onclick=()=>{ if(V.busy) return; $('#mvSrc').value=''; $('#mvFileList').textContent='파일을 올리거나 이 상자에 끌어다 놓으면 내용을 읽어 위 칸에 채웁니다 (한글 hwpx·워드·PDF·텍스트)'; V.data=null; V.blob=null; $('#mvOut').hidden=true; $('#mvMsg').textContent=''; };
 }
 async function mvPeek(t,msg){ if(!V.data) return; V.logo=V.logo||await loadImg('assets/dalseong_ci.png'); V.slogan=V.slogan||await loadImg('assets/slogan.png'); const c=$('#mvCanvas'); c.hidden=false; $('#mvVideo').pause(); $('#mvVideo').hidden=true; frameAt(c.getContext('2d'),t); $('#mvMsg').textContent=msg+' — 「고친 자막으로 다시 합치기」를 누르면 영상에 들어갑니다.'; }
+/* 오늘 남은 편수 — 1인 하루 5편. 관리자는 한도 없음 */
+async function quotaShow(){ const el=$('#mvQuota'); if(!el) return; try{ const j=await (await fetch('/api/video',{method:'POST',headers:{'content-type':'application/json','x-access-code':code(),'x-admin-code':adc()},body:'{"ping":1}'})).json();
+    if(!j.hasKey){ el.hidden=true; return; } if(j.admin){ el.textContent='🛠 관리자 · 한도 없음'; el.className='mv-quota adm'; el.hidden=false; return; }
+    const left=Math.max(0,USER_LIMIT-quotaLocal()); el.textContent=left>0?`🎬 오늘 남은 AI 영상 ${left}편`:'오늘 AI 영상 한도를 다 썼습니다 · 간이 영상으로 만들어집니다'; el.className='mv-quota'+(left>0?'':' none'); el.hidden=false; }catch(e){ el.hidden=true; } }
 window.MOVIE={init};
 })();
