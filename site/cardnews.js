@@ -27,11 +27,11 @@ const SYS=`당신은 대구광역시 달성군 SNS 홍보 담당자입니다. �
   theme: navy(행정·안내) / green(환경·농업·건강) / orange(축제·행사·청년) / mint(복지·교육·생활)
   font: pre(기본 고딕) / ng(나눔고딕·공문 느낌) / bhs(굵은 제목·강렬) / jua(둥근·친근) / gd(고운돋움·부드러움) / bagel(굵고 귀여움)
 · 본문 장마다 구도를 정한다. type: list(항목 나열) / stat(숫자가 핵심 — big에 그 숫자) / steps(신청 절차·순서, body가 단계) / qa(자주 묻는 질문 — head는 질문, body는 답) / quote(한마디·인용 강조 — body[0]이 큰 문장)
-  art(그림 위치): right / top / bottom / none,  align: left / center.  장마다 겹치지 않게 다양하게 섞되 내용에 맞게.
+  그림 위치·정렬은 모든 장이 같게 유지되므로 정하지 않는다. 장 모양만 내용에 맞게 고른다(억지로 섞지 말 것).
 · 본문 장에서 숫자·핵심어가 중요하면 big에 짧게(8자 이내, 예: "120명" "무료" "11월 14일까지") 넣는다. 없으면 생략.
 · 표지 head는 반드시 채운다.
 반드시 아래 JSON만 출력한다(설명 금지):
-{"design":{"layout":"left","theme":"navy","font":"pre"},"visual":"English concrete visual motifs","keywords":["핵심 키워드1","핵심 키워드2"],"art":"edu","slides":[{"kind":"cover","head":"제목","body":["부제"]},{"kind":"body","type":"list","art":"right","align":"left","head":"소제목","big":"120명","body":["문장","문장"]},{"kind":"end","head":"마무리 문구","body":["문의 ○○과 053)668-○○○○"]}],"caption":"…","tags":["#달성군","#대구달성"]}`;
+{"design":{"layout":"left","theme":"navy","font":"pre"},"visual":"English concrete visual motifs","keywords":["핵심 키워드1","핵심 키워드2"],"art":"edu","slides":[{"kind":"cover","head":"제목","body":["부제"]},{"kind":"body","type":"list","head":"소제목","big":"120명","body":["문장","문장"]},{"kind":"end","head":"마무리 문구","body":["문의 ○○과 053)668-○○○○"]}],"caption":"…","tags":["#달성군","#대구달성"]}`;
 
 function offline(){
   const src=v('cnSrc'); const paras=src.split(/\n\s*\n|\r?\n/).map(x=>x.trim()).filter(x=>x.length>8); const n=+v('cnCount')||6;
@@ -79,7 +79,7 @@ async function getArt(){
 }
 async function drawSlide(canvas,s,i,total){
   const [W,H]=SIZES[v('cnSize')]||SIZES.sq; const [,grad,fg,acc]=themeOf(); const L=layoutOf();
-  canvas.width=W; canvas.height=H; const ctx=canvas.getContext('2d'); const pad=W*0.085;
+  canvas.width=W; canvas.height=H; const U=Math.min(W,H*1.05);   /* 글자·여백·그림 크기 기준: 짧은 변 — 가로형(16:9)으로 바꿔도 넘치지 않게 */ const ctx=canvas.getContext('2d'); const pad=U*0.085;
   await fontsReady();
   const g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,grad[0]); g.addColorStop(1,grad[1]);
   const art=await getArt(); const cover=(im,x,y,w,h)=>{ const r=Math.max(w/im.width,h/im.height); const iw=im.width*r, ih=im.height*r; ctx.save(); ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip(); ctx.drawImage(im,x+(w-iw)/2,y+(h-ih)/2,iw,ih); ctx.restore(); };
@@ -89,78 +89,78 @@ async function drawSlide(canvas,s,i,total){
   // ── 배경 ──
   let dark=isBody, artBox=null;
   // 본문 장 구도: AI가 장마다 고른 그림 위치(s.art)·정렬(s.align)·장 모양(s.type). 없으면 전체 틀(L)을 따른다
-  const AP=isBody?(s.art&&['right','top','bottom','none'].includes(s.art)?s.art:(L==='bottom'?'top':L==='center'?'bottom':'right')):null;
-  const AL=isBody?(s.align==='center'||s.align==='left'?s.align:(L==='center'?'center':'left')):null;
+  const AP=isBody?(s.artUser&&['right','top','bottom','none'].includes(s.artUser)?s.artUser:(L==='bottom'?'top':L==='center'?'bottom':'right')):null;   /* 그림 위치·정렬은 모든 장 통일(전체 「디자인」) — 장마다 바뀌면 산만하므로 */
+  const AL=isBody?(L==='center'?'center':'left'):null;
   if(isBody){
     ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
     if(AP==='top'&&art){ artBox=[0,0,W,H*0.34]; cover(art,0,0,W,H*0.34); ctx.fillStyle=g; ctx.fillRect(0,H*0.34,W,H*0.012); }
     else { ctx.fillStyle=g; ctx.fillRect(0,0,W,H*0.045);
-      if(art&&AP==='right'){ const aw=W*0.4, ah=aw, ax=W-aw-pad*0.6, ay=H-ah-pad*1.6; artBox=[ax,ay,aw,ah]; ctx.save(); ctx.globalAlpha=.95; ctx.beginPath(); ctx.roundRect(ax,ay,aw,ah,W*0.03); ctx.clip(); ctx.drawImage(art,ax,ay,aw,ah); ctx.restore(); } }
+      if(art&&AP==='right'){ const aw=U*0.4, ah=aw, ax=W-aw-pad*0.6, ay=H-ah-pad*1.6; artBox=[ax,ay,aw,ah]; ctx.save(); ctx.globalAlpha=.95; ctx.beginPath(); ctx.roundRect(ax,ay,aw,ah,U*0.03); ctx.clip(); ctx.drawImage(art,ax,ay,aw,ah); ctx.restore(); } }
   }else if(art){
     cover(art,0,0,W,H); const og=ctx.createLinearGradient(0,0,0,H);
     if(L==='bottom'){ og.addColorStop(0,grad[0]+'55'); og.addColorStop(0.45,grad[0]+'22'); og.addColorStop(0.7,grad[0]+'cc'); og.addColorStop(1,grad[0]+'f5'); }
     else if(L==='center'){ og.addColorStop(0,grad[0]+'e6'); og.addColorStop(0.55,grad[0]+'99'); og.addColorStop(1,grad[1]+'55'); }
     else { og.addColorStop(0,grad[0]+'f2'); og.addColorStop(0.45,grad[0]+'b8'); og.addColorStop(1,grad[1]+'33'); }
     ctx.fillStyle=og; ctx.fillRect(0,0,W,H);
-  }else{ ctx.fillStyle=g; ctx.fillRect(0,0,W,H); ctx.fillStyle='rgba(255,255,255,.08)'; ctx.beginPath(); ctx.arc(W*0.85,H*0.2,W*0.35,0,7); ctx.fill(); }
+  }else{ ctx.fillStyle=g; ctx.fillRect(0,0,W,H); ctx.fillStyle='rgba(255,255,255,.08)'; ctx.beginPath(); ctx.arc(U*0.85,H*0.2,U*0.35,0,7); ctx.fill(); }
   const tx=dark?'#1c2333':fg; const sub=dark?'#4b5563':'rgba(255,255,255,.9)';
   const C_=isBody?AL==='center':L==='center'; ctx.textBaseline='top'; ctx.textAlign=C_?'center':'left'; const X=C_?W/2:pad, MW=W-pad*2;
   // 위 라벨
-  font(ctx,'700',Math.round(W*0.03)); ctx.fillStyle=dark?grad[0]:acc; const lbl=s.kind==='cover'?'달성군 소식':s.kind==='end'?'함께해요 달성':`${i}/${total-1}`;
+  font(ctx,'700',Math.round(U*0.03)); ctx.fillStyle=dark?grad[0]:acc; const lbl=s.kind==='cover'?'달성군 소식':s.kind==='end'?'함께해요 달성':`${i}/${total-1}`;
   ctx.fillText(lbl, X, isBody&&AP==='top'&&artBox?H*0.38:pad*0.9);
   const lines=(t,mw)=>wrap(ctx,t,mw);
   let y;
   if(s.kind==='cover'||s.kind==='end'){
-    let hs=Math.round(W*(s.kind==='cover'?0.11:0.08)); font(ctx,'800',hs); let hl=lines(head,MW); while((hl.length>2||hl.some(l=>ctx.measureText(l).width>MW))&&hs>W*0.06){ hs-=2; font(ctx,'800',hs); hl=lines(head,MW); }
-    const subS=Math.round(W*0.045); const blockH=hl.length*hs*1.18+hs*0.6+body.length*W*0.065;
-    if(L==='bottom') y=H-pad*2.6-blockH; else if(C_) y=Math.max(pad*0.9+W*0.07,H*(art?0.3:0.38)-blockH/2); else y=Math.max(pad*0.9+W*0.03*2.2,(art?H*0.22:H*0.36)-hl.length*hs*0.6);
+    let hs=Math.round(W*(s.kind==='cover'?0.11:0.08)); font(ctx,'800',hs); let hl=lines(head,MW); while((hl.length>2||hl.some(l=>ctx.measureText(l).width>MW))&&hs>U*0.06){ hs-=2; font(ctx,'800',hs); hl=lines(head,MW); }
+    const subS=Math.round(U*0.045); const blockH=hl.length*hs*1.18+hs*0.6+body.length*U*0.065;
+    if(L==='bottom') y=H-pad*2.6-blockH; else if(C_) y=Math.max(pad*0.9+U*0.07,H*(art?0.3:0.38)-blockH/2); else y=Math.max(pad*0.9+U*0.03*2.2,(art?H*0.22:H*0.36)-hl.length*hs*0.6);
     ctx.fillStyle=tx; hl.forEach(l=>{ ctx.fillText(l,X,y); y+=hs*1.18; });
-    ctx.fillStyle=acc; ctx.fillRect(C_?W/2-W*0.06:pad,y+hs*0.2,W*0.12,H*0.008); y+=hs*0.6;
-    font(ctx,'500',subS,true); ctx.fillStyle=sub; body.forEach(b=>lines(b,MW).forEach(l=>{ ctx.fillText(l,X,y); y+=W*0.065; }));
+    ctx.fillStyle=acc; ctx.fillRect(C_?W/2-U*0.06:pad,y+hs*0.2,U*0.12,H*0.008); y+=hs*0.6;
+    font(ctx,'500',subS,true); ctx.fillStyle=sub; body.forEach(b=>lines(b,MW).forEach(l=>{ ctx.fillText(l,X,y); y+=U*0.065; }));
   }else{
     // ── 본문 장: 장 모양(type)별로 그린다. 글자 크기는 로고 줄·그림과 겹치지 않게 맞춘다 ──
     const T=['list','stat','steps','qa','quote'].includes(s.type)?s.type:'list';
     const top0=AP==='top'&&artBox?H*0.43:H*0.15;
-    const artBottomH=AP==='bottom'&&art?Math.min(W*0.3,H*0.28):0;
-    const limit=H-pad-H*0.085-(artBottomH?artBottomH+W*0.03:0);
-    const avoid=AP==='right'&&artBox&&art, mwAt=(yy,h0)=>(C_?MW:MW)-(avoid&&yy+h0>artBox[1]?artBox[2]+W*0.03:0);
+    const artBottomH=AP==='bottom'&&art?Math.min(U*0.3,H*0.28):0;
+    const limit=H-pad-H*0.085-(artBottomH?artBottomH+U*0.03:0);
+    const avoid=AP==='right'&&artBox&&art, mwAt=(yy,h0)=>(C_?MW:MW)-(avoid&&yy+h0>artBox[1]?artBox[2]+U*0.03:0);
     const accent=grad[1];
     // k: 글자 배율 — 넘치면 줄여 가며 다시 잰다(dry=true) → 맞는 크기로 실제로 그린다
     const run=(k,dry)=>{ let yy=top0; const P=(t,x,yv)=>{ if(!dry) ctx.fillText(t,x,yv); };
-      const bar=()=>{ if(!dry){ ctx.fillStyle=accent; ctx.fillRect(C_?W/2-W*0.045:pad,yy,W*0.09,H*0.006); } yy+=H*0.006+W*0.035; };
+      const bar=()=>{ if(!dry){ ctx.fillStyle=accent; ctx.fillRect(C_?W/2-U*0.045:pad,yy,U*0.09,H*0.006); } yy+=H*0.006+U*0.035; };
       if(T==='stat'){
         const big=(s.big||((s.body||[]).join(' ').match(/[\d,.]+\s*[^\s,.]{0,3}/)||[head])[0]).trim();
-        const bs=Math.round(W*0.2*k); font(ctx,'800',bs); while(ctx.measureText(big).width>MW&&bs>W*0.08){ font(ctx,'800',(bs-=4)); }
+        const bs=Math.round(U*0.2*k); font(ctx,'800',bs); while(ctx.measureText(big).width>MW&&bs>U*0.08){ font(ctx,'800',(bs-=4)); }
         ctx.fillStyle=accent; P(big,X,yy); yy+=bs*1.1;
-        const hs=Math.round(W*0.062*k); font(ctx,'800',hs); ctx.fillStyle=tx; lines(head,mwAt(yy,hs)).forEach(l=>{ P(l,X,yy); yy+=hs*1.22; }); yy+=hs*0.2; bar();
-        const ts=Math.round(W*0.044*k); font(ctx,'500',ts,true); ctx.fillStyle='#2b3445'; body.forEach(b=>{ lines(b,mwAt(yy,ts)).forEach(l=>{ P(l,X,yy); yy+=ts*1.5; }); });
+        const hs=Math.round(U*0.062*k); font(ctx,'800',hs); ctx.fillStyle=tx; lines(head,mwAt(yy,hs)).forEach(l=>{ P(l,X,yy); yy+=hs*1.22; }); yy+=hs*0.2; bar();
+        const ts=Math.round(U*0.044*k); font(ctx,'500',ts,true); ctx.fillStyle='#2b3445'; body.forEach(b=>{ lines(b,mwAt(yy,ts)).forEach(l=>{ P(l,X,yy); yy+=ts*1.5; }); });
       }else if(T==='steps'){
-        const hs=Math.round(W*0.068*k); if(s.big){ const bs=Math.round(W*0.1*k); font(ctx,'800',bs); ctx.fillStyle=accent; P(s.big,X,yy); yy+=bs*1.12; }
+        const hs=Math.round(U*0.068*k); if(s.big){ const bs=Math.round(U*0.1*k); font(ctx,'800',bs); ctx.fillStyle=accent; P(s.big,X,yy); yy+=bs*1.12; }
         font(ctx,'800',hs); ctx.fillStyle=tx; lines(head,mwAt(yy,hs)).forEach(l=>{ P(l,X,yy); yy+=hs*1.22; }); yy+=hs*0.35;
-        const ts=Math.round(W*0.042*k), r=ts*0.85;
+        const ts=Math.round(U*0.042*k), r=ts*0.85;
         body.forEach((b,n)=>{ const bx=pad, mw=mwAt(yy,ts*2)-r*2.6; font(ctx,'500',ts,true); const ls=lines(b,mw); const bh=Math.max(r*2.2,ls.length*ts*1.45+ts*0.8);
-          if(!dry){ ctx.fillStyle='#f2f5fb'; ctx.beginPath(); ctx.roundRect(bx,yy,mwAt(yy,ts*2),bh,W*0.02); ctx.fill();
+          if(!dry){ ctx.fillStyle='#f2f5fb'; ctx.beginPath(); ctx.roundRect(bx,yy,mwAt(yy,ts*2),bh,U*0.02); ctx.fill();
             ctx.fillStyle=accent; ctx.beginPath(); ctx.arc(bx+r*1.4,yy+bh/2,r,0,7); ctx.fill(); ctx.fillStyle='#fff'; font(ctx,'800',Math.round(ts*0.95)); ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(String(n+1),bx+r*1.4,yy+bh/2+1); ctx.textBaseline='top'; ctx.textAlign='left';
             font(ctx,'500',ts,true); ctx.fillStyle='#1c2333'; let ty=yy+(bh-ls.length*ts*1.45)/2+ts*0.1; ls.forEach(l=>{ ctx.fillText(l,bx+r*2.8,ty); ty+=ts*1.45; }); }
-          yy+=bh+(n<body.length-1?ts*0.25+W*0.012:0);
-          if(!dry&&n<body.length-1){ ctx.fillStyle=accent; ctx.beginPath(); const cx=bx+r*1.4; ctx.moveTo(cx-r*0.35,yy-W*0.012-ts*0.15); ctx.lineTo(cx+r*0.35,yy-W*0.012-ts*0.15); ctx.lineTo(cx,yy-ts*0.02); ctx.fill(); } });
+          yy+=bh+(n<body.length-1?ts*0.25+U*0.012:0);
+          if(!dry&&n<body.length-1){ ctx.fillStyle=accent; ctx.beginPath(); const cx=bx+r*1.4; ctx.moveTo(cx-r*0.35,yy-U*0.012-ts*0.15); ctx.lineTo(cx+r*0.35,yy-U*0.012-ts*0.15); ctx.lineTo(cx,yy-ts*0.02); ctx.fill(); } });
         ctx.textAlign=C_?'center':'left';
       }else if(T==='qa'){
-        const hs=Math.round(W*0.06*k); font(ctx,'800',hs); const q='Q. '+head.replace(/^Q\.\s*/,''); ctx.fillStyle=accent; lines(q,mwAt(yy,hs)).forEach(l=>{ P(l,X,yy); yy+=hs*1.25; }); yy+=hs*0.3; bar();
-        const ts=Math.round(W*0.046*k); font(ctx,'500',ts,true); ctx.fillStyle='#1c2333'; const ans='A. '+body.join(' ').replace(/^A\.\s*/,''); lines(ans,mwAt(yy,ts)).forEach(l=>{ P(l,X,yy); yy+=ts*1.55; });
+        const hs=Math.round(U*0.06*k); font(ctx,'800',hs); const q='Q. '+head.replace(/^Q\.\s*/,''); ctx.fillStyle=accent; lines(q,mwAt(yy,hs)).forEach(l=>{ P(l,X,yy); yy+=hs*1.25; }); yy+=hs*0.3; bar();
+        const ts=Math.round(U*0.046*k); font(ctx,'500',ts,true); ctx.fillStyle='#1c2333'; const ans='A. '+body.join(' ').replace(/^A\.\s*/,''); lines(ans,mwAt(yy,ts)).forEach(l=>{ P(l,X,yy); yy+=ts*1.55; });
       }else if(T==='quote'){
-        const qs=Math.round(W*0.16*k); font(ctx,'800',qs); ctx.fillStyle=accent+'55'; P('“',X,yy-qs*0.15); yy+=qs*0.62;
-        const ts=Math.round(W*0.064*k); font(ctx,'800',ts); ctx.fillStyle=tx; const main=(body[0]||head); lines(main,mwAt(yy,ts)).forEach(l=>{ P(l,X,yy); yy+=ts*1.35; }); yy+=ts*0.4; bar();
-        const ss=Math.round(W*0.04*k); font(ctx,'500',ss,true); ctx.fillStyle='#4b5563'; [body[0]?head:'',...body.slice(1)].filter(Boolean).forEach(b=>lines(b,mwAt(yy,ss)).forEach(l=>{ P(l,X,yy); yy+=ss*1.5; }));
+        const qs=Math.round(U*0.16*k); font(ctx,'800',qs); ctx.fillStyle=accent+'55'; P('“',X,yy-qs*0.15); yy+=qs*0.62;
+        const ts=Math.round(U*0.064*k); font(ctx,'800',ts); ctx.fillStyle=tx; const main=(body[0]||head); lines(main,mwAt(yy,ts)).forEach(l=>{ P(l,X,yy); yy+=ts*1.35; }); yy+=ts*0.4; bar();
+        const ss=Math.round(U*0.04*k); font(ctx,'500',ss,true); ctx.fillStyle='#4b5563'; [body[0]?head:'',...body.slice(1)].filter(Boolean).forEach(b=>lines(b,mwAt(yy,ss)).forEach(l=>{ P(l,X,yy); yy+=ss*1.5; }));
       }else{
-        if(s.big){ const bs=Math.round(W*0.12*k); font(ctx,'800',bs); ctx.fillStyle=accent; P(lines(s.big,MW)[0],X,yy); yy+=bs*1.15; }
-        const hs=Math.round(W*0.07*k); font(ctx,'800',hs); ctx.fillStyle=tx; lines(head,mwAt(yy,hs)).forEach(l=>{ P(l,X,yy); yy+=hs*1.2; }); yy+=hs*0.15; bar();
-        const ts=Math.round(W*0.046*k); font(ctx,'500',ts,true);
-        body.forEach(b=>{ const ls=lines(b,mwAt(yy,ts)-(C_?0:W*0.05)); if(!dry&&!C_){ ctx.fillStyle=grad[0]; ctx.fillRect(pad,yy+ts*0.42,W*0.012,W*0.012); } ctx.fillStyle='#2b3445'; ls.forEach(l=>{ P(l,C_?X:pad+W*0.04,yy); yy+=ts*1.5; }); yy+=ts*0.5; });
+        if(s.big){ const bs=Math.round(U*0.12*k); font(ctx,'800',bs); ctx.fillStyle=accent; P(lines(s.big,MW)[0],X,yy); yy+=bs*1.15; }
+        const hs=Math.round(U*0.07*k); font(ctx,'800',hs); ctx.fillStyle=tx; lines(head,mwAt(yy,hs)).forEach(l=>{ P(l,X,yy); yy+=hs*1.2; }); yy+=hs*0.15; bar();
+        const ts=Math.round(U*0.046*k); font(ctx,'500',ts,true);
+        body.forEach(b=>{ const ls=lines(b,mwAt(yy,ts)-(C_?0:U*0.05)); if(!dry&&!C_){ ctx.fillStyle=grad[0]; ctx.fillRect(pad,yy+ts*0.42,U*0.012,U*0.012); } ctx.fillStyle='#2b3445'; ls.forEach(l=>{ P(l,C_?X:pad+U*0.04,yy); yy+=ts*1.5; }); yy+=ts*0.5; });
       }
       return yy; };
     let k=1; while(k>0.55&&run(k,true)>limit) k-=0.05; y=run(k,false);
-    if(artBottomH&&art){ const ah=artBottomH, aw=Math.min(W-pad*2,ah*1.6), ax=(W-aw)/2, ay=H-pad-H*0.085-ah; ctx.save(); ctx.globalAlpha=.95; ctx.beginPath(); ctx.roundRect(ax,ay,aw,ah,W*0.03); ctx.clip(); const r=Math.max(aw/art.width,ah/art.height); ctx.drawImage(art,ax+(aw-art.width*r)/2,ay+(ah-art.height*r)/2,art.width*r,art.height*r); ctx.restore(); }
+    if(artBottomH&&art){ const ah=artBottomH, aw=Math.min(W-pad*2,ah*1.6), ax=(W-aw)/2, ay=H-pad-H*0.085-ah; ctx.save(); ctx.globalAlpha=.95; ctx.beginPath(); ctx.roundRect(ax,ay,aw,ah,U*0.03); ctx.clip(); const r=Math.max(aw/art.width,ah/art.height); ctx.drawImage(art,ax+(aw-art.width*r)/2,ay+(ah-art.height*r)/2,art.width*r,art.height*r); ctx.restore(); }
   }
   // 로고(선택 입력 「로고」): 모든 장 같은 자리(왼쪽 아래)·같은 크기, 원본 그대로
   const lk=v('cnLogo')||'ci'; C.logos=C.logos||{}; const need=lk==='both'?['ci','slogan']:lk==='none'?[]:[lk];
@@ -169,13 +169,13 @@ async function drawSlide(canvas,s,i,total){
   if(ims.length){ const lh=H*0.05, gap=lh*0.35, ws=ims.map(im=>im.width*lh/im.height), tw=ws.reduce((a,b)=>a+b,0)+gap*(ims.length-1);
     if(!dark){ ctx.fillStyle='rgba(255,255,255,.95)'; ctx.beginPath(); ctx.roundRect(pad-lh*0.25,H-pad-lh-lh*0.2,tw+lh*0.5,lh+lh*0.4,lh*0.2); ctx.fill(); }
     let x=pad; ims.forEach((im,k)=>{ ctx.drawImage(im,x,H-pad-lh,ws[k],lh); x+=ws[k]+gap; }); }
-  if(s.kind!=='cover'){ ctx.textAlign='right'; font(ctx,'600',Math.round(W*0.028),true); ctx.fillStyle=dark?'#9aa3b2':'rgba(255,255,255,.7)'; ctx.fillText('대구광역시 달성군',W-pad,H-pad-W*0.03); }
+  if(s.kind!=='cover'){ ctx.textAlign='right'; font(ctx,'600',Math.round(U*0.028),true); ctx.fillStyle=dark?'#9aa3b2':'rgba(255,255,255,.7)'; ctx.fillText('대구광역시 달성군',W-pad,H-pad-U*0.03); }
 }
 async function renderAll(){
   const d=C.data; const wrapEl=$('#cnSlides'); wrapEl.innerHTML='';
   for(let i=0;i<d.slides.length;i++){ const c=document.createElement('canvas'); c.className='cn-thumb'+(i===C.cur?' on':''); c.title=`${i+1}장`; c.onclick=()=>{ C.cur=i; renderAll(); }; wrapEl.appendChild(c); await drawSlide(c,d.slides[i],i,d.slides.length); }
   await drawSlide($('#cnMain'),d.slides[C.cur],C.cur,d.slides.length);
-  const s=d.slides[C.cur]; const fe=document.activeElement; if(fe!==$('#cnEditHead')) $('#cnEditHead').value=s.head; if(fe!==$('#cnEditBody')) $('#cnEditBody').value=(s.body||[]).join('\n'); if(fe!==$('#cnEditBig')) $('#cnEditBig').value=s.big||''; $('#cnBigWrap').hidden=s.kind!=='body'; $('#cnShapeWrap').hidden=s.kind!=='body'; if(s.kind==='body'){ $('#cnType').value=s.type||'list'; $('#cnArtPos').value=s.art||'auto'; $('#cnAlign').value=s.align||'auto'; }   /* 입력 중인 칸은 덮어쓰지 않는다 */ $('#cnCurNo').textContent=`${C.cur+1} / ${d.slides.length}장`;
+  const s=d.slides[C.cur]; const fe=document.activeElement; if(fe!==$('#cnEditHead')) $('#cnEditHead').value=s.head; if(fe!==$('#cnEditBody')) $('#cnEditBody').value=(s.body||[]).join('\n'); if(fe!==$('#cnEditBig')) $('#cnEditBig').value=s.big||''; $('#cnBigWrap').hidden=s.kind!=='body';   /* 입력 중인 칸은 덮어쓰지 않는다 */ $('#cnCurNo').textContent=`${C.cur+1} / ${d.slides.length}장`;
   $('#cnDots').innerHTML=d.slides.map((_,k)=>`<i class="${k===C.cur?'on':''}" data-k="${k}"></i>`).join(''); $('#cnArrL').hidden=C.cur===0; $('#cnArrR').hidden=C.cur===d.slides.length-1;
   $('#cnCaption').value=`${d.caption||''}\n\n${(d.tags||[]).join(' ')}`;
   $('#cnOut').hidden=false;
@@ -252,7 +252,23 @@ function init(){
   // 이 장 편집: 고치는 대로 바로 반영 (버튼 없이)
   let _ed=null; const applyEdit=()=>{ if(!C.data) return; const s=C.data.slides[C.cur]; s.head=v('cnEditHead'); s.body=$('#cnEditBody').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean); if(s.kind==='body') s.big=v('cnEditBig'); renderAll(); };
   ['cnEditBig','cnEditHead','cnEditBody'].forEach(id=>$('#'+id).addEventListener('input',()=>{ clearTimeout(_ed); _ed=setTimeout(applyEdit,450); }));
-  ['cnType','cnArtPos','cnAlign'].forEach(id=>$('#'+id).onchange=()=>{ if(!C.data) return; const s=C.data.slides[C.cur]; const k={cnType:'type',cnArtPos:'art',cnAlign:'align'}[id]; const val=v(id); if(val==='auto') delete s[k]; else s[k]=val; renderAll(); });
+  /* 이 장만 AI로 다시 만들기: 같은 자리(표지·본문·마무리)를 원문 기준으로 다른 표현·장 모양으로 다시 쓴다 */
+  $('#cnRedo').onclick=async()=>{ if(!C.data||C.busy) return; const btn=$('#cnRedo'), d=C.data, k=C.cur, cur=d.slides[k]; const S=window.S||{};
+    if(!(S.key||S.server)||S.offline){ toast?.('AI 연결 시 사용할 수 있습니다'); return; }
+    btn.disabled=true; const t0=btn.textContent; btn.textContent='⏳ 이 장을 다시 만드는 중…';
+    const sys=`당신은 대구광역시 달성군 SNS 카드뉴스 담당자입니다. 카드뉴스 중 한 장만 다시 씁니다.
+· 같은 역할(${cur.kind==='cover'?'표지':cur.kind==='end'?'마무리':'본문'})을 유지하되 지금과 다른 표현으로, 더 눈에 띄고 쉽게.
+· 본문 장이면 내용에 가장 맞는 type을 고른다: list / stat(big에 숫자) / steps / qa / quote. 지금 type(${cur.type||'list'})과 다르게 해도 좋다.
+· 제목 12자 이내, 문장은 22자 이내, 숫자·날짜는 원문에 있는 것만.
+반드시 JSON 하나만 출력: {"kind":"${cur.kind}","type":"list","head":"…","big":"","body":["…"]}`;
+    const others=d.slides.map((x,n)=>`${n+1}장${n===k?'(다시 쓸 장)':''}: ${x.head} / ${(x.body||[]).join(' · ')}`).join('\n');
+    try{ const txt=await dsLLM(sys,`원문:\n${v('cnSrc').slice(0,6000)}\n\n지금 카드 구성:\n${others}`,{max:800});
+      const m=txt.match(/\{[\s\S]*\}/); if(!m) throw new Error('응답을 읽지 못했습니다'); const j=JSON.parse(m[0]);
+      if(!j.head&&!(j.body||[]).length) throw new Error('내용이 비었습니다');
+      d.slides[k]={kind:cur.kind,type:j.type||cur.type,head:j.head||cur.head,big:j.big||'',body:Array.isArray(j.body)&&j.body.length?j.body:cur.body};
+      await renderAll(); toast?.(`${k+1}장을 새로 만들었습니다`); }
+    catch(e){ toast?.('⚠ 다시 만들지 못했습니다 — '+e.message); }
+    finally{ btn.disabled=false; btn.textContent=t0; } };
   $('#cnArrL').onclick=()=>$('#cnPrev').click(); $('#cnArrR').onclick=()=>$('#cnNext').click();
   $('#cnDots').onclick=e=>{ const k=e.target.dataset?.k; if(k!=null&&C.data){ C.cur=+k; renderAll(); } };
   $('#cnPrev').onclick=()=>{ if(C.data){ C.cur=(C.cur-1+C.data.slides.length)%C.data.slides.length; renderAll(); } };

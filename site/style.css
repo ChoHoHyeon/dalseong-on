@@ -2163,5 +2163,12 @@ body[data-theme=dark] .bn-prop.float #bpText,body[data-theme=dark] .bn-prop.floa
 .cn-dots{position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:6px;z-index:2}
 .cn-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.55);box-shadow:0 0 0 1px rgba(0,0,0,.15);cursor:pointer}
 .cn-dots i.on{background:#2f6fed;width:20px;border-radius:5px}
-.cn-shape{display:grid;grid-template-columns:1.2fr 1fr 0.9fr;gap:8px;margin-bottom:6px} .cn-shape label{margin:0} .cn-shape select{height:36px;font-size:13px}
+.cn-shape{display:block;margin-bottom:6px} .cn-shape label{margin:0} .cn-shape select{height:36px;font-size:13px}
 .cn-shape[hidden]{display:none}
+/* 카드뉴스 오른쪽: 이 장 편집 + 다시 만들기 + 게시글 */
+.cn-redo{width:100%;height:40px;margin-top:8px;border-radius:10px;border:1.5px dashed rgba(47,111,237,.5);background:rgba(47,111,237,.05);color:var(--acc);font-weight:700;font-size:13.5px;cursor:pointer}
+.cn-redo:hover{background:rgba(47,111,237,.1)} .cn-redo:disabled{opacity:.7;cursor:wait}
+.cn-post{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.cn-ph{display:flex;align-items:center;gap:8px;margin-bottom:8px} .cn-ph b{font-size:13px;color:#fff;background:#12a594;padding:3px 10px;border-radius:7px} .cn-ph span{font-size:12px;color:var(--mut)}
+.cn-ph button{margin-left:auto;height:32px;padding:0 12px;border-radius:9px;border:1px solid var(--line);background:var(--panel);font-weight:700;font-size:12.5px;cursor:pointer;color:var(--tx)}
+#cnCaption{width:100%;box-sizing:border-box;font-size:13px;line-height:1.6;resize:vertical}

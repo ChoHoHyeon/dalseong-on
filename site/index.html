@@ -824,25 +824,23 @@
           <label class="cn-artsel">그림<select id="cnArt" class="psel"></select></label>
           <button id="cnAi">🎨 AI 그림 다시 그리기</button>
           <span style="flex:1"></span>
-          <button id="cnAll" class="p">⬇ 전체 PNG 저장</button><button id="cnAgain">문구 다시 만들기</button>
+          <button id="cnPng">⬇ 이 장 PNG</button><button id="cnAll" class="p">⬇ 전체 PNG 저장</button><button id="cnAgain">문구 다시 만들기</button>
         </div>
         <div class="cn-wrap">
           <div class="cn-stage"><div class="cn-view"><canvas id="cnMain"></canvas><button type="button" class="cn-arr l" id="cnArrL" aria-label="이전 장">‹</button><button type="button" class="cn-arr r" id="cnArrR" aria-label="다음 장">›</button><div class="cn-dots" id="cnDots"></div></div><div class="bn-aiload" id="cnAiLoad" hidden></div></div>
           <div class="cn-edit">
             <div class="cn-eh">이 장 편집</div>
             <div class="cn-nav"><button id="cnPrev">‹ 이전</button><b id="cnCurNo"></b><button id="cnNext">다음 ›</button></div>
-            <div id="cnShapeWrap" class="cn-shape">
-              <label>장 모양<select id="cnType" class="psel"><option value="list">목록형</option><option value="stat">큰 숫자형</option><option value="steps">단계형</option><option value="qa">질문·답형</option><option value="quote">한마디형</option></select></label>
-              <label>그림 위치<select id="cnArtPos" class="psel"><option value="auto">자동</option><option value="right">오른쪽</option><option value="top">위</option><option value="bottom">아래</option><option value="none">그림 없음</option></select></label>
-              <label>정렬<select id="cnAlign" class="psel"><option value="auto">자동</option><option value="left">왼쪽</option><option value="center">가운데</option></select></label>
-            </div>
-            <label id="cnBigWrap">강조 문구 <small class="hint">크게 보일 숫자·핵심어 · 비우면 없음</small><input id="cnEditBig" maxlength="12"></label>
+            <label id="cnBigWrap">강조 문구<input id="cnEditBig" maxlength="12"></label>
             <label>제목<input id="cnEditHead"></label>
             <label>본문 <small class="hint">한 줄에 한 문장</small><textarea id="cnEditBody" rows="4"></textarea></label>
-            <div class="pact" style="margin-top:6px"><button id="cnPng">⬇ 이 장 PNG</button><span class="hint">고치는 대로 카드에 바로 반영됩니다</span></div>
+            <button type="button" id="cnRedo" class="cn-redo">🔄 이 장만 AI로 다시 만들기</button>
+            <div class="cn-post">
+              <div class="cn-ph"><b>게시글</b><span>인스타·블로그 본문에 붙여 넣을 글</span><button type="button" id="cnCopy">📋 복사</button></div>
+              <textarea id="cnCaption" rows="6"></textarea>
+            </div>
           </div>
         </div>
-        <div class="cn-cap"><label>게시글 문구 · 해시태그<textarea id="cnCaption" rows="3"></textarea></label><button id="cnCopy">게시글 복사</button></div>
       </div>
     </section>
 
