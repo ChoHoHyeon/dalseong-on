@@ -259,7 +259,7 @@ function draw(){
   $('#mlGrid').innerHTML=h+'</tbody>';
   S.placed=false; S.shop={};      // 판정이 바뀌면 배치는 다시 눌러야 한다
   drawChk(); drawPay(); drawLedger(); drawTeamSet();
-  const fc=document.querySelector('.view[data-view="meal"] .flowcard'); if(fc) fc.hidden=true;
+  /* 상단 「이렇게 씁니다」 안내는 결과가 나온 뒤에도 그대로 둔다(다음 단계 안내 역할) */
   const up=document.querySelector('.view[data-view="meal"] .mlcard');   if(up) up.classList.add('slim');
   $('#mlOut').hidden=false;
 }

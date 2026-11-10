@@ -192,7 +192,7 @@ const HOME_MENU=[
   {mode:'staff',view:'minutes',icon:'🎙', label:'회의록\n정리하기', ready:1},
   // ── 직원 생활 (개인 업무·경조사)
   {mode:'staff',view:'meal',   icon:'🍚', label:'급량비\n계산하기', cls:'sep', ready:1},
-  {mode:'staff',view:'trip',   icon:'🚗', label:'출장비(관내여비)\n계산하기', ready:1},
+  {mode:'staff',view:'trip',   icon:'🚗', label:'출장비(관내)\n계산하기', ready:1},
   {mode:'staff',view:'family', icon:'💐', label:'경조사 카드\n만들기', ready:1},
   // ── 알리기 · 홍보물 만들기
   {mode:'staff',view:'press',  icon:'📰', label:'보도자료\n작성하기', cls:'sep', ready:1},
