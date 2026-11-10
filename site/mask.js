@@ -91,7 +91,14 @@ function renderPlan(){
   $('#mkPlan').querySelectorAll('.mk-act').forEach(s=>s.onchange=()=>{ M.plan[s.dataset.a].act=s.value; renderPlan(); });
   $('#mkStep').hidden=false; $('#mkOut').hidden=true; $('#mkTxtOut').hidden=true;
 }
-function apply(){
+/* 찾은 열 칩: 누를 때마다 가리기 → 열 삭제 → 그대로. 「＋ 다른 열도」로 나머지 열도 칩으로 펼친다 */
+const ACT={mask:['가림','🛡'],drop:['열 삭제','🗑'],keep:['그대로','·']};
+function renderCols(){ const show=M.cols.map((c,i)=>i).filter(i=>M.plan[i].type!=='none'||M.showAll||M.plan[i].act!=='keep');
+  $('#mkCols').innerHTML=show.map(i=>{ const p=M.plan[i], t=p.type==='none'?['직접 지정','➕']:TYPES[p.type]; return `<button type="button" class="mk-col ${p.act}" data-i="${i}" title="${p.type==='name'?'공개·배포용이면 이름 열은 「열 삭제」가 더 안전합니다 · ':''}누를 때마다 가림 → 열 삭제 → 그대로"><i>${t[1]}</i><b>${esc(M.cols[i])}</b><em>${ACT[p.act][0]}</em></button>`; }).join('')
+    +(M.cols.length>show.length||M.showAll?`<button type="button" class="mk-more" id="mkMore">${M.showAll?'− 접기':'＋ 다른 열도 가리기'}</button>`:'');
+  $('#mkCols').querySelectorAll('.mk-col').forEach(b=>b.onclick=()=>{ const p=M.plan[b.dataset.i]; p.act={mask:'drop',drop:'keep',keep:'mask'}[p.act]; if(p.act==='mask'&&p.type==='none') p.type=M.rows.map(r=>r[b.dataset.i]).filter(Boolean).slice(0,50).every(isName)?'name':'text'; apply(true); });
+  const mo=$('#mkMore'); if(mo) mo.onclick=()=>{ M.showAll=!M.showAll; renderCols(); }; }
+function apply(quiet){
   const keep=M.cols.map((_,i)=>M.plan[i].act!=='drop');
   const cnt={}; let cells=0;
   const rows=M.rows.map(r=>r.map((v,i)=>{ const p=M.plan[i]; if(p.act!=='mask'||p.type==='none'||v===''||v==null) return v; const nv=FN[p.type](v); if(String(nv)!==String(v)){ cells++; cnt[p.type]=(cnt[p.type]||0)+1; } return nv; }).filter((_,i)=>keep[i]));
@@ -100,7 +107,7 @@ function apply(){
   M.out={cols,rows,cnt,cells,dropped};
   $('#mkStat').innerHTML=Object.entries(cnt).map(([k,n])=>`<span class="mk-chip">${TYPES[k][1]} ${TYPES[k][0]} <b>${n.toLocaleString()}</b></span>`).join('')+(dropped.length?`<span class="mk-chip">🗑 삭제한 열 <b>${dropped.length}</b></span>`:'')+(cells||dropped.length?'':'<span class="mk-chip">가릴 값이 없었습니다</span>');
   $('#mkPrev').innerHTML=`<table class="mk-tbl sm"><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.slice(0,6).map(r=>`<tr>${r.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
-  $('#mkOut').hidden=false; $('#mkOut').scrollIntoView({behavior:'smooth',block:'start'});
+  renderCols(); $('#mkOut').hidden=false; $('#mkStep').hidden=true; $('#mkTxtOut').hidden=true; if(quiet) return; $('#mkOut').scrollIntoView({behavior:'smooth',block:'start'});
   window.dsSave&&dsSave('mask',`${M.name} 개인정보 가림`,`${M.name} · ${rows.length}행\n가린 칸 ${cells}개\n`+Object.entries(cnt).map(([k,n])=>`${TYPES[k][0]} ${n}`).join(', ')+(dropped.length?`\n삭제한 열: ${dropped.join(', ')}`:''));
   if(window.S&&S.stats) S.stats.gen++; window.dsHit&&dsHit('gen','mask');
 }
@@ -132,7 +139,7 @@ function maskText(src){
   t=t.replace(/(계좌번호|계좌)(\s*[:：]?\s*)([\d][\d-]{7,})/g,(m,a,b,c)=>a+b+mark('acct',c,mAcct(c)));
   t=t.replace(/(생년월일|생일)(\s*[:：]?\s*)(\d{2,4}[.\-/년\s]+\d{1,2}[.\-/월\s]+\d{1,2}일?)/g,(m,a,b,c)=>a+b+mark('birth',c,mBirth(c)));
   t=t.replace(RE.rrn,m=>mark('rrn',m,mRrn(m)));
-  t=t.replace(RE.mobile,m=>mark('phone',m,mPhone(m))).replace(RE.tel,m=>/\u0001/.test(m)?m:mark('phone',m,mPhone(m)));
+  t=t.replace(RE.mobile,m=>mark('phone',m,mPhone(m)));   /* 글에서는 휴대폰만 가린다 — 053-668-○○○○ 같은 기관·부서 일반전화는 문의처라 그대로 둔다 */
   t=t.replace(RE.email,m=>mark('email',m,mEmail(m)));
   t=t.replace(RE.car,m=>mark('car',m,mCar(m)));
   t=t.replace(/(성명|이름|민원인|신청인|대표자|보호자|담당자|작성자|수신자|발신자|신고인|피해자)(\s*[:：]?\s*)([가-힣]{2,4})(?![가-힣])/g,(m,a,b,c)=>NOT_NAME.test(c)?m:a+b+mark('name',c,mName(c)));
@@ -150,7 +157,7 @@ function textRun(){
 const TABLE=/\.(xlsx|xls|csv)$/i;
 async function take(fs){ const L=$('#mkFileList'); const done=[];
   for(const f of fs){
-    if(TABLE.test(f.name)){ L.textContent=`「${f.name}」 읽는 중…`; try{ await readFile(f); renderPlan(); done.push(`📊 ${f.name} (${M.rows.length.toLocaleString()}행 · 표는 열마다 판단)`); }catch(e){ done.push(`⚠ ${f.name} — ${e.message}`); } continue; }
+    if(TABLE.test(f.name)){ L.textContent=`「${f.name}」 읽는 중…`; try{ await readFile(f); M.showAll=false; $('#mkOut').hidden=true; done.push(`📊 ${f.name} (${M.rows.length.toLocaleString()}행 · 표는 열마다 판단)`); }catch(e){ done.push(`⚠ ${f.name} — ${e.message}`); } continue; }
     try{ L.textContent=`「${f.name}」 읽는 중…`; if(typeof window.pressRead!=='function') throw new Error('읽기 기능을 불러오지 못했습니다'); const r=await window.pressRead(f); if(!r.text) throw new Error('글자를 찾지 못했습니다');
       const t=r.text.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim(); const src=$('#mkSrc'); src.value=src.value.trim()?src.value.trim()+'\n\n'+t:t; done.push(`📄 ${f.name} (${t.length.toLocaleString()}자)`); }
     catch(e){ done.push(`⚠ ${f.name} — ${e.message}`); } }
@@ -159,7 +166,7 @@ const v=()=>$('#mkSrc').value.trim();
 function init(){
   if($('#mkGo')._on) return; $('#mkGo')._on=1;
   $('#mkFile').onchange=e=>{ const fs=[...e.target.files]; e.target.value=''; if(fs.length) take(fs); };
-  $('#mkFind').onclick=()=>{ if(v()) return textRun(); if(M.rows.length){ renderPlan(); $('#mkStep').scrollIntoView({behavior:'smooth',block:'start'}); return; } $('#mkMsg').textContent='가릴 글을 붙여넣거나 파일을 올려 주세요.'; $('#mkSrc').focus(); };
+  $('#mkFind').onclick=()=>{ if(v()) return textRun(); if(M.rows.length) return apply(); $('#mkMsg').textContent='가릴 글을 붙여넣거나 파일을 올려 주세요.'; $('#mkSrc').focus(); };
   $('#mkSample').onclick=async()=>{ const b=await (await fetch('assets/sample_personal.csv')).blob(); $('#mkSrc').value=''; await take([new File([b],'예시_민원접수대장(가상).csv')]); window.toast&&toast('가상 예시 파일을 불러왔습니다 — 판단 결과를 확인하고 [가리기]를 누르세요'); };
   $('#mkReset').onclick=()=>{ $('#mkSrc').value=''; M.rows=[]; M.cols=[]; M.out=null; M.txt=null; ['mkStep','mkOut','mkTxtOut'].forEach(id=>$('#'+id).hidden=true); $('#mkMsg').textContent=''; $('#mkFileList').textContent='엑셀·CSV 표 또는 한글(hwpx)·워드·PDF·텍스트 문서 · 이 상자에 끌어다 놓아도 됩니다'; };
   $('#mkTxtCopy').onclick=()=>{ if(!M.txt) return; navigator.clipboard.writeText(M.txt.text).then(()=>window.toast&&toast('가린 글을 복사했습니다')); };
