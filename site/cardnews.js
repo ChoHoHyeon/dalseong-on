@@ -26,10 +26,12 @@ const SYS=`당신은 대구광역시 달성군 SNS 홍보 담당자입니다. �
   layout: left(정보 전달형·공지) / center(감성·캠페인·행사) / bottom(그림이 주인공인 축제·관광·현장)
   theme: navy(행정·안내) / green(환경·농업·건강) / orange(축제·행사·청년) / mint(복지·교육·생활)
   font: pre(기본 고딕) / ng(나눔고딕·공문 느낌) / bhs(굵은 제목·강렬) / jua(둥근·친근) / gd(고운돋움·부드러움) / bagel(굵고 귀여움)
+· 본문 장마다 구도를 정한다. type: list(항목 나열) / stat(숫자가 핵심 — big에 그 숫자) / steps(신청 절차·순서, body가 단계) / qa(자주 묻는 질문 — head는 질문, body는 답) / quote(한마디·인용 강조 — body[0]이 큰 문장)
+  art(그림 위치): right / top / bottom / none,  align: left / center.  장마다 겹치지 않게 다양하게 섞되 내용에 맞게.
 · 본문 장에서 숫자·핵심어가 중요하면 big에 짧게(8자 이내, 예: "120명" "무료" "11월 14일까지") 넣는다. 없으면 생략.
 · 표지 head는 반드시 채운다.
 반드시 아래 JSON만 출력한다(설명 금지):
-{"design":{"layout":"left","theme":"navy","font":"pre"},"visual":"English concrete visual motifs","keywords":["핵심 키워드1","핵심 키워드2"],"art":"edu","slides":[{"kind":"cover","head":"제목","body":["부제"]},{"kind":"body","head":"소제목","big":"120명","body":["문장","문장"]},{"kind":"end","head":"마무리 문구","body":["문의 ○○과 053)668-○○○○"]}],"caption":"…","tags":["#달성군","#대구달성"]}`;
+{"design":{"layout":"left","theme":"navy","font":"pre"},"visual":"English concrete visual motifs","keywords":["핵심 키워드1","핵심 키워드2"],"art":"edu","slides":[{"kind":"cover","head":"제목","body":["부제"]},{"kind":"body","type":"list","art":"right","align":"left","head":"소제목","big":"120명","body":["문장","문장"]},{"kind":"end","head":"마무리 문구","body":["문의 ○○과 053)668-○○○○"]}],"caption":"…","tags":["#달성군","#대구달성"]}`;
 
 function offline(){
   const src=v('cnSrc'); const paras=src.split(/\n\s*\n|\r?\n/).map(x=>x.trim()).filter(x=>x.length>8); const n=+v('cnCount')||6;
@@ -65,16 +67,18 @@ const LAYOUTS={ left:'왼쪽형', center:'가운데형', bottom:'하단 제목�
 const curFont=()=>CFONTS[C.data?.design?.font]||CFONTS.pre;
 function font(ctx,w,s,body){ const [fam,b,r]=curFont(); const wt=body?r:(+w>=700?b:r); ctx.font=`${body?(fam==='Bagel Fat One'||fam==='Black Han Sans'?500:wt):wt} ${s}px ${body&&/Bagel|Black Han/.test(fam)?'Pretendard':`"${fam}",Pretendard`},"Malgun Gothic",sans-serif`; }   // 본문 긴 글은 굵은 장식체 대신 고딕
 async function fontsReady(){ const [fam,b,r]=curFont(); try{ await Promise.all([document.fonts.load(`${b} 40px "${fam}"`,'가나다'),document.fonts.load(`${r} 40px "${fam}"`,'가나다')]); }catch(e){} }
+const themeOf=()=>{ const u=v('cnTheme'); return THEMES[u&&u!=='auto'?u:C.data?.design?.theme]||THEMES.navy; };
 const layoutOf=()=>{ const u=v('cnLayout'); return u&&u!=='auto'?u:(LAYOUTS[C.data?.design?.layout]?C.data.design.layout:'left'); };
 async function getArt(){
   const key=v('cnArt')||C.data?.art||'admin';
   if(key==='none') return null;
-  if(key==='ai'){ if(C.art) return C.art; const k=C.data?.art||'admin'; if(!C.artCache[k]) C.artCache[k]=await loadImg(`assets/cn/cn_${k}.jpg`); return C.artCache[k]; }   // AI 그림 (그리는 동안은 테마 일러스트)
+  if(key==='ai'){ if(C.art) return C.art; if(!C.aiFailed) return null;   /* 그리는 중에는 그림 없이(임시 그림을 보여 주지 않음), 실패하면 기본 그림 */
+    const k=C.data?.art||'admin'; if(!C.artCache[k]) C.artCache[k]=await loadImg(`assets/cn/cn_${k}.jpg`); return C.artCache[k]; }   // AI 그림 (그리는 동안은 테마 일러스트)
   if(!C.artCache[key]) C.artCache[key]=await loadImg(`assets/cn/cn_${key}.jpg`);
   return C.artCache[key];
 }
 async function drawSlide(canvas,s,i,total){
-  const [W,H]=SIZES[v('cnSize')]||SIZES.sq; const [,grad,fg,acc]=THEMES[v('cnTheme')]||THEMES.navy; const L=layoutOf();
+  const [W,H]=SIZES[v('cnSize')]||SIZES.sq; const [,grad,fg,acc]=themeOf(); const L=layoutOf();
   canvas.width=W; canvas.height=H; const ctx=canvas.getContext('2d'); const pad=W*0.085;
   await fontsReady();
   const g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,grad[0]); g.addColorStop(1,grad[1]);
@@ -84,11 +88,14 @@ async function drawSlide(canvas,s,i,total){
   const isBody=s.kind==='body';
   // ── 배경 ──
   let dark=isBody, artBox=null;
+  // 본문 장 구도: AI가 장마다 고른 그림 위치(s.art)·정렬(s.align)·장 모양(s.type). 없으면 전체 틀(L)을 따른다
+  const AP=isBody?(s.art&&['right','top','bottom','none'].includes(s.art)?s.art:(L==='bottom'?'top':L==='center'?'bottom':'right')):null;
+  const AL=isBody?(s.align==='center'||s.align==='left'?s.align:(L==='center'?'center':'left')):null;
   if(isBody){
     ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
-    if(L==='bottom'&&art){ artBox=[0,0,W,H*0.36]; cover(art,0,0,W,H*0.36); ctx.fillStyle=g; ctx.fillRect(0,H*0.36,W,H*0.012); }
+    if(AP==='top'&&art){ artBox=[0,0,W,H*0.34]; cover(art,0,0,W,H*0.34); ctx.fillStyle=g; ctx.fillRect(0,H*0.34,W,H*0.012); }
     else { ctx.fillStyle=g; ctx.fillRect(0,0,W,H*0.045);
-      if(art&&L!=='center'){ const aw=W*0.42, ah=aw, ax=W-aw-pad*0.6, ay=H-ah-pad*1.6; artBox=[ax,ay,aw,ah]; ctx.save(); ctx.globalAlpha=.95; ctx.beginPath(); ctx.roundRect(ax,ay,aw,ah,W*0.03); ctx.clip(); ctx.drawImage(art,ax,ay,aw,ah); ctx.restore(); } }
+      if(art&&AP==='right'){ const aw=W*0.4, ah=aw, ax=W-aw-pad*0.6, ay=H-ah-pad*1.6; artBox=[ax,ay,aw,ah]; ctx.save(); ctx.globalAlpha=.95; ctx.beginPath(); ctx.roundRect(ax,ay,aw,ah,W*0.03); ctx.clip(); ctx.drawImage(art,ax,ay,aw,ah); ctx.restore(); } }
   }else if(art){
     cover(art,0,0,W,H); const og=ctx.createLinearGradient(0,0,0,H);
     if(L==='bottom'){ og.addColorStop(0,grad[0]+'55'); og.addColorStop(0.45,grad[0]+'22'); og.addColorStop(0.7,grad[0]+'cc'); og.addColorStop(1,grad[0]+'f5'); }
@@ -97,10 +104,10 @@ async function drawSlide(canvas,s,i,total){
     ctx.fillStyle=og; ctx.fillRect(0,0,W,H);
   }else{ ctx.fillStyle=g; ctx.fillRect(0,0,W,H); ctx.fillStyle='rgba(255,255,255,.08)'; ctx.beginPath(); ctx.arc(W*0.85,H*0.2,W*0.35,0,7); ctx.fill(); }
   const tx=dark?'#1c2333':fg; const sub=dark?'#4b5563':'rgba(255,255,255,.9)';
-  const C_=L==='center'; ctx.textBaseline='top'; ctx.textAlign=C_?'center':'left'; const X=C_?W/2:pad, MW=W-pad*2;
+  const C_=isBody?AL==='center':L==='center'; ctx.textBaseline='top'; ctx.textAlign=C_?'center':'left'; const X=C_?W/2:pad, MW=W-pad*2;
   // 위 라벨
   font(ctx,'700',Math.round(W*0.03)); ctx.fillStyle=dark?grad[0]:acc; const lbl=s.kind==='cover'?'달성군 소식':s.kind==='end'?'함께해요 달성':`${i}/${total-1}`;
-  ctx.fillText(lbl, X, isBody&&L==='bottom'&&artBox?H*0.4:pad*0.9);
+  ctx.fillText(lbl, X, isBody&&AP==='top'&&artBox?H*0.38:pad*0.9);
   const lines=(t,mw)=>wrap(ctx,t,mw);
   let y;
   if(s.kind==='cover'||s.kind==='end'){
@@ -111,15 +118,50 @@ async function drawSlide(canvas,s,i,total){
     ctx.fillStyle=acc; ctx.fillRect(C_?W/2-W*0.06:pad,y+hs*0.2,W*0.12,H*0.008); y+=hs*0.6;
     font(ctx,'500',subS,true); ctx.fillStyle=sub; body.forEach(b=>lines(b,MW).forEach(l=>{ ctx.fillText(l,X,y); y+=W*0.065; }));
   }else{
-    const sb=L==='bottom'&&artBox?0.88:1; const hs=Math.round(W*0.07*sb); y=L==='bottom'&&artBox?H*0.44:H*0.17;
-    if(s.big){ const bs=Math.round(W*0.12*sb); font(ctx,'800',bs); ctx.fillStyle=grad[1]; lines(s.big,MW).slice(0,1).forEach(l=>{ ctx.fillText(l,X,y); }); y+=bs*1.15; }
-    font(ctx,'800',hs); ctx.fillStyle=tx; lines(head,MW).forEach(l=>{ ctx.fillText(l,X,y); y+=hs*1.2; });
-    ctx.fillStyle=grad[1]; ctx.fillRect(C_?W/2-W*0.045:pad,y+hs*0.15,W*0.09,H*0.006); y+=hs*0.7;
-    const bs=Math.round(W*0.046*(sb<1?0.93:1)); font(ctx,'500',bs,true);
-    const avoid=isBody&&L==='left'&&artBox&&art; body.forEach(b=>{ const mw=(C_?MW:MW-W*0.05)-(avoid&&y+bs*1.5>artBox[1]?artBox[2]+W*0.02:0); const ls=lines(b,mw); if(!C_){ ctx.fillStyle=grad[0]; ctx.fillRect(pad,y+bs*0.42,W*0.012,W*0.012); } ctx.fillStyle='#2b3445'; ls.forEach(l=>{ ctx.fillText(l,C_?X:pad+W*0.04,y); y+=bs*1.5; }); y+=bs*0.5; });
+    // ── 본문 장: 장 모양(type)별로 그린다. 글자 크기는 로고 줄·그림과 겹치지 않게 맞춘다 ──
+    const T=['list','stat','steps','qa','quote'].includes(s.type)?s.type:'list';
+    const top0=AP==='top'&&artBox?H*0.43:H*0.15;
+    const artBottomH=AP==='bottom'&&art?Math.min(W*0.3,H*0.28):0;
+    const limit=H-pad-H*0.085-(artBottomH?artBottomH+W*0.03:0);
+    const avoid=AP==='right'&&artBox&&art, mwAt=(yy,h0)=>(C_?MW:MW)-(avoid&&yy+h0>artBox[1]?artBox[2]+W*0.03:0);
+    const accent=grad[1];
+    // k: 글자 배율 — 넘치면 줄여 가며 다시 잰다(dry=true) → 맞는 크기로 실제로 그린다
+    const run=(k,dry)=>{ let yy=top0; const P=(t,x,yv)=>{ if(!dry) ctx.fillText(t,x,yv); };
+      const bar=()=>{ if(!dry){ ctx.fillStyle=accent; ctx.fillRect(C_?W/2-W*0.045:pad,yy,W*0.09,H*0.006); } yy+=H*0.006+W*0.035; };
+      if(T==='stat'){
+        const big=(s.big||((s.body||[]).join(' ').match(/[\d,.]+\s*[^\s,.]{0,3}/)||[head])[0]).trim();
+        const bs=Math.round(W*0.2*k); font(ctx,'800',bs); while(ctx.measureText(big).width>MW&&bs>W*0.08){ font(ctx,'800',(bs-=4)); }
+        ctx.fillStyle=accent; P(big,X,yy); yy+=bs*1.1;
+        const hs=Math.round(W*0.062*k); font(ctx,'800',hs); ctx.fillStyle=tx; lines(head,mwAt(yy,hs)).forEach(l=>{ P(l,X,yy); yy+=hs*1.22; }); yy+=hs*0.2; bar();
+        const ts=Math.round(W*0.044*k); font(ctx,'500',ts,true); ctx.fillStyle='#2b3445'; body.forEach(b=>{ lines(b,mwAt(yy,ts)).forEach(l=>{ P(l,X,yy); yy+=ts*1.5; }); });
+      }else if(T==='steps'){
+        const hs=Math.round(W*0.068*k); if(s.big){ const bs=Math.round(W*0.1*k); font(ctx,'800',bs); ctx.fillStyle=accent; P(s.big,X,yy); yy+=bs*1.12; }
+        font(ctx,'800',hs); ctx.fillStyle=tx; lines(head,mwAt(yy,hs)).forEach(l=>{ P(l,X,yy); yy+=hs*1.22; }); yy+=hs*0.35;
+        const ts=Math.round(W*0.042*k), r=ts*0.85;
+        body.forEach((b,n)=>{ const bx=pad, mw=mwAt(yy,ts*2)-r*2.6; font(ctx,'500',ts,true); const ls=lines(b,mw); const bh=Math.max(r*2.2,ls.length*ts*1.45+ts*0.8);
+          if(!dry){ ctx.fillStyle='#f2f5fb'; ctx.beginPath(); ctx.roundRect(bx,yy,mwAt(yy,ts*2),bh,W*0.02); ctx.fill();
+            ctx.fillStyle=accent; ctx.beginPath(); ctx.arc(bx+r*1.4,yy+bh/2,r,0,7); ctx.fill(); ctx.fillStyle='#fff'; font(ctx,'800',Math.round(ts*0.95)); ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(String(n+1),bx+r*1.4,yy+bh/2+1); ctx.textBaseline='top'; ctx.textAlign='left';
+            font(ctx,'500',ts,true); ctx.fillStyle='#1c2333'; let ty=yy+(bh-ls.length*ts*1.45)/2+ts*0.1; ls.forEach(l=>{ ctx.fillText(l,bx+r*2.8,ty); ty+=ts*1.45; }); }
+          yy+=bh+(n<body.length-1?ts*0.25+W*0.012:0);
+          if(!dry&&n<body.length-1){ ctx.fillStyle=accent; ctx.beginPath(); const cx=bx+r*1.4; ctx.moveTo(cx-r*0.35,yy-W*0.012-ts*0.15); ctx.lineTo(cx+r*0.35,yy-W*0.012-ts*0.15); ctx.lineTo(cx,yy-ts*0.02); ctx.fill(); } });
+        ctx.textAlign=C_?'center':'left';
+      }else if(T==='qa'){
+        const hs=Math.round(W*0.06*k); font(ctx,'800',hs); const q='Q. '+head.replace(/^Q\.\s*/,''); ctx.fillStyle=accent; lines(q,mwAt(yy,hs)).forEach(l=>{ P(l,X,yy); yy+=hs*1.25; }); yy+=hs*0.3; bar();
+        const ts=Math.round(W*0.046*k); font(ctx,'500',ts,true); ctx.fillStyle='#1c2333'; const ans='A. '+body.join(' ').replace(/^A\.\s*/,''); lines(ans,mwAt(yy,ts)).forEach(l=>{ P(l,X,yy); yy+=ts*1.55; });
+      }else if(T==='quote'){
+        const qs=Math.round(W*0.16*k); font(ctx,'800',qs); ctx.fillStyle=accent+'55'; P('“',X,yy-qs*0.15); yy+=qs*0.62;
+        const ts=Math.round(W*0.064*k); font(ctx,'800',ts); ctx.fillStyle=tx; const main=(body[0]||head); lines(main,mwAt(yy,ts)).forEach(l=>{ P(l,X,yy); yy+=ts*1.35; }); yy+=ts*0.4; bar();
+        const ss=Math.round(W*0.04*k); font(ctx,'500',ss,true); ctx.fillStyle='#4b5563'; [body[0]?head:'',...body.slice(1)].filter(Boolean).forEach(b=>lines(b,mwAt(yy,ss)).forEach(l=>{ P(l,X,yy); yy+=ss*1.5; }));
+      }else{
+        if(s.big){ const bs=Math.round(W*0.12*k); font(ctx,'800',bs); ctx.fillStyle=accent; P(lines(s.big,MW)[0],X,yy); yy+=bs*1.15; }
+        const hs=Math.round(W*0.07*k); font(ctx,'800',hs); ctx.fillStyle=tx; lines(head,mwAt(yy,hs)).forEach(l=>{ P(l,X,yy); yy+=hs*1.2; }); yy+=hs*0.15; bar();
+        const ts=Math.round(W*0.046*k); font(ctx,'500',ts,true);
+        body.forEach(b=>{ const ls=lines(b,mwAt(yy,ts)-(C_?0:W*0.05)); if(!dry&&!C_){ ctx.fillStyle=grad[0]; ctx.fillRect(pad,yy+ts*0.42,W*0.012,W*0.012); } ctx.fillStyle='#2b3445'; ls.forEach(l=>{ P(l,C_?X:pad+W*0.04,yy); yy+=ts*1.5; }); yy+=ts*0.5; });
+      }
+      return yy; };
+    let k=1; while(k>0.55&&run(k,true)>limit) k-=0.05; y=run(k,false);
+    if(artBottomH&&art){ const ah=artBottomH, aw=Math.min(W-pad*2,ah*1.6), ax=(W-aw)/2, ay=H-pad-H*0.085-ah; ctx.save(); ctx.globalAlpha=.95; ctx.beginPath(); ctx.roundRect(ax,ay,aw,ah,W*0.03); ctx.clip(); const r=Math.max(aw/art.width,ah/art.height); ctx.drawImage(art,ax+(aw-art.width*r)/2,ay+(ah-art.height*r)/2,art.width*r,art.height*r); ctx.restore(); }
   }
-  // 가운데형 본문: 글 아래 남은 자리에 그림 (글과 겹치지 않게)
-  if(isBody&&L==='center'&&art){ const bottom=H-pad*1.5, room=bottom-(y+W*0.02), ah=Math.min(W*0.34,room); if(ah>W*0.12){ const aw=ah, ax=(W-aw)/2, ay=bottom-ah; ctx.save(); ctx.globalAlpha=.95; ctx.beginPath(); ctx.roundRect(ax,ay,aw,ah,W*0.03); ctx.clip(); ctx.drawImage(art,ax,ay,aw,ah); ctx.restore(); } }
   // 로고(선택 입력 「로고」): 모든 장 같은 자리(왼쪽 아래)·같은 크기, 원본 그대로
   const lk=v('cnLogo')||'ci'; C.logos=C.logos||{}; const need=lk==='both'?['ci','slogan']:lk==='none'?[]:[lk];
   for(const n of need) if(!C.logos[n]) C.logos[n]=await loadImg(n==='ci'?'assets/dalseong_ci.png':'assets/slogan.png');
@@ -133,7 +175,8 @@ async function renderAll(){
   const d=C.data; const wrapEl=$('#cnSlides'); wrapEl.innerHTML='';
   for(let i=0;i<d.slides.length;i++){ const c=document.createElement('canvas'); c.className='cn-thumb'+(i===C.cur?' on':''); c.title=`${i+1}장`; c.onclick=()=>{ C.cur=i; renderAll(); }; wrapEl.appendChild(c); await drawSlide(c,d.slides[i],i,d.slides.length); }
   await drawSlide($('#cnMain'),d.slides[C.cur],C.cur,d.slides.length);
-  const s=d.slides[C.cur]; $('#cnEditHead').value=s.head; $('#cnEditBody').value=(s.body||[]).join('\n'); $('#cnCurNo').textContent=`${C.cur+1} / ${d.slides.length}장`;
+  const s=d.slides[C.cur]; const fe=document.activeElement; if(fe!==$('#cnEditHead')) $('#cnEditHead').value=s.head; if(fe!==$('#cnEditBody')) $('#cnEditBody').value=(s.body||[]).join('\n'); if(fe!==$('#cnEditBig')) $('#cnEditBig').value=s.big||''; $('#cnBigWrap').hidden=s.kind!=='body'; $('#cnShapeWrap').hidden=s.kind!=='body'; if(s.kind==='body'){ $('#cnType').value=s.type||'list'; $('#cnArtPos').value=s.art||'auto'; $('#cnAlign').value=s.align||'auto'; }   /* 입력 중인 칸은 덮어쓰지 않는다 */ $('#cnCurNo').textContent=`${C.cur+1} / ${d.slides.length}장`;
+  $('#cnDots').innerHTML=d.slides.map((_,k)=>`<i class="${k===C.cur?'on':''}" data-k="${k}"></i>`).join(''); $('#cnArrL').hidden=C.cur===0; $('#cnArrR').hidden=C.cur===d.slides.length-1;
   $('#cnCaption').value=`${d.caption||''}\n\n${(d.tags||[]).join(' ')}`;
   $('#cnOut').hidden=false;
 }
@@ -144,7 +187,7 @@ async function make(){
     const S=window.S||{};
     if((S.key||S.server)&&!S.offline){ C.data=await callModel(`장수: ${v('cnCount')||6}장(표지·마무리 포함)\n제목(참고): ${v('cnTitle')||'원문에서 뽑기'}\n문의처: ${v('cnContact')||'원문에 있으면 사용, 없으면 ○○'}\n원문:\n${v('cnSrc')}`); $('#cnMsg').textContent='카드 문구를 만들었습니다 — AI가 그림을 그리는 동안 카드를 넘겨 보세요.'; }
     else { await new Promise(r=>setTimeout(r,300)); C.data=offline(); $('#cnMsg').textContent='오프라인 모드 — 모델 연결 시 원문을 읽어 장별 문구를 씁니다.'; }
-    C.cur=0; C.art=null; $('#cnArt').value='ai'; { const d=C.data.design||{}; if(THEMES[d.theme]&&$('#cnTheme').dataset.user!=='1') $('#cnTheme').value=d.theme; } await renderAll(); if(S.key||S.server) aiArt(false); window.dsSave&&dsSave('card',C.data.slides[0]?.head||'카드뉴스',C.data.slides.map((x,i)=>`[${i+1}장] ${x.head}\n${(x.body||[]).join('\n')}`).join('\n\n')+'\n\n'+(C.data.caption||'')+'\n'+(C.data.tags||[]).join(' ')); $('#cnOut').scrollIntoView({behavior:'smooth',block:'start'}); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
+    C.cur=0; C.art=null; C.aiFailed=!(S.key||S.server); $('#cnArt').value='ai'; await renderAll(); if(S.key||S.server) aiArt(false); window.dsSave&&dsSave('card',C.data.slides[0]?.head||'카드뉴스',C.data.slides.map((x,i)=>`[${i+1}장] ${x.head}\n${(x.body||[]).join('\n')}`).join('\n\n')+'\n\n'+(C.data.caption||'')+'\n'+(C.data.tags||[]).join(' ')); $('#cnOut').scrollIntoView({behavior:'smooth',block:'start'}); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
   }catch(e){ $('#cnMsg').textContent='⚠ '+e.message; }
   finally{ C.busy=false; $('#cnGo').disabled=false; }
 }
@@ -164,7 +207,7 @@ async function aiArt(redo){
 MAIN SUBJECT (must be clearly visible and dominant): ${subj}
 ${(d.keywords||[]).length?`Key themes: ${d.keywords.join(', ')}.\n`:''}Style: ${redo?pickR(AI_STYLE):'clean flat vector illustration with soft pastel colors and navy accents'}, ${redo?pickR(AI_TIME):'bright daytime'}.${d.visual?' The main subject must stay the same in every version — only the art style and lighting change.':''}
 Keep the upper half simple with generous empty space for headline text. IMPORTANT: absolutely no text, no letters, no numbers, no logos, no signs. No close-up faces of real people.`;
-  C.aiBusy=true; cnLoad(); const btn=$('#cnAi'); if(btn) btn.disabled=true;
+  C.aiBusy=true; C.aiFailed=false; cnLoad(); const btn=$('#cnAi'); if(btn) btn.disabled=true;
   try{
     const r=await fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':code},body:JSON.stringify({action:'start',prompt,size,expect:[]})});
     const j=await r.json(); if(!r.ok||!j.id) throw new Error(j.error||'접수 실패');
@@ -173,14 +216,14 @@ Keep the upper half simple with generous empty space for headline text. IMPORTAN
     const im=await loadImg(job.image); if(!im) throw new Error('그림을 열지 못했습니다'); if(C.data!==d) return;
     C.art=im; C.aiBusy=false; cnLoad(false); if(v('cnArt')==='ai') await renderAll();
     const mg=$('#cnMsg'); if(/그리는 동안/.test(mg.textContent)) mg.textContent='그림이 완성됐습니다 — 장을 눌러 문구를 고칠 수 있습니다.';
-  }catch(e){ C.aiBusy=false; cnLoad('⚠️ AI 그림을 만들지 못했습니다 — '+String(e.message||'').slice(0,60)+' · 기본 그림으로 계속됩니다'); }
+  }catch(e){ C.aiBusy=false; C.aiFailed=true; if(C.data===d&&v('cnArt')==='ai') renderAll(); cnLoad('⚠️ AI 그림을 만들지 못했습니다 — '+String(e.message||'').slice(0,60)+' · 기본 그림으로 바꿔 두었습니다'); }
   finally{ C.aiBusy=false; if(btn) btn.disabled=false; }
 }
 function dl(canvas,name){ const a=document.createElement('a'); a.download=name; a.href=canvas.toDataURL('image/png'); a.click(); }
 function init(){
   if($('#cnGo')._on) return; $('#cnGo')._on=1;
   $('#cnSize').innerHTML=Object.entries(SIZES).map(([k,[,,l]])=>`<option value="${k}">${l}</option>`).join('');
-  $('#cnTheme').innerHTML=Object.entries(THEMES).map(([k,[l]])=>`<option value="${k}">${l}</option>`).join('');
+  $('#cnTheme').innerHTML='<option value="auto">✨ AI 추천</option>'+Object.entries(THEMES).map(([k,[l]])=>`<option value="${k}">${l}</option>`).join('');
   $('#cnArt').innerHTML='<option value="ai">🎨 AI 그림 (추천)</option><optgroup label="기본 그림">'+Object.entries(ART).map(([k,l])=>`<option value="${k}">${l}</option>`).join('')+'</optgroup><option value="none">그림 없이</option>';
   $('#cnArt').onchange=()=>{ if(C.data){ renderAll(); if(v('cnArt')==='ai'&&!C.art&&!C.aiBusy) aiArt(false); } };
   $('#cnAi').onclick=()=>aiArt(true);
@@ -204,9 +247,14 @@ function init(){
     await new Promise(r=>setTimeout(r,30));
     try{ preload(); const b=await _sampleBlob; if(!b) throw 0; $('#cnSrc').value=''; $('#cnTitle').value=''; await readFiles([new File([b],'2026년 군민 정보화교육 추진 계획(샘플).pdf',{type:'application/pdf'})]); if(!v('cnContact')) $('#cnContact').value='문의 정보통신과 053)668-0000'; }catch(e){ $('#cnFileList').textContent='⚠ 샘플 파일을 불러오지 못했습니다'; _sampleBlob=null; } finally{ btn.disabled=false; btn.textContent=t0; } };
   $('#cnGo').onclick=make; $('#cnAgain').onclick=make;
-  ['cnSize','cnTheme','cnLogo','cnLayout'].forEach(id=>$('#'+id).onchange=()=>{ if(id==='cnTheme') $('#cnTheme').dataset.user='1'; if(C.data) renderAll(); });
+  ['cnSize','cnTheme','cnLogo','cnLayout'].forEach(id=>$('#'+id).onchange=()=>{ if(C.data) renderAll(); });
   $('#cnSize').addEventListener('change',()=>{ if(C.data&&v('cnArt')==='ai'&&C.art){ C.art=null; aiArt(false); } });   // 비율이 바뀌면 그 비율로 다시 그린다
-  $('#cnApply').onclick=()=>{ if(!C.data) return; const s=C.data.slides[C.cur]; s.head=v('cnEditHead'); s.body=$('#cnEditBody').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean); renderAll(); };
+  // 이 장 편집: 고치는 대로 바로 반영 (버튼 없이)
+  let _ed=null; const applyEdit=()=>{ if(!C.data) return; const s=C.data.slides[C.cur]; s.head=v('cnEditHead'); s.body=$('#cnEditBody').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean); if(s.kind==='body') s.big=v('cnEditBig'); renderAll(); };
+  ['cnEditBig','cnEditHead','cnEditBody'].forEach(id=>$('#'+id).addEventListener('input',()=>{ clearTimeout(_ed); _ed=setTimeout(applyEdit,450); }));
+  ['cnType','cnArtPos','cnAlign'].forEach(id=>$('#'+id).onchange=()=>{ if(!C.data) return; const s=C.data.slides[C.cur]; const k={cnType:'type',cnArtPos:'art',cnAlign:'align'}[id]; const val=v(id); if(val==='auto') delete s[k]; else s[k]=val; renderAll(); });
+  $('#cnArrL').onclick=()=>$('#cnPrev').click(); $('#cnArrR').onclick=()=>$('#cnNext').click();
+  $('#cnDots').onclick=e=>{ const k=e.target.dataset?.k; if(k!=null&&C.data){ C.cur=+k; renderAll(); } };
   $('#cnPrev').onclick=()=>{ if(C.data){ C.cur=(C.cur-1+C.data.slides.length)%C.data.slides.length; renderAll(); } };
   $('#cnNext').onclick=()=>{ if(C.data){ C.cur=(C.cur+1)%C.data.slides.length; renderAll(); } };
   $('#cnPng').onclick=()=>{ if(C.data) dl($('#cnMain'),`카드뉴스_${C.cur+1}.png`); };
