@@ -16,7 +16,7 @@ const CLIPS = 4;                                        // 영상 1편 = AI 장�
 const FILE_OK = /^https:\/\/([a-z0-9-]+\.)*(fal\.media|fal\.run|fal\.ai)\/|^https:\/\/storage\.googleapis\.com\/falserverless\//i;
 
 export default async (req) => {
-  const key = process.env.FAL_KEY;
+  const key = process.env.FAL_KEY || process.env.Fal_Key || process.env.fal_key;   // 환경변수 이름 대소문자 차이 허용
   const model = process.env.FAL_VIDEO_MODEL || "fal-ai/wan/v2.2-a14b/image-to-video/turbo";
   const limit = Math.max(0, +(process.env.VIDEO_DAY_LIMIT || 10));
   const gate = process.env.ACCESS_CODE;
