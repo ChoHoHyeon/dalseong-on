@@ -824,18 +824,19 @@
           <label class="cn-artsel">그림<select id="cnArt" class="psel"></select></label>
           <button id="cnAi">🎨 AI 그림 다시 그리기</button>
           <span style="flex:1"></span>
-          <button id="cnPng">⬇ 이 장 PNG</button><button id="cnAll" class="p">⬇ 전체 PNG 저장</button><button id="cnAgain">문구 다시 만들기</button>
+          <button id="cnPng">⬇ 이 장 PNG</button><button id="cnAll" class="p">⬇ 전체 PNG 저장</button>
         </div>
         <div class="cn-wrap">
           <div class="cn-stage"><div class="cn-view"><canvas id="cnMain"></canvas><button type="button" class="cn-arr l" id="cnArrL" aria-label="이전 장">‹</button><button type="button" class="cn-arr r" id="cnArrR" aria-label="다음 장">›</button><div class="cn-dots" id="cnDots"></div></div><div class="bn-aiload" id="cnAiLoad" hidden></div></div>
           <div class="cn-edit">
-            <div class="cn-eh">이 장 편집</div>
+            <div class="cn-box">
             <div class="cn-nav"><button id="cnPrev">‹ 이전</button><b id="cnCurNo"></b><button id="cnNext">다음 ›</button></div>
             <label id="cnBigWrap">강조 문구<input id="cnEditBig" maxlength="12"></label>
             <label>제목<input id="cnEditHead"></label>
-            <label>본문 <small class="hint">한 줄에 한 문장</small><textarea id="cnEditBody" rows="4"></textarea></label>
+            <label><span>본문 <small class="hint" style="display:inline">(한 줄에 한 문장)</small></span><textarea id="cnEditBody" rows="4"></textarea></label>
             <button type="button" id="cnRedo" class="cn-redo">🔄 이 장만 AI로 다시 만들기</button>
-            <div class="cn-post">
+            </div>
+            <div class="cn-box cn-post">
               <div class="cn-ph"><b>게시글</b><span>인스타·블로그 본문에 붙여 넣을 글</span><button type="button" id="cnCopy">📋 복사</button></div>
               <textarea id="cnCaption" rows="6"></textarea>
             </div>

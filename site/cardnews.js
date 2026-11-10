@@ -26,12 +26,12 @@ const SYS=`당신은 대구광역시 달성군 SNS 홍보 담당자입니다. �
   layout: left(정보 전달형·공지) / center(감성·캠페인·행사) / bottom(그림이 주인공인 축제·관광·현장)
   theme: navy(행정·안내) / green(환경·농업·건강) / orange(축제·행사·청년) / mint(복지·교육·생활)
   font: pre(기본 고딕) / ng(나눔고딕·공문 느낌) / bhs(굵은 제목·강렬) / jua(둥근·친근) / gd(고운돋움·부드러움) / bagel(굵고 귀여움)
-· 본문 장마다 구도를 정한다. type: list(항목 나열) / stat(숫자가 핵심 — big에 그 숫자) / steps(신청 절차·순서, body가 단계) / qa(자주 묻는 질문 — head는 질문, body는 답) / quote(한마디·인용 강조 — body[0]이 큰 문장)
+· 본문 장마다 구도를 정한다. type: list(항목 나열) / stat(숫자가 핵심 — big에 그 숫자) / steps(번호 목록 — 신청 절차처럼 순서가 있으면 flow:true로 단계 사이 화살표, 순서 없는 항목이면 flow 생략) / qa(자주 묻는 질문 — head는 질문, body는 답) / quote(한마디·인용 강조 — body[0]이 큰 문장)
   그림 위치·정렬은 모든 장이 같게 유지되므로 정하지 않는다. 장 모양만 내용에 맞게 고른다(억지로 섞지 말 것).
 · 본문 장에서 숫자·핵심어가 중요하면 big에 짧게(8자 이내, 예: "120명" "무료" "11월 14일까지") 넣는다. 없으면 생략.
 · 표지 head는 반드시 채운다.
 반드시 아래 JSON만 출력한다(설명 금지):
-{"design":{"layout":"left","theme":"navy","font":"pre"},"visual":"English concrete visual motifs","keywords":["핵심 키워드1","핵심 키워드2"],"art":"edu","slides":[{"kind":"cover","head":"제목","body":["부제"]},{"kind":"body","type":"list","head":"소제목","big":"120명","body":["문장","문장"]},{"kind":"end","head":"마무리 문구","body":["문의 ○○과 053)668-○○○○"]}],"caption":"…","tags":["#달성군","#대구달성"]}`;
+{"design":{"layout":"left","theme":"navy","font":"pre"},"visual":"English concrete visual motifs","keywords":["핵심 키워드1","핵심 키워드2"],"art":"edu","slides":[{"kind":"cover","head":"제목","body":["부제"]},{"kind":"body","type":"list","flow":false,"head":"소제목","big":"120명","body":["문장","문장"]},{"kind":"end","head":"마무리 문구","body":["문의 ○○과 053)668-○○○○"]}],"caption":"…","tags":["#달성군","#대구달성"]}`;
 
 function offline(){
   const src=v('cnSrc'); const paras=src.split(/\n\s*\n|\r?\n/).map(x=>x.trim()).filter(x=>x.length>8); const n=+v('cnCount')||6;
@@ -143,7 +143,7 @@ async function drawSlide(canvas,s,i,total){
             ctx.fillStyle=accent; ctx.beginPath(); ctx.arc(bx+r*1.4,yy+bh/2,r,0,7); ctx.fill(); ctx.fillStyle='#fff'; font(ctx,'800',Math.round(ts*0.95)); ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(String(n+1),bx+r*1.4,yy+bh/2+1); ctx.textBaseline='top'; ctx.textAlign='left';
             font(ctx,'500',ts,true); ctx.fillStyle='#1c2333'; let ty=yy+(bh-ls.length*ts*1.45)/2+ts*0.1; ls.forEach(l=>{ ctx.fillText(l,bx+r*2.8,ty); ty+=ts*1.45; }); }
           yy+=bh+(n<body.length-1?ts*0.25+U*0.012:0);
-          if(!dry&&n<body.length-1){ ctx.fillStyle=accent; ctx.beginPath(); const cx=bx+r*1.4; ctx.moveTo(cx-r*0.35,yy-U*0.012-ts*0.15); ctx.lineTo(cx+r*0.35,yy-U*0.012-ts*0.15); ctx.lineTo(cx,yy-ts*0.02); ctx.fill(); } });
+          if(!dry&&s.flow&&n<body.length-1){ ctx.fillStyle=accent; ctx.beginPath(); const cx=bx+r*1.4; ctx.moveTo(cx-r*0.35,yy-U*0.012-ts*0.15); ctx.lineTo(cx+r*0.35,yy-U*0.012-ts*0.15); ctx.lineTo(cx,yy-ts*0.02); ctx.fill(); } });
         ctx.textAlign=C_?'center':'left';
       }else if(T==='qa'){
         const hs=Math.round(U*0.06*k); font(ctx,'800',hs); const q='Q. '+head.replace(/^Q\.\s*/,''); ctx.fillStyle=accent; lines(q,mwAt(yy,hs)).forEach(l=>{ P(l,X,yy); yy+=hs*1.25; }); yy+=hs*0.3; bar();
@@ -246,7 +246,7 @@ function init(){
   $('#cnSampleFile').onclick=async()=>{ const btn=$('#cnSampleFile'); if(btn.disabled) return; btn.disabled=true; const t0=btn.textContent; btn.textContent='⏳ 샘플 계획서 읽는 중…'; $('#cnFileList').textContent='샘플 계획서를 올리고 내용을 읽고 있습니다…';
     await new Promise(r=>setTimeout(r,30));
     try{ preload(); const b=await _sampleBlob; if(!b) throw 0; $('#cnSrc').value=''; $('#cnTitle').value=''; await readFiles([new File([b],'2026년 군민 정보화교육 추진 계획(샘플).pdf',{type:'application/pdf'})]); if(!v('cnContact')) $('#cnContact').value='문의 정보통신과 053)668-0000'; }catch(e){ $('#cnFileList').textContent='⚠ 샘플 파일을 불러오지 못했습니다'; _sampleBlob=null; } finally{ btn.disabled=false; btn.textContent=t0; } };
-  $('#cnGo').onclick=make; $('#cnAgain').onclick=make;
+  $('#cnGo').onclick=make;
   ['cnSize','cnTheme','cnLogo','cnLayout'].forEach(id=>$('#'+id).onchange=()=>{ if(C.data) renderAll(); });
   $('#cnSize').addEventListener('change',()=>{ if(C.data&&v('cnArt')==='ai'&&C.art){ C.art=null; aiArt(false); } });   // 비율이 바뀌면 그 비율로 다시 그린다
   // 이 장 편집: 고치는 대로 바로 반영 (버튼 없이)
@@ -260,12 +260,12 @@ function init(){
 · 같은 역할(${cur.kind==='cover'?'표지':cur.kind==='end'?'마무리':'본문'})을 유지하되 지금과 다른 표현으로, 더 눈에 띄고 쉽게.
 · 본문 장이면 내용에 가장 맞는 type을 고른다: list / stat(big에 숫자) / steps / qa / quote. 지금 type(${cur.type||'list'})과 다르게 해도 좋다.
 · 제목 12자 이내, 문장은 22자 이내, 숫자·날짜는 원문에 있는 것만.
-반드시 JSON 하나만 출력: {"kind":"${cur.kind}","type":"list","head":"…","big":"","body":["…"]}`;
+반드시 JSON 하나만 출력: {"kind":"${cur.kind}","type":"list","flow":false,"head":"…","big":"","body":["…"]}`;
     const others=d.slides.map((x,n)=>`${n+1}장${n===k?'(다시 쓸 장)':''}: ${x.head} / ${(x.body||[]).join(' · ')}`).join('\n');
     try{ const txt=await dsLLM(sys,`원문:\n${v('cnSrc').slice(0,6000)}\n\n지금 카드 구성:\n${others}`,{max:800});
       const m=txt.match(/\{[\s\S]*\}/); if(!m) throw new Error('응답을 읽지 못했습니다'); const j=JSON.parse(m[0]);
       if(!j.head&&!(j.body||[]).length) throw new Error('내용이 비었습니다');
-      d.slides[k]={kind:cur.kind,type:j.type||cur.type,head:j.head||cur.head,big:j.big||'',body:Array.isArray(j.body)&&j.body.length?j.body:cur.body};
+      d.slides[k]={kind:cur.kind,type:j.type||cur.type,flow:!!j.flow,head:j.head||cur.head,big:j.big||'',body:Array.isArray(j.body)&&j.body.length?j.body:cur.body};
       await renderAll(); toast?.(`${k+1}장을 새로 만들었습니다`); }
     catch(e){ toast?.('⚠ 다시 만들지 못했습니다 — '+e.message); }
     finally{ btn.disabled=false; btn.textContent=t0; } };
