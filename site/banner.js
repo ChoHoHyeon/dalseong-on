@@ -44,7 +44,7 @@ async function callModel(user){
 /* ── 그리기 ── */
 function loadImg(src){ return new Promise((ok,no)=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=()=>ok(null); i.src=src; }); }
 /* 글씨체: 모두 무료(OFL) 웹글꼴 — 인쇄물에도 쓸 수 있다. w:[메인,서브·주최] 굵기 (한 굵기만 있는 글꼴은 400) */
-const FONTS={ pre:['기본 고딕','Pretendard',[800,600]], bhs:['굵은 제목체','Black Han Sans',[400,400]], gd:['고운돋움','Gowun Dodum',[400,400]], sf:['해바라기','Sunflower',[700,500]], jua:['주아체','Jua',[400,400]] };
+const FONTS={ pre:['기본 고딕','Pretendard',[800,600]], ng:['나눔고딕','Nanum Gothic',[800,700]], bhs:['굵은 제목체','Black Han Sans',[400,400]], bagel:['베이글','Bagel Fat One',[400,400]], gd:['고운돋움','Gowun Dodum',[400,400]], sf:['해바라기','Sunflower',[700,500]], jua:['주아체','Jua',[400,400]], pen:['손글씨(나눔펜)','Nanum Pen Script',[400,400]] };
 B.font='pre';
 const FF=f=>FONTS[f||B.font]||FONTS.pre;
 const fstr=(role,px,f)=>{ const [, fam, w]=FF(f); const wt=role==='main'?w[0]:w[1]; return `${wt} ${px}px "${fam}",Pretendard,"Malgun Gothic",sans-serif`; };
@@ -107,6 +107,9 @@ function layout(){
   B.L=L; B.dirty=false; B._placeExtra=true;
 }
 const LH=1.15;
+const PT_CM=2.54/72;   // 1pt = 0.03528cm
+const toPt=px=>{ const [wcm]=dims(); return Math.round(px*wcm/B.L.W/PT_CM); };
+const fromPt=pt=>pt*PT_CM*B.L.W/dims()[0];
 function paintText(ctx,ly,fg){ const lines=String(ly.text||'').split('\n'); if(!ly.text) { ly.bb=null; return; }
   ctx.font=fstr(ly.role,ly.size,ly.font); ctx.fillStyle=fg; ctx.textAlign='center'; ctx.textBaseline='middle';
   const lh=ly.size*LH, h=lines.length*lh; let y=ly.cy-h/2+lh/2; let w=0;
@@ -194,7 +197,7 @@ async function make(){
     const S=window.S||{};
     if((S.key||S.server)&&!S.offline){
       B.alts=await callModel(`행사·사업명: ${v('bnName')}\n기간·일시: ${v('bnWhen')||'미정'}\n장소: ${v('bnPlace')||'미정'}\n주최·주관: ${v('bnHost')||'달성군'}\n어조: ${v('bnTone')}\n강조할 점: ${v('bnPoint')||'없음'}`);
-      $('#bnMsg').textContent='문구 3안 — 마음에 드는 안을 고르면 시안이 바뀝니다.';
+      $('#bnMsg').textContent=v('bnBg')==='ai'&&!B.ai?'AI가 배경을 그리는 동안 아래 문구 3안을 둘러보세요.':'문구 3안을 만들었습니다 — 아래에서 골라 보세요.';
     }else{ await new Promise(r=>setTimeout(r,300)); B.alts=offline(); $('#bnMsg').textContent='오프라인 모드 — 모델 연결 시 문구 3안을 새로 씁니다.'; }
     B.pick=0; B.L=null; B.sel=null; window.propShow&&propShow(null); renderAlts(); await draw(); if(v('bnBg')==='ai') aiBg(false); window.dsSave&&dsSave('banner',v('bnName'),B.alts.map((a,i)=>`${i+1}안) ${a.main} / ${a.sub||''}`).join('\n')+`\n\n크기 : ${dims().join('cm × ')}cm`); $('#bnOut').scrollIntoView({behavior:'smooth',block:'start'}); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
   }catch(e){ $('#bnMsg').textContent='⚠ '+e.message; }
@@ -215,9 +218,6 @@ function init(){
   const setBg=k=>{ $('#bnBg').value=k; $('#bnBg').dispatchEvent(new Event('change')); syncBg(); };
   const syncBg=()=>{ const k=v('bnBg'); $$p('#bnBgs .bn-bg').forEach(b=>b.classList.toggle('on',b.dataset.bg===k)); };
   $$p('#bnBgs .bn-bg').forEach(b=>b.onclick=()=>setBg(b.dataset.bg)); syncBg();
-  $('#bnFonts').innerHTML=Object.entries(FONTS).map(([k,[l,fam]])=>`<button type="button" data-v="${k}" style="font-family:'${fam}',Pretendard,sans-serif">${l}</button>`).join('');
-  const syncF=()=>$$p('#bnFonts button').forEach(b=>b.classList.toggle('on',b.dataset.v===B.font)); syncF();
-  $$p('#bnFonts button').forEach(b=>b.onclick=()=>{ B.font=b.dataset.v; syncF(); if(B.L) ['main','sub','host'].forEach(k=>delete B.L[k].font); if(B.alts.length) draw().then(()=>B.sel&&propShow(B.sel)); });
   const chips=(id,M,key)=>{ $('#'+id).innerHTML=Object.entries(M).map(([k,l])=>`<button type="button" data-v="${k}">${l}</button>`).join(''); const sync=()=>$$p('#'+id+' button').forEach(b=>b.classList.toggle('on',b.dataset.v===B.lg[key])); sync();
     $$p('#'+id+' button').forEach(b=>b.onclick=async ()=>{ B.lg[key]=b.dataset.v; sync(); if(!B.L){ if(B.alts.length) draw(); return; }
       const [W,H,vert]=canvasWH(); if(key==='sz'){ const lg=B.L.logo, r=logoBaseH(W,H,vert)/lg.h; lg.h*=r; if(lg.w) lg.w*=r; }
@@ -238,14 +238,16 @@ function init(){
     prop.innerHTML=`<div class="bp-h"><b>${LNAME[k]}</b><span>줄바꿈 Shift+Enter</span><button type="button" class="bp-x" title="선택 해제">✕</button></div>
       <div class="bp-body"><textarea id="bpText" rows="1" maxlength="80"></textarea>
         <div class="bp-row"><em>글씨체</em><div class="bn-chips" id="bpFont">${Object.entries(FONTS).map(([f,[l,fam]])=>`<button type="button" data-v="${f}" class="${f===cur?'on':''}" style="font-family:'${fam}',Pretendard,sans-serif">${l}</button>`).join('')}</div></div>
-        <div class="bp-row"><em>크기</em><span class="bn-fs"><button type="button" data-d="-1" title="작게">가<sup>−</sup></button><b id="bpPct"></b><button type="button" data-d="1" title="크게">가<sup>+</sup></button></span><button type="button" class="bp-reset" title="처음 크기로">↺ 처음 크기</button></div></div>`;
+        <div class="bp-row"><em>크기</em><span class="bn-fs"><button type="button" data-d="-1" title="작게">가<sup>−</sup></button><input id="bpPt" inputmode="numeric" title="실제 현수막에 인쇄되는 글자 크기"><i class="bp-unit">pt</i><button type="button" data-d="1" title="크게">가<sup>+</sup></button></span><button type="button" class="bp-reset" title="처음 크기로">↺ 처음 크기</button><small class="bp-cm" id="bpCm"></small></div></div>`;
     const t=$('#bpText'); t.value=ly.text; const grow=()=>{ t.style.height='auto'; t.style.height=t.scrollHeight+2+'px'; }; grow();
-    const pct=()=>{ $('#bpPct').textContent=Math.round(ly.size/(ly.base||ly.size)*100)+'%'; }; pct();
+    const pct=()=>{ const pt=toPt(ly.size); $('#bpPt').value=pt; $('#bpCm').textContent=`글자 높이 약 ${(pt*PT_CM).toFixed(pt*PT_CM<10?1:0)}cm`; }; pct();
+    $('#bpPt').onchange=()=>{ const n=parseFloat($('#bpPt').value); if(n>0){ ly.size=Math.max(4,fromPt(n)); B.dirty=true; paint(); } pct(); };
+    $('#bpPt').onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); $('#bpPt').blur(); } };
     t.oninput=()=>{ ly.text=t.value; grow(); B.dirty=true; syncAlt(k); paint(); };
     t.onkeydown=e=>{ if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){ e.preventDefault(); t.blur(); } };
     t.onblur=()=>{ ly.text=t.value.split('\n').map(x=>x.trim()).filter(Boolean).join('\n')||ly.text; shrinkFit(); paint(); renderAlts(); };
     $$p('#bpFont button').forEach(b=>b.onclick=async ()=>{ ly.font=b.dataset.v; $$p('#bpFont button').forEach(x=>x.classList.toggle('on',x===b)); B.dirty=true; await fontReady(); shrinkFit(); paint(); });
-    prop.querySelectorAll('.bn-fs button').forEach(b=>b.onclick=()=>{ const base=ly.base||ly.size, r=Math.round((ly.size/base+(+b.dataset.d)*0.1)*10)/10; ly.size=base*Math.max(.3,Math.min(3,r)); B.dirty=true; pct(); paint(); });
+    prop.querySelectorAll('.bn-fs button').forEach(b=>b.onclick=()=>{ const pt=toPt(ly.size), st=pt>=200?20:pt>=60?10:pt>=20?2:1; ly.size=Math.max(4,fromPt(Math.max(st,(Math.round(pt/st)+(+b.dataset.d))*st))); B.dirty=true; pct(); paint(); });
     prop.querySelector('.bp-reset').onclick=()=>{ ly.size=ly.base||ly.size; pct(); paint(); };
     prop.querySelector('.bp-x').onclick=()=>{ B.sel=null; overlay(); prop.hidden=true; };
   };
@@ -270,7 +272,7 @@ function init(){
   ov.addEventListener('pointermove',e=>{ if(!act) return; const p=toCanvas(e), ly=B.L[act.k];
     if(act.mode==='move'){ const dx=p[0]-act.p0[0], dy=p[1]-act.p0[1]; if(Math.abs(dx)+Math.abs(dy)>B.L.W*0.003){ act.moved=true; lastTap={}; } if(!act.moved) return; ly.cx=act.c0[0]+dx; ly.cy=act.c0[1]+dy; }
     else { const d=Math.hypot(p[0]-ly.cx,p[1]-ly.cy); setSz(act.k,Math.max(B.L.H*0.02,Math.min(B.L.H*1.2,act.s0*d/act.d0))); }
-    B.dirty=true; sched(); if(act.mode==='size'){ const pp=$('#bpPct'); if(pp&&B.L[act.k].type==='text') pp.textContent=Math.round(B.L[act.k].size/(B.L[act.k].base||1)*100)+'%'; } });
+    B.dirty=true; sched(); if(act.mode==='size'){ const pp=$('#bpPt'); if(pp&&B.L[act.k].type==='text'&&B.sel===act.k){ pp.value=toPt(B.L[act.k].size); } } });
   const end=()=>{ act=null; };
   ov.addEventListener('pointerup',end); ov.addEventListener('pointercancel',end);
   document.addEventListener('keydown',e=>{ if(!B.sel||!B.L||$('#bnOut').hidden||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return; if((e.key==='Delete'||e.key==='Backspace')&&B.L[B.sel]&&B.L[B.sel].type==='img'){ e.preventDefault(); return removeExtra(B.sel); } const st=B.L.W*(e.shiftKey?0.01:0.002); const m={ArrowLeft:[-st,0],ArrowRight:[st,0],ArrowUp:[0,-st],ArrowDown:[0,st]}[e.key]; if(!m) return; e.preventDefault(); B.L[B.sel].cx+=m[0]; B.L[B.sel].cy+=m[1]; B.dirty=true; paint(); });

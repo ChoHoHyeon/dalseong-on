@@ -2108,3 +2108,10 @@ body[data-theme=dark] .pp-wrap{background:#1b2333}
 #bnExtraList{color:var(--acc);font-weight:600}
 .bp-del{margin-left:auto;height:30px;padding:0 12px;border-radius:999px;border:1px solid rgba(192,57,43,.35);background:#fff;color:#c0392b;font-size:12.5px;cursor:pointer}
 .bp-del+.bp-x{margin-left:0}
+/* 시안 편집 안내 강조 */
+.bn-tip>span{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:999px;background:linear-gradient(100deg,rgba(47,111,237,.12),rgba(18,165,148,.12));border:1px solid rgba(47,111,237,.3);color:#1d4fb0;font-size:13.5px;font-weight:600}
+.bn-tip>span b{color:#2f6fed;font-weight:800}
+body[data-theme=dark] .bn-tip>span{color:#cfe0ff;background:linear-gradient(100deg,rgba(79,140,255,.18),rgba(18,165,148,.18))} body[data-theme=dark] .bn-tip>span b{color:#8fb6ff}
+#bpPt{width:64px;height:100%;border:0;border-left:1px solid var(--line);border-right:0;text-align:right;font-weight:800;font-size:14px;padding:0 2px 0 6px;outline:none;background:var(--panel);color:var(--tx);box-shadow:none}
+.bp-unit{font-style:normal;font-size:12px;color:var(--mut);padding:0 8px 0 3px;border-right:1px solid var(--line);height:100%;display:flex;align-items:center;background:var(--panel)}
+.bp-cm{font-size:12px;color:var(--mut)}

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>달성On · 달성군 직원 AI 업무도우미</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Dodum&family=Jua&family=Sunflower:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Black+Han+Sans&family=Gowun+Dodum&family=Jua&family=Nanum+Gothic:wght@700;800&family=Nanum+Pen+Script&family=Sunflower:wght@500;700&display=swap">
 <script src="vendor/jszip.min.js"></script>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="trip.css">
@@ -660,7 +660,7 @@
 
         <div class="pcols">
         <fieldset class="pbox req-box">
-          <legend>꼭 입력해 주세요</legend>
+          <legend>필수 입력</legend>
           <label class="pfull"><span class="cap">행사·사업명 <b class="req">*</b></span>
             <input id="pfName" placeholder="예) 반부패·청렴 특별교육"></label>
           <label class="pfull"><span class="cap">주요 내용 <b class="req">*</b></span>
@@ -736,7 +736,7 @@
         <h4>문구·시안 만들기 <small>규격 비율 그대로 · 군 CI 원본 사용</small></h4>
         <div class="pcols">
         <fieldset class="pbox req-box">
-          <legend>꼭 입력해 주세요</legend>
+          <legend>필수 입력</legend>
           <label class="pfull"><span class="cap">행사·사업명 <b class="req">*</b></span><input id="bnName" placeholder="예) 2026 비슬산 참꽃문화제"></label>
           <div class="pgrid pgrid2">
             <label>기간·일시<input id="bnWhen" placeholder="예) 2026. 4. 18. ~ 4. 26."></label>
@@ -756,7 +756,6 @@
             </div>
             <div class="pfile" id="bnFileWrap" hidden><label class="filebtn">📷 사진 올리기<input type="file" id="bnFile" accept="image/*"></label><span class="hint">가로 3000px 이상 권장</span></div>
           </div>
-          <div class="bn-sec"><span class="cap">글씨체</span><div class="bn-chips" id="bnFonts"></div></div>
           <div class="bn-sec"><span class="cap">크기</span>
             <div class="bn-dim"><label><em>가로</em><input id="bnW" inputmode="numeric" value="500"><i>cm</i></label><span>×</span><label><em>세로</em><input id="bnH" inputmode="numeric" value="90"><i>cm</i></label></div>
             <div class="bn-quick"><small>자주 쓰는 크기</small><span id="bnPresets"></span></div>
@@ -770,7 +769,7 @@
         <div class="pact"><button id="bnGo" class="p">문구·시안 만들기</button><button id="bnSample">예시로 채우기</button><button id="bnReset">비우기</button><span class="hint" id="bnMsg"></span></div>
       </div>
       <div class="card pout" id="bnOut" hidden>
-        <h4>문구 3안 <small>하나를 고르면 시안이 바뀝니다 · 직접 고칠 수도 있습니다</small></h4>
+        <h4>문구 3안 <small>배경을 그리는 동안 둘러보고 마음에 드는 안을 고르세요</small></h4>
         <div class="bn-alts" id="bnAlts"></div>
         <div class="bn-tip"><span>✋ 시안 속 <b>문구와 로고를 직접 눌러서</b> 옮기고 고칠 수 있습니다</span><button type="button" id="bnResetPos">↺ 처음 배치로</button></div>
         <div class="bn-stage"><div class="bn-cwrap"><canvas id="bnCanvas"></canvas><div class="bn-ov" id="bnOv"></div></div><div class="bn-aiload" id="bnAiLoad" hidden></div></div>
@@ -787,7 +786,7 @@
         <h4>카드뉴스 만들기 <small>정해진 틀에 배치 · 디자이너 없이 10분</small></h4>
         <div class="pcols">
         <fieldset class="pbox req-box">
-          <legend>꼭 입력해 주세요</legend>
+          <legend>필수 입력</legend>
           <label class="pfull"><span class="cap">알릴 내용 <b class="req">*</b> <small class="hint">보도자료·공고문·계획서 본문을 그대로 붙여넣기</small></span><textarea id="cnSrc" rows="9" placeholder="보도자료 전문을 붙여넣으세요. 달성On이 장별로 나눠 짧은 문장으로 다시 씁니다."></textarea></label>
         </fieldset>
         <fieldset class="pbox opt-box">
@@ -830,7 +829,7 @@
         <h4>대본 만들기 <small>문서 → 장면별 자막 → 영상</small></h4>
         <div class="pcols">
         <fieldset class="pbox req-box">
-          <legend>꼭 입력해 주세요</legend>
+          <legend>필수 입력</legend>
           <div class="pfile" style="margin-bottom:8px"><label class="filebtn">📎 문서 올리기 (PDF · txt)<input type="file" id="mvFile" accept=".pdf,.txt,.md,.csv"></label><span class="hint">계획서·보도자료·공고문 PDF면 됩니다 (글자 PDF만, 스캔본 제외)</span></div>
           <label class="pfull"><span class="cap">내용 <b class="req">*</b> <small class="hint">문서를 올리면 자동으로 채워집니다 · 직접 붙여넣어도 됩니다</small></span><textarea id="mvSrc" rows="8" placeholder="홍보할 사업·행사의 계획서나 보도자료 내용"></textarea></label>
         </fieldset>
