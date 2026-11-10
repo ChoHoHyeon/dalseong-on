@@ -193,7 +193,7 @@ function init(){
     finally{ $('#mtAudio').disabled=false; $('#mtAudio').value=''; $('#mtSampleAudio').disabled=false; }
   }
   const fillInfo=()=>{ $('#mtName').value='2026년 데이터기반행정 실태점검 대응 회의'; $('#mtDate').value=new Date().toISOString().slice(0,10); $('#mtTime').value='14:00'; $('#mtPlace').value='군청 3층 소회의실'; $('#mtDept').value='행정국 정보통신과';
-    $('#mtWho').value='정보통신과장, 정보통계팀장, 조호현 주무관, 기획예산실 담당, 민원과 담당'; $('#mtAgenda').value='실태점검 지표별 담당 배정\n공동 데이터 분석 과제 선정\n하반기 주민 정보화교육 일정'; mrail(2); };
+    $('#mtWho').value='정보통신과장, 정보통계팀장, 조호현 주무관, 기획예산실 담당, 민원과 담당'; mrail(2); };
   $('#mtFill').onclick=()=>{ fillInfo(); toast?.('회의 정보를 예시로 채웠습니다 — 2단계에서 녹음을 올리거나 샘플 녹음을 눌러 보세요'); };
   $('#mtAudio').onchange=e=>runAudio(e.target.files[0]);
   $('#mtSampleAudio').onclick=async()=>{

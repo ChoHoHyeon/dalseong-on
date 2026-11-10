@@ -239,17 +239,14 @@
         <div class="ru-form">
           <label class="ru-f"><span class="ru-lb">회의 제목 <b class="req">*</b></span><input id="mtName" placeholder="예) 2026년 데이터기반행정 실태점검 대응 회의"></label>
           <div class="mt-optbox">
-            <div class="mt-optt">선택 입력</div>
-            <div class="mt-grid4">
+            <div class="mt-optt">선택 입력 <small>비워 두면 녹음에서 파악합니다</small></div>
+            <div class="mt-grid3">
               <label class="ru-f"><span class="ru-lb">일자</span><input id="mtDate" type="date"></label>
               <label class="ru-f"><span class="ru-lb">시각</span><input id="mtTime" placeholder="예) 14:00"></label>
               <label class="ru-f"><span class="ru-lb">장소</span><input id="mtPlace" placeholder="예) 군청 3층 소회의실"></label>
-              <label class="ru-f"><span class="ru-lb">작성 부서</span><input id="mtDept" placeholder="행정국 정보통신과"></label>
             </div>
-            <div class="mt-grid2">
-              <label class="ru-f"><span class="ru-lb">참석자</span><input id="mtWho" placeholder="예) 정보통신과장, 정보통계팀장, ○○○ 주무관"></label>
-              <label class="ru-f"><span class="ru-lb">안건 <small>한 줄에 하나</small></span><textarea id="mtAgenda" rows="2" placeholder="예) 실태점검 지표별 담당 배정"></textarea></label>
-            </div>
+            <label class="ru-f"><span class="ru-lb">참석자</span><input id="mtWho" placeholder="예) 정보통신과장, 정보통계팀장, ○○○ 주무관"></label>
+            <input type="hidden" id="mtDept" value="행정국 정보통신과"><input type="hidden" id="mtAgenda" value="">
           </div>
         </div>
       </div>

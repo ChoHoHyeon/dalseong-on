@@ -1921,3 +1921,11 @@ html[data-theme=dark] .lw-paper,body.dark .lw-paper{background:#fff;color:#111}
 .mt-row #mtS2 .mt-run{flex-wrap:wrap}
 @media(max-width:1100px){.mt-row{grid-template-columns:1fr}}
 .mt-row .ru-sh{min-height:52px;box-sizing:content-box}
+/* 회의 정보: 꼭 필요한 것만(일자·시각·장소 한 줄 + 참석자), 오른쪽 녹음 카드와 높이 균형 */
+.mt-grid3{display:grid;grid-template-columns:1fr .7fr 1.3fr;gap:12px}
+.mt-optt small{font-weight:400;color:var(--mut);margin-left:6px}
+.mt-row #mtS1 .ru-form{flex:1;justify-content:space-between}
+.mt-row #mtS1 .mt-optbox{flex:1;justify-content:center}
+.mt-row #mtS2 .mt-sample{margin-top:auto;padding-top:12px}
+.mt-row #mtS2 .mt-file+.mt-run{margin-bottom:12px}
+@media(max-width:900px){.mt-grid3{grid-template-columns:1fr 1fr}}
