@@ -5,7 +5,7 @@
 //  GET  /api/video?rid=...                          → {status:'queued'|'running'|'done'|'error', url?}
 //  GET  /api/video?file=<fal 영상 주소>              → 영상 파일 중계(브라우저가 직접 못 받을 때만)
 // 키는 Netlify 환경변수 FAL_KEY 에만 존재(브라우저·GitHub 노출 없음). 원본 문서는 보내지 않는다 — AI가 그린 그림 1장 + 움직임 설명 한 줄만.
-// 선택: FAL_VIDEO_MODEL(기본 Wan 2.2 Turbo i2v) · VIDEO_DAY_LIMIT(하루 전체 편수, 기본 10) · ACCESS_CODE
+// 선택: FAL_VIDEO_MODEL(기본 Wan 2.2 Turbo i2v) · VIDEO_DAY_LIMIT(하루 전체 편수, 기본 5) · VIDEO_ADMIN_CODE(한도 없는 관리자 코드) · ACCESS_CODE
 import { getStore } from "@netlify/blobs";
 
 export const config = { path: "/api/video" };
@@ -18,9 +18,11 @@ const FILE_OK = /^https:\/\/([a-z0-9-]+\.)*(fal\.media|fal\.run|fal\.ai)\/|^http
 export default async (req) => {
   const key = process.env.FAL_KEY || process.env.Fal_Key || process.env.fal_key;   // 환경변수 이름 대소문자 차이 허용
   const model = process.env.FAL_VIDEO_MODEL || "fal-ai/wan/v2.2-a14b/image-to-video/turbo";
-  const limit = Math.max(0, +(process.env.VIDEO_DAY_LIMIT || 10));
+  const limit = Math.max(0, +(process.env.VIDEO_DAY_LIMIT || 5));
+  const adminCode = process.env.VIDEO_ADMIN_CODE;                // 관리자(시험용) 코드 — 관리자 › 모델 설정 「접속 코드」에 넣으면 하루 한도 없이 만든다
+  const isAdmin = !!adminCode && req.headers.get("x-access-code") === adminCode;
   const gate = process.env.ACCESS_CODE;
-  const codeOk = !gate || req.headers.get("x-access-code") === gate;
+  const codeOk = !gate || req.headers.get("x-access-code") === gate || (!!process.env.VIDEO_ADMIN_CODE && req.headers.get("x-access-code") === process.env.VIDEO_ADMIN_CODE);
   const st = getStore({ name: "video", consistency: "strong" });
   const auth = { authorization: "Key " + key };
   const url = new URL(req.url);
@@ -57,13 +59,15 @@ export default async (req) => {
   if (req.method !== "POST") return json({ error: "Method Not Allowed" }, 405);
   let b; try { b = await req.json(); } catch { return json({ error: "Bad Request" }, 400); }
   const day = await st.get("d:" + today(), { type: "json" }) || { n: 0 };
-  if (b.ping) return json({ ok: true, hasKey: !!key, model, limit, used: day.n, codeOk });
+  if (b.ping) return json({ ok: true, hasKey: !!key, model, limit, used: day.n, codeOk, admin: isAdmin });
   if (!codeOk) return json({ error: "접속 코드가 맞지 않습니다" }, 401);
   if (!key) return json({ error: "nokey" }, 503);
 
   if (b.action === "start") {
-    if (day.n >= limit) return json({ error: "limit", limit, used: day.n }, 429);
-    day.n += 1; await st.setJSON("d:" + today(), day);
+    if (!isAdmin) {
+      if (day.n >= limit) return json({ error: "limit", limit, used: day.n }, 429);
+      day.n += 1; await st.setJSON("d:" + today(), day);
+    }
     const ticket = (globalThis.crypto?.randomUUID?.() || String(Date.now()) + Math.random().toString(36).slice(2)).replace(/[^a-z0-9-]/gi, "").toLowerCase();
     await st.setJSON("t:" + ticket, { left: CLIPS, day: today(), t: Date.now() });
     return json({ ok: true, ticket, used: day.n, limit });
@@ -79,7 +83,7 @@ export default async (req) => {
     const prompt = String(b.prompt || "").slice(0, 1200) || "Smooth natural motion, gentle camera movement.";
     const r = await fetch("https://queue.fal.run/" + model, {
       method: "POST", headers: { ...auth, "content-type": "application/json" },
-      body: JSON.stringify({ image_url: image, prompt, resolution: "720p", aspect_ratio: "9:16", enable_safety_checker: true, enable_prompt_expansion: false, acceleration: "regular", video_quality: "high" })
+      body: JSON.stringify({ image_url: image, prompt, resolution: "580p", aspect_ratio: "9:16", enable_safety_checker: true, enable_prompt_expansion: false, acceleration: "regular", video_quality: "high" })
     });
     const txt = await r.text(); let j = {}; try { j = JSON.parse(txt); } catch {}
     if (!r.ok || !j.request_id) return json({ error: "영상 접수 실패 " + r.status + ": " + txt.slice(0, 300) }, 502);

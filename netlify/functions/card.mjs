@@ -43,7 +43,7 @@ export default async (req) => {
   const expect = Array.isArray(b.expect) ? b.expect.map(x => String(x).slice(0, 200)).slice(0, 20) : [];
   const id = (globalThis.crypto?.randomUUID?.() || String(Date.now()) + Math.random().toString(36).slice(2)).replace(/[^a-z0-9-]/gi, "").toLowerCase();
 
-  await store.setJSON("req:" + id, { prompt, photo, size, expect, quality: b.quality === "high" ? "high" : "medium", t: Date.now() });
+  await store.setJSON("req:" + id, { prompt, photo, size, expect, quality: ["high", "low"].includes(b.quality) ? b.quality : "medium", t: Date.now() });
   await store.setJSON("job:" + id, { status: "queued", t: Date.now() });
 
   // 백그라운드 함수 호출 (202로 바로 돌아오고, 실제 생성은 최대 15분까지 이어서 진행)

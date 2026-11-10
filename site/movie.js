@@ -12,7 +12,7 @@
 const $=s=>document.querySelector(s);
 const W=720,H=1280, T_HOOK=3, T_SC=5, T_END=4;          // 3 + 5×4 + 4 = 27초
 const USER_LIMIT=2;                                     // 이 브라우저 하루 AI 영상 편수
-const V={busy:false,data:null,imgs:[],clips:[],blob:null,ext:'mp4',logo:null,purpose:'auto'};
+const V={font:'pre',busy:false,data:null,imgs:[],clips:[],blob:null,ext:'mp4',logo:null,purpose:'auto'};
 const PUR={ recruit:['📣','모집·신청'], event:['🎉','행사·축제'], policy:['📋','안내·공지'], news:['🏆','성과·소식'], campaign:['🦺','생활정보·캠페인'] };
 const TONE={ bright:'밝고 경쾌', calm:'차분·신뢰' }, STYLE={ illust:'일러스트', photo:'실사풍' };
 const PAL={ navy:['#0b2a6b','#1b4db3','#ffd166'], green:['#145a32','#27ae60','#f9e79f'], orange:['#c0392b','#e67e22','#fff3c4'], mint:['#0f6b78','#2bb3a3','#fdfefe'], purple:['#3b2a7a','#6c4cd1','#ffd6f0'] };
@@ -44,7 +44,9 @@ const ease=t=>t<=0?0:t>=1?1:1-Math.pow(1-t,3);
 const back=t=>{ if(t<=0) return 0; if(t>=1) return 1; const c=1.70158; return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2); };
 function wrap(ctx,text,maxW){ const out=[]; let line=''; for(const w of String(text||'').split(/(\s+)/)){ const t=line+w; if(ctx.measureText(t).width>maxW&&line.trim()){ out.push(line.trim()); line=w.trimStart(); } else line=t; } if(line.trim()) out.push(line.trim());
   return out.flatMap(l=>{ if(ctx.measureText(l).width<=maxW) return [l]; const r=[]; let s=''; for(const ch of l){ if(ctx.measureText(s+ch).width>maxW&&s){ r.push(s); s=ch; } else s+=ch; } if(s) r.push(s); return r; }); }
-const F=(w,s,bold)=>`${w} ${s}px ${bold&&V.data?.tone==='bright'?'"Black Han Sans",':''}Pretendard,"Malgun Gothic",sans-serif`;
+/* 글씨체: 큰 글자(제목·강조)에만 적용, 작은 자막은 늘 기본 고딕 */
+const MFONTS={ pre:['기본 고딕','Pretendard',800], ng:['나눔고딕','Nanum Gothic',800], gd:['고운돋움','Gowun Dodum',400], jua:['주아체','Jua',400], bhs:['굵은 제목체','Black Han Sans',400] };
+const F=(w,s,bold)=>{ const f=bold&&MFONTS[V.font]; return f?`${f[2]} ${s}px "${f[1]}",Pretendard,"Malgun Gothic",sans-serif`:`${Math.min(w,700)} ${s}px Pretendard,"Malgun Gothic",sans-serif`; };
 function quotaLocal(){ try{ const o=JSON.parse(localStorage.getItem('dsMvQuota')||'{}'); const d=new Date().toISOString().slice(0,10); return o.d===d?o.n:0; }catch(e){ return 0; } }
 function quotaUse(){ try{ const d=new Date().toISOString().slice(0,10); localStorage.setItem('dsMvQuota',JSON.stringify({d,n:quotaLocal()+1})); }catch(e){} }
 
@@ -78,7 +80,7 @@ ${d.character?`RECURRING MAIN CHARACTER (keep identical across all scenes): ${d.
 Composition: main subject in the middle, keep the bottom third simple (subtitles go there). IMPORTANT: absolutely no text, no letters, no numbers, no logos, no signs, no watermarks.`;
 }
 async function cardJob(prompt){
-  const r=await fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':code()},body:JSON.stringify({action:'start',prompt,size:'1024x1536',expect:[]})});
+  const r=await fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':code()},body:JSON.stringify({action:'start',prompt,size:'1024x1536',quality:'low',expect:[]})   /* 빠른 화질 — 영상 속에서 움직이고 자막이 덮어 차이가 잘 안 보인다 */});
   const j=await r.json(); if(!r.ok||!j.id) throw new Error(j.error||'그림 접수 실패');
   const t0=Date.now(); while(Date.now()-t0<200000){ await sleep(1800); const k=await (await fetch('/api/card?id='+j.id,{headers:{'x-access-code':code()}})).json(); if(k.status==='done') return k.image; if(k.status==='error') throw new Error(k.error||'그림 실패'); }
   throw new Error('그림 시간 초과'); }
@@ -106,8 +108,8 @@ function caption(ctx,s,t,p,dur){ const out=Math.min(1,(dur-t)/0.35); ctx.save();
   let y=H-150;
   if(s.sub){ const a=ease((t-0.55)/0.45)*out; ctx.globalAlpha=a; ctx.font=F(600,34); ctx.fillStyle='rgba(255,255,255,.95)'; const ls=wrap(ctx,s.sub,W-120); ls.reverse().forEach(l=>{ ctx.fillText(l,W/2,y+(1-a)*30); y-=48; }); y-=14; }
   const hs=s.head.length>9?60:70; ctx.font=F(800,hs,true); const hl=wrap(ctx,s.head,W-100); const k=back((t-0.15)/0.5)*out;
-  ctx.globalAlpha=Math.min(1,k); hl.reverse().forEach(l=>{ ctx.save(); ctx.translate(W/2,y); ctx.scale(0.85+0.15*k,0.85+0.15*k); ctx.lineWidth=10; ctx.strokeStyle='rgba(5,12,35,.55)'; ctx.lineJoin='round'; ctx.strokeText(l,0,0); ctx.fillStyle='#fff'; ctx.fillText(l,0,0); ctx.restore(); y-=hs*1.15; });
-  if(s.big){ const kb=back((t-0.05)/0.45)*out; ctx.globalAlpha=Math.min(1,kb); ctx.font=F(900,s.big.length>6?84:110,true); ctx.save(); ctx.translate(W/2,y-12); ctx.scale(0.6+0.4*kb,0.6+0.4*kb); ctx.lineWidth=12; ctx.strokeStyle='rgba(5,12,35,.5)'; ctx.strokeText(s.big,0,0); ctx.fillStyle=p[2]; ctx.fillText(s.big,0,0); ctx.restore(); }
+  ctx.globalAlpha=Math.min(1,k); hl.reverse().forEach(l=>{ ctx.save(); ctx.translate(W/2,y); ctx.scale(0.85+0.15*k,0.85+0.15*k); ctx.shadowColor='rgba(0,0,0,.45)'; ctx.shadowBlur=14; ctx.lineWidth=4; ctx.strokeStyle='rgba(5,12,35,.35)'; ctx.lineJoin='round'; ctx.strokeText(l,0,0); ctx.fillStyle='#fff'; ctx.fillText(l,0,0); ctx.restore(); y-=hs*1.15; });
+  if(s.big){ const kb=back((t-0.05)/0.45)*out; ctx.globalAlpha=Math.min(1,kb); ctx.font=F(900,s.big.length>6?84:110,true); ctx.save(); ctx.translate(W/2,y-12); ctx.scale(0.6+0.4*kb,0.6+0.4*kb); ctx.shadowColor='rgba(0,0,0,.45)'; ctx.shadowBlur=16; ctx.lineWidth=4; ctx.strokeStyle='rgba(5,12,35,.3)'; ctx.strokeText(s.big,0,0); ctx.fillStyle=p[2]; ctx.fillText(s.big,0,0); ctx.restore(); }
   ctx.restore(); }
 function drawHook(ctx,t,d,p){ const im=V.imgs[0]; if(im){ ctx.save(); ctx.filter='blur(6px) brightness(.55)'; cover(ctx,im,im.width,im.height,1.15+0.05*t/T_HOOK); ctx.restore(); } else bgGrad(ctx,p);
   ctx.fillStyle=p[0]+'99'; ctx.fillRect(0,0,W,H);
@@ -138,7 +140,7 @@ const TOTAL=T_HOOK+T_SC*4+T_END;
 /* 실시간으로 그리며 녹화 (장면이 바뀔 때 그 장면 영상을 처음부터 재생) */
 async function compose(){
   const c=$('#mvCanvas'); c.width=W; c.height=H; const ctx=c.getContext('2d'); $('#mvVideo').hidden=true; c.hidden=false;
-  try{ await Promise.all(['Black Han Sans','Pretendard'].flatMap(f=>[document.fonts.load(`800 40px "${f}"`,'가나다'),document.fonts.load(`400 40px "${f}"`,'가나다')])); }catch(e){}
+  try{ const f=MFONTS[V.font]; await Promise.all([document.fonts.load(`${f[2]} 40px "${f[1]}"`,'가나다'),document.fonts.load('700 40px "Pretendard"','가나다'),document.fonts.load('600 40px "Pretendard"','가나다')]); }catch(e){}
   const mime=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm'].find(m=>window.MediaRecorder&&MediaRecorder.isTypeSupported(m)); V.ext=mime&&mime.startsWith('video/mp4')?'mp4':'webm';
   const stream=c.captureStream(30); const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8_000_000}); const chunks=[]; rec.ondataavailable=e=>{ if(e.data.size) chunks.push(e.data); };
   const stopped=new Promise(ok=>rec.onstop=ok); rec.start(250);
@@ -175,10 +177,11 @@ async function make(){
     prog(0,'',V._t0); $('#mvMsg').textContent='AI가 영상을 만들고 있습니다 — 보통 2~4분 걸립니다.';
     V.data=online?await script():offline(); renderSide();
     // ③ 움직이는 영상 접수권(하루 한도) 먼저 받기
-    let ticket=null;
-    if(online&&quotaLocal()>=USER_LIMIT) note+=`이 브라우저의 오늘 AI 영상 ${USER_LIMIT}편을 다 써서 그림에 움직임을 넣어 만들었습니다. `;
+    let ticket=null, admin=false;
+    if(online){ try{ admin=!!(await (await fetch('/api/video',{method:'POST',headers:{'content-type':'application/json','x-access-code':code()},body:'{"ping":1}'})).json()).admin; }catch(e){} }   /* 관리자 코드면 하루 한도 없음 */
+    if(online&&!admin&&quotaLocal()>=USER_LIMIT) note+=`이 브라우저의 오늘 AI 영상 ${USER_LIMIT}편을 다 써서 그림에 움직임을 넣어 만들었습니다. `;
     else if(online){ try{ const r=await fetch('/api/video',{method:'POST',headers:{'content-type':'application/json','x-access-code':code()},body:JSON.stringify({action:'start'})}); const j=await r.json();
-        if(r.ok&&j.ticket){ ticket=j.ticket; quotaUse(); } else if(j.error==='limit') note+=`오늘 AI 영상 한도(전체 ${j.limit}편)를 다 써서 그림에 움직임을 넣어 만들었습니다. `; else if(j.error==='nokey') note+='움직이는 영상 기능이 아직 연결되지 않아 그림에 움직임을 넣어 만들었습니다. '; else note+='움직이는 영상을 접수하지 못해 그림에 움직임을 넣어 만들었습니다. '; }catch(e){ note+='움직이는 영상을 접수하지 못했습니다. '; } }
+        if(r.ok&&j.ticket){ ticket=j.ticket; if(!admin) quotaUse(); } else if(j.error==='limit') note+=`오늘 AI 영상 한도(전체 ${j.limit}편)를 다 써서 그림에 움직임을 넣어 만들었습니다. `; else if(j.error==='nokey') note+='움직이는 영상 기능이 아직 연결되지 않아 그림에 움직임을 넣어 만들었습니다. '; else note+='움직이는 영상을 접수하지 못해 그림에 움직임을 넣어 만들었습니다. '; }catch(e){ note+='움직이는 영상을 접수하지 못했습니다. '; } }
     // ②→③ 장면마다 그림이 나오는 즉시 그 장면 영상을 맡긴다 (4장면 동시 진행 — 기다리는 시간 단축)
     let ni=0, nc=0, failI=0, failC=0; const st=()=>prog(ni<4?1:2,ni<4?`${ni}/4`:`${nc}/4`,V._t0); st();
     V.imgs=[null,null,null,null]; V.clips=[null,null,null,null];
@@ -202,6 +205,11 @@ async function remix(){ if(!V.data||V.busy) return; V.busy=true; $('#mvRemix').d
 function init(){
   if($('#mvGo')._on) return; $('#mvGo')._on=1;
   $('#mvGo').onclick=make; $('#mvRemix').onclick=remix;
+  $('#mvFont').innerHTML=Object.entries(MFONTS).map(([k,[l,f,w]])=>`<button type="button" data-v="${k}" class="${k===V.font?'on':''}" style="font-family:'${f}',Pretendard;font-weight:${w}">${l}</button>`).join('');
+  $('#mvFont').onclick=async e=>{ const b=e.target.closest('button'); if(!b||V.busy) return; V.font=b.dataset.v; $('#mvFont').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+    if(!V.data) return; const f=MFONTS[V.font]; try{ await document.fonts.load(`${f[2]} 40px "${f[1]}"`,'가나다'); }catch(err){}
+    const c=$('#mvCanvas'); c.hidden=false; $('#mvVideo').pause(); $('#mvVideo').hidden=true; frameAt(c.getContext('2d'),T_HOOK+T_SC*1+2.5);   /* 고른 글씨체로 장면 하나를 바로 보여 준다 */
+    $('#mvMsg').textContent=`글씨체를 「${f[0]}」(으)로 바꿨습니다 — 「고친 자막으로 다시 합치기」를 누르면 영상에 들어갑니다.`; };
   $('#mvPurpose').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; V.purpose=b.dataset.v; $('#mvPurpose').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); };
   const readFiles=async fs=>{ const L=$('#mvFileList'); const done=[];
     for(const f of fs){ L.textContent=`「${f.name}」 읽는 중…`;
