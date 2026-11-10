@@ -1065,7 +1065,7 @@ function build(){
         <small>새올에서 출력한 파일을 끌어다 놓거나 클릭</small></div>
       <input type="file" id="mlFile" accept="application/pdf" hidden>
       <p class="mlnote" id="mlPdfMsg">이 파일 하나면 판정·인원·명단이 모두 정해집니다.</p>
-      <p class="mldemo"><a href="assets/demo_overtime.pdf" download="예시_초과근무확인서.pdf">⬇ 예시 파일 내려받기</a>
+      <p class="mldemo"><button type="button" class="ru-sub mt-sbtn" id="mlSample">📎 샘플 확인서 업로드하기</button>
         <small>2026년 8월 · 4명 · 이름은 <b>홍길동·김철수</b> 등 가명입니다</small></p>
     </div>
     <button class="mlmore" id="mlTripToggle">＋ 출장 다녀온 사람이 있나요?</button>
@@ -1180,6 +1180,11 @@ function build(){
     fi.click();
   };
   fi.onchange=()=>{if(fi.files[0])readPdf(fi.files[0]);};
+  /* 샘플 확인서: 내려받지 않고 바로 올린 상태로 → 판정까지 자동 진행 */
+  const sb=$('#mlSample'); if(sb) sb.onclick=async e=>{ e.stopPropagation(); sb.disabled=true; const t=sb.textContent; sb.textContent='샘플 불러오는 중…';
+    try{ const b=await (await fetch('assets/demo_overtime.pdf')).blob(); await readPdf(new File([b],'샘플_초과근무확인서(2026년8월).pdf',{type:'application/pdf'})); }
+    catch(err){ toast?.('샘플을 불러오지 못했습니다: '+err.message); }
+    finally{ sb.disabled=false; sb.textContent=t; } };
 
   /* ── 드래그앤드롭 : 화면 어디에 놓아도 받는다 ──────────────
      드롭존을 조금만 벗어나도 브라우저가 PDF를 그냥 열어버리므로,
