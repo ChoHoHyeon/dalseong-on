@@ -20,8 +20,11 @@ const SYS=`당신은 대구광역시 달성군 홍보 담당자입니다. 행사
 · 메인 문구는 12자 이내(공백 포함), 멀리서 한눈에 읽히게. 서브 문구는 24자 이내로 일시·장소·대상 중 핵심만.
 · 홍보성 과장·느낌표 남발 금지. 군민 대상이면 "함께" "여러분" 같은 친근한 어조, 공고성이면 격식.
 · 모르는 날짜·장소는 입력된 값만 쓰고 지어내지 않는다.
+· visual: 현수막 배경 그림용. 행사명·장소·강조할 점에서 핵심 키워드를 뽑아, 그림에 꼭 나와야 할 구체적인 사물·장면을 영어로 쓴다.
+  (예: 100대 피아노 · 사문진 주막촌 → "dozens of grand pianos arranged outdoors on a riverside lawn by the Nakdong River, traditional Korean thatched-roof tavern village behind")
+  일반적인 풍경 말고 그 행사만의 상징이 화면 주인공이 되게. 글자·간판·로고·사람 얼굴은 넣지 않는다.
 반드시 아래 JSON만 출력한다(설명 금지):
-{"alts":[{"main":"…","sub":"…","why":"이 안을 고른 이유 한 줄"},{"main":"…","sub":"…","why":"…"},{"main":"…","sub":"…","why":"…"}]}`;
+{"visual":"English, 1~2 sentences of concrete visual motifs","keywords":["핵심 키워드1","핵심 키워드2","핵심 키워드3"],"alts":[{"main":"…","sub":"…","why":"이 안을 고른 이유 한 줄"},{"main":"…","sub":"…","why":"…"},{"main":"…","sub":"…","why":"…"}]}`;
 
 function offline(){
   const n=v('bnName')||'○○ 행사', w=v('bnWhen'), p=v('bnPlace');
@@ -38,7 +41,7 @@ async function callModel(user){
   if(ct.includes('text/event-stream')){ const rd=r.body.getReader(), dec=new TextDecoder(); let buf=''; while(true){ const {value,done}=await rd.read(); if(done) break; buf+=dec.decode(value,{stream:true}); const ls=buf.split('\n'); buf=ls.pop(); for(const ln of ls){ if(!ln.startsWith('data:')) continue; try{ const j=JSON.parse(ln.slice(5)); if(j.type==='content_block_delta'&&j.delta?.text) text+=j.delta.text; }catch(e){} } } }
   else { const j=await r.json(); text=(j.content||[]).map(c=>c.text||'').join(''); }
   const m=text.match(/\{[\s\S]*\}/); if(!m) throw new Error('응답 형식을 읽지 못했습니다');
-  return JSON.parse(m[0]).alts;
+  const j=JSON.parse(m[0]); B.visual=String(j.visual||'').slice(0,500); B.keywords=Array.isArray(j.keywords)?j.keywords.slice(0,5):[]; return j.alts;
 }
 
 /* ── 그리기 ── */
@@ -173,7 +176,7 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 function aiPrompt(vert,redo){
   return `A ${vert?'tall vertical':'wide horizontal'} background artwork for an outdoor public event banner of Dalseong-gun, Daegu, South Korea.
 Event: "${v('bnName')}". Place: "${v('bnPlace')||'Dalseong-gun'}". Mood keywords: "${v('bnPoint')||''}".
-Show scenery and symbols that match the event theme (Korean landscape, seasonal nature, local atmosphere) in a ${redo?pick(AI_STYLE):'clean, bright, modern poster illustration'} style, ${redo?pick(AI_TIME)+', '+pick(AI_COMP):'bright daytime'}. ${redo?'Make it clearly different from a typical version of this scene.':''}
+${B.visual?`MAIN SUBJECT (must be clearly visible and dominant): ${B.visual}\nKey themes: ${(B.keywords||[]).join(", ")}.\n`:"Show the symbols of this event as the main subject. "}Depict it in a ${redo?pick(AI_STYLE):'clean, bright, modern poster illustration'} style, ${redo?pick(AI_TIME)+', '+pick(AI_COMP):'bright daytime'}. ${redo?'Make it clearly different from a typical version of this scene.':''}
 IMPORTANT: absolutely no text, no letters, no numbers, no logos, no signs, no watermarks. Keep the ${vert?'upper and middle':'center'} area calm and simple with low detail so large text can be overlaid later. No people's faces in close-up.`;
 }
 let _aiT=null;
@@ -197,7 +200,7 @@ async function aiBg(force){
 }
 async function make(){
   if(B.busy) return; if(!v('bnName')){ $('#bnMsg').textContent='행사·사업명은 입력해 주세요.'; return $('#bnName').focus(); }
-  B.busy=true; $('#bnGo').disabled=true; $('#bnMsg').textContent='문구 작성 중…';
+  B.busy=true; B.visual=''; B.keywords=[]; $('#bnGo').disabled=true; $('#bnMsg').textContent='문구 작성 중…';
   try{
     const S=window.S||{};
     if((S.key||S.server)&&!S.offline){
