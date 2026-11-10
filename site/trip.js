@@ -95,6 +95,43 @@ function parsePage(lines) {
   return rows.map(r => Object.fromEntries(HEADER.map(h => [h, r[h].sort((a, b) => b.y - a.y).map(l => l.str).join("")])));
 }
 
+// ---------- 출장내역서 두 번째 서식 (순번·구분·출발일자·도착일자·총출장시간·출장지·차량·출장목적·소속·출장자…) ----------
+// 칸 사이가 좁아 조각을 줄로 합치면 옆 칸 글자와 섞이므로, pdf.js 조각 하나하나를 머리글 x 위치로 칸에 넣는다.
+const HEADER2 = ["순번", "구분", "출발일자", "도착일자", "총출장시간", "출장지", "차량", "출장목적", "소속", "출장자", "지출", "여비", "지출일자", "결재상태", "여비등급", "비고", "업무대행"];
+function parsePage2(items) {
+  const fix = s => s.replace(/(\d) (?=\S)/g, "$1").trim();
+  const parts = items.filter(it => it.str && it.str.trim()).map(it => ({str: it.str, x: it.transform[4], y: it.transform[5], w: it.width}));
+  const head = {};
+  for (const p of parts) {
+    const words = p.str.trim().split(/\s+/);
+    if (!words.every(w => HEADER2.includes(w))) continue;
+    // "결재상태 여비등급"처럼 붙어 나온 머리글은 글자 수 비율로 나눠 위치를 잡는다
+    const total = p.str.trim().length; let pos = 0;
+    for (const w of words) { const i = p.str.indexOf(w, pos); head[w] = {cx: p.x + p.w * (i + w.length / 2) / total, y: p.y}; pos = i + w.length; }
+  }
+  if (!["출장자", "출발일자", "도착일자", "구분"].every(h => head[h])) return [];
+  const headY = Math.min(...Object.values(head).map(h => h.y));
+  const cols = Object.entries(head).map(([h, v]) => ({h, cx: v.cx}));
+  const colOf = cx => cols.reduce((a, b) => Math.abs(b.cx - cx) < Math.abs(a.cx - cx) ? b : a).h;
+  const body = parts.filter(p => p.y < headY - 2 && p.y > 60).map(p => ({str: fix(p.str), y: p.y, col: colOf(p.x + p.w / 2)}));
+  const dates = body.filter(l => l.col === "출발일자" && /^\d{4}-\d{2}-\d{2}$/.test(l.str));
+  const centers = dates.map(d => { const t = body.find(l => l.col === "출발일자" && /^\d{1,2}:\d{2}$/.test(l.str) && l.y < d.y && d.y - l.y < 20); return t ? (d.y + t.y) / 2 : d.y; }).sort((a, b) => b - a);
+  if (!centers.length) return [];
+  let half = 30; for (let i = 1; i < centers.length; i++) half = Math.min(half, (centers[i - 1] - centers[i]) / 2 + 1);
+  const rows = centers.map(() => ({}));
+  for (const l of body) {
+    let best = -1, dist = Infinity;
+    centers.forEach((c, i) => { const d = Math.abs(c - l.y); if (d < dist) { dist = d; best = i; } });
+    if (dist <= half) (rows[best][l.col] = rows[best][l.col] || []).push(l);
+  }
+  const cell = (r, h, sep = "") => (r[h] || []).sort((a, b) => b.y - a.y).map(l => l.str).join(sep);
+  return rows.map(r => ({
+    "성명": cell(r, "출장자"), "직급": cell(r, "여비등급"), "구분": cell(r, "구분"), "공무용차량": cell(r, "차량"),
+    "출장목적": cell(r, "출장목적"), "출장시작일시": cell(r, "출발일자", " "), "출장종료일시": cell(r, "도착일자", " "),
+    "총출장시간": cell(r, "총출장시간"), "여비등급": cell(r, "여비등급"), "출장지": cell(r, "출장지"), "결재상태": cell(r, "결재상태"),
+  }));
+}
+
 const hm = m => `${Math.floor(m / 60)}시간${m % 60}분`;
 const clock = m => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 const WORK_START = 9 * 60, WORK_END = 18 * 60;  // 여러 날 출장을 날짜별로 나눌 때 쓰는 하루 근무시간
@@ -137,7 +174,9 @@ async function readPdf(file) {
   for (let p = 1; p <= pdf.numPages; p++) {
     const page = await pdf.getPage(p);
     const tc = await page.getTextContent();
-    for (const r of parsePage(toLines(tc.items))) trips.push(...toTrips(r));
+    let rows = parsePage(toLines(tc.items));
+    if (!rows.length) rows = parsePage2(tc.items);   // 두 번째 서식
+    for (const r of rows) trips.push(...toTrips(r));
   }
   return trips;
 }
@@ -148,6 +187,11 @@ let trips = [], order = [], monthKeys = [], selected = null;
 const drop = $("drop");
 drop.onclick = () => $("file").click();
 $("file").onchange = e => { load(e.target.files); e.target.value = ""; };
+// 샘플 출장내역서: 내려받지 않고 바로 올린 상태로 → 판정까지 자동 진행 (이름·사번은 가명)
+{ const sb = $("tripSample"); if (sb) sb.onclick = async e => { e.stopPropagation(); sb.disabled = true; const t = sb.textContent; sb.textContent = "샘플 불러오는 중…";
+    try { const b = await (await fetch("assets/demo_trip.pdf")).blob(); await load([new File([b], "샘플_출장내역서(2026년10월).pdf", {type: "application/pdf"})]); }
+    catch (err) { window.toast && toast("샘플을 불러오지 못했습니다: " + err.message); }
+    finally { sb.disabled = false; sb.textContent = t; } }; }
 drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
 drop.ondragleave = () => drop.classList.remove("over");
 drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); load(e.dataTransfer.files); };
