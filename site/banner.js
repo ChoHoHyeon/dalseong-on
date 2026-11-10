@@ -169,14 +169,13 @@ function shrinkFit(){ const L=B.L; ['main','sub','host'].forEach(k=>{ const ly=L
 function pickAlt(){ if(!B.L||!B.dirty){ B.L=null; return draw(); } const a=B.alts[B.pick]; B.L.main.text=B.L.vert?a.main.split(/\s+/).join('\n'):a.main; B.L.sub.text=a.sub||''; if(!B.L.sub.size) B.L.sub.size=Math.round(B.L.H*0.1); shrinkFit(); draw(); }
 /* ── AI 배경: 행사 분위기에 맞는 글자 없는 배경 그림 (gpt-image, 서버 /api/card) ── */
 /* 다시 그리기마다 화풍·시간대·구도를 바꿔 넣는다 (같은 글만 보내면 비슷한 그림이 반복되므로) */
-const AI_STYLE=['clean bright modern poster illustration','soft watercolor painting','flat vector illustration with simple shapes','realistic landscape photograph look','paper-cut layered art','warm gouache poster painting','dreamy pastel illustration','bold graphic poster with gradients'];
+const AI_STYLE=['clean bright modern poster illustration','soft watercolor painting','flat vector illustration','realistic photograph look','warm gouache poster painting','soft pastel illustration'];
 const AI_TIME=['bright daytime','golden hour sunset','clear blue morning','soft evening twilight','sunny afternoon'];
-const AI_COMP=['wide panoramic view','scenery framed on the left and right edges','symbols arranged along the bottom','distant landscape with open sky','close-up seasonal elements at the corners'];
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 function aiPrompt(vert,redo){
   return `A ${vert?'tall vertical':'wide horizontal'} background artwork for an outdoor public event banner of Dalseong-gun, Daegu, South Korea.
 Event: "${v('bnName')}". Place: "${v('bnPlace')||'Dalseong-gun'}". Mood keywords: "${v('bnPoint')||''}".
-${B.visual?`MAIN SUBJECT (must be clearly visible and dominant): ${B.visual}\nKey themes: ${(B.keywords||[]).join(", ")}.\n`:"Show the symbols of this event as the main subject. "}Depict it in a ${redo?pick(AI_STYLE):'clean, bright, modern poster illustration'} style, ${redo?pick(AI_TIME)+', '+pick(AI_COMP):'bright daytime'}. ${redo?'Make it clearly different from a typical version of this scene.':''}
+${B.visual?`MAIN SUBJECT (must be clearly visible and dominant): ${B.visual}\nKey themes: ${(B.keywords||[]).join(", ")}.\n`:"Show the symbols of this event as the main subject. "}Depict it in a ${redo?pick(AI_STYLE):'clean, bright, modern poster illustration'} style, ${redo?pick(AI_TIME):'bright daytime'}.${B.visual?` The main subject above must stay the same in every version — only the art style and lighting change.`:''}
 IMPORTANT: absolutely no text, no letters, no numbers, no logos, no signs, no watermarks. Keep the ${vert?'upper and middle':'center'} area calm and simple with low detail so large text can be overlaid later. No people's faces in close-up.`;
 }
 let _aiT=null;
