@@ -19,6 +19,7 @@ const PAL={ navy:['#0b2a6b','#1b4db3','#ffd166'], green:['#145a32','#27ae60','#f
 const v=id=>($('#'+id).value||'').trim();
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const code=()=>(window.S||{}).code||'';
+const adc=()=>{ try{ return localStorage.getItem('dsOn.adCode')||''; }catch(e){ return ''; } };   /* 관리자 코드(관리자 메뉴에서 확인) — 하루 한도 없음 */
 
 const SYS=`당신은 대구광역시 달성군 SNS 홍보영상(릴스·쇼츠, 세로 9:16, 약 27초) 연출가입니다. 제공된 문서를 읽고 영상 대본을 씁니다.
 구성은 고정: 훅(3초) → 장면 4개(각 5초, AI가 그린 그림이 실제로 움직이는 영상) → 마무리(4초, 군 CI).
@@ -178,9 +179,9 @@ async function make(){
     V.data=online?await script():offline(); renderSide();
     // ③ 움직이는 영상 접수권(하루 한도) 먼저 받기
     let ticket=null, admin=false;
-    if(online){ try{ admin=!!(await (await fetch('/api/video',{method:'POST',headers:{'content-type':'application/json','x-access-code':code()},body:'{"ping":1}'})).json()).admin; }catch(e){} }   /* 관리자 코드면 하루 한도 없음 */
+    if(online){ try{ admin=!!(await (await fetch('/api/video',{method:'POST',headers:{'content-type':'application/json','x-access-code':code(),'x-admin-code':adc()},body:'{"ping":1}'})).json()).admin; }catch(e){} }   /* 관리자 코드면 하루 한도 없음 */
     if(online&&!admin&&quotaLocal()>=USER_LIMIT) note+=`이 브라우저의 오늘 AI 영상 ${USER_LIMIT}편을 다 써서 그림에 움직임을 넣어 만들었습니다. `;
-    else if(online){ try{ const r=await fetch('/api/video',{method:'POST',headers:{'content-type':'application/json','x-access-code':code()},body:JSON.stringify({action:'start'})}); const j=await r.json();
+    else if(online){ try{ const r=await fetch('/api/video',{method:'POST',headers:{'content-type':'application/json','x-access-code':code(),'x-admin-code':adc()},body:JSON.stringify({action:'start'})}); const j=await r.json();
         if(r.ok&&j.ticket){ ticket=j.ticket; if(!admin) quotaUse(); } else if(j.error==='limit') note+=`오늘 AI 영상 한도(전체 ${j.limit}편)를 다 써서 그림에 움직임을 넣어 만들었습니다. `; else if(j.error==='nokey') note+='움직이는 영상 기능이 아직 연결되지 않아 그림에 움직임을 넣어 만들었습니다. '; else note+='움직이는 영상을 접수하지 못해 그림에 움직임을 넣어 만들었습니다. '; }catch(e){ note+='움직이는 영상을 접수하지 못했습니다. '; } }
     // ②→③ 장면마다 그림이 나오는 즉시 그 장면 영상을 맡긴다 (4장면 동시 진행 — 기다리는 시간 단축)
     let ni=0, nc=0, failI=0, failC=0; const st=()=>prog(ni<4?1:2,ni<4?`${ni}/4`:`${nc}/4`,V._t0); st();

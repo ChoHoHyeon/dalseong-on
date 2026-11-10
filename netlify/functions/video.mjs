@@ -19,8 +19,8 @@ export default async (req) => {
   const key = process.env.FAL_KEY || process.env.Fal_Key || process.env.fal_key;   // 환경변수 이름 대소문자 차이 허용
   const model = process.env.FAL_VIDEO_MODEL || "fal-ai/wan/v2.2-a14b/image-to-video/turbo";
   const limit = Math.max(0, +(process.env.VIDEO_DAY_LIMIT || 5));
-  const adminCode = process.env.VIDEO_ADMIN_CODE;                // 관리자(시험용) 코드 — 관리자 › 모델 설정 「접속 코드」에 넣으면 하루 한도 없이 만든다
-  const isAdmin = !!adminCode && req.headers.get("x-access-code") === adminCode;
+  const adminCode = process.env.ADMIN_CODE || process.env.VIDEO_ADMIN_CODE;                // 관리자(시험용) 코드 — 관리자 › 모델 설정 「접속 코드」에 넣으면 하루 한도 없이 만든다
+  const isAdmin = !!adminCode && (req.headers.get("x-admin-code") === adminCode || req.headers.get("x-access-code") === adminCode);
   const gate = process.env.ACCESS_CODE;
   const codeOk = !gate || req.headers.get("x-access-code") === gate || (!!process.env.VIDEO_ADMIN_CODE && req.headers.get("x-access-code") === process.env.VIDEO_ADMIN_CODE);
   const st = getStore({ name: "video", consistency: "strong" });

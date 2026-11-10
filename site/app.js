@@ -228,13 +228,29 @@ function renderNav(){
   } else html=HOME_MENU.map(item).join('');
   html+=MINOR.map(item).join('');
   $('#nav').innerHTML=html;
-  $$('#nav li[data-view]').forEach(li=>li.onclick=()=>{ if(S.mode!==li.dataset.mode){ S.mode=li.dataset.mode; document.body.dataset.mode=S.mode; } go(li.dataset.view); });
+  $$('#nav li[data-view]').forEach(li=>li.onclick=()=>{ if(li.dataset.mode==='admin'&&!S.adminOk&&!S.adminRO) return adminGate(); if(S.mode!==li.dataset.mode){ S.mode=li.dataset.mode; document.body.dataset.mode=S.mode; } go(li.dataset.view); });
   const nn=$('#navNew'); if(nn) nn.onclick=()=>{ S.mode='staff'; document.body.dataset.mode='staff'; resetChat(); go('on'); };
   $$('#nav li.rc').forEach(li=>li.onclick=e=>{ if(e.target.closest('.rx')) return; S.mode='staff'; document.body.dataset.mode='staff'; resetChat(); go('on'); ask(li.dataset.q); });
   $$('#nav .rx').forEach(b=>b.onclick=e=>{ e.stopPropagation(); localStorage.setItem('dOnRecent',JSON.stringify(loadRecent().filter(x=>x!==b.dataset.del))); renderNav(); });
   const nc=$('#navClear'); if(nc) nc.onclick=()=>{ localStorage.removeItem('dOnRecent'); renderNav(); };
 }
-function setMode(m){ S.mode=m; document.body.dataset.mode=m; go(NAV[m][0].id); }
+function setMode(m){ if(m==='admin'&&!S.adminOk&&!S.adminRO) return adminGate(); S.mode=m; document.body.dataset.mode=m; go(NAV[m][0].id); }
+/* 관리자 메뉴 잠금 — 관리자 코드(Netlify ADMIN_CODE)를 맞게 넣은 브라우저만 바꿀 수 있고, 다른 사람은 「보기 전용」으로만 둘러본다 */
+function adminGate(){ let md=document.getElementById('adGate');
+  if(!md){ md=document.createElement('div'); md.id='adGate'; md.className='modal'; md.innerHTML=`<div class="box ad-gate"><div class="box-h"><b>🛠 관리자 메뉴</b><button class="x" data-x>✕</button></div>
+    <p>이용 통계·자료 갱신·모델 설정·신고 관리는 <b>정보통신과 담당자</b>만 바꿀 수 있습니다.</p>
+    <label>관리자 코드<input id="adGateCode" type="password" autocomplete="off" placeholder="담당자만 알고 있는 코드"></label><span class="hint" id="adGateMsg"></span>
+    <div class="pact"><button class="p" id="adGateOk">들어가기</button><button id="adGateRO">👀 보기 전용으로 둘러보기</button></div></div>`;
+    document.body.appendChild(md);
+    md.addEventListener('click',e=>{ if(e.target===md||e.target.closest('[data-x]')) md.hidden=true; });
+    const ok=async()=>{ const c=$('#adGateCode').value.trim(); if(!c) return $('#adGateCode').focus(); $('#adGateMsg').textContent='확인 중…';
+      try{ const j=await (await fetch('/api/admin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({code:c})})).json();
+        if(j.ok){ try{ localStorage.setItem('dsOn.adCode',c); }catch(e){} S.adminOk=true; S.adminRO=false; document.body.dataset.adro=''; md.hidden=true; toast('관리자로 들어왔습니다'); setMode('admin'); }
+        else $('#adGateMsg').textContent=j.error||'코드가 맞지 않습니다'; }catch(e){ $('#adGateMsg').textContent='확인하지 못했습니다 — 잠시 뒤 다시'; } };
+    $('#adGateOk').onclick=ok; $('#adGateCode').onkeydown=e=>{ if(e.key==='Enter') ok(); };
+    $('#adGateRO').onclick=()=>{ S.adminRO=true; document.body.dataset.adro='1'; md.hidden=true; setMode('admin'); }; }
+  $('#adGateMsg').textContent=''; $('#adGateCode').value=''; md.hidden=false; setTimeout(()=>$('#adGateCode').focus(),30); }
+(async()=>{ try{ const c=localStorage.getItem('dsOn.adCode'); if(!c) return; const j=await (await fetch('/api/admin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({code:c})})).json(); if(j.ok) S.adminOk=true; }catch(e){} })();   /* 이 브라우저에 맞는 코드가 있으면 바로 관리자 */
 /* 기능 이어 주기 — 보도자료 결과를 다음 메뉴 입력칸에 채워서 넘긴다 */
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-chain]'); if(!b||!window.PRESS_LAST) return; const o=PRESS_LAST, full=[o.title,...o.subs,'',...o.body].join('\n'), H=(typeof pressHead==='function')?pressHead():{};
   const to=b.dataset.chain; setMode('staff'); go(to);
@@ -244,7 +260,8 @@ document.addEventListener('click',e=>{ const b=e.target.closest('[data-chain]');
     if(to==='movie'){ set('mvSrc',full); }
     toast('보도자료 내용을 채워 두었어요 — 버튼만 누르세요'); },250); });
 function bootDone(){ const b=document.getElementById('boot'); if(!b||b._d) return; b._d=1; b.classList.add('out'); setTimeout(()=>b.remove(),450); }
-function go(v){ setTimeout(bootDone,60); const target=ALIAS[v]; const top=target||v; if(HOME_MENU.some(n=>n.view===top&&n.ready&&top!=='on')&&!HIT_SEEN[top]){ HIT_SEEN[top]=1; dsHit('use',top); } S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ if($('#guideChips')) $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); renderGuideFeat(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='rule'&&window.RULEDRAFT) RULEDRAFT.init(); if(top==='minutes'&&window.MINUTES) MINUTES.init(); if(top==='banner'&&window.BANNER) BANNER.init(); if(top==='card'&&window.CARDNEWS) CARDNEWS.init(); if(top==='movie'&&window.MOVIE) MOVIE.init(); if(top==='share'&&window.SHARE) SHARE.init(); if(top==='analyze'&&window.ANALYZE) ANALYZE.init(); if(top==='mask'&&window.MASK) MASK.init(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='trip') loadTrip(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(['on','data','lib','stats','doc'].includes(top)){ if(top==='on'&&!S.idx) idxNote(true); ensureIndex().then(()=>idxNote(false)).catch(()=>idxNote(false,true)); } if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
+const AD_VIEWS=['stats','update','model','bugs'];
+function go(v){ if(AD_VIEWS.includes(v)&&!S.adminOk&&!S.adminRO) return adminGate(); setTimeout(bootDone,60); const target=ALIAS[v]; const top=target||v; if(HOME_MENU.some(n=>n.view===top&&n.ready&&top!=='on')&&!HIT_SEEN[top]){ HIT_SEEN[top]=1; dsHit('use',top); } S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ if($('#guideChips')) $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); renderGuideFeat(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='rule'&&window.RULEDRAFT) RULEDRAFT.init(); if(top==='minutes'&&window.MINUTES) MINUTES.init(); if(top==='banner'&&window.BANNER) BANNER.init(); if(top==='card'&&window.CARDNEWS) CARDNEWS.init(); if(top==='movie'&&window.MOVIE) MOVIE.init(); if(top==='share'&&window.SHARE) SHARE.init(); if(top==='analyze'&&window.ANALYZE) ANALYZE.init(); if(top==='mask'&&window.MASK) MASK.init(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='trip') loadTrip(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(['on','data','lib','stats','doc'].includes(top)){ if(top==='on'&&!S.idx) idxNote(true); ensureIndex().then(()=>idxNote(false)).catch(()=>idxNote(false,true)); } if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
 
 /* ── 홈 대시보드 ── */
 document.addEventListener('click',e=>{ if(e.target.id==='rcClose'||e.target.id==='rcModal'){ $('#rcModal').hidden=true; return; } const g=e.target.closest('[data-go]'); if(!g) return; if(g.tagName==='A') e.preventDefault(); const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });

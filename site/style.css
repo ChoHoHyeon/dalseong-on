@@ -2349,3 +2349,10 @@ body[data-theme=dark] .pact>button:not(.p),body[data-theme=dark] .pact>label.fil
 #mvFont{display:flex;gap:6px;flex-wrap:wrap}
 #mvFont button{padding:6px 11px;border-radius:999px;border:1px solid #d3dcea;background:linear-gradient(180deg,#fff,#f4f7fc);font-size:13px;cursor:pointer;color:var(--tx)}
 #mvFont button.on{border-color:#2f6fed;background:#e8f0ff;color:#1d4fd8;box-shadow:0 0 0 2px rgba(47,111,237,.15)}
+/* 관리자 잠금 · 보기 전용 */
+.ad-gate{max-width:420px}
+.ad-gate p{font-size:13.5px;line-height:1.6;margin:4px 0 10px}
+.ad-gate label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600}
+.ad-gate .pact{justify-content:flex-end}
+body[data-adro="1"][data-mode="admin"] #main::before{content:"👀 보기 전용 — 관리자 코드를 넣으면 설정을 바꿀 수 있습니다";display:block;margin:0 0 12px;padding:9px 14px;border-radius:10px;background:#fff7e6;border:1px solid #f5d38a;color:#8a5a00;font-size:13px;font-weight:600}
+body[data-adro="1"] [data-view="model"] input,body[data-adro="1"] [data-view="model"] select,body[data-adro="1"] [data-view="update"] button,body[data-adro="1"] [data-view="update"] input,body[data-adro="1"] [data-view="bugs"] .bst,body[data-adro="1"] [data-view="bugs"] .ad-code{pointer-events:none;opacity:.55}
