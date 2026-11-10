@@ -44,9 +44,16 @@ async function callModel(user){
 /* ── 그리기 ── */
 function loadImg(src){ return new Promise((ok,no)=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=()=>ok(null); i.src=src; }); }
 function fit(ctx,text,maxW,start,min,weight){ let s=start; for(;s>=min;s-=4){ ctx.font=`${weight} ${s}px Pretendard,"Malgun Gothic",sans-serif`; if(ctx.measureText(text).width<=maxW) break; } return s; }
+/* 시안 위 요소(메인·서브·주최·로고)는 끌어서 옮길 수 있다 — 옮긴 거리는 B.off에, 누를 수 있는 영역은 B.hit에 */
+B.off={}; B.hit=[]; B.offKey='';
+const O=k=>B.off[k]||(B.off[k]={x:0,y:0});
+function txt(ctx,k,t,x,y){ const o=O(k); x+=o.x; y+=o.y; ctx.fillText(t,x,y); const w=ctx.measureText(t).width, h=+((ctx.font.match(/(\d+)px/)||[0,20])[1]); const ax=ctx.textAlign==='center'?x-w/2:ctx.textAlign==='right'?x-w:x; return [ax,y-h/2,w,h]; }
+function U(bb,b){ if(!bb) return b.slice(); const x=Math.min(bb[0],b[0]), y=Math.min(bb[1],b[1]); return [x,y,Math.max(bb[0]+bb[2],b[0]+b[2])-x,Math.max(bb[1]+bb[3],b[1]+b[3])-y]; }
+const hit=(k,b)=>{ if(b) B.hit.push({k,x:b[0],y:b[1],w:b[2],h:b[3]}); };
 async function draw(){
   const [W0,H0]=dims(); const vert=H0>W0;
   const W=vert?900:2400, H=Math.round(W*H0/W0);
+  if(B.offKey!==W+'x'+H){ B.off={}; B.offKey=W+'x'+H; } B.hit=[];
   const c=$('#bnCanvas'); c.width=W; c.height=H; const ctx=c.getContext('2d');
   const bg=v('bnBg'); const [,col]=BGS[bg]||BGS.navy;
   const img = bg==='photo' ? (B.img||(B.img=await loadImg('assets/hero.jpg'))) : bg==='custom' ? B.custom : bg==='ai' ? B.ai : null;
@@ -54,36 +61,51 @@ async function draw(){
   else { ctx.fillStyle=col||'#0b2a6b'; ctx.fillRect(0,0,W,H); }
   if(bg==='ai'&&!B.ai){ aiLoad(B.aiBusy?null:'AI 배경을 아직 그리지 않았습니다'); }
   const light = bg==='white'; const fg = light?'#0b2a6b':'#ffffff';
-  // 왼쪽 띠(포인트)
-  ctx.fillStyle = light?'#0b2a6b':'rgba(255,255,255,.9)'; ctx.fillRect(0,0,vert?W:18,vert?18:H);
+  ctx.fillStyle = light?'#0b2a6b':'rgba(255,255,255,.9)'; ctx.fillRect(0,0,vert?W:18,vert?18:H);   // 포인트 띠
   const a=B.alts[B.pick]||{main:v('bnName')||'행사명',sub:''};
   ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle=fg;
   if(!vert){
-    const mainS=fit(ctx,a.main,W*0.78,Math.round(H*0.42),Math.round(H*0.2),'800'); ctx.fillText(a.main,W/2,H*0.42);
-    if(a.sub){ fit(ctx,a.sub,W*0.8,Math.round(H*0.15),Math.round(H*0.08),'500'); ctx.globalAlpha=.92; ctx.fillText(a.sub,W/2,H*0.42+mainS*0.62+H*0.09); ctx.globalAlpha=1; }
-    // 주최 (좌하) · CI (우하)
-    ctx.textAlign='left'; ctx.font=`600 ${Math.round(H*0.075)}px Pretendard,"Malgun Gothic",sans-serif`; ctx.fillText((v('bnHost')||'달성군'), W*0.03, H*0.9);
-    const logo=B.logo||(B.logo=await loadImg('assets/dalseong_ci.png'));
-    if(logo){ const lh=H*0.2, lw=logo.width*lh/logo.height; if(light){ ctx.drawImage(logo,W-lw-W*0.025,H-lh-H*0.1,lw,lh); } else { ctx.fillStyle='rgba(255,255,255,.95)'; roundRect(ctx,W-lw-W*0.025-lh*0.25,H-lh-H*0.1-lh*0.2,lw+lh*0.5,lh+lh*0.4,lh*0.2); ctx.fill(); ctx.drawImage(logo,W-lw-W*0.025,H-lh-H*0.1,lw,lh); } }
+    const mainS=fit(ctx,a.main,W*0.78,Math.round(H*0.42),Math.round(H*0.2),'800'); hit('main',txt(ctx,'main',a.main,W/2,H*0.42));
+    if(a.sub){ fit(ctx,a.sub,W*0.8,Math.round(H*0.15),Math.round(H*0.08),'500'); ctx.globalAlpha=.92; hit('sub',txt(ctx,'sub',a.sub,W/2,H*0.42+mainS*0.62+H*0.09)); ctx.globalAlpha=1; }
+    await drawLogo(ctx,W,H,false,light,fg);
   }else{
-    // 세로형: 글자를 한 줄씩 세로로
-    const lines=a.main.split(/\s+/); let y=H*0.14; const s=fit(ctx,lines.reduce((p,q)=>p.length>q.length?p:q,''),W*0.8,Math.round(W*0.22),Math.round(W*0.1),'800');
-    lines.forEach(l=>{ ctx.fillText(l,W/2,y); y+=s*1.25; });
-    if(a.sub){ const ss=fit(ctx,a.sub,W*0.86,Math.round(W*0.075),Math.round(W*0.045),'500'); y+=ss; const parts=a.sub.split(/\s·\s|\s+/); parts.forEach(pt=>{ ctx.fillText(pt,W/2,y); y+=ss*1.35; }); }
-    ctx.font=`600 ${Math.round(W*0.06)}px Pretendard,"Malgun Gothic",sans-serif`; ctx.fillText((v('bnHost')||'달성군'),W/2,H*0.9);
-    const logo=B.logo||(B.logo=await loadImg('assets/dalseong_ci.png'));
-    if(logo){ const lw=W*0.5, lh=logo.height*lw/logo.width; ctx.fillStyle='rgba(255,255,255,.95)'; roundRect(ctx,(W-lw)/2-lh*0.25,H*0.94-lh,lw+lh*0.5,lh+lh*0.3,lh*0.2); ctx.fill(); ctx.drawImage(logo,(W-lw)/2,H*0.94-lh+lh*0.15,lw,lh); }
+    const lg=await drawLogo(ctx,W,H,true,light,fg); ctx.fillStyle=fg; ctx.textAlign='center';
+    const lines=a.main.split(/\s+/); let y=H*0.14+(lg.top?lg.h+H*0.03:0); const s=fit(ctx,lines.reduce((p,q)=>p.length>q.length?p:q,''),W*0.8,Math.round(W*0.22),Math.round(W*0.1),'800');
+    let bb=null; lines.forEach(l=>{ bb=U(bb,txt(ctx,'main',l,W/2,y)); y+=s*1.25; }); hit('main',bb);
+    if(a.sub){ const ss=fit(ctx,a.sub,W*0.86,Math.round(W*0.075),Math.round(W*0.045),'500'); y+=ss; let sb=null; a.sub.split(/\s·\s|\s+/).forEach(pt=>{ sb=U(sb,txt(ctx,'sub',pt,W/2,y)); y+=ss*1.35; }); hit('sub',sb); }
+    ctx.font=`600 ${Math.round(W*0.06)}px Pretendard,"Malgun Gothic",sans-serif`; hit('host',txt(ctx,'host',(v('bnHost')||'달성군'),W/2,lg.top||!lg.on?H*0.93:H*0.94-lg.h-W*0.08));
   }
   $('#bnOut').hidden=false;
+}
+/* 로고: 종류(군 CI·슬로건·둘 다·내 로고·없음) · 위치(네 귀퉁이) · 크기(3단계). 원본 비율 그대로, 변형 없이 */
+const LOGOS={ci:'군 CI',slogan:'슬로건',both:'CI + 슬로건',custom:'내 로고',none:'없음'};
+const LPOS={br:'오른쪽 아래',bl:'왼쪽 아래',tr:'오른쪽 위',tl:'왼쪽 위'}, LSZ={s:'작게',m:'보통',l:'크게'};
+B.lg={kind:'ci',pos:'br',sz:'m',img:{}};
+async function logoImgs(){ const k=B.lg.kind, I=B.lg.img;
+  if(k==='custom') return B.lg.custom?[B.lg.custom]:[];
+  const need=k==='both'?['ci','slogan']:k==='none'?[]:[k];
+  for(const n of need) if(!I[n]) I[n]=await loadImg(n==='ci'?'assets/dalseong_ci.png':'assets/slogan.png');
+  return need.map(n=>I[n]).filter(Boolean); }
+async function drawLogo(ctx,W,H,vert,light,fg){
+  const imgs=await logoImgs(); const pos=B.lg.pos, top=pos[0]==='t', left=pos[1]==='l';
+  const f={s:.72,m:1,l:1.35}[B.lg.sz];
+  // 주최 문구는 로고와 겹치지 않게 반대쪽 아래에 (끌어서 옮길 수 있음)
+  if(!vert){ ctx.fillStyle=fg; ctx.font=`600 ${Math.round(H*0.075)}px Pretendard,"Malgun Gothic",sans-serif`; const hl=(!imgs.length||top)?true:!left; ctx.textAlign=hl?'left':'right'; hit('host',txt(ctx,'host',(v('bnHost')||'달성군'), hl?W*0.03:W*0.97, H*0.9)); }
+  if(!imgs.length) return {on:false,top,h:0};
+  let lh=vert?W*0.16*f:H*0.2*f; const gap=lh*0.35;
+  let ws=imgs.map(im=>im.width*lh/im.height); let tw=ws.reduce((a,b)=>a+b,0)+gap*(imgs.length-1);
+  if(vert&&tw>W*0.8){ const r=W*0.8/tw; lh*=r; ws=ws.map(w=>w*r); tw*=r; }
+  const pad=lh*0.25, mx=vert?0:W*0.025, my=vert?H*0.03:H*0.1, o=O('logo');
+  let x=(vert?(W-tw)/2:(left?mx+pad:W-mx-pad-tw))+o.x; let y=(top?my+pad:H-my-pad-lh)+o.y;
+  if(!light){ ctx.fillStyle='rgba(255,255,255,.95)'; roundRect(ctx,x-pad,y-pad,tw+pad*2,lh+pad*2,lh*0.2); ctx.fill(); }
+  hit('logo',[x-pad,y-pad,tw+pad*2,lh+pad*2]);
+  imgs.forEach((im,i)=>{ ctx.drawImage(im,x,y,ws[i],lh); x+=ws[i]+gap; });
+  ctx.fillStyle=fg; return {on:true,top,h:lh+pad*2};
 }
 function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 function renderAlts(){
   $('#bnAlts').innerHTML=B.alts.map((a,i)=>`<button class="alt${i===B.pick?' on':''}" data-i="${i}"><b>${a.main}</b><span>${a.sub||''}</span><small>${a.why||''}</small></button>`).join('');
   $('#bnAlts').querySelectorAll('.alt').forEach(b=>b.onclick=()=>{ B.pick=+b.dataset.i; renderAlts(); draw(); });
-}
-function spec(){
-  const a=B.alts[B.pick]||{}; const [w,h]=dims(); const label=(h>w?'세로':'가로')+` ${w}m×${h}m`; const [bgl]=BGS[v('bnBg')]||BGS.navy;
-  return `[현수막 제작 의뢰]\n· 행사명 : ${v('bnName')}\n· 메인 문구 : ${a.main||''}\n· 서브 문구 : ${a.sub||''}\n· 주최·주관 : ${v('bnHost')||'달성군'}\n· 규격 : ${label}\n· 수량 : ○장\n· 배경 : ${v('bnBg')==='ai'?'AI 생성 배경(시안 PNG 참고)':bgl}${v('bnBg')==='custom'?' (첨부 사진)':''} / 글자 ${v('bnBg')==='white'?'남색':'흰색'} 고딕 굵게\n· 군 CI : 우측 하단(원본 사용, 변형 금지)\n· 게시 기간·장소 : ${v('bnWhen')||'○○'} / ${v('bnPlace')||'○○'}\n· 납품 희망일 : ○○\n· 담당 : ${v('bnPic')||'○○과 ○○○ ☎ 053)668-○○○○'}\n※ 시안 PNG 첨부. 지정게시대 게시는 「달성군 옥외광고물 관리 조례」에 따라 별도 신청.`;
 }
 /* ── AI 배경: 행사 분위기에 맞는 글자 없는 배경 그림 (gpt-image, 서버 /api/card) ── */
 function aiPrompt(vert){
@@ -120,7 +142,7 @@ async function make(){
       B.alts=await callModel(`행사·사업명: ${v('bnName')}\n기간·일시: ${v('bnWhen')||'미정'}\n장소: ${v('bnPlace')||'미정'}\n주최·주관: ${v('bnHost')||'달성군'}\n어조: ${v('bnTone')}\n강조할 점: ${v('bnPoint')||'없음'}`);
       $('#bnMsg').textContent='문구 3안 — 마음에 드는 안을 고르면 시안이 바뀝니다.';
     }else{ await new Promise(r=>setTimeout(r,300)); B.alts=offline(); $('#bnMsg').textContent='오프라인 모드 — 모델 연결 시 문구 3안을 새로 씁니다.'; }
-    B.pick=0; renderAlts(); await draw(); if(v('bnBg')==='ai') aiBg(false); window.dsSave&&dsSave('banner',v('bnName'),B.alts.map((a,i)=>`${i+1}안) ${a.main} / ${a.sub||''}`).join('\n')+'\n\n'+spec()); $('#bnOut').scrollIntoView({behavior:'smooth',block:'start'}); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
+    B.pick=0; renderAlts(); await draw(); if(v('bnBg')==='ai') aiBg(false); window.dsSave&&dsSave('banner',v('bnName'),B.alts.map((a,i)=>`${i+1}안) ${a.main} / ${a.sub||''}`).join('\n')+`\n\n크기 : ${dims().join('m × ')}m`); $('#bnOut').scrollIntoView({behavior:'smooth',block:'start'}); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
   }catch(e){ $('#bnMsg').textContent='⚠ '+e.message; }
   finally{ B.busy=false; $('#bnGo').disabled=false; }
 }
@@ -131,30 +153,51 @@ function init(){
   $$p('#bnPresets button').forEach(b=>b.onclick=()=>{ $('#bnW').value=b.dataset.w; $('#bnH').value=b.dataset.h; syncP(); if(B.alts.length){ draw(); if(v('bnBg')==='ai'&&B.ai) aiBg(false); } });
   ['bnW','bnH'].forEach(id=>$('#'+id).addEventListener('input',()=>{ syncP(); if(B.alts.length) draw(); }));
   $('#bnBg').innerHTML=Object.entries(BGS).map(([k,[l]])=>`<option value="${k}">${l}</option>`).join('');
-  $('#bnGo').onclick=make; $('#bnAgain').onclick=make;
+  $('#bnGo').onclick=make;
   ['bnBg','bnHost'].forEach(id=>$('#'+id).onchange=()=>{ if(B.alts.length){ draw(); if(id==='bnBg'&&v('bnBg')==='ai') aiBg(false); } if(id==='bnBg'&&v('bnBg')!=='ai') aiLoad(false); $('#bnAiRedo').hidden=v('bnBg')!=='ai'; });
   $('#bnAiRedo').onclick=()=>aiBg(true);
   $('#bnBg').addEventListener('change',()=>{ $('#bnFileWrap').hidden=$('#bnBg').value!=='custom'; });
+  const SOL=['navy','green','orange','white'];
+  $('#bnSolid').innerHTML=SOL.map(k=>`<button type="button" data-v="${k}"><u style="background:${BGS[k][1]}"></u>${BGS[k][0].replace(' 단색','')}</button>`).join('');
+  const setBg=k=>{ $('#bnBg').value=k; $('#bnBg').dispatchEvent(new Event('change')); syncBg(); };
+  const syncBg=()=>{ const k=v('bnBg'), grp=SOL.includes(k)?'solid':k; $$p('#bnBgs .bn-bg').forEach(b=>b.classList.toggle('on',b.dataset.bg===grp)); $('#bnSolid').hidden=grp!=='solid'; $$p('#bnSolid button').forEach(b=>b.classList.toggle('on',b.dataset.v===k)); };
+  $$p('#bnBgs .bn-bg').forEach(b=>b.onclick=()=>{ const g=b.dataset.bg; setBg(g==='solid'?(SOL.includes(v('bnBg'))?v('bnBg'):'navy'):g); });
+  $$p('#bnSolid button').forEach(b=>b.onclick=()=>setBg(b.dataset.v)); syncBg();
+  const chips=(id,M,key)=>{ $('#'+id).innerHTML=Object.entries(M).map(([k,l])=>`<button type="button" data-v="${k}">${l}</button>`).join(''); const sync=()=>$$p('#'+id+' button').forEach(b=>b.classList.toggle('on',b.dataset.v===B.lg[key])); sync();
+    $$p('#'+id+' button').forEach(b=>b.onclick=()=>{ B.lg[key]=b.dataset.v; sync(); if(key==='pos') delete B.off.logo; if(key==='kind') $('#bnLogoWrap').hidden=B.lg.kind!=='custom'; if(B.alts.length) draw(); }); };
+  chips('bnLogo',LOGOS,'kind'); chips('bnLogoPos',LPOS,'pos'); chips('bnLogoSz',LSZ,'sz');
+  $('#bnLogoFile').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; B.lg.custom=await loadImg(URL.createObjectURL(f)); if(B.alts.length) draw(); };
   $('#bnFile').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; B.custom=await loadImg(URL.createObjectURL(f)); if(B.alts.length) draw(); };
-  $('#bnEdit').onclick=()=>{ const a=B.alts[B.pick]; if(!a) return;
+  const openEdit=(focus)=>{ const a=B.alts[B.pick]; if(!a) return;
     let md=$('#bnEditPop');
     if(!md){ md=document.createElement('div'); md.id='bnEditPop'; md.className='modal'; md.hidden=true;
       md.innerHTML='<div class="box bn-editbox"><div class="box-h"><b>문구 직접 고치기</b><button class="x" data-x>✕</button></div>'
-        +'<label>메인 문구<input id="bnEdM" maxlength="40"></label><label>서브 문구<input id="bnEdS" maxlength="60"></label>'
+        +'<label>메인 문구<input id="bnEdM" maxlength="40"></label><label>서브 문구<input id="bnEdS" maxlength="60"></label><label>주최·주관<input id="bnEdH" maxlength="40"></label>'
         +'<div class="pact"><button class="p" data-ok>적용</button><button data-x>취소</button></div></div>';
       document.body.appendChild(md);
       const close=()=>{ md.hidden=true; };
       md.addEventListener('click',e=>{ if(e.target===md||e.target.closest('[data-x]')) close(); });
       md.addEventListener('keydown',e=>{ if(e.key==='Escape') close(); if(e.key==='Enter'){ e.preventDefault(); md.querySelector('[data-ok]').click(); } });
     }
-    $('#bnEdM').value=a.main||''; $('#bnEdS').value=a.sub||'';
-    md.querySelector('[data-ok]').onclick=()=>{ const m=$('#bnEdM').value.trim(); if(!m){ $('#bnEdM').focus(); return; } a.main=m; a.sub=$('#bnEdS').value.trim(); md.hidden=true; renderAlts(); draw(); };
-    md.hidden=false; setTimeout(()=>{ const i=$('#bnEdM'); i.focus(); i.select(); },30);
+    $('#bnEdM').value=a.main||''; $('#bnEdS').value=a.sub||''; $('#bnEdH').value=v('bnHost')||'달성군';
+    md.querySelector('[data-ok]').onclick=()=>{ const m=$('#bnEdM').value.trim(); if(!m){ $('#bnEdM').focus(); return; } a.main=m; a.sub=$('#bnEdS').value.trim(); $('#bnHost').value=$('#bnEdH').value.trim(); md.hidden=true; renderAlts(); draw(); };
+    md.hidden=false; setTimeout(()=>{ const i=$({sub:'#bnEdS',host:'#bnEdH'}[focus]||'#bnEdM'); i.focus(); i.select(); },30);
   };
-  $('#bnPng').onclick=()=>{ const a=document.createElement('a'); a.download=`현수막시안_${v('bnName').replace(/[\\/:*?"<>|]/g,'').slice(0,20)}.png`; a.href=$('#bnCanvas').toDataURL('image/png'); a.click(); };
-  $('#bnSpec').onclick=()=>{ navigator.clipboard.writeText(spec()); toast?.('업체 전달용 사양을 복사했습니다'); };
+  $('#bnEdit').onclick=()=>openEdit('main');
+  // 시안에서 끌어서 옮기기 · 글자를 누르면 고치기
+  const cv=$('#bnCanvas'); let drag=null, raf=0;
+  const pt=e=>{ const r=cv.getBoundingClientRect(); return [(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]; };
+  const find=p=>{ const m=10*cv.width/(cv.getBoundingClientRect().width||1); for(let i=B.hit.length-1;i>=0;i--){ const h=B.hit[i]; if(p[0]>=h.x-m&&p[0]<=h.x+h.w+m&&p[1]>=h.y-m&&p[1]<=h.y+h.h+m) return h; } return null; };
+  cv.addEventListener('pointerdown',e=>{ if(!B.alts.length) return; const p=pt(e), h=find(p); if(!h) return; drag={k:h.k,p0:p,o0:{...O(h.k)},moved:false}; cv.setPointerCapture(e.pointerId); e.preventDefault(); });
+  cv.addEventListener('pointermove',e=>{ const p=pt(e); if(!drag){ const h=find(p); cv.style.cursor=h?(h.k==='logo'?'move':'grab'):'default'; cv.title=h?(h.k==='logo'?'끌어서 옮기기':'끌어서 옮기기 · 누르면 문구 고치기'):''; return; }
+    const dx=p[0]-drag.p0[0], dy=p[1]-drag.p0[1]; if(Math.abs(dx)+Math.abs(dy)>cv.width*0.004) drag.moved=true; if(!drag.moved) return;
+    const o=O(drag.k); o.x=drag.o0.x+dx; o.y=drag.o0.y+dy; cv.style.cursor='grabbing'; if(!raf) raf=requestAnimationFrame(()=>{ raf=0; draw(); }); });
+  const up=()=>{ if(!drag) return; const d=drag; drag=null; cv.style.cursor='default'; if(!d.moved&&d.k!=='logo') openEdit(d.k); };
+  cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',()=>{ drag=null; });
+  $('#bnResetPos').onclick=()=>{ B.off={}; if(B.alts.length) draw(); };
+  $('#bnPng').onclick=()=>{ const a=document.createElement('a'); a.download=`현수막시안_${v('bnName').replace(/[\\/:*?"<>|]/g,'').slice(0,20)}_${(()=>{ const [w,h]=dims(); return (h>w?'세로':'가로')+w+'x'+h+'m'; })()}.png`; a.href=$('#bnCanvas').toDataURL('image/png'); a.click(); };
   $('#bnSample').onclick=()=>{ $('#bnName').value='2026 비슬산 참꽃문화제'; $('#bnWhen').value='2026. 4. 18.(토) ~ 4. 26.(일)'; $('#bnPlace').value='비슬산 자연휴양림 일원'; $('#bnHost').value='달성군 · 달성문화재단'; $('#bnPoint').value='30년 만의 참꽃 만개, 가족 나들이'; $('#bnTone').value='친근'; toast?.('예시를 채웠습니다 — 「문구·시안 만들기」를 눌러보세요'); };
-  $('#bnReset').onclick=()=>{ ['bnName','bnWhen','bnPlace','bnHost','bnPoint','bnPic'].forEach(id=>$('#'+id).value=''); B.alts=[]; $('#bnOut').hidden=true; $('#bnMsg').textContent=''; };
+  $('#bnReset').onclick=()=>{ ['bnName','bnWhen','bnPlace','bnHost','bnPoint'].forEach(id=>$('#'+id).value=''); B.alts=[]; $('#bnOut').hidden=true; $('#bnMsg').textContent=''; };
 }
 window.BANNER={init};
 })();
