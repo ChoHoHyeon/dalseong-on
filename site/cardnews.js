@@ -22,8 +22,14 @@ const SYS=`당신은 대구광역시 달성군 SNS 홍보 담당자입니다. �
 · 게시글 문구(caption)는 3~4문장, 해시태그 6~8개(#달성군 #대구달성 포함).
 · visual: 카드 그림용. 원문에서 핵심 키워드를 뽑아, 그림에 꼭 나와야 할 구체적인 사물·장면을 영어 1~2문장으로 쓴다. (예: 어르신 스마트폰 교육 → "a friendly instructor helping seniors use smartphones and a kiosk in a bright classroom") 글자·간판·로고는 넣지 않는다.
 · 내용에 가장 맞는 그림 주제(art)를 다음 중 하나로 고른다(AI 그림이 나오기 전 임시 그림): edu(정보화·교육) festival(축제·꽃·관광) safety(안전·재난) welfare(복지·돌봄) env(환경·청소) farm(농업·농촌) traffic(교통) youth(청년·일자리) health(보건·건강) admin(민원·행정) culture(문화·체육·행사) data(데이터·AI).
+· design: 내용에 맞는 카드 디자인을 고른다.
+  layout: left(정보 전달형·공지) / center(감성·캠페인·행사) / bottom(그림이 주인공인 축제·관광·현장)
+  theme: navy(행정·안내) / green(환경·농업·건강) / orange(축제·행사·청년) / mint(복지·교육·생활)
+  font: pre(기본 고딕) / ng(나눔고딕·공문 느낌) / bhs(굵은 제목·강렬) / jua(둥근·친근) / gd(고운돋움·부드러움) / bagel(굵고 귀여움)
+· 본문 장에서 숫자·핵심어가 중요하면 big에 짧게(8자 이내, 예: "120명" "무료" "11월 14일까지") 넣는다. 없으면 생략.
+· 표지 head는 반드시 채운다.
 반드시 아래 JSON만 출력한다(설명 금지):
-{"visual":"English concrete visual motifs","keywords":["핵심 키워드1","핵심 키워드2"],"art":"edu","slides":[{"kind":"cover","head":"제목","body":["부제"]},{"kind":"body","head":"소제목","body":["문장","문장"]},{"kind":"end","head":"마무리 문구","body":["문의 ○○과 053)668-○○○○"]}],"caption":"…","tags":["#달성군","#대구달성"]}`;
+{"design":{"layout":"left","theme":"navy","font":"pre"},"visual":"English concrete visual motifs","keywords":["핵심 키워드1","핵심 키워드2"],"art":"edu","slides":[{"kind":"cover","head":"제목","body":["부제"]},{"kind":"body","head":"소제목","big":"120명","body":["문장","문장"]},{"kind":"end","head":"마무리 문구","body":["문의 ○○과 053)668-○○○○"]}],"caption":"…","tags":["#달성군","#대구달성"]}`;
 
 function offline(){
   const src=v('cnSrc'); const paras=src.split(/\n\s*\n|\r?\n/).map(x=>x.trim()).filter(x=>x.length>8); const n=+v('cnCount')||6;
@@ -50,8 +56,16 @@ async function callModel(user){
 
 /* ── 그리기 ── */
 function loadImg(src){ return new Promise(ok=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=()=>ok(null); i.src=src; }); }
-function wrap(ctx,text,maxW){ const out=[]; let line=''; for(const ch of String(text)){ const t=line+ch; if(ctx.measureText(t).width>maxW&&line){ out.push(line); line=ch; } else line=t; } if(line) out.push(line); return out; }
-function font(ctx,w,s){ ctx.font=`${w} ${s}px Pretendard,"Malgun Gothic",sans-serif`; }
+function wrapChars(ctx,text,maxW){ const out=[]; let line=''; for(const ch of String(text)){ const t=line+ch; if(ctx.measureText(t).width>maxW&&line){ out.push(line); line=ch; } else line=t; } if(line) out.push(line); return out; }
+/* 띄어쓰기 단위로 줄바꿈(단어가 중간에 잘리지 않게), 한 단어가 폭보다 길 때만 글자 단위 */
+function wrap(ctx,text,maxW){ const out=[]; let line=''; for(const w of String(text).split(/\s+/).filter(Boolean)){ const t=line?line+' '+w:w; if(ctx.measureText(t).width<=maxW){ line=t; continue; } if(line) out.push(line); if(ctx.measureText(w).width>maxW){ const parts=wrapChars(ctx,w,maxW); line=parts.pop(); out.push(...parts); } else line=w; } if(line) out.push(line); return out; }
+/* 글씨체: AI가 design.font로 고른다 (모두 무료 웹글꼴, index.html에서 불러옴). [이름, 굵게, 보통] */
+const CFONTS={ pre:['Pretendard',800,500], ng:['Nanum Gothic',800,700], bhs:['Black Han Sans',400,400], jua:['Jua',400,400], gd:['Gowun Dodum',400,400], bagel:['Bagel Fat One',400,400] };
+const LAYOUTS={ left:'왼쪽형', center:'가운데형', bottom:'하단 제목형' };
+const curFont=()=>CFONTS[C.data?.design?.font]||CFONTS.pre;
+function font(ctx,w,s,body){ const [fam,b,r]=curFont(); const wt=body?r:(+w>=700?b:r); ctx.font=`${body?(fam==='Bagel Fat One'||fam==='Black Han Sans'?500:wt):wt} ${s}px ${body&&/Bagel|Black Han/.test(fam)?'Pretendard':`"${fam}",Pretendard`},"Malgun Gothic",sans-serif`; }   // 본문 긴 글은 굵은 장식체 대신 고딕
+async function fontsReady(){ const [fam,b,r]=curFont(); try{ await Promise.all([document.fonts.load(`${b} 40px "${fam}"`,'가나다'),document.fonts.load(`${r} 40px "${fam}"`,'가나다')]); }catch(e){} }
+const layoutOf=()=>{ const u=v('cnLayout'); return u&&u!=='auto'?u:(LAYOUTS[C.data?.design?.layout]?C.data.design.layout:'left'); };
 async function getArt(){
   const key=v('cnArt')||C.data?.art||'admin';
   if(key==='none') return null;
@@ -60,33 +74,60 @@ async function getArt(){
   return C.artCache[key];
 }
 async function drawSlide(canvas,s,i,total){
-  const [W,H]=SIZES[v('cnSize')]||SIZES.sq; const [,grad,fg,acc]=THEMES[v('cnTheme')]||THEMES.navy;
+  const [W,H]=SIZES[v('cnSize')]||SIZES.sq; const [,grad,fg,acc]=THEMES[v('cnTheme')]||THEMES.navy; const L=layoutOf();
   canvas.width=W; canvas.height=H; const ctx=canvas.getContext('2d'); const pad=W*0.085;
+  await fontsReady();
   const g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,grad[0]); g.addColorStop(1,grad[1]);
   const art=await getArt(); const cover=(im,x,y,w,h)=>{ const r=Math.max(w/im.width,h/im.height); const iw=im.width*r, ih=im.height*r; ctx.save(); ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip(); ctx.drawImage(im,x+(w-iw)/2,y+(h-ih)/2,iw,ih); ctx.restore(); };
-  if(s.kind==='body'){ ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H); ctx.fillStyle=g; ctx.fillRect(0,0,W,H*0.045);
-    if(art){ const aw=W*0.46, ah=aw; ctx.save(); ctx.globalAlpha=.95; ctx.beginPath(); ctx.roundRect(W-aw-pad*0.6,H-ah-pad*1.6,aw,ah,W*0.03); ctx.clip(); ctx.drawImage(art,W-aw-pad*0.6,H-ah-pad*1.6,aw,ah); ctx.restore(); } }
-  else if(art){ cover(art,0,0,W,H); const og=ctx.createLinearGradient(0,0,0,H); og.addColorStop(0,grad[0]+'f2'); og.addColorStop(0.45,grad[0]+'b8'); og.addColorStop(1,grad[1]+'33'); ctx.fillStyle=og; ctx.fillRect(0,0,W,H); }
-  else { ctx.fillStyle=g; ctx.fillRect(0,0,W,H); ctx.fillStyle='rgba(255,255,255,.08)'; ctx.beginPath(); ctx.arc(W*0.85,H*0.2,W*0.35,0,7); ctx.fill(); }
-  const dark = s.kind==='body'; const tx = dark?'#1c2333':fg; const sub = dark?'#4b5563':'rgba(255,255,255,.88)';
-  ctx.textBaseline='top'; ctx.textAlign='left';
-  // 상단 라벨
-  font(ctx,'700',Math.round(W*0.03)); ctx.fillStyle=dark?grad[0]:acc; ctx.fillText(s.kind==='cover'?'달성군 소식':s.kind==='end'?'함께해요 달성':`${i}/${total-1}`, pad, pad*0.9);
+  const head=(s.head||'').trim()||(s.kind==='cover'?(v('cnTitle')||(s.body||[])[0]||'달성군 소식'):'');   // 표지 제목이 비면 채운다
+  const body=s.kind==='cover'&&!(s.head||'').trim()&&!v('cnTitle')?(s.body||[]).slice(1):(s.body||[]);
+  const isBody=s.kind==='body';
+  // ── 배경 ──
+  let dark=isBody, artBox=null;
+  if(isBody){
+    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
+    if(L==='bottom'&&art){ artBox=[0,0,W,H*0.36]; cover(art,0,0,W,H*0.36); ctx.fillStyle=g; ctx.fillRect(0,H*0.36,W,H*0.012); }
+    else { ctx.fillStyle=g; ctx.fillRect(0,0,W,H*0.045);
+      if(art&&L!=='center'){ const aw=W*0.42, ah=aw, ax=W-aw-pad*0.6, ay=H-ah-pad*1.6; artBox=[ax,ay,aw,ah]; ctx.save(); ctx.globalAlpha=.95; ctx.beginPath(); ctx.roundRect(ax,ay,aw,ah,W*0.03); ctx.clip(); ctx.drawImage(art,ax,ay,aw,ah); ctx.restore(); } }
+  }else if(art){
+    cover(art,0,0,W,H); const og=ctx.createLinearGradient(0,0,0,H);
+    if(L==='bottom'){ og.addColorStop(0,grad[0]+'55'); og.addColorStop(0.45,grad[0]+'22'); og.addColorStop(0.7,grad[0]+'cc'); og.addColorStop(1,grad[0]+'f5'); }
+    else if(L==='center'){ og.addColorStop(0,grad[0]+'e6'); og.addColorStop(0.55,grad[0]+'99'); og.addColorStop(1,grad[1]+'55'); }
+    else { og.addColorStop(0,grad[0]+'f2'); og.addColorStop(0.45,grad[0]+'b8'); og.addColorStop(1,grad[1]+'33'); }
+    ctx.fillStyle=og; ctx.fillRect(0,0,W,H);
+  }else{ ctx.fillStyle=g; ctx.fillRect(0,0,W,H); ctx.fillStyle='rgba(255,255,255,.08)'; ctx.beginPath(); ctx.arc(W*0.85,H*0.2,W*0.35,0,7); ctx.fill(); }
+  const tx=dark?'#1c2333':fg; const sub=dark?'#4b5563':'rgba(255,255,255,.9)';
+  const C_=L==='center'; ctx.textBaseline='top'; ctx.textAlign=C_?'center':'left'; const X=C_?W/2:pad, MW=W-pad*2;
+  // 위 라벨
+  font(ctx,'700',Math.round(W*0.03)); ctx.fillStyle=dark?grad[0]:acc; const lbl=s.kind==='cover'?'달성군 소식':s.kind==='end'?'함께해요 달성':`${i}/${total-1}`;
+  ctx.fillText(lbl, X, isBody&&L==='bottom'&&artBox?H*0.4:pad*0.9);
+  const lines=(t,mw)=>wrap(ctx,t,mw);
   let y;
-  if(s.kind==='cover'){
-    const hs=Math.round(W*0.11); font(ctx,'800',hs); ctx.fillStyle=tx; const hl=wrap(ctx,s.head,W-pad*2); y=Math.max(pad*0.9+W*0.03*2.2,(art?H*0.22:H*0.36)-hl.length*hs*0.6);   // 두 줄 제목이 위 라벨과 겹치지 않게 hl.forEach(l=>{ ctx.fillText(l,pad,y); y+=hs*1.18; });
-    ctx.fillStyle=acc; ctx.fillRect(pad,y+hs*0.2,W*0.12,H*0.008); y+=hs*0.6;
-    font(ctx,'500',Math.round(W*0.045)); ctx.fillStyle=sub; (s.body||[]).forEach(b=>wrap(ctx,b,W-pad*2).forEach(l=>{ ctx.fillText(l,pad,y); y+=W*0.065; }));
+  if(s.kind==='cover'||s.kind==='end'){
+    let hs=Math.round(W*(s.kind==='cover'?0.11:0.08)); font(ctx,'800',hs); let hl=lines(head,MW); while((hl.length>2||hl.some(l=>ctx.measureText(l).width>MW))&&hs>W*0.06){ hs-=2; font(ctx,'800',hs); hl=lines(head,MW); }
+    const subS=Math.round(W*0.045); const blockH=hl.length*hs*1.18+hs*0.6+body.length*W*0.065;
+    if(L==='bottom') y=H-pad*2.6-blockH; else if(C_) y=Math.max(pad*0.9+W*0.07,H*(art?0.3:0.38)-blockH/2); else y=Math.max(pad*0.9+W*0.03*2.2,(art?H*0.22:H*0.36)-hl.length*hs*0.6);
+    ctx.fillStyle=tx; hl.forEach(l=>{ ctx.fillText(l,X,y); y+=hs*1.18; });
+    ctx.fillStyle=acc; ctx.fillRect(C_?W/2-W*0.06:pad,y+hs*0.2,W*0.12,H*0.008); y+=hs*0.6;
+    font(ctx,'500',subS,true); ctx.fillStyle=sub; body.forEach(b=>lines(b,MW).forEach(l=>{ ctx.fillText(l,X,y); y+=W*0.065; }));
   }else{
-    const hs=Math.round(W*(s.kind==='end'?0.075:0.07)); font(ctx,'800',hs); ctx.fillStyle=tx; y=H*0.2; wrap(ctx,s.head,W-pad*2).forEach(l=>{ ctx.fillText(l,pad,y); y+=hs*1.2; });
-    ctx.fillStyle=dark?grad[1]:acc; ctx.fillRect(pad,y+hs*0.15,W*0.09,H*0.006); y+=hs*0.7;
-    const bs=Math.round(W*0.046); font(ctx,'500',bs); ctx.fillStyle=dark?'#2b3445':sub;
-    (s.body||[]).forEach(b=>{ const ls=wrap(ctx,b,W-pad*2-W*0.05); ctx.fillStyle=dark?grad[0]:acc; ctx.fillRect(pad,y+bs*0.42,W*0.012,W*0.012); ctx.fillStyle=dark?'#2b3445':sub; ls.forEach(l=>{ ctx.fillText(l,pad+W*0.04,y); y+=bs*1.5; }); y+=bs*0.5; });
+    const sb=L==='bottom'&&artBox?0.88:1; const hs=Math.round(W*0.07*sb); y=L==='bottom'&&artBox?H*0.44:H*0.17;
+    if(s.big){ const bs=Math.round(W*0.12*sb); font(ctx,'800',bs); ctx.fillStyle=grad[1]; lines(s.big,MW).slice(0,1).forEach(l=>{ ctx.fillText(l,X,y); }); y+=bs*1.15; }
+    font(ctx,'800',hs); ctx.fillStyle=tx; lines(head,MW).forEach(l=>{ ctx.fillText(l,X,y); y+=hs*1.2; });
+    ctx.fillStyle=grad[1]; ctx.fillRect(C_?W/2-W*0.045:pad,y+hs*0.15,W*0.09,H*0.006); y+=hs*0.7;
+    const bs=Math.round(W*0.046*(sb<1?0.93:1)); font(ctx,'500',bs,true);
+    const avoid=isBody&&L==='left'&&artBox&&art; body.forEach(b=>{ const mw=(C_?MW:MW-W*0.05)-(avoid&&y+bs*1.5>artBox[1]?artBox[2]+W*0.02:0); const ls=lines(b,mw); if(!C_){ ctx.fillStyle=grad[0]; ctx.fillRect(pad,y+bs*0.42,W*0.012,W*0.012); } ctx.fillStyle='#2b3445'; ls.forEach(l=>{ ctx.fillText(l,C_?X:pad+W*0.04,y); y+=bs*1.5; }); y+=bs*0.5; });
   }
-  // 하단 CI
-  const logo=C.logo||(C.logo=await loadImg('assets/dalseong_ci.png'));
-  if(logo){ const lh=H*0.05, lw=logo.width*lh/logo.height; if(!dark){ ctx.fillStyle='rgba(255,255,255,.95)'; ctx.beginPath(); ctx.roundRect(pad-lh*0.25,H-pad-lh-lh*0.2,lw+lh*0.5,lh+lh*0.4,lh*0.2); ctx.fill(); } ctx.drawImage(logo,pad,H-pad-lh,lw,lh); }
-  if(s.kind!=='cover'){ ctx.textAlign='right'; font(ctx,'600',Math.round(W*0.028)); ctx.fillStyle=dark?'#9aa3b2':'rgba(255,255,255,.7)'; ctx.fillText('대구광역시 달성군',W-pad,H-pad-W*0.03); }
+  // 가운데형 본문: 글 아래 남은 자리에 그림 (글과 겹치지 않게)
+  if(isBody&&L==='center'&&art){ const bottom=H-pad*1.5, room=bottom-(y+W*0.02), ah=Math.min(W*0.34,room); if(ah>W*0.12){ const aw=ah, ax=(W-aw)/2, ay=bottom-ah; ctx.save(); ctx.globalAlpha=.95; ctx.beginPath(); ctx.roundRect(ax,ay,aw,ah,W*0.03); ctx.clip(); ctx.drawImage(art,ax,ay,aw,ah); ctx.restore(); } }
+  // 로고(선택 입력 「로고」): 모든 장 같은 자리(왼쪽 아래)·같은 크기, 원본 그대로
+  const lk=v('cnLogo')||'ci'; C.logos=C.logos||{}; const need=lk==='both'?['ci','slogan']:lk==='none'?[]:[lk];
+  for(const n of need) if(!C.logos[n]) C.logos[n]=await loadImg(n==='ci'?'assets/dalseong_ci.png':'assets/slogan.png');
+  const ims=need.map(n=>C.logos[n]).filter(Boolean);
+  if(ims.length){ const lh=H*0.05, gap=lh*0.35, ws=ims.map(im=>im.width*lh/im.height), tw=ws.reduce((a,b)=>a+b,0)+gap*(ims.length-1);
+    if(!dark){ ctx.fillStyle='rgba(255,255,255,.95)'; ctx.beginPath(); ctx.roundRect(pad-lh*0.25,H-pad-lh-lh*0.2,tw+lh*0.5,lh+lh*0.4,lh*0.2); ctx.fill(); }
+    let x=pad; ims.forEach((im,k)=>{ ctx.drawImage(im,x,H-pad-lh,ws[k],lh); x+=ws[k]+gap; }); }
+  if(s.kind!=='cover'){ ctx.textAlign='right'; font(ctx,'600',Math.round(W*0.028),true); ctx.fillStyle=dark?'#9aa3b2':'rgba(255,255,255,.7)'; ctx.fillText('대구광역시 달성군',W-pad,H-pad-W*0.03); }
 }
 async function renderAll(){
   const d=C.data; const wrapEl=$('#cnSlides'); wrapEl.innerHTML='';
@@ -103,7 +144,7 @@ async function make(){
     const S=window.S||{};
     if((S.key||S.server)&&!S.offline){ C.data=await callModel(`장수: ${v('cnCount')||6}장(표지·마무리 포함)\n제목(참고): ${v('cnTitle')||'원문에서 뽑기'}\n문의처: ${v('cnContact')||'원문에 있으면 사용, 없으면 ○○'}\n원문:\n${v('cnSrc')}`); $('#cnMsg').textContent='카드 문구를 만들었습니다 — AI가 그림을 그리는 동안 카드를 넘겨 보세요.'; }
     else { await new Promise(r=>setTimeout(r,300)); C.data=offline(); $('#cnMsg').textContent='오프라인 모드 — 모델 연결 시 원문을 읽어 장별 문구를 씁니다.'; }
-    C.cur=0; C.art=null; $('#cnArt').value='ai'; await renderAll(); if(S.key||S.server) aiArt(false); window.dsSave&&dsSave('card',C.data.slides[0]?.head||'카드뉴스',C.data.slides.map((x,i)=>`[${i+1}장] ${x.head}\n${(x.body||[]).join('\n')}`).join('\n\n')+'\n\n'+(C.data.caption||'')+'\n'+(C.data.tags||[]).join(' ')); $('#cnOut').scrollIntoView({behavior:'smooth',block:'start'}); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
+    C.cur=0; C.art=null; $('#cnArt').value='ai'; { const d=C.data.design||{}; if(THEMES[d.theme]&&$('#cnTheme').dataset.user!=='1') $('#cnTheme').value=d.theme; } await renderAll(); if(S.key||S.server) aiArt(false); window.dsSave&&dsSave('card',C.data.slides[0]?.head||'카드뉴스',C.data.slides.map((x,i)=>`[${i+1}장] ${x.head}\n${(x.body||[]).join('\n')}`).join('\n\n')+'\n\n'+(C.data.caption||'')+'\n'+(C.data.tags||[]).join(' ')); $('#cnOut').scrollIntoView({behavior:'smooth',block:'start'}); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
   }catch(e){ $('#cnMsg').textContent='⚠ '+e.message; }
   finally{ C.busy=false; $('#cnGo').disabled=false; }
 }
@@ -163,7 +204,7 @@ function init(){
     await new Promise(r=>setTimeout(r,30));
     try{ preload(); const b=await _sampleBlob; if(!b) throw 0; $('#cnSrc').value=''; $('#cnTitle').value=''; await readFiles([new File([b],'2026년 군민 정보화교육 추진 계획(샘플).pdf',{type:'application/pdf'})]); if(!v('cnContact')) $('#cnContact').value='문의 정보통신과 053)668-0000'; }catch(e){ $('#cnFileList').textContent='⚠ 샘플 파일을 불러오지 못했습니다'; _sampleBlob=null; } finally{ btn.disabled=false; btn.textContent=t0; } };
   $('#cnGo').onclick=make; $('#cnAgain').onclick=make;
-  ['cnSize','cnTheme'].forEach(id=>$('#'+id).onchange=()=>{ if(C.data) renderAll(); });
+  ['cnSize','cnTheme','cnLogo','cnLayout'].forEach(id=>$('#'+id).onchange=()=>{ if(id==='cnTheme') $('#cnTheme').dataset.user='1'; if(C.data) renderAll(); });
   $('#cnSize').addEventListener('change',()=>{ if(C.data&&v('cnArt')==='ai'&&C.art){ C.art=null; aiArt(false); } });   // 비율이 바뀌면 그 비율로 다시 그린다
   $('#cnApply').onclick=()=>{ if(!C.data) return; const s=C.data.slides[C.cur]; s.head=v('cnEditHead'); s.body=$('#cnEditBody').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean); renderAll(); };
   $('#cnPrev').onclick=()=>{ if(C.data){ C.cur=(C.cur-1+C.data.slides.length)%C.data.slides.length; renderAll(); } };
