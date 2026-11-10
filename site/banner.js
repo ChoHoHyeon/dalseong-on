@@ -230,7 +230,17 @@ function init(){
   $('#bnFile').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; B.custom=await loadImg(URL.createObjectURL(f)); if(B.alts.length) draw(); };
   /* 선택한 글상자 편집 패널: 그 글상자의 글 · 글씨체 · 크기만 (로고는 위치·크기만 → 안내만) */
   const prop=$('#bnProp');
-  window.propShow=k=>{ if(!B.L||!k){ prop.hidden=true; return; } prop.hidden=false; const ly=B.L[k];
+  /* 편집 창은 선택한 글상자 바로 아래(공간이 없으면 위)에 작은 창으로 띄운다 · 머리줄을 끌면 창을 옮길 수 있다 */
+  document.body.appendChild(prop); prop.classList.add('float'); let pman=null;
+  window.propPlace=()=>{ if(prop.hidden||!B.sel) return; const el=$(`#bnOv .bn-ly[data-k="${B.sel}"]`); if(!el) return; if(pman){ prop.style.left=pman[0]+'px'; prop.style.top=pman[1]+'px'; return; }
+    const r=el.getBoundingClientRect(), pw=prop.offsetWidth, ph=prop.offsetHeight, vw=innerWidth, vh=innerHeight;
+    let top=r.bottom+12; if(top+ph>vh-8) top=r.top-ph-12; if(top<8) top=Math.max(8,Math.min(vh-ph-8,r.bottom+12));
+    const left=Math.max(8,Math.min(vw-pw-8,r.left+r.width/2-pw/2)); prop.style.left=left+'px'; prop.style.top=top+'px'; };
+  addEventListener('scroll',()=>propPlace(),true); addEventListener('resize',()=>propPlace());
+  prop.addEventListener('pointerdown',e=>{ const h=e.target.closest('.bp-h'); if(!h||e.target.closest('button')) return; e.preventDefault(); const r=prop.getBoundingClientRect(), dx=e.clientX-r.left, dy=e.clientY-r.top;
+    const mv=ev=>{ pman=[Math.max(0,Math.min(innerWidth-r.width,ev.clientX-dx)),Math.max(0,Math.min(innerHeight-40,ev.clientY-dy))]; propPlace(); }; const up=()=>{ removeEventListener('pointermove',mv); removeEventListener('pointerup',up); };
+    addEventListener('pointermove',mv); addEventListener('pointerup',up); });
+  window.propShow=k=>{ if(!B.L||!k){ prop.hidden=true; pman=null; return; } const was=prop.hidden; prop.hidden=false; if(was) pman=null; const ly=B.L[k]; requestAnimationFrame(()=>propPlace());
     if(ly.type==='img'){ prop.innerHTML=`<div class="bp-h"><b>추가 로고</b><span>끌어서 옮기고, 모서리 ●로 크기 조절</span><button type="button" class="bp-del">🗑 이 로고 빼기</button><button type="button" class="bp-x" title="선택 해제">✕</button></div>`;
       prop.querySelector('.bp-del').onclick=()=>removeExtra(k); prop.querySelector('.bp-x').onclick=()=>{ B.sel=null; overlay(); prop.hidden=true; }; return; }
     if(k==='logo'){ prop.innerHTML=`<div class="bp-h"><b>로고</b><span>끌어서 옮기고, 모서리 ●로 크기 조절</span></div>`; return; }
@@ -273,9 +283,9 @@ function init(){
     if(act.mode==='move'){ const dx=p[0]-act.p0[0], dy=p[1]-act.p0[1]; if(Math.abs(dx)+Math.abs(dy)>B.L.W*0.003){ act.moved=true; lastTap={}; } if(!act.moved) return; ly.cx=act.c0[0]+dx; ly.cy=act.c0[1]+dy; }
     else { const d=Math.hypot(p[0]-ly.cx,p[1]-ly.cy); setSz(act.k,Math.max(B.L.H*0.02,Math.min(B.L.H*1.2,act.s0*d/act.d0))); }
     B.dirty=true; sched(); if(act.mode==='size'){ const pp=$('#bpPt'); if(pp&&B.L[act.k].type==='text'&&B.sel===act.k){ pp.value=toPt(B.L[act.k].size); } } });
-  const end=()=>{ act=null; };
+  const end=()=>{ act=null; propPlace(); };
   ov.addEventListener('pointerup',end); ov.addEventListener('pointercancel',end);
-  document.addEventListener('keydown',e=>{ if(!B.sel||!B.L||$('#bnOut').hidden||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return; if((e.key==='Delete'||e.key==='Backspace')&&B.L[B.sel]&&B.L[B.sel].type==='img'){ e.preventDefault(); return removeExtra(B.sel); } const st=B.L.W*(e.shiftKey?0.01:0.002); const m={ArrowLeft:[-st,0],ArrowRight:[st,0],ArrowUp:[0,-st],ArrowDown:[0,st]}[e.key]; if(!m) return; e.preventDefault(); B.L[B.sel].cx+=m[0]; B.L[B.sel].cy+=m[1]; B.dirty=true; paint(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!prop.hidden){ B.sel=null; overlay(); propShow(null); return; } if(!B.sel||!B.L||$('#bnOut').hidden||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return; if((e.key==='Delete'||e.key==='Backspace')&&B.L[B.sel]&&B.L[B.sel].type==='img'){ e.preventDefault(); return removeExtra(B.sel); } const st=B.L.W*(e.shiftKey?0.01:0.002); const m={ArrowLeft:[-st,0],ArrowRight:[st,0],ArrowUp:[0,-st],ArrowDown:[0,st]}[e.key]; if(!m) return; e.preventDefault(); B.L[B.sel].cx+=m[0]; B.L[B.sel].cy+=m[1]; B.dirty=true; paint(); });
   document.addEventListener('pointerdown',e=>{ if(B.sel&&!e._bnOv&&!e.target.closest('#bnOv')&&!e.target.closest('#bnProp')&&!e.target.closest('.bn-cwrap')){ B.sel=null; overlay(); propShow(null); } });
   $('#bnResetPos').onclick=()=>{ B.L=null; B.sel=null; propShow(null); if(B.alts.length) draw(); };
   $('#bnPng').onclick=()=>{ const a=document.createElement('a'); a.download=`현수막시안_${v('bnName').replace(/[\\/:*?"<>|]/g,'').slice(0,20)}_${(()=>{ const [w,h]=dims(); return (h>w?'세로':'가로')+w+'x'+h+'cm'; })()}.png`; a.href=$('#bnCanvas').toDataURL('image/png'); a.click(); };

@@ -2115,3 +2115,10 @@ body[data-theme=dark] .bn-tip>span{color:#cfe0ff;background:linear-gradient(100d
 #bpPt{width:64px;height:100%;border:0;border-left:1px solid var(--line);border-right:0;text-align:right;font-weight:800;font-size:14px;padding:0 2px 0 6px;outline:none;background:var(--panel);color:var(--tx);box-shadow:none}
 .bp-unit{font-style:normal;font-size:12px;color:var(--mut);padding:0 8px 0 3px;border-right:1px solid var(--line);height:100%;display:flex;align-items:center;background:var(--panel)}
 .bp-cm{font-size:12px;color:var(--mut)}
+/* 편집 창: 선택한 글상자 옆에 뜨는 작은 창 */
+.bn-prop.float{position:fixed;z-index:80;width:min(460px,94vw);margin:0;padding:10px 12px 12px;box-shadow:0 14px 38px rgba(20,33,61,.22),0 2px 6px rgba(20,33,61,.08);border-color:rgba(47,111,237,.45)}
+.bn-prop.float .bp-h{cursor:move;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.bn-prop.float .bp-body{margin-top:10px;gap:8px}
+.bn-prop.float .bp-row>em{width:40px}
+.bn-prop.float #bpFont{gap:4px} .bn-prop.float #bpFont button{height:28px;padding:0 9px;font-size:12.5px}
+.bn-prop.float .bp-h b{font-size:13px} .bn-prop.float .bp-h span{font-size:12px}
