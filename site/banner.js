@@ -9,7 +9,7 @@
 "use strict";
 const $=s=>document.querySelector(s);
 const B={busy:false,alts:[],pick:0,img:null,custom:null,logo:null,ai:null,aiKey:'',aiBusy:false};
-const PRESETS=[[5,0.9,'가로 5×0.9 (지정게시대)'],[6,0.9,'가로 6×0.9'],[4,0.7,'가로 4×0.7'],[0.9,3,'세로 0.9×3']];
+const PRESETS=[[5,0.9,'5×0.9'],[4,0.7,'4×0.7'],[0.9,3,'세로 0.9×3']];
 const BGS={ ai:['🎨 AI 배경 (행사 맞춤)',null], photo:['군 보유 사진(비슬산)',null], navy:['남색 단색','#0b2a6b'], green:['진녹색 단색','#145a32'], orange:['주황 단색','#d35400'], white:['흰 바탕(남색 글자)','#ffffff'], custom:['내 사진 올리기',null] };
 const num=id=>{ const x=parseFloat(String($('#'+id).value).replace(',','.')); return x>0?x:0; };
 const dims=()=>{ const w=num('bnW')||5, h=num('bnH')||0.9; return [w,h]; };
@@ -43,7 +43,13 @@ async function callModel(user){
 
 /* ── 그리기 ── */
 function loadImg(src){ return new Promise((ok,no)=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=()=>ok(null); i.src=src; }); }
-function fit(ctx,text,maxW,start,min,weight){ let s=start; for(;s>=min;s-=4){ ctx.font=`${weight} ${s}px Pretendard,"Malgun Gothic",sans-serif`; if(ctx.measureText(text).width<=maxW) break; } return s; }
+/* 글씨체: 모두 무료(OFL) 웹글꼴 — 인쇄물에도 쓸 수 있다. w:[메인,서브·주최] 굵기 (한 굵기만 있는 글꼴은 400) */
+const FONTS={ pre:['기본 고딕','Pretendard',[800,600]], bhs:['굵은 제목체','Black Han Sans',[400,400]], dh:['도현체','Do Hyeon',[400,400]], jua:['주아체','Jua',[400,400]], mj:['명조','Nanum Myeongjo',[800,700]] };
+B.font='pre';
+const FF=()=>FONTS[B.font]||FONTS.pre;
+const fstr=(role,px)=>{ const [, fam, w]=FF(); const wt=role==='main'?w[0]:w[1]; return `${wt} ${px}px "${fam}",Pretendard,"Malgun Gothic",sans-serif`; };
+async function fontReady(){ const [, fam, w]=FF(); try{ await Promise.all([document.fonts.load(`${w[0]} 40px "${fam}"`,'가나다'),document.fonts.load(`${w[1]} 40px "${fam}"`,'가나다')]); }catch(e){} }
+function fit(ctx,text,maxW,start,min,weight){ let s=start; for(;s>=min;s-=4){ ctx.font=fstr(weight==='800'?'main':'sub',s); if(ctx.measureText(text).width<=maxW) break; } return s; }
 /* 시안 위 요소(메인·서브·주최·로고)는 끌어서 옮길 수 있다 — 옮긴 거리는 B.off에, 누를 수 있는 영역은 B.hit에 */
 B.off={}; B.hit=[]; B.offKey='';
 const O=k=>B.off[k]||(B.off[k]={x:0,y:0});
@@ -54,6 +60,7 @@ async function draw(){
   const [W0,H0]=dims(); const vert=H0>W0;
   const W=vert?900:2400, H=Math.round(W*H0/W0);
   if(B.offKey!==W+'x'+H){ B.off={}; B.offKey=W+'x'+H; } B.hit=[];
+  await fontReady();
   const c=$('#bnCanvas'); c.width=W; c.height=H; const ctx=c.getContext('2d');
   const bg=v('bnBg'); const [,col]=BGS[bg]||BGS.navy;
   const img = bg==='photo' ? (B.img||(B.img=await loadImg('assets/hero.jpg'))) : bg==='custom' ? B.custom : bg==='ai' ? B.ai : null;
@@ -73,12 +80,12 @@ async function draw(){
     const lines=a.main.split(/\s+/); let y=H*0.14+(lg.top?lg.h+H*0.03:0); const s=fit(ctx,lines.reduce((p,q)=>p.length>q.length?p:q,''),W*0.8,Math.round(W*0.22),Math.round(W*0.1),'800');
     let bb=null; lines.forEach(l=>{ bb=U(bb,txt(ctx,'main',l,W/2,y)); y+=s*1.25; }); hit('main',bb);
     if(a.sub){ const ss=fit(ctx,a.sub,W*0.86,Math.round(W*0.075),Math.round(W*0.045),'500'); y+=ss; let sb=null; a.sub.split(/\s·\s|\s+/).forEach(pt=>{ sb=U(sb,txt(ctx,'sub',pt,W/2,y)); y+=ss*1.35; }); hit('sub',sb); }
-    ctx.font=`600 ${Math.round(W*0.06)}px Pretendard,"Malgun Gothic",sans-serif`; hit('host',txt(ctx,'host',(v('bnHost')||'달성군'),W/2,lg.top||!lg.on?H*0.93:H*0.94-lg.h-W*0.08));
+    ctx.font=fstr('sub',Math.round(W*0.06)); hit('host',txt(ctx,'host',(v('bnHost')||'달성군'),W/2,lg.top||!lg.on?H*0.93:H*0.94-lg.h-W*0.08));
   }
   $('#bnOut').hidden=false;
 }
 /* 로고: 종류(군 CI·슬로건·둘 다·내 로고·없음) · 위치(네 귀퉁이) · 크기(3단계). 원본 비율 그대로, 변형 없이 */
-const LOGOS={ci:'군 CI',slogan:'슬로건',both:'CI + 슬로건',custom:'내 로고',none:'없음'};
+const LOGOS={ci:'군 CI',slogan:'슬로건',both:'CI + 슬로건',none:'없음'};
 const LPOS={br:'오른쪽 아래',bl:'왼쪽 아래',tr:'오른쪽 위',tl:'왼쪽 위'}, LSZ={s:'작게',m:'보통',l:'크게'};
 B.lg={kind:'ci',pos:'br',sz:'m',img:{}};
 async function logoImgs(){ const k=B.lg.kind, I=B.lg.img;
@@ -90,7 +97,7 @@ async function drawLogo(ctx,W,H,vert,light,fg){
   const imgs=await logoImgs(); const pos=B.lg.pos, top=pos[0]==='t', left=pos[1]==='l';
   const f={s:.72,m:1,l:1.35}[B.lg.sz];
   // 주최 문구는 로고와 겹치지 않게 반대쪽 아래에 (끌어서 옮길 수 있음)
-  if(!vert){ ctx.fillStyle=fg; ctx.font=`600 ${Math.round(H*0.075)}px Pretendard,"Malgun Gothic",sans-serif`; const hl=(!imgs.length||top)?true:!left; ctx.textAlign=hl?'left':'right'; hit('host',txt(ctx,'host',(v('bnHost')||'달성군'), hl?W*0.03:W*0.97, H*0.9)); }
+  if(!vert){ ctx.fillStyle=fg; ctx.font=fstr('sub',Math.round(H*0.075)); const hl=(!imgs.length||top)?true:!left; ctx.textAlign=hl?'left':'right'; hit('host',txt(ctx,'host',(v('bnHost')||'달성군'), hl?W*0.03:W*0.97, H*0.9)); }
   if(!imgs.length) return {on:false,top,h:0};
   let lh=vert?W*0.16*f:H*0.2*f; const gap=lh*0.35;
   let ws=imgs.map(im=>im.width*lh/im.height); let tw=ws.reduce((a,b)=>a+b,0)+gap*(imgs.length-1);
@@ -157,16 +164,16 @@ function init(){
   ['bnBg','bnHost'].forEach(id=>$('#'+id).onchange=()=>{ if(B.alts.length){ draw(); if(id==='bnBg'&&v('bnBg')==='ai') aiBg(false); } if(id==='bnBg'&&v('bnBg')!=='ai') aiLoad(false); $('#bnAiRedo').hidden=v('bnBg')!=='ai'; });
   $('#bnAiRedo').onclick=()=>aiBg(true);
   $('#bnBg').addEventListener('change',()=>{ $('#bnFileWrap').hidden=$('#bnBg').value!=='custom'; });
-  const SOL=['navy','green','orange','white'];
-  $('#bnSolid').innerHTML=SOL.map(k=>`<button type="button" data-v="${k}"><u style="background:${BGS[k][1]}"></u>${BGS[k][0].replace(' 단색','')}</button>`).join('');
   const setBg=k=>{ $('#bnBg').value=k; $('#bnBg').dispatchEvent(new Event('change')); syncBg(); };
-  const syncBg=()=>{ const k=v('bnBg'), grp=SOL.includes(k)?'solid':k; $$p('#bnBgs .bn-bg').forEach(b=>b.classList.toggle('on',b.dataset.bg===grp)); $('#bnSolid').hidden=grp!=='solid'; $$p('#bnSolid button').forEach(b=>b.classList.toggle('on',b.dataset.v===k)); };
-  $$p('#bnBgs .bn-bg').forEach(b=>b.onclick=()=>{ const g=b.dataset.bg; setBg(g==='solid'?(SOL.includes(v('bnBg'))?v('bnBg'):'navy'):g); });
-  $$p('#bnSolid button').forEach(b=>b.onclick=()=>setBg(b.dataset.v)); syncBg();
+  const syncBg=()=>{ const k=v('bnBg'); $$p('#bnBgs .bn-bg').forEach(b=>b.classList.toggle('on',b.dataset.bg===k)); };
+  $$p('#bnBgs .bn-bg').forEach(b=>b.onclick=()=>setBg(b.dataset.bg)); syncBg();
+  $('#bnFonts').innerHTML=Object.entries(FONTS).map(([k,[l,fam]])=>`<button type="button" data-v="${k}" style="font-family:'${fam}',Pretendard,sans-serif">${l}</button>`).join('');
+  const syncF=()=>$$p('#bnFonts button').forEach(b=>b.classList.toggle('on',b.dataset.v===B.font)); syncF();
+  $$p('#bnFonts button').forEach(b=>b.onclick=()=>{ B.font=b.dataset.v; syncF(); if(B.alts.length) draw(); });
   const chips=(id,M,key)=>{ $('#'+id).innerHTML=Object.entries(M).map(([k,l])=>`<button type="button" data-v="${k}">${l}</button>`).join(''); const sync=()=>$$p('#'+id+' button').forEach(b=>b.classList.toggle('on',b.dataset.v===B.lg[key])); sync();
-    $$p('#'+id+' button').forEach(b=>b.onclick=()=>{ B.lg[key]=b.dataset.v; sync(); if(key==='pos') delete B.off.logo; if(key==='kind') $('#bnLogoWrap').hidden=B.lg.kind!=='custom'; if(B.alts.length) draw(); }); };
+    $$p('#'+id+' button').forEach(b=>b.onclick=()=>{ B.lg[key]=b.dataset.v; sync(); if(key==='pos') delete B.off.logo; if(B.alts.length) draw(); }); };
   chips('bnLogo',LOGOS,'kind'); chips('bnLogoPos',LPOS,'pos'); chips('bnLogoSz',LSZ,'sz');
-  $('#bnLogoFile').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; B.lg.custom=await loadImg(URL.createObjectURL(f)); if(B.alts.length) draw(); };
+
   $('#bnFile').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; B.custom=await loadImg(URL.createObjectURL(f)); if(B.alts.length) draw(); };
   const openEdit=(focus)=>{ const a=B.alts[B.pick]; if(!a) return;
     let md=$('#bnEditPop');
