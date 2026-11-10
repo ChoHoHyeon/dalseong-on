@@ -544,38 +544,47 @@
       <div id="famApp"></div>
     </section>
 
-    <!-- 개인정보 가리기 (mask.js · 브라우저 안에서만 처리) -->
+    <!-- 개인정보 가리기 (mask.js · 브라우저 안에서만 처리 · AI로 보내지 않음) -->
     <section class="view" data-view="mask">
-      <div class="vh"><h2>개인정보 가리기</h2><p>엑셀·CSV를 올리면 이름·주민번호·전화번호·주소 같은 개인정보 열을 찾아 <b>홍*동, 010-****-5678</b>처럼 가린 파일을 만들어 줍니다. 파일은 이 PC 브라우저 안에서만 처리되고 어디로도 보내지지 않습니다.</p></div>
-      <div class="card pcard" id="mkDrop">
-        <h4>파일 올리기 <small>xlsx · xls · csv (첫 번째 시트 · 첫 줄은 열 이름) · 끌어다 놓아도 됩니다</small></h4>
-        <div class="pact" style="margin-top:4px"><label class="filebtn">📂 파일 선택<input type="file" id="mkFile" accept=".xlsx,.xls,.csv"></label><button id="mkSample">예시 파일로 해보기</button><span class="hint" id="mkMsg"></span></div>
+      <div class="vh"><h2>개인정보 가리기</h2><p>엑셀 표나 한글·워드·PDF 문서를 올리거나 글을 붙여넣으면 이름·주민번호·전화번호·주소 같은 개인정보를 찾아 <b>홍*동, 010-****-5678</b>처럼 가려 줍니다.<br>이 PC 브라우저 안에서만 처리되고, AI를 포함해 어디로도 보내지 않습니다.</p></div>
+      <div class="card flowcard">
+        <h4>이렇게 씁니다 <small>3단계면 끝납니다</small></h4>
+        <ol class="flow3">
+          <li><span class="fnum">1</span><span class="fico" aria-hidden="true">📋</span><span class="ftx"><b>파일·글 넣기</b><small>엑셀 표 · 한글·워드·PDF 문서 · 붙여넣기</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">2</span><span class="fico" aria-hidden="true">🔍</span><span class="ftx"><b>「개인정보 찾기」 누르기</b><small>자동으로 찾고 · 열마다 직접 바꿀 수 있어요</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">3</span><span class="fico" aria-hidden="true">🛡️</span><span class="ftx"><b>확인하고 내려받기</b><small>같은 형식 · 가림내역 포함</small></span></li>
+        </ol>
       </div>
-      <div id="mkEmpty">
-        <div class="card flowcard">
-          <h4>이렇게 씁니다 <small>AI 없이 규칙으로 처리 · 외부 전송 없음</small></h4>
-          <ol class="flow3">
-            <li><span class="fnum">1</span><span class="fico" aria-hidden="true">📂</span><span class="ftx"><b>파일 올리기</b><small>민원대장·명단 등 엑셀 그대로</small></span></li>
-            <li class="farr" aria-hidden="true">→</li>
-            <li><span class="fnum">2</span><span class="fico" aria-hidden="true">🔍</span><span class="ftx"><b>자동으로 찾기</b><small>열 이름·값 형태로 개인정보 열 판단 · 직접 바꿀 수 있어요</small></span></li>
-            <li class="farr" aria-hidden="true">→</li>
-            <li><span class="fnum">3</span><span class="fico" aria-hidden="true">🛡️</span><span class="ftx"><b>가린 파일 받기</b><small>같은 형식으로 저장 · 가림내역 시트 포함</small></span></li>
-          </ol>
-        </div>
-        <div class="card ae-prev" id="mkPrevCard" role="button" tabindex="0" title="예시 파일로 바로 해보기">
-          <div class="ae-head"><h4>이렇게 가려져요 <small>누르면 가상 예시 파일로 실제 처리</small></h4><span class="ae-tag">예시</span></div>
-          <div class="mk-rules">
+      <div class="card pcard">
+        <h4>개인정보 가리기 <small>AI 없이 규칙으로 처리 · 외부 전송 없음</small></h4>
+        <div class="pcols">
+        <fieldset class="pbox req-box">
+          <legend>필수 입력</legend>
+          <label class="pfull"><span class="cap">가릴 내용 <b class="req">*</b> <small class="hint">파일을 올리거나 글을 그대로 붙여넣기</small></span><textarea id="mkSrc" rows="9" placeholder="민원 회신문·보고서 본문 등을 붙여넣으세요. 엑셀 표는 아래 「파일 추가」로 올리면 열마다 판단합니다."></textarea></label>
+          <div class="pfile"><label class="filebtn">📎 파일 추가<input type="file" id="mkFile" accept=".xlsx,.xls,.csv,.hwpx,.docx,.pdf,.txt,.md"></label><span class="hint" id="mkFileList">엑셀·CSV 표 또는 한글(hwpx)·워드·PDF·텍스트 문서 · 이 상자에 끌어다 놓아도 됩니다</span></div>
+        </fieldset>
+        <fieldset class="pbox opt-box">
+          <legend>이렇게 가려져요</legend>
+          <div class="mk-rules mk-rules1">
             <div><span>👤 이름</span><s>홍길동</s><b>홍*동</b></div>
             <div><span>🪪 주민번호</span><s>900101-1234567</s><b>900101-1******</b></div>
             <div><span>📞 전화번호</span><s>010-1234-5678</s><b>010-****-5678</b></div>
-            <div><span>🏠 주소</span><s>달성군 화원읍 비슬로 123 101동</s><b>달성군 화원읍 비슬로 ***</b></div>
+            <div><span>🏠 주소</span><s>달성군 화원읍 비슬로 123</s><b>달성군 화원읍 비슬로 ***</b></div>
             <div><span>✉️ 이메일</span><s>hong.gd@korea.kr</s><b>ho***@korea.kr</b></div>
             <div><span>🚗 차량번호</span><s>12가3456</s><b>12가****</b></div>
             <div><span>🏦 계좌번호</span><s>110-234-567890</s><b>********7890</b></div>
-            <div><span>📝 비고 글 속</span><s>회신 010-9876-5432</s><b>회신 010-****-5432</b></div>
           </div>
+        </fieldset>
         </div>
-        <div class="ae-safe"><span>🔒 파일은 이 PC 브라우저 안에서만 처리</span><span>🤖 AI 모델로 보내지 않아요</span><span>👀 결과는 꼭 한 번 눈으로 확인하세요</span></div>
+        <div class="pact"><button id="mkFind" class="p">🔍 개인정보 찾기</button><button type="button" id="mkSample">📎 샘플 파일 업로드하기</button><button id="mkReset">비우기</button><span class="hint" id="mkMsg"></span></div>
+      </div>
+      <div class="card pout" id="mkTxtOut" hidden>
+        <h4>가림 완료 <small>노란 부분이 가려진 곳입니다</small></h4>
+        <div class="mk-stat" id="mkTxtStat"></div>
+        <div class="mk-txt" id="mkTxtPrev"></div>
+        <div class="pact"><button id="mkTxtCopy" class="p">📋 가린 글 복사</button><button id="mkTxtDown">⬇ 텍스트 파일로 받기</button></div>
       </div>
       <div class="card pcard" id="mkStep" hidden>
         <h4>찾은 결과 <small>판단·처리를 열마다 바꿀 수 있습니다</small></h4>
@@ -587,7 +596,6 @@
         <div class="mk-stat" id="mkStat"></div>
         <div class="mk-tblwrap" id="mkPrev"></div>
         <div class="pact"><button id="mkDown" class="p">⬇ 가린 파일 받기</button><button id="mkAn">📊 이 파일로 데이터 분석하기</button></div>
-        <p class="hint">※ 자동 판단은 보조 수단입니다. 배포·공개 전에는 담당자가 결과를 반드시 확인하세요.</p>
       </div>
     </section>
 

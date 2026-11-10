@@ -2371,3 +2371,10 @@ body[data-adro="1"] [data-view="model"] input,body[data-adro="1"] [data-view="mo
 .mv-lite p{font-size:13.5px;line-height:1.65;margin:6px 0}
 .mv-lite .mv-lite-alt{background:#f4f7fc;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .mv-lite .pact{justify-content:flex-end}
+/* 개인정보 가리기 — 새 구성 */
+.mk-rules.mk-rules1{display:flex;flex-direction:column;gap:6px;grid-template-columns:none}
+.mk-rules.mk-rules1>div{display:grid;grid-template-columns:96px 1fr 1fr;gap:8px;align-items:center;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);font-size:12.5px}
+.mk-rules.mk-rules1 s{color:var(--mut);text-decoration-color:#e57373}
+.mk-rules.mk-rules1 b{color:#1d4fd8}
+.mk-txt{max-height:420px;overflow:auto;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);font-size:14px;line-height:1.8;white-space:normal;word-break:keep-all}
+.mk-txt mark{background:#fff1a8;color:#1d4fd8;font-weight:700;padding:0 2px;border-radius:3px}

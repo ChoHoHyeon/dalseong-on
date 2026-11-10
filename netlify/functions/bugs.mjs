@@ -5,7 +5,7 @@
 import { getStore } from "@netlify/blobs";
 import { guard, originOk } from "../lib/guard.mjs";
 // 공개 목록에서는 이름을 가린다(홍길동 → 홍*동). 관리자 코드가 맞으면 그대로.
-const maskName = (w) => String(w || "").split(/\s+/).map((t, i, a) => i === a.length - 1 && /^[가-힣]{2,4}$/.test(t) && !/(과|팀|실|읍|면|소|원|청|국|단)$/.test(t) ? t[0] + "*".repeat(t.length - 2 || 1) + (t.length > 2 ? t.slice(-1) : "") : t).join(" ");
+const maskName = (w) => String(w || "").split(/\s+/).map(t => /^[가-힣]{2,4}$/.test(t) && !/(과|팀|실|읍|면|소|원|청|국|단|센터|담당|주무관|팀장|과장)$/.test(t) ? t[0] + "*".repeat(Math.max(1, t.length - 2)) + (t.length > 2 ? t.slice(-1) : "") : /^\d{3,4}$/.test(t) ? "****" : t).join(" ");   // 이름은 가운데 가리고, 내선번호도 가린다
 
 export const config = { path: "/api/bugs" };
 
