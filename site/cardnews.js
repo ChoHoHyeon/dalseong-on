@@ -107,7 +107,7 @@ async function drawSlide(canvas,s,i,total){
   const tx=dark?'#1c2333':fg; const sub=dark?'#4b5563':'rgba(255,255,255,.9)';
   const C_=isBody?AL==='center':L==='center'; ctx.textBaseline='top'; ctx.textAlign=C_?'center':'left'; const X=C_?W/2:pad, MW=W-pad*2;
   // 위 라벨
-  font(ctx,'700',Math.round(U*0.03)); ctx.fillStyle=dark?grad[0]:acc; const lbl=s.kind==='cover'?'달성군 소식':s.kind==='end'?'함께해요 달성':`${i}/${total-1}`;
+  font(ctx,'700',Math.round(U*0.03)); ctx.fillStyle=dark?grad[0]:acc; const topTxt=($('#cnTop')?$('#cnTop').value.trim():'달성군 소식'); const lbl=s.kind==='body'?`${i}/${total-1}`:topTxt;   /* 머리글: 표지·마무리 공통(첫 장에서 고침) */
   ctx.fillText(lbl, X, isBody&&AP==='top'&&artBox?H*0.38:pad*0.9);
   const lines=(t,mw)=>wrap(ctx,t,mw);
   let y;
@@ -175,9 +175,10 @@ async function drawSlide(canvas,s,i,total){
 }
 async function renderAll(){
   const d=C.data; const wrapEl=$('#cnSlides'); wrapEl.innerHTML='';
-  for(let i=0;i<d.slides.length;i++){ const c=document.createElement('canvas'); c.className='cn-thumb'+(i===C.cur?' on':''); c.title=`${i+1}장`; c.onclick=()=>{ C.cur=i; renderAll(); }; wrapEl.appendChild(c); await drawSlide(c,d.slides[i],i,d.slides.length); }
+  for(let i=0;i<d.slides.length;i++){ const c=document.createElement('canvas'); c.className='cn-thumb'+(i===C.cur?' on':''); c.title=`${i+1}번째 카드`; c.onclick=()=>{ C.cur=i; renderAll(); }; wrapEl.appendChild(c); await drawSlide(c,d.slides[i],i,d.slides.length); }
   await drawSlide($('#cnMain'),d.slides[C.cur],C.cur,d.slides.length);
-  const s=d.slides[C.cur]; const fe=document.activeElement; if(fe!==$('#cnEditHead')) $('#cnEditHead').value=s.head; if(fe!==$('#cnEditBody')) $('#cnEditBody').value=(s.body||[]).join('\n'); if(fe!==$('#cnEditBig')) $('#cnEditBig').value=s.big||''; $('#cnBigWrap').hidden=s.kind!=='body';   /* 입력 중인 칸은 덮어쓰지 않는다 */ $('#cnCurNo').textContent=`${C.cur+1} / ${d.slides.length}장`;
+  const s=d.slides[C.cur]; const fe=document.activeElement; if(fe!==$('#cnEditHead')) $('#cnEditHead').value=s.head; if(fe!==$('#cnEditBody')) $('#cnEditBody').value=(s.body||[]).join('\n'); if(fe!==$('#cnEditBig')) $('#cnEditBig').value=s.big||''; $('#cnBigWrap').hidden=s.kind!=='body';   /* 입력 중인 칸은 덮어쓰지 않는다 */ $('#cnCurNo').textContent=`${C.cur+1} / ${d.slides.length}`; { const first=C.cur===0; ['cnTop','cnFoot'].forEach(id=>{ $('#'+id).disabled=!first; }); ['cnLock1','cnLock2'].forEach(id=>$('#'+id).textContent=first?'· 모든 카드 공통':'· 첫 카드에서 고칠 수 있어요'); }
+  $('#cnSvOne').textContent=`지금 보고 있는 ${C.cur+1}번째 카드 · 이미지 파일`; $('#cnSvAll').textContent=`카드 ${d.slides.length}장 모두 한 번에 · 이미지 파일`;
   $('#cnDots').innerHTML=d.slides.map((_,k)=>`<i class="${k===C.cur?'on':''}" data-k="${k}"></i>`).join(''); $('#cnArrL').hidden=C.cur===0; $('#cnArrR').hidden=C.cur===d.slides.length-1;
   $('#cnCaption').value=`${d.caption||''}\n\n${(d.tags||[]).join(' ')}`;
   $('#cnOut').hidden=false;
@@ -257,7 +258,7 @@ function init(){
   /* 이 장만 AI로 다시 만들기: 같은 자리(표지·본문·마무리)를 원문 기준으로 다른 표현·장 모양으로 다시 쓴다 */
   $('#cnRedo').onclick=async()=>{ if(!C.data||C.busy) return; const btn=$('#cnRedo'), d=C.data, k=C.cur, cur=d.slides[k]; const S=window.S||{};
     if(!(S.key||S.server)||S.offline){ toast?.('AI 연결 시 사용할 수 있습니다'); return; }
-    btn.disabled=true; const t0=btn.textContent; btn.textContent='⏳ 이 장 문구를 다시 쓰는 중…';
+    btn.disabled=true; const t0=btn.textContent; btn.textContent='⏳ 현재 카드 문구를 다시 쓰는 중…';
     const sys=`당신은 대구광역시 달성군 SNS 카드뉴스 담당자입니다. 카드뉴스 중 한 장만 다시 씁니다.
 · 같은 역할(${cur.kind==='cover'?'표지':cur.kind==='end'?'마무리':'본문'})을 유지하되 지금과 다른 표현으로, 더 눈에 띄고 쉽게.
 · 본문 장이면 내용에 가장 맞는 type을 고른다: list / stat(big에 숫자) / steps / qa / quote. 지금 type(${cur.type||'list'})과 다르게 해도 좋다.
@@ -269,25 +270,25 @@ function init(){
       const m=txt.match(/\{[\s\S]*\}/); if(!m) throw new Error('응답을 읽지 못했습니다'); const j=JSON.parse(m[0]);
       if(!j.head&&!(j.body||[]).length) throw new Error('내용이 비었습니다');
       d.slides[k]={kind:cur.kind,type:j.type||cur.type,flow:!!j.flow,head:j.head||cur.head,big:j.big||'',body:Array.isArray(j.body)&&j.body.length?j.body:cur.body,img:cur.img||null};
-      await renderAll(); toast?.(`${k+1}장 문구를 새로 만들었습니다 — 그림도 이 장에 맞게 그리는 중…`);
+      await renderAll(); toast?.(`${k+1}번째 카드 문구를 새로 만들었습니다 — 그림도 맞춰 그리는 중…`);
       // 이 장 그림도 새 내용에 맞게 다시 그린다 (이 장에만 적용)
-      if(j.visual&&v('cnArt')!=='none'){ btn.textContent='🎨 이 장 그림 그리는 중…'; cnLoad(); const code=S.code||''; const [W,H]=SIZES[v('cnSize')]||SIZES.sq;
+      if(j.visual&&v('cnArt')!=='none'){ btn.textContent='🎨 현재 카드 그림 그리는 중…'; cnLoad(); const code=S.code||''; const [W,H]=SIZES[v('cnSize')]||SIZES.sq;
         const prompt=`Illustration for a Korean local government (Dalseong-gun) public-service card news.\nMAIN SUBJECT (must be clearly visible and dominant): ${j.visual}\nStyle: same as the other cards — ${C.data.visual?'consistent with: '+C.data.visual+'. ':''}clean flat vector illustration with soft pastel colors and navy accents, bright daytime.\nIMPORTANT: absolutely no text, no letters, no numbers, no logos, no signs. No close-up faces of real people.`;
         try{ const r=await fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':code},body:JSON.stringify({action:'start',prompt,size:H>W*1.1?'1024x1536':W>H*1.1?'1536x1024':'1024x1024',expect:[]})});
           const jj=await r.json(); if(!r.ok||!jj.id) throw new Error(jj.error||'접수 실패'); let job=null; const t1=Date.now();
           while(Date.now()-t1<180000){ await new Promise(res=>setTimeout(res,1500)); job=await (await fetch('/api/card?id='+jj.id,{headers:{'x-access-code':code}})).json(); if(job.status==='done'||job.status==='error') break; }
-          if(!job||job.status!=='done') throw new Error(job?.error||'시간 초과'); const im=await loadImg(job.image); if(im&&C.data===d){ d.slides[k].img=im; await renderAll(); toast?.(`${k+1}장 그림을 새로 그렸습니다`); } }
-        catch(err){ toast?.('⚠ 이 장 그림은 그대로 둡니다 — '+err.message); }
+          if(!job||job.status!=='done') throw new Error(job?.error||'시간 초과'); const im=await loadImg(job.image); if(im&&C.data===d){ d.slides[k].img=im; await renderAll(); toast?.(`${k+1}번째 카드 그림을 새로 그렸습니다`); } }
+        catch(err){ toast?.('⚠ 현재 카드 그림은 그대로 둡니다 — '+err.message); }
         finally{ cnLoad(false); } } }
     catch(e){ toast?.('⚠ 다시 만들지 못했습니다 — '+e.message); }
     finally{ btn.disabled=false; btn.textContent=t0; } };
-  { let _ft=null; $('#cnFoot').addEventListener('input',()=>{ clearTimeout(_ft); _ft=setTimeout(()=>{ if(C.data) renderAll(); },400); }); }
+  { let _ft=null; $('#cnTop').addEventListener('input',()=>{ clearTimeout(_ft); _ft=setTimeout(()=>{ if(C.data) renderAll(); },400); }); $('#cnFoot').addEventListener('input',()=>{ clearTimeout(_ft); _ft=setTimeout(()=>{ if(C.data) renderAll(); },400); }); }
   $('#cnArrL').onclick=()=>$('#cnPrev').click(); $('#cnArrR').onclick=()=>$('#cnNext').click();
   $('#cnDots').onclick=e=>{ const k=e.target.dataset?.k; if(k!=null&&C.data){ C.cur=+k; renderAll(); } };
   $('#cnPrev').onclick=()=>{ if(C.data){ C.cur=(C.cur-1+C.data.slides.length)%C.data.slides.length; renderAll(); } };
   $('#cnNext').onclick=()=>{ if(C.data){ C.cur=(C.cur+1)%C.data.slides.length; renderAll(); } };
   $('#cnPng').onclick=()=>{ if(C.data) dl($('#cnMain'),`카드뉴스_${C.cur+1}.png`); };
-  $('#cnAll').onclick=async()=>{ if(!C.data) return; const t=document.createElement('canvas'); for(let i=0;i<C.data.slides.length;i++){ await drawSlide(t,C.data.slides[i],i,C.data.slides.length); dl(t,`카드뉴스_${String(i+1).padStart(2,'0')}.png`); await new Promise(r=>setTimeout(r,350)); } toast?.(`${C.data.slides.length}장을 내려받았습니다`); };
+  $('#cnAll').onclick=async()=>{ if(!C.data) return; const t=document.createElement('canvas'); for(let i=0;i<C.data.slides.length;i++){ await drawSlide(t,C.data.slides[i],i,C.data.slides.length); dl(t,`카드뉴스_${String(i+1).padStart(2,'0')}.png`); await new Promise(r=>setTimeout(r,350)); } toast?.(`카드 ${C.data.slides.length}장을 내려받았습니다`); };
   $('#cnCopy').onclick=()=>{ navigator.clipboard.writeText($('#cnCaption').value); toast?.('게시글 문구를 복사했습니다'); };
   if($('#cnSample')) $('#cnSample').onclick=()=>{ $('#cnTitle').value='하반기 정보화교육 수강생 모집'; $('#cnCount').value='6'; $('#cnContact').value='문의 정보통신과 053)668-2454';
     $('#cnSrc').value='달성군은 디지털 취약계층의 정보 격차 해소를 위해 2026년 하반기 주민 정보화교육 수강생을 모집한다.\n교육은 11월 17일부터 12월 19일까지 8주간 군청 정보화교육장과 읍·면 주민자치센터에서 운영된다.\n과정은 스마트폰 활용(사진·카카오톡·모바일 신분증), 키오스크 실습(무인주문·민원발급), 생성형 AI 기초(검색·문서 작성) 3개로, 과정별 주 2회 2시간씩 진행된다.\n모집 인원은 과정별 20명, 총 120명이며 달성군민이면 누구나 신청할 수 있다. 수강료는 무료다.\n신청은 11월 14일까지 읍·면 행정복지센터 방문 또는 전화로 하면 된다.\n군 관계자는 "어르신도 키오스크와 스마트폰을 어렵지 않게 쓸 수 있도록 실습 위주로 운영하겠다"고 말했다.';
