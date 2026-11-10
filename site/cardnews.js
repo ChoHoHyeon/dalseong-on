@@ -2,12 +2,13 @@
    달성On — 카드뉴스 제작하기 (cardnews.js)
    · 보도자료·공고문을 붙여넣으면 표지–본문–마무리 5~8장으로 나눠 카드 문구를 만들고, 정해진 틀에 배치해 바로 그린다.
    · 규격 1:1(1080) / 4:5 / 9:16 · 색 테마 4종 · 군 CI 원본 그대로.  장별 문구는 바로 고쳐 다시 그릴 수 있다.
+   · 그림 : 만들기와 동시에 AI가 내용의 핵심 키워드로 그림을 그린다(현수막과 같은 방식). 그리는 동안은 테마 일러스트 12종 중 맞는 것을 임시로 쓴다.
    · 결과 : 장별 PNG(또는 전체 저장) + 게시글 문구·해시태그 복사
    ============================================================ */
 (function(){
 "use strict";
 const $=s=>document.querySelector(s);
-const C={busy:false,data:null,logo:null,cur:0,art:null,artKey:'',artCache:{}};
+const C={busy:false,data:null,logo:null,cur:0,art:null,artKey:'',artCache:{},aiBusy:false};
 /* 달성군 테마 일러스트 라이브러리(assets/cn/*.jpg, 1080×1080, 한 스타일) — 모델이 내용에 맞는 키를 고른다 */
 const ART={ edu:'정보화·교육·배움', festival:'축제·꽃·관광', safety:'안전·재난·치안', welfare:'복지·돌봄·어르신', env:'환경·청소·재활용', farm:'농업·농촌·특산물', traffic:'교통·버스·도로', youth:'청년·일자리·창업', health:'보건·건강·예방접종', admin:'민원·행정·군정', culture:'문화·체육·행사', data:'데이터·AI·디지털' };
 const THEMES={ navy:['남색',['#0b2a6b','#1b4db3'],'#ffffff','#ffd166'], green:['녹색',['#145a32','#27ae60'],'#ffffff','#f9e79f'], orange:['주황',['#c0392b','#e67e22'],'#ffffff','#fff3c4'], mint:['민트',['#117a8b','#48c9b0'],'#ffffff','#fdfefe'] };
@@ -19,9 +20,10 @@ const SYS=`당신은 대구광역시 달성군 SNS 홍보 담당자입니다. �
 · 본문 장은 소제목 10자 이내 + 핵심 문장 1~3줄(각 22자 이내). 한 장에 한 가지 내용만.
 · 문장은 짧고 쉬운 말, 군민 대상 존댓말("~해요" "~하세요"). 숫자·날짜·장소는 원문에 있는 것만 쓴다.
 · 게시글 문구(caption)는 3~4문장, 해시태그 6~8개(#달성군 #대구달성 포함).
-· 내용에 가장 맞는 그림 주제(art)를 다음 중 하나로 고른다: edu(정보화·교육) festival(축제·꽃·관광) safety(안전·재난) welfare(복지·돌봄) env(환경·청소) farm(농업·농촌) traffic(교통) youth(청년·일자리) health(보건·건강) admin(민원·행정) culture(문화·체육·행사) data(데이터·AI).
+· visual: 카드 그림용. 원문에서 핵심 키워드를 뽑아, 그림에 꼭 나와야 할 구체적인 사물·장면을 영어 1~2문장으로 쓴다. (예: 어르신 스마트폰 교육 → "a friendly instructor helping seniors use smartphones and a kiosk in a bright classroom") 글자·간판·로고는 넣지 않는다.
+· 내용에 가장 맞는 그림 주제(art)를 다음 중 하나로 고른다(AI 그림이 나오기 전 임시 그림): edu(정보화·교육) festival(축제·꽃·관광) safety(안전·재난) welfare(복지·돌봄) env(환경·청소) farm(농업·농촌) traffic(교통) youth(청년·일자리) health(보건·건강) admin(민원·행정) culture(문화·체육·행사) data(데이터·AI).
 반드시 아래 JSON만 출력한다(설명 금지):
-{"art":"edu","slides":[{"kind":"cover","head":"제목","body":["부제"]},{"kind":"body","head":"소제목","body":["문장","문장"]},{"kind":"end","head":"마무리 문구","body":["문의 ○○과 053)668-○○○○"]}],"caption":"…","tags":["#달성군","#대구달성"]}`;
+{"visual":"English concrete visual motifs","keywords":["핵심 키워드1","핵심 키워드2"],"art":"edu","slides":[{"kind":"cover","head":"제목","body":["부제"]},{"kind":"body","head":"소제목","body":["문장","문장"]},{"kind":"end","head":"마무리 문구","body":["문의 ○○과 053)668-○○○○"]}],"caption":"…","tags":["#달성군","#대구달성"]}`;
 
 function offline(){
   const src=v('cnSrc'); const paras=src.split(/\n\s*\n|\r?\n/).map(x=>x.trim()).filter(x=>x.length>8); const n=+v('cnCount')||6;
@@ -53,7 +55,7 @@ function font(ctx,w,s){ ctx.font=`${w} ${s}px Pretendard,"Malgun Gothic",sans-se
 async function getArt(){
   const key=v('cnArt')||C.data?.art||'admin';
   if(key==='none') return null;
-  if(key==='ai') return C.art;                      // AI로 새로 그린 그림
+  if(key==='ai'){ if(C.art) return C.art; const k=C.data?.art||'admin'; if(!C.artCache[k]) C.artCache[k]=await loadImg(`assets/cn/cn_${k}.jpg`); return C.artCache[k]; }   // AI 그림 (그리는 동안은 테마 일러스트)
   if(!C.artCache[key]) C.artCache[key]=await loadImg(`assets/cn/cn_${key}.jpg`);
   return C.artCache[key];
 }
@@ -72,7 +74,7 @@ async function drawSlide(canvas,s,i,total){
   font(ctx,'700',Math.round(W*0.03)); ctx.fillStyle=dark?grad[0]:acc; ctx.fillText(s.kind==='cover'?'달성군 소식':s.kind==='end'?'함께해요 달성':`${i}/${total-1}`, pad, pad*0.9);
   let y;
   if(s.kind==='cover'){
-    const hs=Math.round(W*0.11); font(ctx,'800',hs); ctx.fillStyle=tx; const hl=wrap(ctx,s.head,W-pad*2); y=(art?H*0.22:H*0.36)-hl.length*hs*0.6; hl.forEach(l=>{ ctx.fillText(l,pad,y); y+=hs*1.18; });
+    const hs=Math.round(W*0.11); font(ctx,'800',hs); ctx.fillStyle=tx; const hl=wrap(ctx,s.head,W-pad*2); y=Math.max(pad*0.9+W*0.03*2.2,(art?H*0.22:H*0.36)-hl.length*hs*0.6);   // 두 줄 제목이 위 라벨과 겹치지 않게 hl.forEach(l=>{ ctx.fillText(l,pad,y); y+=hs*1.18; });
     ctx.fillStyle=acc; ctx.fillRect(pad,y+hs*0.2,W*0.12,H*0.008); y+=hs*0.6;
     font(ctx,'500',Math.round(W*0.045)); ctx.fillStyle=sub; (s.body||[]).forEach(b=>wrap(ctx,b,W-pad*2).forEach(l=>{ ctx.fillText(l,pad,y); y+=W*0.065; }));
   }else{
@@ -89,7 +91,6 @@ async function drawSlide(canvas,s,i,total){
 async function renderAll(){
   const d=C.data; const wrapEl=$('#cnSlides'); wrapEl.innerHTML='';
   for(let i=0;i<d.slides.length;i++){ const c=document.createElement('canvas'); c.className='cn-thumb'+(i===C.cur?' on':''); c.title=`${i+1}장`; c.onclick=()=>{ C.cur=i; renderAll(); }; wrapEl.appendChild(c); await drawSlide(c,d.slides[i],i,d.slides.length); }
-  if(!v('cnArt')||( $('#cnArt').dataset.auto==='1' )){ $('#cnArt').value=ART[d.art]?d.art:'admin'; $('#cnArt').dataset.auto='1'; }
   await drawSlide($('#cnMain'),d.slides[C.cur],C.cur,d.slides.length);
   const s=d.slides[C.cur]; $('#cnEditHead').value=s.head; $('#cnEditBody').value=(s.body||[]).join('\n'); $('#cnCurNo').textContent=`${C.cur+1} / ${d.slides.length}장`;
   $('#cnCaption').value=`${d.caption||''}\n\n${(d.tags||[]).join(' ')}`;
@@ -100,35 +101,61 @@ async function make(){
   C.busy=true; $('#cnGo').disabled=true; $('#cnMsg').textContent='작성 중…';
   try{
     const S=window.S||{};
-    if((S.key||S.server)&&!S.offline){ C.data=await callModel(`장수: ${v('cnCount')||6}장(표지·마무리 포함)\n제목(참고): ${v('cnTitle')||'원문에서 뽑기'}\n문의처: ${v('cnContact')||'원문에 있으면 사용, 없으면 ○○'}\n원문:\n${v('cnSrc')}`); $('#cnMsg').textContent='완성 — 장을 눌러 문구를 고칠 수 있습니다.'; }
+    if((S.key||S.server)&&!S.offline){ C.data=await callModel(`장수: ${v('cnCount')||6}장(표지·마무리 포함)\n제목(참고): ${v('cnTitle')||'원문에서 뽑기'}\n문의처: ${v('cnContact')||'원문에 있으면 사용, 없으면 ○○'}\n원문:\n${v('cnSrc')}`); $('#cnMsg').textContent='카드 문구를 만들었습니다 — AI가 그림을 그리는 동안 카드를 넘겨 보세요.'; }
     else { await new Promise(r=>setTimeout(r,300)); C.data=offline(); $('#cnMsg').textContent='오프라인 모드 — 모델 연결 시 원문을 읽어 장별 문구를 씁니다.'; }
-    C.cur=0; await renderAll(); window.dsSave&&dsSave('card',C.data.slides[0]?.head||'카드뉴스',C.data.slides.map((x,i)=>`[${i+1}장] ${x.head}\n${(x.body||[]).join('\n')}`).join('\n\n')+'\n\n'+(C.data.caption||'')+'\n'+(C.data.tags||[]).join(' ')); $('#cnOut').scrollIntoView({behavior:'smooth',block:'start'}); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
+    C.cur=0; C.art=null; $('#cnArt').value='ai'; await renderAll(); if(S.key||S.server) aiArt(false); window.dsSave&&dsSave('card',C.data.slides[0]?.head||'카드뉴스',C.data.slides.map((x,i)=>`[${i+1}장] ${x.head}\n${(x.body||[]).join('\n')}`).join('\n\n')+'\n\n'+(C.data.caption||'')+'\n'+(C.data.tags||[]).join(' ')); $('#cnOut').scrollIntoView({behavior:'smooth',block:'start'}); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
   }catch(e){ $('#cnMsg').textContent='⚠ '+e.message; }
   finally{ C.busy=false; $('#cnGo').disabled=false; }
+}
+/* ── AI 그림: 문구 작성 때 뽑은 핵심 장면(visual)을 주인공으로. 다시 그리기는 화풍·빛만 바꾼다 ── */
+const AI_STYLE=['clean flat vector illustration with soft pastel colors','soft watercolor illustration','warm gouache poster painting','bright modern 3D-style illustration','gentle pastel illustration'];
+const AI_TIME=['bright daytime','warm afternoon light','soft morning light'];
+const pickR=a=>a[Math.floor(Math.random()*a.length)];
+let _cnT=null;
+function cnLoad(msg){ const L=$('#cnAiLoad'); if(!L) return; clearInterval(_cnT); if(msg===false){ L.hidden=true; return; } L.hidden=false;
+  if(msg){ L.innerHTML=`<b>${msg}</b><button type="button" id="cnAiGo2">🎨 AI 그림 그리기</button>`; $('#cnAiGo2').onclick=()=>aiArt(true); return; }
+  const t0=Date.now(); const f=()=>{ L.innerHTML=`<div class="spin"></div><b>🎨 AI가 그림을 그리는 중… ${Math.round((Date.now()-t0)/1000)}초</b><small>보통 30~60초\n그동안 카드를 넘겨 보며 문구를 고쳐 보세요\n완성되면 그림이 바뀝니다</small>`; }; f(); _cnT=setInterval(f,1000); }
+async function aiArt(redo){
+  if(!C.data||C.aiBusy) return; const S=window.S||{}, code=S.code||''; const d=C.data;
+  const subj=d.visual||((d.slides[0]?.head||'')+' '+(d.slides[0]?.body||[]).join(' '));
+  const [W,H]=SIZES[v('cnSize')]||SIZES.sq; const size=H>W*1.1?'1024x1536':W>H*1.1?'1536x1024':'1024x1024';
+  const prompt=`Illustration for a Korean local government (Dalseong-gun, Daegu) public-service card news.
+MAIN SUBJECT (must be clearly visible and dominant): ${subj}
+${(d.keywords||[]).length?`Key themes: ${d.keywords.join(', ')}.\n`:''}Style: ${redo?pickR(AI_STYLE):'clean flat vector illustration with soft pastel colors and navy accents'}, ${redo?pickR(AI_TIME):'bright daytime'}.${d.visual?' The main subject must stay the same in every version — only the art style and lighting change.':''}
+Keep the upper half simple with generous empty space for headline text. IMPORTANT: absolutely no text, no letters, no numbers, no logos, no signs. No close-up faces of real people.`;
+  C.aiBusy=true; cnLoad(); const btn=$('#cnAi'); if(btn) btn.disabled=true;
+  try{
+    const r=await fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':code},body:JSON.stringify({action:'start',prompt,size,expect:[]})});
+    const j=await r.json(); if(!r.ok||!j.id) throw new Error(j.error||'접수 실패');
+    let job=null; const t0=Date.now(); while(Date.now()-t0<180000){ await new Promise(res=>setTimeout(res,1500)); job=await (await fetch('/api/card?id='+j.id,{headers:{'x-access-code':code}})).json(); if(job.status==='done'||job.status==='error') break; }
+    if(!job||job.status!=='done') throw new Error(job?.error||'시간 초과');
+    const im=await loadImg(job.image); if(!im) throw new Error('그림을 열지 못했습니다'); if(C.data!==d) return;
+    C.art=im; C.aiBusy=false; cnLoad(false); if(v('cnArt')==='ai') await renderAll();
+    const mg=$('#cnMsg'); if(/그리는 동안/.test(mg.textContent)) mg.textContent='그림이 완성됐습니다 — 장을 눌러 문구를 고칠 수 있습니다.';
+  }catch(e){ C.aiBusy=false; cnLoad('⚠️ AI 그림을 만들지 못했습니다 — '+String(e.message||'').slice(0,60)+' · 기본 그림으로 계속됩니다'); }
+  finally{ C.aiBusy=false; if(btn) btn.disabled=false; }
 }
 function dl(canvas,name){ const a=document.createElement('a'); a.download=name; a.href=canvas.toDataURL('image/png'); a.click(); }
 function init(){
   if($('#cnGo')._on) return; $('#cnGo')._on=1;
   $('#cnSize').innerHTML=Object.entries(SIZES).map(([k,[,,l]])=>`<option value="${k}">${l}</option>`).join('');
   $('#cnTheme').innerHTML=Object.entries(THEMES).map(([k,[l]])=>`<option value="${k}">${l}</option>`).join('');
-  $('#cnArt').innerHTML=Object.entries(ART).map(([k,l])=>`<option value="${k}">${l}</option>`).join('')+'<option value="none">그림 없이</option>';
-  $('#cnArt').onchange=()=>{ $('#cnArt').dataset.auto='0'; if(C.data) renderAll(); };
-  $('#cnAi').onclick=async()=>{
-    if(!C.data||C.busy) return; const btn=$('#cnAi'); btn.disabled=true; const S=window.S||{}; const code=S.code||'';
-    const subject=($('#cnAiPrompt').value||'').trim()||(C.data.slides[0]?.head||'')+' '+(C.data.slides[0]?.body||[]).join(' ');
-    const prompt=`Clean flat vector illustration, soft pastel palette with navy accents, generous empty space in the upper half for headline text, absolutely no text or letters. Theme: ${subject} (Korean local government public-service announcement, Dalseong-gun). Minimal shapes, modern Korean public-service poster style.`;
-    try{
-      $('#cnMsg').textContent='AI가 그림을 그리는 중… (30초~1분)';
-      const r=await fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':code},body:JSON.stringify({action:'start',prompt,size:'1024x1024',expect:[]})});
-      const j=await r.json(); if(!r.ok||!j.id) throw new Error(j.error||'접수 실패');
-      let job=null; const t0=Date.now(); while(Date.now()-t0<180000){ await new Promise(res=>setTimeout(res,1500)); job=await (await fetch('/api/card?id='+j.id,{headers:{'x-access-code':code}})).json(); if(job.status==='done'||job.status==='error') break; }
-      if(!job||job.status!=='done') throw new Error(job?.error||'시간 초과');
-      C.art=await loadImg(job.image); if(!$('#cnArt').querySelector('option[value=ai]')) $('#cnArt').insertAdjacentHTML('afterbegin','<option value="ai">✨ AI가 새로 그린 그림</option>'); $('#cnArt').value='ai'; $('#cnArt').dataset.auto='0'; await renderAll(); $('#cnMsg').textContent='새 그림을 적용했습니다.';
-    }catch(e){ $('#cnMsg').textContent='⚠ AI 그림 실패: '+e.message; }
-    finally{ btn.disabled=false; }
-  };
+  $('#cnArt').innerHTML='<option value="ai">🎨 AI 그림 (추천)</option><optgroup label="기본 그림">'+Object.entries(ART).map(([k,l])=>`<option value="${k}">${l}</option>`).join('')+'</optgroup><option value="none">그림 없이</option>';
+  $('#cnArt').onchange=()=>{ if(C.data){ renderAll(); if(v('cnArt')==='ai'&&!C.art&&!C.aiBusy) aiArt(false); } };
+  $('#cnAi').onclick=()=>aiArt(true);
+  /* 파일 추가: 보도자료와 같은 읽기(pressRead · app.js)로 글을 뽑아 「알릴 내용」에 채운다 (여러 번·여러 개 가능) */
+  $('#cnFile').onchange=async e=>{ const fs=[...e.target.files]; e.target.value=''; const L=$('#cnFileList'); const done=[];
+    for(const f of fs){ L.textContent=`「${f.name}」 읽는 중…`;
+      try{ if(typeof window.pressRead!=='function') throw new Error('읽기 기능을 불러오지 못했습니다'); const r=await window.pressRead(f); if(!r.text) throw new Error('글자를 찾지 못했습니다(그림 파일은 내용으로 쓰지 않습니다)');
+        const t=r.text.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim().slice(0,8000); const src=$('#cnSrc');
+        src.value=src.value.trim()?src.value.trim()+`\n\n[${f.name}]\n`+t:t;
+        if(!v('cnTitle')){ const first=t.split('\n').map(x=>x.replace(/^[◎○□▸\-\s]+/,'').trim()).find(x=>x.length>=4); if(first) $('#cnTitle').value=first.slice(0,40); }
+        done.push(`📄 ${f.name} (${t.length.toLocaleString()}자)`); }
+      catch(err){ done.push(`⚠ ${f.name} — ${err.message}`); } }
+    L.textContent=done.join(' · ')+' — 아래 「카드뉴스 만들기」를 누르세요'; };
   $('#cnGo').onclick=make; $('#cnAgain').onclick=make;
   ['cnSize','cnTheme'].forEach(id=>$('#'+id).onchange=()=>{ if(C.data) renderAll(); });
+  $('#cnSize').addEventListener('change',()=>{ if(C.data&&v('cnArt')==='ai'&&C.art){ C.art=null; aiArt(false); } });   // 비율이 바뀌면 그 비율로 다시 그린다
   $('#cnApply').onclick=()=>{ if(!C.data) return; const s=C.data.slides[C.cur]; s.head=v('cnEditHead'); s.body=$('#cnEditBody').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean); renderAll(); };
   $('#cnPrev').onclick=()=>{ if(C.data){ C.cur=(C.cur-1+C.data.slides.length)%C.data.slides.length; renderAll(); } };
   $('#cnNext').onclick=()=>{ if(C.data){ C.cur=(C.cur+1)%C.data.slides.length; renderAll(); } };
@@ -138,7 +165,7 @@ function init(){
   $('#cnSample').onclick=()=>{ $('#cnTitle').value='하반기 정보화교육 수강생 모집'; $('#cnCount').value='6'; $('#cnContact').value='문의 정보통신과 053)668-2454';
     $('#cnSrc').value='달성군은 디지털 취약계층의 정보 격차 해소를 위해 2026년 하반기 주민 정보화교육 수강생을 모집한다.\n교육은 11월 17일부터 12월 19일까지 8주간 군청 정보화교육장과 읍·면 주민자치센터에서 운영된다.\n과정은 스마트폰 활용(사진·카카오톡·모바일 신분증), 키오스크 실습(무인주문·민원발급), 생성형 AI 기초(검색·문서 작성) 3개로, 과정별 주 2회 2시간씩 진행된다.\n모집 인원은 과정별 20명, 총 120명이며 달성군민이면 누구나 신청할 수 있다. 수강료는 무료다.\n신청은 11월 14일까지 읍·면 행정복지센터 방문 또는 전화로 하면 된다.\n군 관계자는 "어르신도 키오스크와 스마트폰을 어렵지 않게 쓸 수 있도록 실습 위주로 운영하겠다"고 말했다.';
     toast?.('예시를 채웠습니다 — 「카드뉴스 만들기」를 눌러보세요'); };
-  $('#cnReset').onclick=()=>{ ['cnTitle','cnContact','cnSrc'].forEach(id=>$('#'+id).value=''); C.data=null; $('#cnOut').hidden=true; $('#cnMsg').textContent=''; };
+  $('#cnReset').onclick=()=>{ ['cnTitle','cnContact','cnSrc'].forEach(id=>$('#'+id).value=''); $('#cnFileList').textContent='파일을 올리면 내용을 읽어 위 칸에 채웁니다 (한글 hwpx·워드·PDF·텍스트) · 직접 붙여넣어도 됩니다'; C.data=null; C.art=null; cnLoad(false); $('#cnOut').hidden=true; $('#cnMsg').textContent=''; };
 }
 window.CARDNEWS={init};
 })();

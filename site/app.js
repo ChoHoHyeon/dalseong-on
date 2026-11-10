@@ -715,6 +715,7 @@ function pfDocs(){
   const per=Math.max(2000,Math.floor(24000/t.length));
   return `<첨부 자료 ${t.length}건 — 모두 빠짐없이 참고해 사실(일시·장소·수치·대상)을 반영하세요>\n`+t.map((f,i)=>`[첨부 ${i+1}] 「${f.name}」\n${f.text.replace(/\n{3,}/g,'\n\n').slice(0,per)}`).join('\n\n')+`\n</첨부 자료>`;
 }
+window.pressRead=pressRead;   // 카드뉴스·홍보영상 등에서 같은 파일 읽기를 쓴다
 function pfShrink(f,max=1280){ return new Promise((ok,no)=>{ const u=URL.createObjectURL(f); const im=new Image(); im.onload=()=>{ const r=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)); const c=document.createElement('canvas'); c.width=Math.round(im.naturalWidth*r); c.height=Math.round(im.naturalHeight*r); c.getContext('2d').drawImage(im,0,0,c.width,c.height); URL.revokeObjectURL(u); ok(c.toDataURL('image/jpeg',0.85).split(',')[1]); }; im.onerror=()=>{ URL.revokeObjectURL(u); no(new Error('그림을 열지 못했습니다')); }; im.src=u; }); }
 
 function initPress(){

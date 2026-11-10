@@ -781,12 +781,26 @@
     <!-- SNS 카드뉴스 제작하기 (세부 내역 추후 확정) -->
     <section class="view" data-view="card">
       <div class="vh"><h2>카드뉴스 제작하기</h2><p>보도자료·공고문을 붙여넣으면 표지–본문–마무리 카드로 나눠 문구를 쓰고, 정해진 틀에 배치해 바로 그려 줍니다. 장별로 고쳐서 PNG로 내려받고 게시글 문구·해시태그까지 함께.</p></div>
+      <div class="card flowcard">
+        <h4>이렇게 씁니다 <small>3단계면 끝납니다</small></h4>
+        <ol class="flow3">
+          <li><span class="fnum">1</span><span class="fico" aria-hidden="true">📋</span>
+            <span class="ftx"><b>알릴 내용 넣기</b><small>붙여넣거나 파일(한글·PDF 등) 올리기</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">2</span><span class="fico" aria-hidden="true">📱</span>
+            <span class="ftx"><b>카드 자동 구성</b><small>표지·본문·마무리로 나눠 그림까지 배치</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">3</span><span class="fico" aria-hidden="true">⬇️</span>
+            <span class="ftx"><b>고쳐서 내려받기</b><small>장별 PNG · 게시글 문구·해시태그까지</small></span></li>
+        </ol>
+      </div>
       <div class="card pcard">
         <h4>카드뉴스 만들기 <small>정해진 틀에 배치 · 디자이너 없이 10분</small></h4>
         <div class="pcols">
         <fieldset class="pbox req-box">
           <legend>필수 입력</legend>
           <label class="pfull"><span class="cap">알릴 내용 <b class="req">*</b> <small class="hint">보도자료·공고문·계획서 본문을 그대로 붙여넣기</small></span><textarea id="cnSrc" rows="9" placeholder="보도자료 전문을 붙여넣으세요. 달성On이 장별로 나눠 짧은 문장으로 다시 씁니다."></textarea></label>
+          <div class="pfile"><label class="filebtn">📎 파일 추가<input type="file" id="cnFile" multiple accept=".hwpx,.hwp,.docx,.pdf,.txt,.md,.htm,.html"></label><span class="hint" id="cnFileList">파일을 올리면 내용을 읽어 위 칸에 채웁니다 (한글 hwpx·워드·PDF·텍스트) · 직접 붙여넣어도 됩니다</span></div>
         </fieldset>
         <fieldset class="pbox opt-box">
           <legend>선택 입력</legend>
@@ -797,27 +811,30 @@
             <label>색 테마<select id="cnTheme" class="psel"></select></label>
             <label>문의처<input id="cnContact" placeholder="예) 문의 정보통신과 053)668-2454"></label>
           </div>
-          <p class="hint" style="margin-top:10px">※ 그림은 <b>달성군 테마 일러스트 12종</b>(한 스타일) 중 내용에 맞는 것을 자동으로 고르고, 결과 화면에서 바꾸거나 AI로 새로 그릴 수 있습니다.</p>
         </fieldset>
         </div>
         <div class="pact"><button id="cnGo" class="p">카드뉴스 만들기</button><button id="cnSample">예시로 채우기</button><button id="cnReset">비우기</button><span class="hint" id="cnMsg"></span></div>
       </div>
       <div class="card pout" id="cnOut" hidden>
-        <h4>카드 미리보기 <small>장을 누르면 크게 보이고 문구를 고칠 수 있습니다</small></h4>
+        <h4>카드 미리보기 <small>장을 누르면 크게 보이고, 오른쪽에서 그 장의 문구를 고칩니다</small></h4>
         <div class="cn-thumbs" id="cnSlides"></div>
+        <div class="cn-bar">
+          <label class="cn-artsel">그림<select id="cnArt" class="psel"></select></label>
+          <button id="cnAi">🎨 AI 그림 다시 그리기</button>
+          <span style="flex:1"></span>
+          <button id="cnAll" class="p">⬇ 전체 PNG 저장</button><button id="cnAgain">문구 다시 만들기</button>
+        </div>
         <div class="cn-wrap">
-          <div class="cn-stage"><canvas id="cnMain"></canvas></div>
+          <div class="cn-stage"><canvas id="cnMain"></canvas><div class="bn-aiload" id="cnAiLoad" hidden></div></div>
           <div class="cn-edit">
+            <div class="cn-eh">이 장 편집</div>
             <div class="cn-nav"><button id="cnPrev">‹ 이전</button><b id="cnCurNo"></b><button id="cnNext">다음 ›</button></div>
-            <label>그림 (전체 카드에 적용)<select id="cnArt" class="psel"></select></label>
-            <div class="cn-ai"><input id="cnAiPrompt" placeholder="AI로 새로 그릴 때 주제 (비우면 표지 내용으로)"><button id="cnAi">✨ AI로 새로 그리기</button></div>
             <label>제목<input id="cnEditHead"></label>
             <label>본문 <small class="hint">한 줄에 한 문장</small><textarea id="cnEditBody" rows="4"></textarea></label>
-            <div class="pact" style="margin-top:6px"><button id="cnApply" class="p">이 장 고치기</button><button id="cnPng">이 장 PNG</button><button id="cnAll">전체 PNG 저장</button></div>
-            <label style="margin-top:10px">게시글 문구 · 해시태그<textarea id="cnCaption" rows="4"></textarea></label>
-            <div class="pact" style="margin-top:6px"><button id="cnCopy">게시글 복사</button><button id="cnAgain">다시 생성</button></div>
+            <div class="pact" style="margin-top:6px"><button id="cnApply" class="p">이 장 고치기</button><button id="cnPng">이 장 PNG</button></div>
           </div>
         </div>
+        <div class="cn-cap"><label>게시글 문구 · 해시태그<textarea id="cnCaption" rows="3"></textarea></label><button id="cnCopy">게시글 복사</button></div>
       </div>
     </section>
 

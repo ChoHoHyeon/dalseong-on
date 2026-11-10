@@ -193,7 +193,7 @@ async function aiBg(force){
     while(Date.now()-t0<180000){ await new Promise(res=>setTimeout(res,1500)); const q=await fetch('/api/card?id='+j.id,{headers:{'x-access-code':S.code||''}}); job=await q.json(); if(job.status==='done'||job.status==='error') break; }
     if(!job||job.status!=='done') throw new Error((job&&job.error)||'시간 초과');
     B.ai=await loadImg(job.image); B.aiKey=key; if(!B.ai) throw new Error('그림을 열지 못했습니다');
-    B.aiBusy=false; aiLoad(false); if(B.alts.length) draw();
+    B.aiBusy=false; aiLoad(false); if(B.alts.length) draw(); const mg=$('#bnMsg'); if(mg&&/그리는 동안/.test(mg.textContent)) mg.textContent='배경이 완성됐습니다 — 시안의 문구·로고를 눌러 다듬어 보세요.';
   }catch(e){ B.aiBusy=false; aiLoad('⚠️ AI 배경을 만들지 못했습니다 — '+String(e.message||'').slice(0,60)); }
   finally{ B.aiBusy=false; if(btn) btn.disabled=false; }
 }
