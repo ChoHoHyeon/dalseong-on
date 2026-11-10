@@ -2009,3 +2009,15 @@ body[data-theme=dark] .pp-wrap{background:#1b2333}
 .nx-item span{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0} .nx-item b{font-size:14px} .nx-item small{font-size:12px;color:var(--mut)}
 .nx-item em{font-style:normal;color:var(--acc);font-weight:800;font-size:16px}
 @media (max-width:760px){ .nx-row{grid-template-columns:1fr} }
+
+/* 현수막: 크기 입력 · AI 배경 대기 */
+.bn-size{display:flex;align-items:center;gap:8px}.bn-size input{width:90px;text-align:center}.bn-size>span{color:var(--mut);font-weight:700}
+.bn-presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.bn-presets button{height:30px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:12.5px;cursor:pointer;color:var(--tx)}
+.bn-presets button.on{border-color:var(--acc);color:var(--acc);background:rgba(47,111,237,.07);font-weight:700}
+.bn-stage{position:relative}
+.bn-aiload{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:8px;text-align:center;background:rgba(255,255,255,.55);backdrop-filter:blur(2px);border-radius:10px}
+.bn-aiload[hidden]{display:none}
+.bn-aiload .spin{width:34px;height:34px;border-radius:50%;border:3px solid rgba(47,111,237,.2);border-top-color:var(--acc);animation:famspin .9s linear infinite}
+.bn-aiload b{font-size:15px;color:#1c2333} .bn-aiload small{font-size:13px;color:#4a5568;line-height:1.65;white-space:pre-line}
+.bn-aiload button{height:36px;padding:0 16px;border-radius:9px;border:0;background:var(--acc);color:#fff;font-weight:700;cursor:pointer}

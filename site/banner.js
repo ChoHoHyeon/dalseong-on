@@ -1,16 +1,19 @@
 /* ============================================================
    달성On — 홍보 현수막 제작하기 (banner.js)
    · 행사명·기간·장소만 넣으면 현수막 문구 3안(메인+서브)을 만들고, 규격 비율 그대로 시안을 그려 보여 준다.
-   · 배경은 군 보유 사진(assets/hero.jpg)·단색·내 사진. 군 CI(assets/dalseong_ci.png)는 원본 그대로 비율만 맞춰 올린다.
+   · 배경은 AI가 행사에 맞게 그린 그림(기본, /api/card · 글자 없는 배경만)·군 보유 사진(assets/hero.jpg)·단색·내 사진. 군 CI(assets/dalseong_ci.png)는 원본 그대로 비율만 맞춰 올린다.
    · 결과 : 시안 PNG(가로 2400px) + 업체 전달용 사양(문구·규격·수량·배경·연락처) 복사
    · 현수막은 결국 업체가 제작하므로 "문구 확정 + 시안 + 사양서"까지가 이 화면의 역할이다.
    ============================================================ */
 (function(){
 "use strict";
 const $=s=>document.querySelector(s);
-const B={busy:false,alts:[],pick:0,img:null,custom:null,logo:null};
-const SIZES={ '5x0.9':[5,0.9,'표준 가로 5m×0.9m(지정게시대)'], '6x0.9':[6,0.9,'가로 6m×0.9m'], '4x0.7':[4,0.7,'가로 4m×0.7m(소형)'], '0.9x3':[0.9,3,'세로 0.9m×3m(건물 부착)'] };
-const BGS={ photo:['군 보유 사진(비슬산)',null], navy:['남색','#0b2a6b'], green:['진녹색','#145a32'], orange:['주황','#d35400'], white:['흰 바탕(남색 글자)','#ffffff'], custom:['내 사진 올리기',null] };
+const B={busy:false,alts:[],pick:0,img:null,custom:null,logo:null,ai:null,aiKey:'',aiBusy:false};
+const PRESETS=[[5,0.9,'가로 5×0.9 (지정게시대)'],[6,0.9,'가로 6×0.9'],[4,0.7,'가로 4×0.7'],[0.9,3,'세로 0.9×3']];
+const BGS={ ai:['🎨 AI 배경 (행사 맞춤)',null], photo:['군 보유 사진(비슬산)',null], navy:['남색 단색','#0b2a6b'], green:['진녹색 단색','#145a32'], orange:['주황 단색','#d35400'], white:['흰 바탕(남색 글자)','#ffffff'], custom:['내 사진 올리기',null] };
+const num=id=>{ const x=parseFloat(String($('#'+id).value).replace(',','.')); return x>0?x:0; };
+const dims=()=>{ const w=num('bnW')||5, h=num('bnH')||0.9; return [w,h]; };
+const $$p=s=>[...document.querySelectorAll(s)];
 const v=id=>($('#'+id).value||'').trim();
 
 const SYS=`당신은 대구광역시 달성군 홍보 담당자입니다. 행사·사업 현수막 문구를 만듭니다.
@@ -42,13 +45,14 @@ async function callModel(user){
 function loadImg(src){ return new Promise((ok,no)=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=()=>ok(null); i.src=src; }); }
 function fit(ctx,text,maxW,start,min,weight){ let s=start; for(;s>=min;s-=4){ ctx.font=`${weight} ${s}px Pretendard,"Malgun Gothic",sans-serif`; if(ctx.measureText(text).width<=maxW) break; } return s; }
 async function draw(){
-  const [W0,H0]=SIZES[v('bnSize')]||SIZES['5x0.9']; const vert=H0>W0;
+  const [W0,H0]=dims(); const vert=H0>W0;
   const W=vert?900:2400, H=Math.round(W*H0/W0);
   const c=$('#bnCanvas'); c.width=W; c.height=H; const ctx=c.getContext('2d');
   const bg=v('bnBg'); const [,col]=BGS[bg]||BGS.navy;
-  const img = bg==='photo' ? (B.img||(B.img=await loadImg('assets/hero.jpg'))) : bg==='custom' ? B.custom : null;
-  if(img){ const r=Math.max(W/img.width,H/img.height); const w=img.width*r,h=img.height*r; ctx.drawImage(img,(W-w)/2,(H-h)/2,w,h); ctx.fillStyle='rgba(8,20,60,.52)'; ctx.fillRect(0,0,W,H); }
+  const img = bg==='photo' ? (B.img||(B.img=await loadImg('assets/hero.jpg'))) : bg==='custom' ? B.custom : bg==='ai' ? B.ai : null;
+  if(img){ const r=Math.max(W/img.width,H/img.height); const w=img.width*r,h=img.height*r; ctx.drawImage(img,(W-w)/2,(H-h)/2,w,h); ctx.fillStyle=bg==='ai'?'rgba(8,20,60,.38)':'rgba(8,20,60,.52)'; ctx.fillRect(0,0,W,H); }
   else { ctx.fillStyle=col||'#0b2a6b'; ctx.fillRect(0,0,W,H); }
+  if(bg==='ai'&&!B.ai){ aiLoad(B.aiBusy?null:'AI 배경을 아직 그리지 않았습니다'); }
   const light = bg==='white'; const fg = light?'#0b2a6b':'#ffffff';
   // 왼쪽 띠(포인트)
   ctx.fillStyle = light?'#0b2a6b':'rgba(255,255,255,.9)'; ctx.fillRect(0,0,vert?W:18,vert?18:H);
@@ -78,8 +82,34 @@ function renderAlts(){
   $('#bnAlts').querySelectorAll('.alt').forEach(b=>b.onclick=()=>{ B.pick=+b.dataset.i; renderAlts(); draw(); });
 }
 function spec(){
-  const a=B.alts[B.pick]||{}; const [w,h,label]=SIZES[v('bnSize')]||SIZES['5x0.9']; const [bgl]=BGS[v('bnBg')]||BGS.navy;
-  return `[현수막 제작 의뢰]\n· 행사명 : ${v('bnName')}\n· 메인 문구 : ${a.main||''}\n· 서브 문구 : ${a.sub||''}\n· 주최·주관 : ${v('bnHost')||'달성군'}\n· 규격 : ${label} (${w}m × ${h}m)\n· 수량 : ${v('bnQty')||'○'}장\n· 배경 : ${bgl}${v('bnBg')==='custom'?' (첨부 사진)':''} / 글자 ${v('bnBg')==='white'?'남색':'흰색'} 고딕 굵게\n· 군 CI : 우측 하단(원본 사용, 변형 금지)\n· 게시 기간·장소 : ${v('bnWhen')||'○○'} / ${v('bnPlace')||'○○'}\n· 납품 희망일 : ○○\n· 담당 : ${v('bnPic')||'○○과 ○○○ ☎ 053)668-○○○○'}\n※ 시안 PNG 첨부. 지정게시대 게시는 「달성군 옥외광고물 관리 조례」에 따라 별도 신청.`;
+  const a=B.alts[B.pick]||{}; const [w,h]=dims(); const label=(h>w?'세로':'가로')+` ${w}m×${h}m`; const [bgl]=BGS[v('bnBg')]||BGS.navy;
+  return `[현수막 제작 의뢰]\n· 행사명 : ${v('bnName')}\n· 메인 문구 : ${a.main||''}\n· 서브 문구 : ${a.sub||''}\n· 주최·주관 : ${v('bnHost')||'달성군'}\n· 규격 : ${label}\n· 수량 : ○장\n· 배경 : ${v('bnBg')==='ai'?'AI 생성 배경(시안 PNG 참고)':bgl}${v('bnBg')==='custom'?' (첨부 사진)':''} / 글자 ${v('bnBg')==='white'?'남색':'흰색'} 고딕 굵게\n· 군 CI : 우측 하단(원본 사용, 변형 금지)\n· 게시 기간·장소 : ${v('bnWhen')||'○○'} / ${v('bnPlace')||'○○'}\n· 납품 희망일 : ○○\n· 담당 : ${v('bnPic')||'○○과 ○○○ ☎ 053)668-○○○○'}\n※ 시안 PNG 첨부. 지정게시대 게시는 「달성군 옥외광고물 관리 조례」에 따라 별도 신청.`;
+}
+/* ── AI 배경: 행사 분위기에 맞는 글자 없는 배경 그림 (gpt-image, 서버 /api/card) ── */
+function aiPrompt(vert){
+  return `A ${vert?'tall vertical':'wide horizontal'} background artwork for an outdoor public event banner of Dalseong-gun, Daegu, South Korea.
+Event: "${v('bnName')}". Place: "${v('bnPlace')||'Dalseong-gun'}". Mood keywords: "${v('bnPoint')||''}".
+Show scenery and symbols that match the event theme (Korean landscape, seasonal nature, local atmosphere) in a clean, bright, modern poster illustration style.
+IMPORTANT: absolutely no text, no letters, no numbers, no logos, no signs, no watermarks. Keep the ${vert?'upper and middle':'center'} area calm and simple with low detail so large text can be overlaid later. No people's faces in close-up.`;
+}
+let _aiT=null;
+function aiLoad(msg){ const L=$('#bnAiLoad'); if(!L) return; clearInterval(_aiT); if(msg===false){ L.hidden=true; return; } L.hidden=false;
+  if(msg){ L.innerHTML=`<b>${msg}</b><button type="button" id="bnAiGo2">🎨 AI 배경 그리기</button>`; $('#bnAiGo2').onclick=()=>aiBg(true); return; }
+  const t0=Date.now(); const f=()=>{ L.innerHTML=`<div class="spin"></div><b>🎨 AI가 배경을 그리는 중… ${Math.round((Date.now()-t0)/1000)}초</b><small>보통 30~60초\n그동안 문구 3안을 골라 보세요\n완성되면 시안 배경이 바뀝니다</small>`; }; f(); _aiT=setInterval(f,1000); }
+async function aiBg(force){
+  if(B.aiBusy) return; const [w,h]=dims(); const vert=h>w; const key=[v('bnName'),v('bnPlace'),v('bnPoint'),vert].join('|');
+  if(B.ai&&B.aiKey===key&&!force){ aiLoad(false); return draw(); }
+  const S=window.S||{}; B.aiBusy=true; aiLoad(); const btn=$('#bnAiRedo'); if(btn) btn.disabled=true;
+  try{
+    const r=await fetch('/api/card',{method:'POST',headers:{'content-type':'application/json','x-access-code':S.code||''},body:JSON.stringify({action:'start',prompt:aiPrompt(vert),photo:null,size:vert?'1024x1536':'1536x1024',expect:[]})});
+    const j=await r.json(); if(!r.ok||!j.id) throw new Error(j.error||('오류 '+r.status));
+    const t0=Date.now(); let job=null;
+    while(Date.now()-t0<180000){ await new Promise(res=>setTimeout(res,1500)); const q=await fetch('/api/card?id='+j.id,{headers:{'x-access-code':S.code||''}}); job=await q.json(); if(job.status==='done'||job.status==='error') break; }
+    if(!job||job.status!=='done') throw new Error((job&&job.error)||'시간 초과');
+    B.ai=await loadImg(job.image); B.aiKey=key; if(!B.ai) throw new Error('그림을 열지 못했습니다');
+    B.aiBusy=false; aiLoad(false); if(B.alts.length) draw();
+  }catch(e){ B.aiBusy=false; aiLoad('⚠️ AI 배경을 만들지 못했습니다 — '+String(e.message||'').slice(0,60)); }
+  finally{ B.aiBusy=false; if(btn) btn.disabled=false; }
 }
 async function make(){
   if(B.busy) return; if(!v('bnName')){ $('#bnMsg').textContent='행사·사업명은 입력해 주세요.'; return $('#bnName').focus(); }
@@ -90,16 +120,20 @@ async function make(){
       B.alts=await callModel(`행사·사업명: ${v('bnName')}\n기간·일시: ${v('bnWhen')||'미정'}\n장소: ${v('bnPlace')||'미정'}\n주최·주관: ${v('bnHost')||'달성군'}\n어조: ${v('bnTone')}\n강조할 점: ${v('bnPoint')||'없음'}`);
       $('#bnMsg').textContent='문구 3안 — 마음에 드는 안을 고르면 시안이 바뀝니다.';
     }else{ await new Promise(r=>setTimeout(r,300)); B.alts=offline(); $('#bnMsg').textContent='오프라인 모드 — 모델 연결 시 문구 3안을 새로 씁니다.'; }
-    B.pick=0; renderAlts(); await draw(); window.dsSave&&dsSave('banner',v('bnName'),B.alts.map((a,i)=>`${i+1}안) ${a.main} / ${a.sub||''}`).join('\n')+'\n\n'+spec()); $('#bnOut').scrollIntoView({behavior:'smooth',block:'start'}); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
+    B.pick=0; renderAlts(); await draw(); if(v('bnBg')==='ai') aiBg(false); window.dsSave&&dsSave('banner',v('bnName'),B.alts.map((a,i)=>`${i+1}안) ${a.main} / ${a.sub||''}`).join('\n')+'\n\n'+spec()); $('#bnOut').scrollIntoView({behavior:'smooth',block:'start'}); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
   }catch(e){ $('#bnMsg').textContent='⚠ '+e.message; }
   finally{ B.busy=false; $('#bnGo').disabled=false; }
 }
 function init(){
   if($('#bnGo')._on) return; $('#bnGo')._on=1;
-  $('#bnSize').innerHTML=Object.entries(SIZES).map(([k,[,,l]])=>`<option value="${k}">${l}</option>`).join('');
+  $('#bnPresets').innerHTML=PRESETS.map(([w,h,l])=>`<button type="button" data-w="${w}" data-h="${h}">${l}</button>`).join('');
+  const syncP=()=>{ const [w,h]=dims(); $$p('#bnPresets button').forEach(b=>b.classList.toggle('on',+b.dataset.w===w&&+b.dataset.h===h)); }; syncP();
+  $$p('#bnPresets button').forEach(b=>b.onclick=()=>{ $('#bnW').value=b.dataset.w; $('#bnH').value=b.dataset.h; syncP(); if(B.alts.length){ draw(); if(v('bnBg')==='ai'&&B.ai) aiBg(false); } });
+  ['bnW','bnH'].forEach(id=>$('#'+id).addEventListener('input',()=>{ syncP(); if(B.alts.length) draw(); }));
   $('#bnBg').innerHTML=Object.entries(BGS).map(([k,[l]])=>`<option value="${k}">${l}</option>`).join('');
   $('#bnGo').onclick=make; $('#bnAgain').onclick=make;
-  ['bnSize','bnBg','bnHost'].forEach(id=>$('#'+id).onchange=()=>{ if(B.alts.length) draw(); });
+  ['bnBg','bnHost'].forEach(id=>$('#'+id).onchange=()=>{ if(B.alts.length){ draw(); if(id==='bnBg'&&v('bnBg')==='ai') aiBg(false); } if(id==='bnBg'&&v('bnBg')!=='ai') aiLoad(false); $('#bnAiRedo').hidden=v('bnBg')!=='ai'; });
+  $('#bnAiRedo').onclick=()=>aiBg(true);
   $('#bnBg').addEventListener('change',()=>{ $('#bnFileWrap').hidden=$('#bnBg').value!=='custom'; });
   $('#bnFile').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; B.custom=await loadImg(URL.createObjectURL(f)); if(B.alts.length) draw(); };
   $('#bnEdit').onclick=()=>{ const a=B.alts[B.pick]; if(!a) return;
@@ -119,8 +153,8 @@ function init(){
   };
   $('#bnPng').onclick=()=>{ const a=document.createElement('a'); a.download=`현수막시안_${v('bnName').replace(/[\\/:*?"<>|]/g,'').slice(0,20)}.png`; a.href=$('#bnCanvas').toDataURL('image/png'); a.click(); };
   $('#bnSpec').onclick=()=>{ navigator.clipboard.writeText(spec()); toast?.('업체 전달용 사양을 복사했습니다'); };
-  $('#bnSample').onclick=()=>{ $('#bnName').value='2026 비슬산 참꽃문화제'; $('#bnWhen').value='2026. 4. 18.(토) ~ 4. 26.(일)'; $('#bnPlace').value='비슬산 자연휴양림 일원'; $('#bnHost').value='달성군 · 달성문화재단'; $('#bnPoint').value='30년 만의 참꽃 만개, 가족 나들이'; $('#bnTone').value='친근'; $('#bnQty').value='20'; toast?.('예시를 채웠습니다 — 「문구·시안 만들기」를 눌러보세요'); };
-  $('#bnReset').onclick=()=>{ ['bnName','bnWhen','bnPlace','bnHost','bnPoint','bnQty','bnPic'].forEach(id=>$('#'+id).value=''); B.alts=[]; $('#bnOut').hidden=true; $('#bnMsg').textContent=''; };
+  $('#bnSample').onclick=()=>{ $('#bnName').value='2026 비슬산 참꽃문화제'; $('#bnWhen').value='2026. 4. 18.(토) ~ 4. 26.(일)'; $('#bnPlace').value='비슬산 자연휴양림 일원'; $('#bnHost').value='달성군 · 달성문화재단'; $('#bnPoint').value='30년 만의 참꽃 만개, 가족 나들이'; $('#bnTone').value='친근'; toast?.('예시를 채웠습니다 — 「문구·시안 만들기」를 눌러보세요'); };
+  $('#bnReset').onclick=()=>{ ['bnName','bnWhen','bnPlace','bnHost','bnPoint','bnPic'].forEach(id=>$('#'+id).value=''); B.alts=[]; $('#bnOut').hidden=true; $('#bnMsg').textContent=''; };
 }
 window.BANNER={init};
 })();

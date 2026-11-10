@@ -718,6 +718,19 @@
     <!-- 홍보 현수막 제작하기 (세부 내역 추후 확정) -->
     <section class="view" data-view="banner">
       <div class="vh"><h2>홍보 현수막 제작하기</h2><p>행사명·기간·장소만 넣으면 현수막 문구 3안을 만들고 실제 규격 비율로 시안을 그려 줍니다. 시안 PNG와 업체 전달용 사양서까지 한 번에 — 제작은 업체가, 문구·시안 확정은 여기서.</p></div>
+      <div class="card flowcard">
+        <h4>이렇게 씁니다 <small>3단계면 끝납니다</small></h4>
+        <ol class="flow3">
+          <li><span class="fnum">1</span><span class="fico" aria-hidden="true">✍️</span>
+            <span class="ftx"><b>행사 정보 입력</b><small>행사명·기간·장소만 적으면 됩니다</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">2</span><span class="fico" aria-hidden="true">🎏</span>
+            <span class="ftx"><b>문구 3안 고르기</b><small>고르는 대로 실제 규격 비율 시안이 바뀝니다</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">3</span><span class="fico" aria-hidden="true">⬇️</span>
+            <span class="ftx"><b>시안·사양서 받기</b><small>시안 PNG와 업체 전달용 사양을 한 번에</small></span></li>
+        </ol>
+      </div>
       <div class="card pcard">
         <h4>문구·시안 만들기 <small>규격 비율 그대로 · 군 CI 원본 사용</small></h4>
         <div class="pcols">
@@ -730,18 +743,19 @@
             <label>주최·주관<input id="bnHost" placeholder="달성군"></label>
             <label>어조<select id="bnTone" class="psel"><option value="친근">친근(군민 참여 행사)</option><option value="격식">격식(공고·안내)</option></select></label>
           </div>
-          <label class="pfull">강조할 점 <small class="hint">선택</small><input id="bnPoint" placeholder="예) 무료 · 가족 나들이 · 선착순 100명"></label>
+          <label class="pfull"><span class="cap">강조할 점 <small class="hint">선택 · 쉼표로 여러 개</small></span><input id="bnPoint" placeholder="예) 무료 · 가족 나들이 · 선착순 100명"></label>
         </fieldset>
         <fieldset class="pbox opt-box">
-          <legend>규격 · 배경</legend>
+          <legend>선택 입력</legend>
+          <label class="pfull"><span class="cap">크기 <small class="hint">시안은 가로·세로 비율로 그립니다 (단위 m)</small></span>
+            <div class="bn-size"><input id="bnW" inputmode="decimal" value="5" aria-label="가로(m)"><span>×</span><input id="bnH" inputmode="decimal" value="0.9" aria-label="세로(m)"><span class="hint">m</span></div>
+            <div class="bn-presets" id="bnPresets"></div></label>
           <div class="pgrid pgrid2">
-            <label>규격<select id="bnSize" class="psel"></select></label>
             <label>배경<select id="bnBg" class="psel"></select></label>
-            <label>수량(장)<input id="bnQty" placeholder="예) 20"></label>
             <label>담당 연락처<input id="bnPic" placeholder="예) 문화체육과 ○○○ ☎ 668-○○○○"></label>
           </div>
           <div class="pfile" id="bnFileWrap" hidden><label class="filebtn">📷 내 사진 올리기<input type="file" id="bnFile" accept="image/*"></label><span class="hint">현수막은 인쇄물이라 가로 3000px 이상 사진을 권장합니다</span></div>
-          <p class="hint" style="margin-top:10px">※ 배경 사진은 AI로 만들지 않고 <b>군 보유 사진</b>이나 직접 올린 사진만 씁니다(저작권·해상도). 지정게시대 게시는 「달성군 옥외광고물 관리 조례」에 따라 별도 신청.</p>
+          <p class="hint" style="margin-top:10px">※ AI 배경은 글자 없이 분위기만 그리고, 문구·군 CI(원본)는 그 위에 얹습니다. 지정게시대 게시는 「달성군 옥외광고물 관리 조례」에 따라 별도 신청.</p>
         </fieldset>
         </div>
         <div class="pact"><button id="bnGo" class="p">문구·시안 만들기</button><button id="bnSample">예시로 채우기</button><button id="bnReset">비우기</button><span class="hint" id="bnMsg"></span></div>
@@ -749,8 +763,8 @@
       <div class="card pout" id="bnOut" hidden>
         <h4>문구 3안 <small>하나를 고르면 시안이 바뀝니다 · 직접 고칠 수도 있습니다</small></h4>
         <div class="bn-alts" id="bnAlts"></div>
-        <div class="bn-stage"><canvas id="bnCanvas"></canvas></div>
-        <div class="pact"><button id="bnPng" class="p">🖼 시안 PNG 내려받기</button><button id="bnSpec">📋 업체 전달용 사양 복사</button><button id="bnEdit">문구 직접 고치기</button><button id="bnAgain">문구 다시 만들기</button></div>
+        <div class="bn-stage"><canvas id="bnCanvas"></canvas><div class="bn-aiload" id="bnAiLoad" hidden></div></div>
+        <div class="pact"><button id="bnPng" class="p">🖼 시안 PNG 내려받기</button><button id="bnSpec">📋 업체 전달용 사양 복사</button><button id="bnEdit">문구 직접 고치기</button><button id="bnAiRedo">🎨 AI 배경 다시 그리기</button><button id="bnAgain">문구 다시 만들기</button></div>
         <p class="hint" style="margin-top:8px">※ 시안은 문구·배치 확인용(가로 2400px)입니다. 실제 인쇄 원고는 업체가 사양서와 시안을 보고 제작합니다.</p>
       </div>
     </section>
