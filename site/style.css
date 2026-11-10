@@ -1929,3 +1929,21 @@ html[data-theme=dark] .lw-paper,body.dark .lw-paper{background:#fff;color:#111}
 .mt-row #mtS2 .mt-sample{margin-top:auto;padding-top:12px}
 .mt-row #mtS2 .mt-file+.mt-run{margin-bottom:12px}
 @media(max-width:900px){.mt-grid3{grid-template-columns:1fr 1fr}}
+
+/* ═══ 회의록 — 마무리(조례·지침과 같은 체계) ═══ */
+/* 4단계 결과: 종이 문서처럼 */
+.ru-card .pv.mtwrap{background:#fff;color:#111;max-width:860px;margin:4px auto;padding:46px 54px 44px;border:1px solid #d9dee8;border-radius:4px;box-shadow:0 14px 34px rgba(20,33,61,.10)}
+.ru-card .mt-title{font-size:23px;letter-spacing:-.3px;margin-bottom:20px;color:#111}
+.ru-card .mt-title small{letter-spacing:8px;font-size:12.5px;margin-top:6px;color:#666}
+.ru-card .mt-h{margin:22px 0 10px}
+.ru-card .mt-ov th,.ru-card .mt-act th,.ru-card .mt-talk th{background:#f2f5fb}
+/* 3단계: 진행 막대·글 상자 정돈 */
+#mtS3 .mt-prog{background:rgba(47,111,237,.04);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+#mtS3 .mt-prog .bar{height:8px;border-radius:99px}
+#mtS3 .mt-prog .bar i{border-radius:99px}
+#mtS3 #mtSttMsg{display:block;margin-top:8px;font-size:12.5px;color:var(--mut)}
+#mtS3 .mt-notes{min-height:220px;background:var(--panel2)}
+/* 카드 머리 통일: 설명 줄 한 줄, 굵기·간격 동일 */
+.ru-view .ru-sh small{max-width:760px}
+/* 다크 모드에서도 결과 문서는 흰 종이 */
+body[data-theme=dark] .ru-card .pv.mtwrap,body[data-theme=dark] .lw-paper{background:#fff;color:#111}

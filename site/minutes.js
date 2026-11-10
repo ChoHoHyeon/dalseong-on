@@ -108,7 +108,7 @@ function render(o){
   const ov=kv((find(/개요/)||{lines:[]}).lines); const talk=find(/^회의록|발언/), disc=S.find(x=>x!==talk&&/논의|요지|내용/.test(x.name)), dec=find(/결정/), act=find(/조치|후속/), etc=find(/기타/);
   const agenda=(ov['안건']||'').split(/\n|(?=[①②③④⑤⑥⑦⑧⑨])/).map(x=>x.trim()).filter(Boolean);
   $('#minutesView').innerHTML=`<div class="mt">
-    <div class="mt-title">${esc(o.title.replace(/\s*(결과|회의록)$/,''))}<small>회 의 록</small></div>
+    <div class="mt-title">${esc(o.title.replace(/\s*(결과|회의록)$/,''))}<small>${talk?'회 의 결 과':'회 의 록'}</small></div>
     <table class="mt-ov"><tbody>
       <tr><th>일  시</th><td>${esc(H.date||ov['일시']||'○○')}</td><th>장  소</th><td>${esc(H.place||ov['장소']||'○○')}</td></tr>
       <tr><th>참석자</th><td colspan="3">${esc(H.who||ov['참석']||'○○')}</td></tr>
