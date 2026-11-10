@@ -673,39 +673,85 @@ ${PRESS_RULE}
 
 const PS={busy:false,files:[],out:null};
 
+const PF_HINT='계획서·기안문·사진을 여러 개 올릴 수 있습니다 — 모두 읽어 함께 반영합니다 (한글 hwpx·워드·PDF·텍스트·이미지)';
+function pfList(){
+  const el=$('#pfFileList'); if(!el) return;
+  if(!PS.files.length){ el.className='hint'; el.textContent=PF_HINT; return; }
+  el.className='pf-chips';
+  el.innerHTML=PS.files.map((f,i)=>`<span class="pf-chip${f.state==='읽지 못함'?' bad':''}" title="${esc(f.err||'')}">${/\.(jpe?g|png)$/i.test(f.name)?'🖼️':'📄'} ${esc(f.name)} <small>${esc(f.state)}</small><i data-pfdel="${i}" title="빼기">×</i></span>`).join('')+`<span class="hint">${PS.files.length}개 첨부 · 모두 참고해 작성합니다</span>`;
+}
+async function pressRead(f){
+  const n=f.name.toLowerCase();
+  if(/\.(txt|md|csv|json)$/.test(n)) return {text:await f.text()};
+  if(/\.html?$/.test(n)){ const d=new DOMParser().parseFromString(await f.text(),'text/html'); return {text:d.body.innerText||''}; }
+  if(/\.(jpe?g|png)$/.test(n)) return {img:await pfShrink(f)};
+  if(n.endsWith('.pdf')){
+    if(!window.pdfjsLib){ await new Promise((ok,no)=>{ const s=document.createElement('script'); s.src='vendor/pdf.min.js'; s.onload=ok; s.onerror=no; document.head.appendChild(s); }); }
+    pdfjsLib.GlobalWorkerOptions.workerSrc='vendor/pdf.worker.min.js';
+    const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise; let out='';
+    for(let i=1;i<=Math.min(pdf.numPages,20);i++){ const pg=await pdf.getPage(i); const tc=await pg.getTextContent(); let line=''; for(const x of tc.items){ line+=x.str; if(x.hasEOL){ out+=line+'\n'; line=''; } } out+=line+'\n'; }
+    if(out.replace(/\s/g,'').length<30) throw new Error('스캔본 PDF라 글자를 읽지 못했습니다');
+    return {text:out};
+  }
+  if(n.endsWith('.docx')||n.endsWith('.hwpx')){
+    const z=await JSZip.loadAsync(await f.arrayBuffer());
+    const names=Object.keys(z.files).filter(k=>n.endsWith('.docx')?k==='word/document.xml':/^Contents\/section\d+\.xml$/i.test(k)).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+    let out='';
+    for(const k of names){
+      const x=await z.file(k).async('string');
+      const P=n.endsWith('.docx')?/<w:p[ >][\s\S]*?<\/w:p>/g:/<hp:p[ >][\s\S]*?<\/hp:p>/g, T=n.endsWith('.docx')?/<w:t[^>]*>([^<]*)<\/w:t>/g:/<hp:t[^>]*>([^<]*)<\/hp:t>/g;
+      for(const p of x.match(P)||[]){ let t='',m; T.lastIndex=0; while((m=T.exec(p))) t+=m[1]; if(t.trim()) out+=t+'\n'; }
+    }
+    const dec=document.createElement('textarea'); dec.innerHTML=out; out=dec.value;
+    if(!out.trim()) throw new Error('본문 글자를 찾지 못했습니다');
+    return {text:out};
+  }
+  if(n.endsWith('.hwp')) throw new Error('hwp는 읽지 못합니다 — 한글에서 hwpx나 PDF로 저장해 올려 주세요');
+  throw new Error('지원하지 않는 형식');
+}
+// 글 첨부는 전부 넣되 합계 24,000자 안에서 파일별로 고르게 나눈다
+function pfDocs(){
+  const t=PS.files.filter(f=>f.text); if(!t.length) return '';
+  const per=Math.max(2000,Math.floor(24000/t.length));
+  return `<첨부 자료 ${t.length}건 — 모두 빠짐없이 참고해 사실(일시·장소·수치·대상)을 반영하세요>\n`+t.map((f,i)=>`[첨부 ${i+1}] 「${f.name}」\n${f.text.replace(/\n{3,}/g,'\n\n').slice(0,per)}`).join('\n\n')+`\n</첨부 자료>`;
+}
+function pfShrink(f,max=1280){ return new Promise((ok,no)=>{ const u=URL.createObjectURL(f); const im=new Image(); im.onload=()=>{ const r=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)); const c=document.createElement('canvas'); c.width=Math.round(im.naturalWidth*r); c.height=Math.round(im.naturalHeight*r); c.getContext('2d').drawImage(im,0,0,c.width,c.height); URL.revokeObjectURL(u); ok(c.toDataURL('image/jpeg',0.85).split(',')[1]); }; im.onerror=()=>{ URL.revokeObjectURL(u); no(new Error('그림을 열지 못했습니다')); }; im.src=u; }); }
+
 function initPress(){
   if($('#pfGo')._on) return; $('#pfGo')._on=1;
   const n=(S.meta&&S.meta.counts&&S.meta.counts.press)||0;
   $('#pfLearn').textContent = n? `달성군 실제 보도자료 ${n.toLocaleString()}건의 문체·구성을 참고합니다` : '달성군 보도자료 서식 기준';
   const t=new Date(); $('#pfDate').value=t.toISOString().slice(0,10);
+  pfList();
+  // 첨부: 여러 번·여러 개 추가 가능, 칩의 ×로 하나씩 뺄 수 있음 (모든 파일은 이 브라우저에서 읽고, 글/그림만 모델로 전달)
   $('#pfFile').onchange=async e=>{
-    PS.files=[];
-    const fs=[...e.target.files];
+    const fs=[...e.target.files]; e.target.value='';
     for(const f of fs){
-      let txt='';
-      if(/\.(txt|md|csv|json|htm|html)$/i.test(f.name)){
-        try{ txt=(await f.text()).slice(0,8000); if(/\.html?$/i.test(f.name)){ const d=new DOMParser().parseFromString(txt,'text/html'); txt=(d.body.innerText||'').slice(0,8000);} }catch(err){}
-      }
-      PS.files.push({name:f.name,size:f.size,text:txt});
+      if(PS.files.some(x=>x.name===f.name&&x.size===f.size)) continue;
+      const it={name:f.name,size:f.size,text:'',img:null,state:'읽는 중…'}; PS.files.push(it); pfList();
+      try{ const r=await pressRead(f); it.text=r.text||''; it.img=r.img||null; it.state=it.img?'그림':it.text?`${it.text.length.toLocaleString()}자`:'내용 없음'; }
+      catch(err){ it.state='읽지 못함'; it.err=err.message; }
+      pfList();
     }
-    $('#pfFileList').textContent = PS.files.length
-      ? PS.files.map(f=>f.name+(f.text?' (본문 읽음)':' (파일명만)')).join(' · ')
-      : '계획서·기안문을 올리면 내용을 읽어 반영합니다';
   };
+  $('#pfFileList').onclick=e=>{ const x=e.target.closest('[data-pfdel]'); if(!x) return; PS.files.splice(+x.dataset.pfdel,1); pfList(); };
+
   $('#pfSample').onclick=()=>{
     $('#pfName').value='달성군 AI 업무비서 「달성On」 시범 운영';
     $('#pfWhen').value='2026. 9. 10.(목) 14:00';
     $('#pfWhere').value='달성군청 군민소통관';
-    $('#pfDept').value='정보통신과'; $('#pfLead').value='김화연'; $('#pfPic').value='조호현'; $('#pfTel').value='053)668-2454';
-    $('#pfBody').value='전 직원 대상 AI 업무비서 「달성On」 시범 운영 개시\n달성군 자치법규 644건(조례·규칙·훈령·예규)과 공공데이터를 근거로 답변\n질문하면 근거 조문을 인용하고, 답변을 군 서식 한글 파일로 바로 생성\n공문 초안·보고서·보도자료 작성 기능 순차 제공 예정\n목적: 반복 문서 작성 시간 단축, 규정 확인에 드는 시간 절감';
+    $('#pfDept').value='정보통신과'; $('#pfLead').value='홍길동'; $('#pfPic').value='김달성'; $('#pfTel').value='053)668-0000';
+    $('#pfBody').value='전 직원 대상 AI 업무비서 「달성On」 시범 운영 개시\n달성군 자치법규 644건(조례·규칙·훈령·예규)과 공공데이터를 근거로 답변\n질문하면 근거 조문을 인용하고, 답변을 군 서식 한글 파일로 바로 생성\n조례안 초안·회의록 정리·급량비·출장비 계산, 보도자료·홍보물 제작 등 반복 업무 지원\n녹음·개인정보 파일은 직원 PC 안에서만 처리해 외부로 나가지 않음\n목적: 반복 문서 작성 시간 단축, 규정 확인에 드는 시간 절감';
     $('#pfQuote').value='';
     toast('예시를 채웠습니다 — 「보도자료 초안 만들기」를 눌러보세요');
   };
-  $('#pfReset').onclick=()=>{ ['pfName','pfWhen','pfWhere','pfDept','pfLead','pfPic','pfTel','pfBody','pfQuote'].forEach(id=>$('#'+id).value=''); PS.files=[]; $('#pfFile').value=''; $('#pfFileList').textContent='계획서·기안문을 올리면 내용을 읽어 반영합니다'; $('#pressOut').hidden=true; };
+  $('#pfReset').onclick=()=>{ ['pfName','pfWhen','pfWhere','pfDept','pfLead','pfPic','pfTel','pfBody','pfQuote'].forEach(id=>$('#'+id).value=''); PS.files=[]; $('#pfFile').value=''; pfList(); $('#pressOut').hidden=true; };
   $('#pfGo').onclick=()=>makePress();
   $('#pfAgain').onclick=()=>makePress();
   $('#pfCopy').onclick=()=>{ if(!PS.out) return; navigator.clipboard.writeText(pressPlain(PS.out)); toast('복사했습니다'); };
   $('#pfHwpx').onclick=()=>pressHwpx();
+  $('#pfPrev').onclick=()=>pressPreview();
+  $('#pressView').onclick=()=>pressPreview();
 }
 
 function pressExamples(q){
@@ -785,19 +831,45 @@ function splitTitle(raw){
   if(best===null) return [t];
   return [t.slice(0,best).trim(), t.slice(best+1).trim()];
 }
-function pressRender(o){
+/* 미리보기: 한글 파일(press_tpl.hwpx)과 같은 A4 용지·머리표·제목상자·글꼴·크기로 그린다 */
+function pressPaper(o){
   const H=pressHead();
   const V=x=>`<span${x&&x.miss?' class="miss"':''}>${esc0(x&&x.t!==undefined?x.t:x)}</span>`;
-  /* 표는 한글 파일에만 들어간다. 미리보기는 내용에 집중하도록 한 줄 요약만 표시 */
-  const meta=`<div class="pvmeta">제공일자 ${V({t:H.date,miss:false})}<i>·</i>담당부서 ${V(H.deptO)}`+
-             `<i>·</i>팀장 ${V(H.leadO)}<i>·</i>담당자 ${V(H.picO)}<i>·</i>전화 ${V(H.telO)}</div>`;
-  $('#pressView').innerHTML = meta +
-    `<div class="ttlbox"><h3>${splitTitle(o.title).map(x=>esc0(x)).join('<br>')}</h3>
-       ${o.subs.map(s=>`<div class="psub">▸ ${esc0(s)}</div>`).join('')}</div>
-     <div class="pbody">${o.body.map(p=>`<p>${esc0(p)}</p>`).join('')}</div>`;
+  return `<div class="pp-paper">
+    <table class="pp-head"><colgroup><col style="width:23mm"><col style="width:53.5mm"><col style="width:2.7mm"><col style="width:27.7mm"><col></colgroup>
+      <tr><td class="pp-logo" colspan="2" rowspan="2"><img src="assets/press_slogan.jpg" alt=""><b>대구광역시 달성군</b></td><td class="pp-gap" rowspan="6"></td><th>제공일자</th><td>${V({t:H.date})}</td></tr>
+      <tr><th rowspan="2">담당부서</th><td rowspan="2">${V(H.deptO)}</td></tr>
+      <tr><td class="pp-mark" rowspan="4"><img src="assets/press_mark.gif" alt=""></td><td class="pp-word" rowspan="4">보도자료</td></tr>
+      <tr><th>팀　　장</th><td>${V(H.leadO)}</td></tr>
+      <tr><th>담 당 자</th><td>${V(H.picO)}</td></tr>
+      <tr><th>전　　화</th><td>${V(H.telO)}</td></tr>
+    </table>
+    <div class="pp-ttl"><h3>${splitTitle(o.title).map(x=>esc0(x)).join('<br>')}</h3>
+      ${o.subs.slice(0,3).map(t=>`<div class="pp-sub">▸ ${esc0(t)}</div>`).join('')}</div>
+    <div class="pp-body">${o.body.map(t=>`<p>${esc0(t)}</p>`).join('')}</div>
+  </div>`;
+}
+// 용지(210mm)를 상자 폭에 맞춰 축소 — 글자 배치는 실제 크기 그대로
+function ppFit(wrap){ if(!wrap) return; const pp=wrap.querySelector('.pp-paper'); if(!pp) return; const W=210*96/25.4; const z=Math.min(1,(wrap.clientWidth-2)/W); pp.style.zoom=z; }
+let _ppRO=null;
+function pressRender(o){
+  $('#pressView').innerHTML = pressPaper(o);
   $('#pressOut').hidden=false; window.PRESS_LAST=o;
+  const w=$('#pressView'); ppFit(w); if(!_ppRO&&window.ResizeObserver){ _ppRO=new ResizeObserver(()=>ppFit($('#pressView'))); _ppRO.observe(w); }
   window.dsSave&&dsSave('press',o.title,[o.title,...o.subs.map(x=>'▸ '+x),'',...o.body].join('\n'));
   $('#pressOut').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function pressPreview(){
+  if(!PS.out) return;
+  let m=$('#ppModal');
+  if(!m){ m=document.createElement('div'); m.id='ppModal'; m.className='pp-modal';
+    m.innerHTML=`<div class="pp-mbar"><b>🔍 미리보기 <small>한글 파일과 같은 A4 서식</small></b><span style="flex:1"></span><button class="p" id="ppDown">📄 한글 파일로 내려받기</button><button id="ppClose">닫기 ✕</button></div><div class="pp-mscroll" id="ppScroll"></div>`;
+    document.body.appendChild(m);
+    m.addEventListener('click',e=>{ if(e.target===m||e.target.id==='ppScroll'||e.target.closest('#ppClose')) m.hidden=true; if(e.target.closest('#ppDown')) pressHwpx(); });
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!m.hidden) m.hidden=true; });
+    window.addEventListener('resize',()=>{ if(!m.hidden) ppFit($('#ppScroll')); });
+  }
+  $('#ppScroll').innerHTML=pressPaper(PS.out); m.hidden=false; ppFit($('#ppScroll'));
 }
 
 const esc0=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -819,7 +891,7 @@ function pressOffline(){
 async function makePress(){
   if(PS.busy) return;
   const name=$('#pfName').value.trim(), body=$('#pfBody').value.trim();
-  if(!name||!body){ $('#pfMsg').textContent='행사·사업명과 주요 내용은 입력해 주세요.'; $('#pfName').focus(); return; }
+  if(!name||(!body&&!PS.files.length)){ $('#pfMsg').textContent='행사·사업명과 주요 내용(또는 첨부 파일)은 입력해 주세요.'; $('#pfName').focus(); return; }
   PS.busy=true; $('#pfGo').disabled=true; $('#pfMsg').textContent='작성 중…';
   try{
     let text='';
@@ -833,21 +905,16 @@ async function makePress(){
         $('#pfWhere').value?`장소: ${$('#pfWhere').value}`:'',
         H.dept?`담당부서: ${H.dept}`:'',
         `제공일자: ${H.date}`,
-        `주요 내용:\n${body}`,
+        body?`주요 내용:\n${body}`:'주요 내용: (첨부 자료에서 뽑아 작성)',
         $('#pfQuote').value.trim()?`인용문(그대로 사용): ${$('#pfQuote').value.trim()}`:'인용문: 문맥에 맞게 군수 말씀을 생성',
-        PS.files.filter(f=>f.text).map(f=>`첨부 「${f.name}」 내용:\n${f.text.slice(0,3000)}`).join('\n\n'),
-        PS.files.filter(f=>!f.text).length?`첨부 파일명: ${PS.files.filter(f=>!f.text).map(f=>f.name).join(', ')}`:'',
+        pfDocs(),
         `</작성 요청>`].filter(Boolean).join('\n');
-      const payload=JSON.stringify({model:S.model,max_tokens:1600,stream:true,system:pressSys(),messages:[{role:'user',content:u}]});
-      const r=S.key
-        ? await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:payload})
-        : await fetch('/api/chat',{method:'POST',headers:{'content-type':'application/json','x-access-code':S.code||''},body:payload});
-      if(!r.ok) throw new Error('모델 호출 실패 ('+r.status+')');
-      const rd=r.body.getReader(), dec=new TextDecoder(); let buf='';
-      while(true){ const {value,done}=await rd.read(); if(done) break; buf+=dec.decode(value,{stream:true});
-        const ls=buf.split('\n'); buf=ls.pop();
-        for(const ln of ls){ if(!ln.startsWith('data:')) continue;
-          try{ const j=JSON.parse(ln.slice(5)); if(j.type==='content_block_delta'&&j.delta?.text) text+=j.delta.text; }catch(e){} } }
+      // 서버 중계는 약 30초에서 끊기므로 dsLLM(llm.js)이 쓴 데까지 넘겨 이어 쓰게 한다
+      const imgs=PS.files.filter(f=>f.img).slice(0,5);
+      const uc=imgs.length? imgs.map(f=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:f.img}})).concat([{type:'text',text:u+`\n(첨부 그림 ${imgs.length}장: ${imgs.map(f=>f.name).join(', ')} — 그림 속 글자·내용도 참고)`}]) : u;
+      text=await dsLLM(pressSys(),uc,{max:3000,restartRe:/^\s*제목\s*:/,
+        onText:t=>{ $('#pfMsg').textContent=`작성 중… ${t.length.toLocaleString()}자`; },
+        onCont:k=>{ $('#pfMsg').textContent=`이어서 쓰는 중… (${k})`; }});
       PS.out=pressParse(text); 
       $('#pfMsg').textContent='작성 완료 — 내용을 확인하고 수정해 주세요.';
     }else{

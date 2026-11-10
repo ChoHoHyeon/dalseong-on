@@ -665,13 +665,13 @@
           <label class="pfull"><span class="cap">주요 내용 <b class="req">*</b></span>
             <textarea id="pfBody" rows="9" placeholder="누가·무엇을·왜·어떻게 — 아는 만큼만 적으시면 됩니다.&#10;추진계획서나 기안문 내용을 그대로 붙여넣어도 됩니다."></textarea></label>
           <div class="pfile">
-            <label class="filebtn">📎 파일 첨부<input type="file" id="pfFile" multiple accept=".txt,.md,.csv,.json,.htm,.html,.hwpx,.docx,.pdf,.jpg,.jpeg,.png"></label>
-            <span class="hint" id="pfFileList">계획서·기안문을 올리면 내용을 읽어 반영합니다 (txt·md·csv·html은 본문까지 읽고, 그 외는 파일명만 참고)</span>
+            <label class="filebtn">📎 파일 추가<input type="file" id="pfFile" multiple accept=".txt,.md,.csv,.json,.htm,.html,.hwpx,.hwp,.docx,.pdf,.jpg,.jpeg,.png"></label>
+            <span class="hint" id="pfFileList">계획서·기안문·사진을 여러 개 올릴 수 있습니다 — 모두 읽어 함께 반영합니다 (한글 hwpx·워드·PDF·텍스트·이미지)</span>
           </div>
         </fieldset>
 
         <fieldset class="pbox opt-box">
-          <legend>선택 입력 <span class="optnote">비우면 <b>○○월 ○○일</b>처럼 <b class="miss">빨간색</b>으로 표시됩니다</span></legend>
+          <legend>선택 입력</legend>
           <div class="pgrid pgrid2">
             <label>일시<input id="pfWhen" placeholder="예) 2026. 9. 9.(수) 14:00"></label>
             <label>장소<input id="pfWhere" placeholder="예) 군청 군민소통관"></label>
@@ -696,14 +696,22 @@
 
       <div class="card pout" id="pressOut" hidden>
         <h4>생성된 초안 <small>담당자 검토 후 사용하세요</small></h4>
-        <div class="pv" id="pressView"></div>
-        <div class="pact">
+        <div class="pact pp-acts">
           <button id="pfHwpx" class="p">📄 한글 파일로 내려받기</button>
+          <button id="pfPrev">🔍 미리보기</button>
           <button id="pfCopy">복사</button>
           <button id="pfAgain">다시 생성</button>
         </div>
-        <div class="chain"><span>✨ 이 보도자료로 이어서 만들기</span><button data-chain="card">📱 카드뉴스</button><button data-chain="banner">🎏 현수막 문구</button><button data-chain="movie">🎬 홍보영상</button></div>
-        <p class="hint" style="margin-top:10px">※ 용지 A4 · 여백 위7·아래15·좌우20·머리말20·꼬리말5mm / 제목 HY헤드라인M 22pt · 부제 한컴바탕확장 15pt 진하게 · 본문 한컴바탕확장 15pt(줄간격 160%) — 달성군 보도자료 원본 서식 기준</p>
+        <div class="pp-wrap" id="pressView" title="누르면 크게 봅니다"></div>
+        <p class="hint" style="margin-top:8px">※ 한글 파일과 같은 서식으로 보여 줍니다 — A4 · 제목 HY헤드라인M 22pt · 부제 한컴바탕확장 15pt 진하게 · 본문 한컴바탕확장 15pt(줄간격 160%)</p>
+        <div class="nx-card">
+          <div class="nx-h"><b>다음 단계</b><span>이 보도자료 내용 그대로 홍보물을 이어서 만듭니다</span></div>
+          <div class="nx-row">
+            <button data-chain="card" class="nx-item"><i>📱</i><span><b>카드뉴스</b><small>표지·본문·마무리 카드로 나눠 제작</small></span><em>→</em></button>
+            <button data-chain="banner" class="nx-item"><i>🎏</i><span><b>홍보 현수막</b><small>현수막 문구 3안과 규격 시안</small></span><em>→</em></button>
+            <button data-chain="movie" class="nx-item"><i>🎬</i><span><b>홍보영상</b><small>장면별 대본과 짧은 영상</small></span><em>→</em></button>
+          </div>
+        </div>
       </div>
     </section>
 
