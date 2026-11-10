@@ -2259,3 +2259,35 @@ body[data-theme=dark] .cn-sum .sv+.sv{border-color:#24324f}
 .cn-wrap.cn-wide .cn-save{grid-column:1;grid-row:2;flex-direction:row!important;align-items:stretch}
 .cn-wrap.cn-wide .cn-save .cn-sv{flex:1}
 @media (max-width:900px){.cn-wrap.cn-wide,.cn-top.cn-wide{grid-template-columns:1fr}.cn-wrap.cn-wide .cn-edit>.cn-box:not(.cn-save){grid-column:1;grid-row:2}.cn-wrap.cn-wide .cn-save{grid-row:3;flex-direction:column!important}}
+/* 실행 버튼 줄(.pact) 입체감 — 모든 메뉴 공통 */
+.pact>button,.pact>label.filebtn{background:linear-gradient(180deg,#ffffff,#f1f5fb);border:1px solid #d3dcea;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(20,33,61,.08),0 3px 8px rgba(20,33,61,.06);font-weight:600;transition:transform .12s,box-shadow .12s,border-color .12s}
+.pact>button:hover:not(:disabled),.pact>label.filebtn:hover{border-color:#a9bfe6;transform:translateY(-1px);box-shadow:inset 0 1px 0 #fff,0 2px 4px rgba(20,33,61,.08),0 8px 16px rgba(47,111,237,.12)}
+.pact>button:active:not(:disabled),.pact>label.filebtn:active{transform:translateY(1px);box-shadow:inset 0 2px 4px rgba(20,33,61,.12)}
+.pact>button.p{background:linear-gradient(180deg,#4d84f5,#2a5fe0);border:1px solid #2253c9;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 2px 4px rgba(34,83,201,.25),0 8px 18px rgba(47,111,237,.28);text-shadow:0 1px 1px rgba(0,0,0,.15)}
+.pact>button.p:hover:not(:disabled){border-color:#1d48b3;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 3px 6px rgba(34,83,201,.28),0 12px 24px rgba(47,111,237,.34)}
+.pact>button.p:active:not(:disabled){box-shadow:inset 0 2px 5px rgba(0,0,0,.22)}
+body[data-theme=dark] .pact>button:not(.p),body[data-theme=dark] .pact>label.filebtn{background:linear-gradient(180deg,#1c2a47,#15203a);border-color:#2b3b5e;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 2px 6px rgba(0,0,0,.3)}
+/* 가로형: 오른쪽 편집 칸을 왼쪽(미리보기+저장) 높이에 맞춰 늘리고, 늘어난 만큼 본문 칸을 키운다 */
+.cn-wrap.cn-wide .cn-edit>.cn-box:not(.cn-save){align-self:stretch!important;display:flex;flex-direction:column}
+.cn-wrap.cn-wide .cn-edit>.cn-box:not(.cn-save)>label:has(#cnEditBody){flex:1;display:flex;flex-direction:column}
+.cn-wrap.cn-wide #cnEditBody{flex:1;min-height:90px;resize:none}
+.cn-wrap.cn-wide .cn-redo{margin-top:10px}
+.cn-sum .sv b{font-size:14px}
+.cn-wrap.cn-wide .cn-sv{padding:12px 14px;gap:12px}
+.cn-sv small{word-break:keep-all}
+/* 모든 규격: 오른쪽(편집+저장) 높이를 왼쪽 미리보기에 맞춘다 — 남는 높이는 본문 칸이 받는다 */
+.cn-wrap>.cn-edit{align-self:stretch}
+.cn-edit>.cn-box:not(.cn-save){flex:1;display:flex;flex-direction:column}
+.cn-edit>.cn-box:not(.cn-save)>label:has(#cnEditBody){flex:1;display:flex;flex-direction:column}
+#cnEditBody{flex:1;min-height:90px}
+.cn-edit>.cn-save.cn-box{flex:none}
+#cnEditBody{flex:1 1 0;min-height:64px;height:auto}
+.cn-wrap.cn-wide #cnEditBody{min-height:64px}
+.cn-wrap.cn-wide .cn-sv i{width:36px;height:36px}
+.cn-wrap.cn-wide .cn-sv small{font-size:11.5px}
+/* 미리보기 칸은 오른쪽과 같은 높이로 늘이고, 카드는 그 가운데에 둔다 (편집 칸 높이가 카드마다 같으므로 화살표도 제자리) */
+.cn-wrap>.cn-stage{align-self:stretch!important;display:flex;align-items:center!important;justify-content:center}
+.cn-wrap.cn-wide>.cn-stage{align-self:stretch!important}
+#cnEditBig:disabled{background:var(--panel2);color:var(--mut)}
+.cn-wrap.cn-wide #cnEditBody{min-height:38px}
+.cn-wrap.cn-wide .cn-save{align-self:stretch!important}
