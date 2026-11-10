@@ -83,7 +83,7 @@ async function drawSlide(canvas,s,i,total){
   canvas.width=W; canvas.height=H; const U=Math.min(W,H*1.05);   /* 글자·여백·그림 크기 기준: 짧은 변 — 가로형(16:9)으로 바꿔도 넘치지 않게 */ const ctx=canvas.getContext('2d'); const pad=U*0.085;
   await fontsReady();
   const g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,grad[0]); g.addColorStop(1,grad[1]);
-  const art=(s.img&&v('cnArt')!=='none')?s.img:await getArt(); const cover=(im,x,y,w,h)=>{ const r=Math.max(w/im.width,h/im.height); const iw=im.width*r, ih=im.height*r; ctx.save(); ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip(); ctx.drawImage(im,x+(w-iw)/2,y+(h-ih)/2,iw,ih); ctx.restore(); };
+  const art=(s.img&&v('cnArt')!=='none')?s.img:await getArt(); const cover=(im,x,y,w,h,fy=0.5)=>{ const r=Math.max(w/im.width,h/im.height); const iw=im.width*r, ih=im.height*r; ctx.save(); ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip(); ctx.drawImage(im,x+(w-iw)/2,y+(h-ih)*fy,iw,ih); ctx.restore(); };   /* fy: 위아래로 잘릴 때 남길 위치(그림 주인공은 아래쪽에 있음 — 위는 제목 자리로 비워 그리게 했으므로) */
   const head=(s.head||'').trim()||(s.kind==='cover'?(v('cnTitle')||(s.body||[])[0]||'달성군 소식'):'');   // 표지 제목이 비면 채운다
   const body=s.kind==='cover'&&!(s.head||'').trim()&&!v('cnTitle')?(s.body||[]).slice(1):(s.body||[]);
   const isBody=s.kind==='body';
@@ -94,7 +94,7 @@ async function drawSlide(canvas,s,i,total){
   const AL=isBody?(L==='center'?'center':'left'):null;
   if(isBody){
     ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
-    if(AP==='top'&&art){ artBox=[0,0,W,H*0.34]; cover(art,0,0,W,H*0.34); ctx.fillStyle=g; ctx.fillRect(0,H*0.34,W,H*0.012); }
+    if(AP==='top'&&art){ artBox=[0,0,W,H*0.34]; cover(art,0,0,W,H*0.34,0.72); ctx.fillStyle=g; ctx.fillRect(0,H*0.34,W,H*0.012); }
     else { ctx.fillStyle=g; ctx.fillRect(0,0,W,H*0.045);
       if(art&&AP==='right'){ const aw=U*0.4, ah=aw, ax=W-aw-pad*0.6, ay=H-ah-pad*1.6; artBox=[ax,ay,aw,ah]; ctx.save(); ctx.globalAlpha=.95; ctx.beginPath(); ctx.roundRect(ax,ay,aw,ah,U*0.03); ctx.clip(); ctx.drawImage(art,ax,ay,aw,ah); ctx.restore(); } }
   }else if(art){
@@ -161,7 +161,7 @@ async function drawSlide(canvas,s,i,total){
       }
       return yy; };
     let k=1; while(k>0.55&&run(k,true)>limit) k-=0.05; y=run(k,false);
-    if(artBottomH&&art){ const ah=artBottomH, aw=Math.min(W-pad*2,ah*1.6), ax=(W-aw)/2, ay=H-pad-H*0.085-ah; ctx.save(); ctx.globalAlpha=.95; ctx.beginPath(); ctx.roundRect(ax,ay,aw,ah,U*0.03); ctx.clip(); const r=Math.max(aw/art.width,ah/art.height); ctx.drawImage(art,ax+(aw-art.width*r)/2,ay+(ah-art.height*r)/2,art.width*r,art.height*r); ctx.restore(); }
+    if(artBottomH&&art){ const ah=artBottomH, aw=Math.min(W-pad*2,ah*(art.width/art.height)), ax=(W-aw)/2, ay=H-pad-H*0.085-ah; ctx.save(); ctx.globalAlpha=.95; ctx.beginPath(); ctx.roundRect(ax,ay,aw,ah,U*0.03); ctx.clip(); const r=Math.max(aw/art.width,ah/art.height); ctx.drawImage(art,ax+(aw-art.width*r)/2,ay+(ah-art.height*r)*0.72,art.width*r,art.height*r); ctx.restore(); }
   }
   // 로고(선택 입력 「로고」): 모든 장 같은 자리(왼쪽 아래)·같은 크기, 원본 그대로
   const lk=v('cnLogo')||'ci'; C.logos=C.logos||{}; const need=lk==='both'?['ci','slogan']:lk==='none'?[]:[lk];
@@ -174,10 +174,13 @@ async function drawSlide(canvas,s,i,total){
   if(s.kind!=='cover'&&foot){ ctx.textAlign='right'; font(ctx,'600',Math.round(U*0.028),true); ctx.fillStyle=dark?'#9aa3b2':'rgba(255,255,255,.7)'; ctx.fillText(foot,W-pad,H-pad-U*0.03); }
 }
 async function renderAll(){
-  const d=C.data; const wrapEl=$('#cnSlides'); wrapEl.innerHTML='';
+  const d=C.data; const wrapEl=$('#cnSlides'); wrapEl.innerHTML=''; wrapEl.style.gridTemplateColumns=`repeat(${d.slides.length},minmax(0,1fr))`;   /* 카드 수에 맞춰 왼쪽 열 폭을 꽉 채운다 */
+  { const dz=d.design||{}, LN={left:'왼쪽형',center:'가운데형',bottom:'하단 제목형'}, FN={pre:'기본 고딕',ng:'나눔고딕',bhs:'굵은 제목체',bagel:'베이글',gd:'고운돋움',jua:'주아체'};
+    const it=(lbl,user,ai,map)=>{ const u=v(user); const byUser=u&&u!=='auto'; const k=byUser?u:ai; const name=map?(map[k]||k):((THEMES[k]||[])[0]||k); return `<span class="${byUser?'me':''}"><em>${lbl}</em>${name||'—'}${byUser?' <small>직접</small>':''}</span>`; };
+    $('#cnSum').innerHTML=`<b>✨ AI가 고른 디자인</b><div>${it('틀','cnLayout',dz.layout||'left',LN)}${it('색','cnTheme',dz.theme||'navy')}${it('글씨체','cnFont',dz.font||'pre',FN)}<span><em>카드</em>${d.slides.length}장</span></div>`; }
   for(let i=0;i<d.slides.length;i++){ const c=document.createElement('canvas'); c.className='cn-thumb'+(i===C.cur?' on':''); c.title=`${i+1}번째 카드`; c.onclick=()=>{ C.cur=i; renderAll(); }; wrapEl.appendChild(c); await drawSlide(c,d.slides[i],i,d.slides.length); }
   await drawSlide($('#cnMain'),d.slides[C.cur],C.cur,d.slides.length);
-  const s=d.slides[C.cur]; const fe=document.activeElement; if(fe!==$('#cnEditHead')) $('#cnEditHead').value=s.head; if(fe!==$('#cnEditBody')) $('#cnEditBody').value=(s.body||[]).join('\n'); if(fe!==$('#cnEditBig')) $('#cnEditBig').value=s.big||''; $('#cnBigWrap').hidden=s.kind!=='body';   /* 입력 중인 칸은 덮어쓰지 않는다 */ $('#cnCurNo').textContent=`${C.cur+1} / ${d.slides.length}`; { const first=C.cur===0; ['cnTop','cnFoot'].forEach(id=>{ $('#'+id).disabled=!first; }); ['cnLock1','cnLock2'].forEach(id=>$('#'+id).textContent=first?'· 모든 카드 공통':'· 첫 카드에서 고칠 수 있어요'); }
+  const s=d.slides[C.cur]; const fe=document.activeElement; if(fe!==$('#cnEditHead')) $('#cnEditHead').value=s.head; if(fe!==$('#cnEditBody')) $('#cnEditBody').value=(s.body||[]).join('\n'); if(fe!==$('#cnEditBig')) $('#cnEditBig').value=s.big||''; $('#cnBigWrap').hidden=s.kind!=='body';   /* 입력 중인 칸은 덮어쓰지 않는다 */ $('#cnCurNo').textContent=`${C.cur+1} / ${d.slides.length}`; { const first=C.cur===0; ['cnTop','cnFoot'].forEach(id=>{ $('#'+id).disabled=!first; }); ['cnLock1','cnLock2'].forEach(id=>$('#'+id).textContent=first?'· 모든 카드 공통':''); }
   $('#cnSvOne').textContent=`지금 보고 있는 ${C.cur+1}번째 카드 · 이미지 파일`; $('#cnSvAll').textContent=`카드 ${d.slides.length}장 모두 한 번에 · 이미지 파일`;
   $('#cnDots').innerHTML=d.slides.map((_,k)=>`<i class="${k===C.cur?'on':''}" data-k="${k}"></i>`).join(''); $('#cnArrL').hidden=C.cur===0; $('#cnArrR').hidden=C.cur===d.slides.length-1;
   $('#cnCaption').value=`${d.caption||''}\n\n${(d.tags||[]).join(' ')}`;

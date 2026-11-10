@@ -2198,3 +2198,27 @@ body[data-theme=dark] .bn-prop.float #bpText,body[data-theme=dark] .bn-prop.floa
 .cn-common input:disabled{background:#eef1f6!important;color:#8a94a6;cursor:not-allowed}
 .cn-lock{font-weight:500;color:var(--mut);font-size:11.5px}
 .cn-common .cn-lock{display:inline;margin-left:4px}
+/* 달력 칸: 화면 배율·높이와 상관없이 정사각형 (늘어나지 않게) */
+.cal-card .cal-grid{flex:none!important;grid-auto-rows:auto!important}
+.cal-card .cd{aspect-ratio:1/1;min-height:0!important;height:auto}
+.hm-row>.cal-card{overflow:visible}
+/* 위 줄: 카드 목록(왼쪽 열 폭) | AI 디자인 요약(오른쪽 열) — 아래 미리보기·편집과 같은 비율 */
+.cn-top{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(260px,.9fr);gap:16px;align-items:stretch;margin:4px 0 12px}
+.cn-top .cn-thumbs{display:grid;gap:8px;overflow:visible;padding:4px 2px;align-items:center}
+.cn-top .cn-thumb{width:100%!important;height:auto!important;min-width:0!important;aspect-ratio:auto}
+.cn-sum{display:flex;flex-direction:column;justify-content:center;gap:8px}
+.cn-sum>b{font-size:13.5px;color:#1d4fb0}
+.cn-sum>div{display:flex;flex-wrap:wrap;gap:6px}
+.cn-sum span{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:12.5px;font-weight:700;color:var(--tx)}
+.cn-sum span em{font-style:normal;font-weight:600;color:var(--mut);font-size:11.5px}
+.cn-sum span.me{border-color:rgba(18,165,148,.45)} .cn-sum span small{color:#0e8a7a;font-weight:700;font-size:11px}
+@media (max-width:900px){.cn-top{grid-template-columns:1fr}}
+/* 저장 버튼: 은은한 바탕 + 살짝 입체감 */
+.cn-sv{background:linear-gradient(180deg,#ffffff,#f4f7fc);border:1px solid #d9e2f0;box-shadow:0 1px 0 #fff inset,0 2px 6px rgba(20,33,61,.08)}
+.cn-sv.p{background:linear-gradient(180deg,#f2f7ff,#e3eeff);border:1px solid #bcd2fb;color:#1c2333;box-shadow:0 1px 0 #fff inset,0 3px 10px rgba(47,111,237,.14)}
+.cn-sv.p i{background:#2f6fed;color:#fff} .cn-sv.p small{color:#4a5f86} .cn-sv.p b{color:#1d4fb0}
+.cn-sv.p:hover{box-shadow:0 1px 0 #fff inset,0 8px 20px rgba(47,111,237,.2)}
+/* 카드 틀 고정: 카드 위치를 위쪽에 고정해 어느 카드든 좌우 화살표가 같은 자리 (오른쪽 칸 높이가 달라져도 안 움직임) */
+.cn-stage{align-items:flex-start!important;justify-content:center}
+.cn-view{margin-top:0}
+.cn-arr{top:50%}
