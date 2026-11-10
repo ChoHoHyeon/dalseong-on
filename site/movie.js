@@ -11,7 +11,7 @@
 "use strict";
 const $=s=>document.querySelector(s);
 const W=720,H=1280, T_HOOK=3, T_SC=5, T_END=4;          // 3 + 5×4 + 4 = 27초
-const USER_LIMIT=2;                                     // 이 브라우저 하루 AI 영상 편수
+const USER_LIMIT=5;                                     // 이 브라우저 하루 AI 영상 편수 (사이트 전체 한도도 5편)
 const V={font:'pre',busy:false,data:null,imgs:[],clips:[],blob:null,ext:'mp4',logo:null,purpose:'auto'};
 const PUR={ recruit:['📣','모집·신청'], event:['🎉','행사·축제'], policy:['📋','안내·공지'], news:['🏆','성과·소식'], campaign:['🦺','생활정보·캠페인'] };
 const TONE={ bright:'밝고 경쾌', calm:'차분·신뢰' }, STYLE={ illust:'일러스트', photo:'실사풍' };
