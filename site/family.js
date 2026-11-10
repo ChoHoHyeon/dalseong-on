@@ -287,7 +287,7 @@ async function makeIllust(style){
   if(!F.ai){ toastF('AI 생성 서버가 준비되지 않았습니다'); return; }
   if(F.illusts.length>=ILL_MAX){ toastF(`일러스트는 ${ILL_MAX}장까지 만들 수 있습니다 — 위에서 마음에 드는 것을 골라 주세요`); const n=$('#famAiNote'); if(n) n.textContent=`일러스트 ${ILL_MAX}장 한도`; return; }
   const label={water:'수채',chic:'화보풍',line:'라인'}[style]+' 일러스트'; const slot={src:'',label,pending:true}; F.illusts.push(slot); renderPics();
-  loading(true,`🎨 ${label} 그리는 중…`,'보통 30~40초 · 완성되면 왼쪽 후보에 추가되고 오른쪽에 크게 보입니다');
+  loading(true,`🎨 ${label} 그리는 중…`,'보통 30~40초\n완성되면 왼쪽 후보에 추가되고\n오른쪽에 크게 보입니다');
   try{ const img=await aiJob({prompt:ILL_PROMPT[style], photo:F.photo, size:'auto'}); slot.src=img; slot.pending=false; F.pic=img; F.picKind='illust'; F.frames=[]; F.frame=null; F.aiStarted=null; renderPics(); if(F.step>0){ ensureFrames(); if($('#f_frames')) renderFrames(); } refresh(); }
   catch(e){ F.illusts=F.illusts.filter(x=>x!==slot); renderPics(); const n=$('#famAiNote'); if(n) n.textContent='일러스트 실패: '+e.message.slice(0,160); }
   finally{ loading(false); }
@@ -368,7 +368,7 @@ async function makeFrame(auto){
   const o=orient(); const size=o==='landscape'?'1536x1024':'1024x1536'; const n=F.frames.filter(f=>f.kind==='ai').length+1;
   const slot={id:'ai'+Date.now(),kind:'ai',label:'AI 디자인 '+n,pending:true}; F.frames.push(slot); renderFrames(); { const cur=F.frames[F.frame]; if(cur&&cur.kind!=='ai') $('#famNote').textContent=''; } syncButtons(false);
   const idx=F.frames.indexOf(slot); const t0=Date.now(); const st=$('#famAiStatus'); const tick=setInterval(()=>{ const sec=Math.round((Date.now()-t0)/1000); const e=document.getElementById('fw'+idx); if(e) e.textContent=sec+'초 · 보통 30~60초'; },1000);
-  if(st) st.hidden=true; loading(true,'🤖 AI 디자인을 그리는 중…','보통 30~60초 · 기다리는 동안 내용을 입력해 주세요 — 완성되면 카드가 바뀝니다');
+  if(st) st.hidden=true; loading(true,'🤖 AI 디자인을 그리는 중…','보통 30~60초\n기다리는 동안 내용을 입력해 주세요\n완성되면 카드가 바뀝니다');
   try{
     const prompt=framePrompt(); slot.style=F.lastStyle; slot.label='AI 디자인 '+n+(slot.style?' · '+slot.style:'');
     const img=await aiJob({prompt, photo:(F.kind==='wed'&&F.pic)?F.pic:null, size});
