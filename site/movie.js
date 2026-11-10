@@ -242,9 +242,8 @@ async function mvPeek(t,msg){ if(!V.data) return; V.logo=V.logo||await loadImg('
 async function quotaShow(){ const el=$('#mvQuota'); if(!el) return; try{ const j=await (await fetch('/api/video',{method:'POST',headers:{'content-type':'application/json','x-access-code':code(),'x-admin-code':adc()},body:'{"ping":1}'})).json();
     if(!j.hasKey){ el.hidden=true; return; } if(j.admin){ el.textContent='🛠 관리자 · 한도 없음'; el.className='mv-quota adm'; el.hidden=false; return; }
     const left=Math.max(0,USER_LIMIT-quotaLocal()); el.textContent=left>0?`🎬 오늘 남은 AI 영상 ${left}편`:'오늘 AI 영상 한도를 다 썼습니다 · 간이 영상으로 만들어집니다'; el.className='mv-quota'+(left>0?'':' none'); el.hidden=false; }catch(e){ el.hidden=true; } }
-function askLite(){ return new Promise(ok=>{ let md=$('#mvLite'); if(!md){ md=document.createElement('div'); md.id='mvLite'; md.className='modal'; md.innerHTML=`<div class="box mv-lite"><div class="box-h"><b>🎬 오늘 AI 영상을 모두 만드셨어요</b><button class="x" data-x>✕</button></div>
-    <p>움직이는 AI 영상은 <b>한 사람당 하루 ${USER_LIMIT}편</b>까지 만들 수 있습니다.</p>
-    <p class="mv-lite-alt">대신 <b>AI가 그린 장면 그림에 천천히 확대·이동하는 움직임</b>을 넣은 <b>간이 영상</b>으로는 지금 바로 만들 수 있어요. 대본·자막·마무리는 똑같습니다.</p>
+function askLite(){ return new Promise(ok=>{ let md=$('#mvLite'); if(!md){ md=document.createElement('div'); md.id='mvLite'; md.className='modal'; md.innerHTML=`<div class="box mv-lite"><div class="box-h"><b>🎬 오늘 AI 영상 ${USER_LIMIT}편을 다 쓰셨어요</b><button class="x" data-x>✕</button></div>
+    <p>그림에 움직임만 넣은 <b>간이 영상</b>으로 만들까요?</p>
     <div class="pact"><button class="p" data-ok>간이 영상으로 만들기</button><button data-x>내일 다시 하기</button></div></div>`; document.body.appendChild(md); }
   const done=r=>{ md.hidden=true; md.onclick=null; ok(r); };
   md.onclick=e=>{ if(e.target.closest('[data-ok]')) done(true); else if(e.target===md||e.target.closest('[data-x]')) done(false); }; md.hidden=false; }); }
