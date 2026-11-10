@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>달성On · 달성군 직원 AI 업무도우미</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Jua&family=Nanum+Myeongjo:wght@700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Dodum&family=Jua&family=Sunflower:wght@500;700&display=swap">
 <script src="vendor/jszip.min.js"></script>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="trip.css">
@@ -757,8 +757,9 @@
             <div class="pfile" id="bnFileWrap" hidden><label class="filebtn">📷 사진 올리기<input type="file" id="bnFile" accept="image/*"></label><span class="hint">가로 3000px 이상 권장</span></div>
           </div>
           <div class="bn-sec"><span class="cap">글씨체</span><div class="bn-chips" id="bnFonts"></div></div>
-          <div class="bn-sec"><span class="cap">크기 <small class="hint">가로 × 세로 (m)</small></span>
-            <div class="bn-size"><input id="bnW" inputmode="decimal" value="5" aria-label="가로(m)"><span>×</span><input id="bnH" inputmode="decimal" value="0.9" aria-label="세로(m)"><div class="bn-chips" id="bnPresets"></div></div>
+          <div class="bn-sec"><span class="cap">크기</span>
+            <div class="bn-dim"><label><em>가로</em><input id="bnW" inputmode="numeric" value="500"><i>cm</i></label><span>×</span><label><em>세로</em><input id="bnH" inputmode="numeric" value="90"><i>cm</i></label></div>
+            <div class="bn-quick"><small>자주 쓰는 크기</small><span id="bnPresets"></span></div>
           </div>
           <div class="bn-sec"><span class="cap">로고</span>
             <div class="bn-row"><em>종류</em><div class="bn-chips" id="bnLogo"></div></div>
@@ -772,8 +773,8 @@
       <div class="card pout" id="bnOut" hidden>
         <h4>문구 3안 <small>하나를 고르면 시안이 바뀝니다 · 직접 고칠 수도 있습니다</small></h4>
         <div class="bn-alts" id="bnAlts"></div>
-        <div class="bn-tip">✋ 시안 위 글자·로고를 <b>끌어서 옮기고</b>, 글자를 <b>누르면 고칠 수</b> 있습니다<button type="button" id="bnResetPos">↺ 위치 되돌리기</button></div>
-        <div class="bn-stage"><canvas id="bnCanvas"></canvas><div class="bn-aiload" id="bnAiLoad" hidden></div></div>
+        <div class="bn-tip">✋ 글상자·로고를 눌러 고른 뒤 <b>끌어서 옮기고</b>, <b>모서리 ●로 크기</b> 조절 · 글상자를 <b>두 번 누르면</b> 문구를 고칩니다<button type="button" id="bnResetPos">↺ 처음 배치로</button></div>
+        <div class="bn-stage"><div class="bn-cwrap"><canvas id="bnCanvas"></canvas><div class="bn-ov" id="bnOv"></div></div><div class="bn-aiload" id="bnAiLoad" hidden></div></div>
         <div class="pact"><button id="bnPng" class="p">🖼 시안 PNG 내려받기</button><button id="bnEdit">문구 직접 고치기</button><button id="bnAiRedo">🎨 AI 배경 다시 그리기</button></div>
         <p class="hint" style="margin-top:8px">※ 시안 PNG(가로 2400px) 파일 이름에 크기가 들어갑니다 — 업체에 그대로 전달하면 실제 인쇄 원고를 만들어 줍니다.</p>
       </div>

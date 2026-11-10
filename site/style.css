@@ -2054,3 +2054,37 @@ body[data-theme=dark] .pp-wrap{background:#1b2333}
 .bn-chips button{white-space:nowrap}
 .bn-opt .bn-size input{width:58px} .bn-opt .bn-size .bn-chips{gap:5px}
 #bnFonts{gap:5px} #bnFonts button{font-size:13.5px;padding:0 10px}
+/* 크기: 직접 입력(상자) / 자주 쓰는 크기(글자 링크) — 모양을 구분 */
+.bn-dim{display:flex;align-items:center;gap:10px}
+.bn-dim>span{color:var(--mut);font-weight:800}
+.bn-dim label{display:flex!important;flex-direction:row!important;align-items:center;gap:0;margin:0;border:1.5px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden;height:40px}
+.bn-dim label:focus-within{border-color:var(--acc);box-shadow:0 0 0 3px rgba(47,111,237,.12)}
+.bn-dim em{font-style:normal;font-size:12px;font-weight:700;color:var(--mut);padding:0 8px 0 12px;align-self:stretch;display:flex;align-items:center;background:rgba(30,60,120,.05);border-right:1px solid var(--line)}
+.bn-dim input{width:70px;border:0!important;box-shadow:none!important;background:transparent;text-align:right;font-size:15px;font-weight:700;padding:0 4px 0 8px;height:100%;outline:none}
+.bn-dim i{font-style:normal;font-size:12.5px;color:var(--mut);padding-right:12px}
+.bn-quick{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:9px}
+.bn-quick small{font-size:12px;color:var(--mut);margin-right:6px}
+.bn-quick button{border:0;background:none;padding:2px 6px;font-size:12.5px;color:var(--acc);cursor:pointer;border-radius:6px;text-decoration:underline;text-decoration-color:rgba(47,111,237,.3);text-underline-offset:3px}
+.bn-quick button:hover{background:rgba(47,111,237,.07)}
+.bn-quick button.on{color:var(--tx);font-weight:700;text-decoration:none;background:rgba(47,111,237,.1)}
+.bn-quick button+button::before{content:"";}
+/* 문구 직접 고치기: 글자 크기 조절 */
+.bn-edrow{margin-bottom:10px} .bn-edrow>label{display:block;font-size:12.5px;font-weight:600;color:var(--mut);margin:0 0 5px}
+.bn-edin{display:flex;gap:8px;align-items:center} .bn-edin input{flex:1;min-width:0}
+.bn-fs{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden;height:42px;flex:none}
+.bn-fs button{border:0;background:var(--panel);width:38px;height:100%;cursor:pointer;font-weight:800;font-size:14px;color:var(--tx)} .bn-fs button:hover{background:rgba(47,111,237,.08)}
+.bn-fs button[data-d="-1"]{font-size:12px} .bn-fs sup{font-size:10px;margin-left:1px}
+.bn-fs b{min-width:46px;text-align:center;font-size:12.5px;border-left:1px solid var(--line);border-right:1px solid var(--line);line-height:40px}
+.bn-editbox{width:min(560px,100%)}
+/* 현수막 레이어 편집: 캔버스 위 HTML 상자 (PNG에는 들어가지 않음) */
+.bn-cwrap{position:relative;width:fit-content;max-width:100%;margin:0 auto}
+.bn-cwrap canvas{margin:0!important}
+.bn-ov{position:absolute;inset:0;touch-action:none;user-select:none}
+.bn-ly{position:absolute;box-sizing:border-box;border:1.5px dashed transparent;border-radius:4px;cursor:move;margin:-6px;padding:6px;box-sizing:content-box}
+.bn-ly:hover{border-color:rgba(255,255,255,.75);box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.bn-ly.on{border:2px solid #2f6fed;box-shadow:0 0 0 1px rgba(255,255,255,.8)}
+.bn-ly .hd{display:none;position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid #2f6fed;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.bn-ly.on .hd{display:block}
+.bn-ly .nw{left:-8px;top:-8px;cursor:nwse-resize}.bn-ly .se{right:-8px;bottom:-8px;cursor:nwse-resize}.bn-ly .ne{right:-8px;top:-8px;cursor:nesw-resize}.bn-ly .sw{left:-8px;bottom:-8px;cursor:nesw-resize}
+.bn-ly .bn-tag{display:none;position:absolute;left:-2px;top:-26px;background:#2f6fed;color:#fff;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap;pointer-events:none}
+.bn-ly.on .bn-tag{display:block}
