@@ -144,15 +144,18 @@ function init(){
   $('#cnArt').onchange=()=>{ if(C.data){ renderAll(); if(v('cnArt')==='ai'&&!C.art&&!C.aiBusy) aiArt(false); } };
   $('#cnAi').onclick=()=>aiArt(true);
   /* 파일 추가: 보도자료와 같은 읽기(pressRead · app.js)로 글을 뽑아 「알릴 내용」에 채운다 (여러 번·여러 개 가능) */
-  $('#cnFile').onchange=async e=>{ const fs=[...e.target.files]; e.target.value=''; const L=$('#cnFileList'); const done=[];
+  const readFiles=async fs=>{ const L=$('#cnFileList'); const done=[];
     for(const f of fs){ L.textContent=`「${f.name}」 읽는 중…`;
       try{ if(typeof window.pressRead!=='function') throw new Error('읽기 기능을 불러오지 못했습니다'); const r=await window.pressRead(f); if(!r.text) throw new Error('글자를 찾지 못했습니다(그림 파일은 내용으로 쓰지 않습니다)');
         const t=r.text.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim().slice(0,8000); const src=$('#cnSrc');
         src.value=src.value.trim()?src.value.trim()+`\n\n[${f.name}]\n`+t:t;
-        if(!v('cnTitle')){ const first=t.split('\n').map(x=>x.replace(/^[◎○□▸\-\s]+/,'').trim()).find(x=>x.length>=4); if(first) $('#cnTitle').value=first.slice(0,40); }
+        if(!v('cnTitle')){ const ls=t.split('\n').map(x=>x.replace(/^[◎○□▸\-\s]+|[\-\s]+$/g,'').trim()).filter(x=>x.length>=4&&!/^※/.test(x)); const first=ls.find(x=>/(계획|모집|안내|개최|운영|추진|공고)$/.test(x)&&x.length<=40)||ls[0]; /* 문서 제목처럼 생긴 줄을 먼저 */ if(first) $('#cnTitle').value=first.slice(0,40); }
         done.push(`📄 ${f.name} (${t.length.toLocaleString()}자)`); }
       catch(err){ done.push(`⚠ ${f.name} — ${err.message}`); } }
     L.textContent=done.join(' · ')+' — 아래 「카드뉴스 만들기」를 누르세요'; };
+  $('#cnFile').onchange=e=>{ const fs=[...e.target.files]; e.target.value=''; readFiles(fs); };
+  // 샘플 계획서(실명·결재·예산 정보를 뺀 시연용 PDF)를 실제 파일처럼 올린다
+  $('#cnSampleFile').onclick=async()=>{ try{ const b=await (await fetch('assets/sample_edu_plan.pdf')).blob(); $('#cnSrc').value=''; $('#cnTitle').value=''; await readFiles([new File([b],'2026년 군민 정보화교육 추진 계획(샘플).pdf',{type:'application/pdf'})]); if(!v('cnContact')) $('#cnContact').value='문의 정보통신과 053)668-0000'; }catch(e){ $('#cnFileList').textContent='⚠ 샘플 파일을 불러오지 못했습니다'; } };
   $('#cnGo').onclick=make; $('#cnAgain').onclick=make;
   ['cnSize','cnTheme'].forEach(id=>$('#'+id).onchange=()=>{ if(C.data) renderAll(); });
   $('#cnSize').addEventListener('change',()=>{ if(C.data&&v('cnArt')==='ai'&&C.art){ C.art=null; aiArt(false); } });   // 비율이 바뀌면 그 비율로 다시 그린다
