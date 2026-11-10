@@ -762,8 +762,8 @@
             <div class="bn-quick"><small>자주 쓰는 크기</small><span id="bnPresets"></span></div>
           </div>
           <div class="bn-sec"><span class="cap">로고</span>
-            <div class="bn-chips" id="bnLogo"></div>
-            <p class="bn-note">위치·크기는 시안에서 로고를 눌러 끌거나 모서리 ●로 조절합니다</p>
+            <div class="bn-logorow"><div class="bn-chips" id="bnLogo"></div><label class="bn-addlogo">＋ 로고 추가<input type="file" id="bnAddLogo" accept="image/png,image/jpeg,image/svg+xml,image/*" multiple hidden></label></div>
+            <p class="bn-note">다른 기관 로고는 「＋ 로고 추가」로 올리세요 <span id="bnExtraList"></span></p>
           </div>
         </fieldset>
         </div>
@@ -772,7 +772,7 @@
       <div class="card pout" id="bnOut" hidden>
         <h4>문구 3안 <small>하나를 고르면 시안이 바뀝니다 · 직접 고칠 수도 있습니다</small></h4>
         <div class="bn-alts" id="bnAlts"></div>
-        <div class="bn-tip">✋ 글자·로고를 <b>누르면 선택</b> — <b>끌어서 옮기고</b>, <b>모서리 ●로 크기</b> 조절 · 글자는 아래 칸에서 <b>내용·글씨체·크기</b>를 고칩니다<button type="button" id="bnResetPos">↺ 처음 배치로</button></div>
+        <div class="bn-tip"><span>✋ 시안 속 <b>문구와 로고를 직접 눌러서</b> 옮기고 고칠 수 있습니다</span><button type="button" id="bnResetPos">↺ 처음 배치로</button></div>
         <div class="bn-stage"><div class="bn-cwrap"><canvas id="bnCanvas"></canvas><div class="bn-ov" id="bnOv"></div></div><div class="bn-aiload" id="bnAiLoad" hidden></div></div>
         <div class="bn-prop" id="bnProp" hidden></div>
         <div class="pact"><button id="bnPng" class="p">🖼 시안 PNG 내려받기</button><button id="bnAiRedo">🎨 AI 배경 다시 그리기</button></div>

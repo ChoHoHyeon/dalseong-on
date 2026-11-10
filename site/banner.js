@@ -58,7 +58,12 @@ B.lg={kind:'ci',pos:'br',sz:'m',img:{}};
 /* ── 레이어 방식: 메인·서브·주최(글상자)와 로고(그림)를 각각 하나의 레이어로 둔다 ──
    · 각 레이어 = 중심 위치(cx,cy · 캔버스 px) + 크기(글자 px / 로고 높이 px). 처음 배치만 자동(layout), 그다음은 사용자가 옮기고 키운다.
    · 캔버스에는 결과만 그리고, 선택 테두리·모서리 손잡이는 캔버스 위 HTML 상자(.bn-ov)로 그려서 PNG에는 들어가지 않는다. */
-B.L=null; B.sel=null; B.dirty=false;
+B.L=null; B.sel=null; B.dirty=false; B.extra=[];   // 추가 로고(다른 기관 등): {id,img,name}
+const XK=()=>B.extra.map(x=>x.id);
+const isImg=ly=>ly&&ly.type!=='text';
+/* 추가 로고 배치: 기본 로고 왼쪽에 차례로 (사용자가 옮기고 키운다) */
+function placeExtra(L,x,i){ const h=L.logo.base||logoBaseH(L.W,L.H,L.vert); const w=x.img.width*h/x.img.height; const ref=L.logo.bb&&B.lg.kind!=='none'?L.logo.bb:[L.W*0.97,L.H-h*1.5-L.H*0.03,0,h*1.5];
+  L[x.id]={type:'img',img:x.img,name:x.name,h,base:h,w,cx:L.vert?L.W/2:ref[0]-h*0.6-w/2-i*(w+h*0.8),cy:L.vert?ref[1]-h*(1.2+i*1.7):ref[1]+ref[3]/2}; }
 const mctx=document.createElement('canvas').getContext('2d');
 const canvasWH=()=>{ const [W0,H0]=dims(); const vert=H0>W0; const W=vert?900:2400; return [W,Math.round(W*H0/W0),vert]; };
 function fitPx(text,role,maxW,start,min){ let s=Math.max(min,Math.round(start)); for(;s>min;s-=2){ mctx.font=fstr(role,s); if(Math.max(...String(text).split('\n').map(l=>mctx.measureText(l).width))<=maxW) break; } return s; }
@@ -99,7 +104,7 @@ function layout(){
     Object.assign(L.host,{text:v('bnHost')||'달성군',size:Math.round(W*0.06),cx:W/2,cy:top||B.lg.kind==='none'?H*0.93:H*0.94-L.logo.h*1.5-W*0.08});
   }
   ['main','sub','host'].forEach(k=>L[k].base=L[k].size); L.logo.base=L.logo.h;
-  B.L=L; B.dirty=false;
+  B.L=L; B.dirty=false; B._placeExtra=true;
 }
 const LH=1.15;
 function paintText(ctx,ly,fg){ const lines=String(ly.text||'').split('\n'); if(!ly.text) { ly.bb=null; return; }
@@ -134,14 +139,18 @@ function paint(){
   ctx.fillStyle=light?'#0b2a6b':'rgba(255,255,255,.9)'; ctx.fillRect(0,0,vert?W:18,vert?18:H);   // 포인트 띠
   paintText(ctx,L.main,fg); ctx.globalAlpha=.94; paintText(ctx,L.sub,fg); ctx.globalAlpha=1; paintText(ctx,L.host,fg);
   if(B.lg.kind!=='none') paintLogo(ctx,L.logo,_imgs,light); else L.logo.bb=null;
+  if(B._placeExtra){ B._placeExtra=false; B.extra.forEach((x,i)=>placeExtra(L,x,i)); }
+  B.extra.forEach(x=>{ if(!L[x.id]) placeExtra(L,x,B.extra.indexOf(x)); paintLogo(ctx,L[x.id],[x.img],light); });
   overlay();
 }
 const LNAME={main:'메인 문구',sub:'서브 문구',host:'주최·주관',logo:'로고'};
+const lname=k=>LNAME[k]||'추가 로고';
 function overlay(){   // 상자는 지우지 않고 위치·선택만 고친다 (끄는 중·두 번 누르기가 끊기지 않게)
   const ov=$('#bnOv'), L=B.L; if(!ov||!L) return; const p=n=>(n*100).toFixed(3)+'%';
-  ['logo','host','sub','main'].forEach(k=>{ let el=ov.querySelector(`.bn-ly[data-k="${k}"]`);
-    if(!L[k].bb){ if(el) el.remove(); return; }
-    if(!el){ el=document.createElement('div'); el.className='bn-ly'; el.dataset.k=k; el.innerHTML=`<span class="bn-tag">${LNAME[k]}</span><i class="hd nw"></i><i class="hd ne"></i><i class="hd sw"></i><i class="hd se"></i>`; ov.appendChild(el); }
+  ov.querySelectorAll('.bn-ly').forEach(el=>{ if(!L[el.dataset.k]) el.remove(); });
+  ['logo',...XK(),'host','sub','main'].forEach(k=>{ let el=ov.querySelector(`.bn-ly[data-k="${k}"]`);
+    if(!L[k]||!L[k].bb){ if(el) el.remove(); return; }
+    if(!el){ el=document.createElement('div'); el.className='bn-ly'; el.dataset.k=k; el.innerHTML=`<span class="bn-tag">${lname(k)}</span><i class="hd nw"></i><i class="hd ne"></i><i class="hd sw"></i><i class="hd se"></i>`; ov.appendChild(el); }
     const [x,y,w,h]=L[k].bb; Object.assign(el.style,{left:p(x/L.W),top:p(y/L.H),width:p(w/L.W),height:p(h/L.H)}); el.classList.toggle('on',B.sel===k); });
 }
 function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
@@ -222,9 +231,11 @@ function init(){
   /* 선택한 글상자 편집 패널: 그 글상자의 글 · 글씨체 · 크기만 (로고는 위치·크기만 → 안내만) */
   const prop=$('#bnProp');
   window.propShow=k=>{ if(!B.L||!k){ prop.hidden=true; return; } prop.hidden=false; const ly=B.L[k];
-    if(k==='logo'){ prop.innerHTML=`<div class="bp-h"><b>로고</b><span>시안에서 끌어서 옮기고, 모서리 ●로 크기를 조절합니다 · 종류는 오른쪽 「로고」에서</span></div>`; return; }
+    if(ly.type==='img'){ prop.innerHTML=`<div class="bp-h"><b>추가 로고</b><span>끌어서 옮기고, 모서리 ●로 크기 조절</span><button type="button" class="bp-del">🗑 이 로고 빼기</button><button type="button" class="bp-x" title="선택 해제">✕</button></div>`;
+      prop.querySelector('.bp-del').onclick=()=>removeExtra(k); prop.querySelector('.bp-x').onclick=()=>{ B.sel=null; overlay(); prop.hidden=true; }; return; }
+    if(k==='logo'){ prop.innerHTML=`<div class="bp-h"><b>로고</b><span>끌어서 옮기고, 모서리 ●로 크기 조절</span></div>`; return; }
     const cur=ly.font||B.font;
-    prop.innerHTML=`<div class="bp-h"><b>${LNAME[k]}</b><span>고친 내용은 시안에 바로 반영됩니다 · 줄바꿈 Shift+Enter</span><button type="button" class="bp-x" title="선택 해제">✕</button></div>
+    prop.innerHTML=`<div class="bp-h"><b>${LNAME[k]}</b><span>줄바꿈 Shift+Enter</span><button type="button" class="bp-x" title="선택 해제">✕</button></div>
       <div class="bp-body"><textarea id="bpText" rows="1" maxlength="80"></textarea>
         <div class="bp-row"><em>글씨체</em><div class="bn-chips" id="bpFont">${Object.entries(FONTS).map(([f,[l,fam]])=>`<button type="button" data-v="${f}" class="${f===cur?'on':''}" style="font-family:'${fam}',Pretendard,sans-serif">${l}</button>`).join('')}</div></div>
         <div class="bp-row"><em>크기</em><span class="bn-fs"><button type="button" data-d="-1" title="작게">가<sup>−</sup></button><b id="bpPct"></b><button type="button" data-d="1" title="크게">가<sup>+</sup></button></span><button type="button" class="bp-reset" title="처음 크기로">↺ 처음 크기</button></div></div>`;
@@ -238,18 +249,23 @@ function init(){
     prop.querySelector('.bp-reset').onclick=()=>{ ly.size=ly.base||ly.size; pct(); paint(); };
     prop.querySelector('.bp-x').onclick=()=>{ B.sel=null; overlay(); prop.hidden=true; };
   };
+  const esc2=t=>String(t||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const removeExtra=k=>{ B.extra=B.extra.filter(x=>x.id!==k); if(B.L) delete B.L[k]; B.sel=null; propShow(null); paint(); renderExtraList(); };
+  $('#bnAddLogo').onchange=async e=>{ const fs=[...e.target.files]; e.target.value=''; for(const f of fs){ const img=await loadImg(URL.createObjectURL(f)); if(!img) continue; const x={id:'x'+Date.now()+Math.random().toString(36).slice(2,5),img,name:f.name}; B.extra.push(x); if(B.L){ placeExtra(B.L,x,B.extra.length-1); B.dirty=true; } }
+    if(B.L){ paint(); const last=B.extra[B.extra.length-1]; if(last){ B.sel=last.id; overlay(); propShow(last.id); } } else if(window.toast) toast('로고를 넣었습니다 — 시안을 만들면 함께 올라갑니다'); renderExtraList(); };
+  window.renderExtraList=()=>{ const el=$('#bnExtraList'); if(el) el.textContent=B.extra.length?`· ${B.extra.length}개 추가됨`:''; };
   const syncAlt=k=>{ const a=B.alts[B.pick]; if(!a) return; if(k==='main') a.main=B.L.main.text.split('\n').join(' '); if(k==='sub') a.sub=B.L.sub.text.split('\n').join(' '); if(k==='host') $('#bnHost').value=B.L.host.text.split('\n').join(' '); };
   const openEdit=k=>{ propShow(k); const t=$('#bpText'); if(t){ t.focus(); t.select(); } };
   /* 레이어 상자: 누르면 선택 · 끌면 이동 · 모서리 손잡이로 크기 · 글상자 두 번 누르면 고치기 · 방향키로 미세 이동 */
   const ov=$('#bnOv'); let act=null, raf=0, lastTap={};
   const toCanvas=e=>{ const r=ov.getBoundingClientRect(); return [(e.clientX-r.left)*B.L.W/r.width,(e.clientY-r.top)*B.L.H/r.height]; };
-  const sz=k=>B.L[k].type==='logo'?B.L[k].h:B.L[k].size;
-  const setSz=(k,n)=>{ if(B.L[k].type==='logo'){ const r=n/B.L[k].h; B.L[k].h=n; if(B.L[k].w) B.L[k].w*=r; } else B.L[k].size=n; };
+  const sz=k=>isImg(B.L[k])?B.L[k].h:B.L[k].size;
+  const setSz=(k,n)=>{ if(isImg(B.L[k])){ const r=n/B.L[k].h; B.L[k].h=n; if(B.L[k].w) B.L[k].w*=r; } else B.L[k].size=n; };
   const sched=()=>{ if(!raf) raf=requestAnimationFrame(()=>{ raf=0; paint(); }); };
   ov.addEventListener('pointerdown',e=>{ e._bnOv=true; const box=e.target.closest('.bn-ly'); if(!box){ B.sel=null; overlay(); propShow(null); return; }
     const k=box.dataset.k, p=toCanvas(e), ly=B.L[k]; if(B.sel!==k) propShow(k); B.sel=k; e.preventDefault(); ov.setPointerCapture(e.pointerId);
     if(e.target.classList.contains('hd')){ act={mode:'size',k,s0:sz(k),d0:Math.max(8,Math.hypot(p[0]-ly.cx,p[1]-ly.cy))}; }
-    else { const now=Date.now(); if(k!=='logo'&&lastTap.k===k&&now-lastTap.t<400){ lastTap={}; act=null; overlay(); return openEdit(k); } lastTap={k,t:now}; act={mode:'move',k,p0:p,c0:[ly.cx,ly.cy],moved:false}; }
+    else { const now=Date.now(); if(B.L[k].type==='text'&&lastTap.k===k&&now-lastTap.t<400){ lastTap={}; act=null; overlay(); return openEdit(k); } lastTap={k,t:now}; act={mode:'move',k,p0:p,c0:[ly.cx,ly.cy],moved:false}; }
     overlay(); });
   ov.addEventListener('pointermove',e=>{ if(!act) return; const p=toCanvas(e), ly=B.L[act.k];
     if(act.mode==='move'){ const dx=p[0]-act.p0[0], dy=p[1]-act.p0[1]; if(Math.abs(dx)+Math.abs(dy)>B.L.W*0.003){ act.moved=true; lastTap={}; } if(!act.moved) return; ly.cx=act.c0[0]+dx; ly.cy=act.c0[1]+dy; }
@@ -257,7 +273,7 @@ function init(){
     B.dirty=true; sched(); if(act.mode==='size'){ const pp=$('#bpPct'); if(pp&&B.L[act.k].type==='text') pp.textContent=Math.round(B.L[act.k].size/(B.L[act.k].base||1)*100)+'%'; } });
   const end=()=>{ act=null; };
   ov.addEventListener('pointerup',end); ov.addEventListener('pointercancel',end);
-  document.addEventListener('keydown',e=>{ if(!B.sel||!B.L||$('#bnOut').hidden||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return; const st=B.L.W*(e.shiftKey?0.01:0.002); const m={ArrowLeft:[-st,0],ArrowRight:[st,0],ArrowUp:[0,-st],ArrowDown:[0,st]}[e.key]; if(!m) return; e.preventDefault(); B.L[B.sel].cx+=m[0]; B.L[B.sel].cy+=m[1]; B.dirty=true; paint(); });
+  document.addEventListener('keydown',e=>{ if(!B.sel||!B.L||$('#bnOut').hidden||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return; if((e.key==='Delete'||e.key==='Backspace')&&B.L[B.sel]&&B.L[B.sel].type==='img'){ e.preventDefault(); return removeExtra(B.sel); } const st=B.L.W*(e.shiftKey?0.01:0.002); const m={ArrowLeft:[-st,0],ArrowRight:[st,0],ArrowUp:[0,-st],ArrowDown:[0,st]}[e.key]; if(!m) return; e.preventDefault(); B.L[B.sel].cx+=m[0]; B.L[B.sel].cy+=m[1]; B.dirty=true; paint(); });
   document.addEventListener('pointerdown',e=>{ if(B.sel&&!e._bnOv&&!e.target.closest('#bnOv')&&!e.target.closest('#bnProp')&&!e.target.closest('.bn-cwrap')){ B.sel=null; overlay(); propShow(null); } });
   $('#bnResetPos').onclick=()=>{ B.L=null; B.sel=null; propShow(null); if(B.alts.length) draw(); };
   $('#bnPng').onclick=()=>{ const a=document.createElement('a'); a.download=`현수막시안_${v('bnName').replace(/[\\/:*?"<>|]/g,'').slice(0,20)}_${(()=>{ const [w,h]=dims(); return (h>w?'세로':'가로')+w+'x'+h+'cm'; })()}.png`; a.href=$('#bnCanvas').toDataURL('image/png'); a.click(); };

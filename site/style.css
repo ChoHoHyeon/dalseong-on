@@ -2102,3 +2102,9 @@ body[data-theme=dark] .pp-wrap{background:#1b2333}
 .bp-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap} .bp-row>em{font-style:normal;font-size:12.5px;font-weight:700;color:var(--mut);width:44px}
 .bp-row .bn-fs{height:36px} .bp-row .bn-fs b{line-height:34px}
 .bp-reset{height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:12.5px;cursor:pointer;color:var(--tx)}
+.bn-logorow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bn-addlogo{display:inline-flex!important;flex-direction:row!important;align-items:center;height:30px;padding:0 12px;margin:0!important;border-radius:999px;border:1.5px dashed rgba(47,111,237,.55);color:var(--acc);font-size:12.5px;font-weight:700;cursor:pointer;background:var(--panel)}
+.bn-addlogo:hover{background:rgba(47,111,237,.07)}
+#bnExtraList{color:var(--acc);font-weight:600}
+.bp-del{margin-left:auto;height:30px;padding:0 12px;border-radius:999px;border:1px solid rgba(192,57,43,.35);background:#fff;color:#c0392b;font-size:12.5px;cursor:pointer}
+.bp-del+.bp-x{margin-left:0}
