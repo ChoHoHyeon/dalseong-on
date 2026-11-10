@@ -173,7 +173,7 @@ function init(){
   let runT=null;
   function busy(on,f){
     const sec=$('[data-view="minutes"]'); sec.classList.toggle('mt-busy',on);
-    if(on){ const t0=Date.now(); $('#mtRun').hidden=false; $('#mtRun').className='mt-run'; $('#mtRunH').textContent='자동으로 정리하고 있어요 — 따로 누를 버튼은 없습니다';
+    if(on){ const t0=Date.now(); $('#mtRun').hidden=false; $('#mtRun').className='mt-run'; $('#mtRunH').textContent='자동으로 정리하고 있어요';
       $('#mtRunS').textContent='녹음 → 글로 바꾸기 → 회의록 정리 순서로 끝까지 진행됩니다. 5분 녹음 기준 4~5분 걸려요. 끝날 때까지 이 화면에서 기다려 주세요.';
       clearInterval(runT); runT=setInterval(()=>{ const s=Math.round((Date.now()-t0)/1000); $('#mtRunT').textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; },1000);
       $('#mtFile').hidden=false; $('#mtDrop').hidden=true; $('#mtFileName').textContent=f.name; $('#mtFileInfo').textContent=`${(f.size/1048576).toFixed(1)}MB${f.dur?' · '+f.dur:''}`; $('#mtFileSt').textContent='올라감 ✓'; }

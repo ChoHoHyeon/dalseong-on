@@ -1903,3 +1903,21 @@ html[data-theme=dark] .lw-paper,body.dark .lw-paper{background:#fff;color:#111}
 .mt-run.err{background:rgba(232,89,12,.07);border-color:rgba(232,89,12,.4)} .mt-run.err b,.mt-run.err em{color:#e8590c} .mt-run.err .mt-spin{display:none}
 .mt-busy #mtS1 input,.mt-busy #mtS1 textarea,.mt-busy #mtS1 button,.mt-busy .mt-sample,.mt-busy #mtS3 .ru-bar,.mt-busy #mtNotes{pointer-events:none;opacity:.5}
 .mt-drop[hidden],.mt-file[hidden],.mt-run[hidden]{display:none}
+.mt-sbtn{font-weight:700;color:var(--acc);border-color:rgba(47,111,237,.45)} .mt-sbtn small{font-weight:400;color:var(--mut);margin-left:4px}
+.mt-sh1{align-items:center}
+.mt-h1{display:flex;align-items:center;gap:12px}
+.mt-h1 b{display:inline}
+.mt-fill{height:38px;padding:0 16px;font-size:13px;margin-left:4px}
+/* 1 회의 정보(왼쪽) · 2 녹음 올리기(오른쪽) 나란히, 높이 맞춤 */
+.mt-row{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;align-items:stretch;margin-top:16px}
+.mt-row>.ru-card{margin-top:0;display:flex;flex-direction:column}
+.mt-row .mt-grid4{grid-template-columns:1fr 1fr}
+.mt-row .mt-grid2{grid-template-columns:1fr}
+.mt-row #mtS2 .mt-drop{flex:1;flex-direction:column;justify-content:center;text-align:center;padding:20px 18px;gap:10px}
+.mt-row #mtS2 .mt-dtx{flex:0;align-items:center} .mt-row #mtS2 .mt-dtx small{line-height:1.6}
+.mt-row #mtS2 .mt-file{flex:0}
+.mt-row #mtS2 .mt-sample{flex-direction:column;align-items:stretch;gap:8px;margin-top:12px}
+.mt-row #mtS2 .mt-sample audio{width:100%;min-width:0;flex:none}
+.mt-row #mtS2 .mt-run{flex-wrap:wrap}
+@media(max-width:1100px){.mt-row{grid-template-columns:1fr}}
+.mt-row .ru-sh{min-height:52px;box-sizing:content-box}
