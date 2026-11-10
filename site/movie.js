@@ -13,7 +13,7 @@ const $=s=>document.querySelector(s);
 const W=720,H=1280, T_HOOK=3, T_SC=5, T_END=4;          // 3 + 5×4 + 4 = 27초
 const USER_LIMIT=2;                                     // 이 브라우저 하루 AI 영상 편수
 const V={busy:false,data:null,imgs:[],clips:[],blob:null,ext:'mp4',logo:null,purpose:'auto'};
-const PUR={ recruit:['📣','모집·신청'], event:['🎉','행사·축제'], policy:['📋','정책·사업 안내'], news:['🏆','성과·소식'], campaign:['🦺','생활정보·캠페인'] };
+const PUR={ recruit:['📣','모집·신청'], event:['🎉','행사·축제'], policy:['📋','안내·공지'], news:['🏆','성과·소식'], campaign:['🦺','생활정보·캠페인'] };
 const TONE={ bright:'밝고 경쾌', calm:'차분·신뢰' }, STYLE={ illust:'일러스트', photo:'실사풍' };
 const PAL={ navy:['#0b2a6b','#1b4db3','#ffd166'], green:['#145a32','#27ae60','#f9e79f'], orange:['#c0392b','#e67e22','#fff3c4'], mint:['#0f6b78','#2bb3a3','#fdfefe'], purple:['#3b2a7a','#6c4cd1','#ffd6f0'] };
 const v=id=>($('#'+id).value||'').trim();
@@ -25,7 +25,7 @@ const SYS=`당신은 대구광역시 달성군 SNS 홍보영상(릴스·쇼츠, 
 용도(purpose)별 장면 흐름:
 · recruit(모집·신청): 질문 훅 → 무엇을 → 누가·얼마나 → 언제·어디서 → 신청 방법
 · event(행사·축제): 분위기 훅 → 행사명·일시 → 볼거리1 → 볼거리2 → 놀러 오세요
-· policy(정책·사업 안내): 무엇이 바뀌나 → 누가 → 혜택 → 방법 → 문의
+· policy(안내·공지 — 정책·사업·일정 변경·시설 이용·휴무 등): 무엇을 알리나 → 누구에게 → 핵심 내용(혜택·변경점·일정) → 방법·장소 → 문의
 · news(성과·소식): 큰 결과 → 의미 → 과정 → 함께한 사람들 → 앞으로
 · campaign(생활정보·캠페인): 경각심 훅 → 상황 → 행동수칙1 → 행동수칙2 → 함께해요
 규칙
@@ -174,19 +174,21 @@ async function make(){
     const online=(S.key||S.server)&&!S.offline;
     prog(0,'',V._t0); $('#mvMsg').textContent='AI가 영상을 만들고 있습니다 — 보통 2~4분 걸립니다.';
     V.data=online?await script():offline(); renderSide();
-    // ② 장면 그림 4장 (동시에)
-    let n=0; prog(1,'0/4',V._t0);
-    const imgs=online?await Promise.all(V.data.scenes.map(async s=>{ try{ const u=await cardJob(imgPrompt(V.data,s)); prog(1,`${++n}/4`,V._t0); return u; }catch(e){ prog(1,`${++n}/4`,V._t0); return null; } })):[null,null,null,null];
-    V.imgs=await Promise.all(imgs.map(u=>u?loadImg(u):loadImg('assets/hero.jpg')));
-    if(imgs.some(u=>!u)) note='일부 장면 그림을 만들지 못해 기본 사진으로 대신했습니다. ';
-    // ③ 움직이는 영상 4개 (하루 한도 안에서)
+    // ③ 움직이는 영상 접수권(하루 한도) 먼저 받기
     let ticket=null;
     if(online&&quotaLocal()>=USER_LIMIT) note+=`이 브라우저의 오늘 AI 영상 ${USER_LIMIT}편을 다 써서 그림에 움직임을 넣어 만들었습니다. `;
     else if(online){ try{ const r=await fetch('/api/video',{method:'POST',headers:{'content-type':'application/json','x-access-code':code()},body:JSON.stringify({action:'start'})}); const j=await r.json();
         if(r.ok&&j.ticket){ ticket=j.ticket; quotaUse(); } else if(j.error==='limit') note+=`오늘 AI 영상 한도(전체 ${j.limit}편)를 다 써서 그림에 움직임을 넣어 만들었습니다. `; else if(j.error==='nokey') note+='움직이는 영상 기능이 아직 연결되지 않아 그림에 움직임을 넣어 만들었습니다. '; else note+='움직이는 영상을 접수하지 못해 그림에 움직임을 넣어 만들었습니다. '; }catch(e){ note+='움직이는 영상을 접수하지 못했습니다. '; } }
-    if(ticket){ let m=0; prog(2,'0/4',V._t0);
-      V.clips=await Promise.all(imgs.map(async (u,i)=>{ if(!u){ prog(2,`${++m}/4`,V._t0); return null; } try{ const s=V.data.scenes[i]; const url=await clipJob(ticket,u,`${s.motion||'gentle natural movement'}. ${V.data.style==='photo'?'Cinematic realistic motion':'Smooth 2D animation motion'}, consistent character, no text.`); const el=await videoEl(url); prog(2,`${++m}/4`,V._t0); return el; }catch(e){ console.warn(e); prog(2,`${++m}/4`,V._t0); return null; } }));
-      const ok=V.clips.filter(Boolean).length; if(ok<4) note+=`움직이는 영상 ${4-ok}개를 만들지 못해 그 장면은 그림에 움직임을 넣었습니다. `; }
+    // ②→③ 장면마다 그림이 나오는 즉시 그 장면 영상을 맡긴다 (4장면 동시 진행 — 기다리는 시간 단축)
+    let ni=0, nc=0, failI=0, failC=0; const st=()=>prog(ni<4?1:2,ni<4?`${ni}/4`:`${nc}/4`,V._t0); st();
+    V.imgs=[null,null,null,null]; V.clips=[null,null,null,null];
+    await Promise.all(V.data.scenes.map(async (s,i)=>{
+      let u=null; if(online){ try{ u=await cardJob(imgPrompt(V.data,s)); }catch(e){ failI++; } } ni++; st();
+      V.imgs[i]=await loadImg(u||'assets/hero.jpg');
+      if(ticket&&u){ try{ const url=await clipJob(ticket,u,`${s.motion||'gentle natural movement'}. ${V.data.style==='photo'?'Cinematic realistic motion':'Smooth 2D animation motion'}, consistent character, no text.`); V.clips[i]=await videoEl(url); }catch(e){ console.warn(e); failC++; } }
+      nc++; st(); }));
+    if(failI) note+='일부 장면 그림을 만들지 못해 기본 사진으로 대신했습니다. ';
+    if(ticket&&failC) note+=`움직이는 영상 ${failC}개를 만들지 못해 그 장면은 그림에 움직임을 넣었습니다. `;
     // ④ 합치기
     prog(3,'',V._t0); await compose(); prog(-1);
     $('#mvMsg').textContent=(note||'완성됐습니다 — ')+'오른쪽에서 자막을 고치고 다시 합치거나 영상으로 저장하세요.';
