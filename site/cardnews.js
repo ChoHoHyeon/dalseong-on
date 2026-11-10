@@ -221,7 +221,7 @@ Keep the upper half simple with generous empty space for headline text. IMPORTAN
     if(!job||job.status!=='done') throw new Error(job?.error||'시간 초과');
     const im=await loadImg(job.image); if(!im) throw new Error('그림을 열지 못했습니다'); if(C.data!==d) return;
     C.art=im; C.aiBusy=false; cnLoad(false); if(v('cnArt')==='ai') await renderAll();
-    const mg=$('#cnMsg'); if(/그리는 동안/.test(mg.textContent)) mg.textContent='그림이 완성됐습니다 — 장을 눌러 문구를 고칠 수 있습니다.';
+    const mg=$('#cnMsg'); if(/그리는 동안/.test(mg.textContent)) mg.textContent='그림이 완성됐습니다 — 카드를 넘기며 오른쪽에서 문구를 고칠 수 있습니다.';
   }catch(e){ C.aiBusy=false; C.aiFailed=true; if(C.data===d&&v('cnArt')==='ai') renderAll(); cnLoad('⚠️ AI 그림을 만들지 못했습니다 — '+String(e.message||'').slice(0,60)+' · 기본 그림으로 바꿔 두었습니다'); }
   finally{ C.aiBusy=false; if(btn) btn.disabled=false; }
 }
