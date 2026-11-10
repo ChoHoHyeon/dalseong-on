@@ -2226,3 +2226,36 @@ body[data-theme=dark] .bn-prop.float #bpText,body[data-theme=dark] .bn-prop.floa
 /* 카드 미리보기: 오른쪽 편집창 높이에 맞춰 늘이지 않는다 — 16:9에서 회색 영역이 길어지고 카드마다 화살표가 움직이던 문제 */
 .cn-wrap{align-items:start!important}
 .cn-stage{align-self:start}
+/* 넘김 화살표·점은 카드 바깥(회색 여백)에 — 카드 속 글자를 가리지 않게 */
+.cn-stage{padding:14px 52px 34px!important}
+.cn-arr{width:36px;height:36px;line-height:34px;font-size:24px}
+.cn-arr.l{left:-46px}
+.cn-arr.r{right:-46px}
+.cn-dots{bottom:-24px}
+.cn-dots i{background:#c5cedb;box-shadow:none}
+/* AI가 고른 디자인 — 4칸 요약 띠 */
+.cn-sum{gap:10px!important;background:linear-gradient(135deg,#f7faff,#eef3ff)!important;border-color:#dbe5f7!important}
+.cn-sum .sh{display:flex;align-items:center;gap:8px}
+.cn-sum .sh span{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#3b6ff0,#7b5cf0);color:#fff;font-size:13px;box-shadow:0 2px 6px rgba(59,111,240,.3)}
+.cn-sum .sh b{font-size:14px;color:#1c2a4a;letter-spacing:-.2px}
+.cn-sum .sg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:#fff;border:1px solid #e1e8f5;border-radius:12px;padding:10px 4px;box-shadow:0 1px 3px rgba(20,40,90,.05)}
+.cn-sum .sv{display:flex;flex-direction:column;align-items:center;gap:4px;padding:0 6px;min-width:0}
+.cn-sum .sv+.sv{border-left:1px solid #edf1f8}
+.cn-sum .sv em{font-style:normal;font-size:11px;font-weight:600;color:#8a94a8;white-space:nowrap}
+.cn-sum .sv b{display:flex;align-items:center;gap:6px;font-size:14.5px;font-weight:800;color:#1c2333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.cn-sum .sv.me em{color:#0e8a7a}
+.cn-sum .sw{width:12px;height:12px;border-radius:50%;flex:none;box-shadow:0 0 0 2px #fff,0 0 0 3px #e1e8f5}
+body[data-theme=dark] .cn-sum{background:#141f36!important;border-color:#24324f!important}
+body[data-theme=dark] .cn-sum .sg{background:#0f1830;border-color:#24324f}
+body[data-theme=dark] .cn-sum .sh b,body[data-theme=dark] .cn-sum .sv b{color:#e6ecf7}
+body[data-theme=dark] .cn-sum .sv+.sv{border-color:#24324f}
+/* 카드뉴스 규격별 자리 맞춤 — 정사각·세로·가로 어느 것이든 빈 곳 없이 */
+.cn-top .cn-thumbs{justify-content:start}
+.cn-top{align-items:center!important}
+.cn-wrap.cn-wide,.cn-top.cn-wide{grid-template-columns:minmax(0,1.3fr) minmax(290px,.8fr)}
+.cn-wrap.cn-wide .cn-edit{display:contents}
+.cn-wrap.cn-wide .cn-stage{grid-column:1;grid-row:1}
+.cn-wrap.cn-wide .cn-edit>.cn-box:not(.cn-save){grid-column:2;grid-row:1/span 2;align-self:start}
+.cn-wrap.cn-wide .cn-save{grid-column:1;grid-row:2;flex-direction:row!important;align-items:stretch}
+.cn-wrap.cn-wide .cn-save .cn-sv{flex:1}
+@media (max-width:900px){.cn-wrap.cn-wide,.cn-top.cn-wide{grid-template-columns:1fr}.cn-wrap.cn-wide .cn-edit>.cn-box:not(.cn-save){grid-column:1;grid-row:2}.cn-wrap.cn-wide .cn-save{grid-row:3;flex-direction:column!important}}
