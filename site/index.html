@@ -76,8 +76,8 @@
         <div><i>2</i><b>파일 올리거나 몇 줄 적기</b><small>녹음·PDF·엑셀을 올리거나 요지만 · 「예시로 채우기」로 먼저 체험</small></div>
         <div><i>3</i><b>결과 확인하고 가져가기</b><small>복사 · 한글 파일 · PNG · 엑셀 — 마지막 확인은 담당자가</small></div>
       </div>
-      <div class="card"><h4>이럴 땐 이 메뉴 <small>누르면 바로 이동</small></h4><div class="gd-feat" id="gdFeat"></div></div>
-      <div class="card"><h4>자주 묻는 질문</h4><div class="gd-faq">
+      <nav class="gd-jump" aria-label="이용 안내 바로가기"><button data-j="gdNewsCard">📢 공지·업데이트</button><button data-j="gdVideoCard">▶️ 안내 영상</button><button data-j="gdFaqCard">❓ 자주 묻는 질문</button><button data-j="gdContact">☎ 문의·지원</button></nav>
+      <div class="card" id="gdFaqCard"><h4>자주 묻는 질문 <small>누르면 펼쳐져요</small></h4><div class="gd-faq">
           <details><summary>내 자료가 밖으로 나가나요?</summary><p><b>급량비·출장비</b>는 이 PC 안에서만 처리돼요. <b>회의록·데이터 분석</b>은 녹음·엑셀 원본은 PC에 두고 필요한 글만 AI로 보내고, <b>보도자료·카드뉴스 등 글쓰기 메뉴</b>는 입력한 글이 AI로 가요. 비공개·개인정보는 넣지 마세요.</p></details>
           
           <details><summary>결과를 그대로 써도 되나요?</summary><p>초안입니다. 날짜·수치·이름·인용문은 꼭 확인한 뒤 쓰세요. 비어 있는 값은 <b>○○</b>로 표시됩니다.</p></details>
@@ -86,7 +86,7 @@
           <details><summary>한글 파일 서식이 달라요</summary><p>달성군 보고서·보도자료 서식을 따릅니다. 다른 서식이 필요하면 질문·요청 소통하기에 남겨 주세요.</p></details>
           <details><summary>이런 기능도 있으면 좋겠어요</summary><p>왼쪽 <b>질문·요청 소통하기</b>에 남겨 주시면 검토해서 반영하고 공지로 알려 드립니다.</p></details>
         </div></div>
-      <div class="card vlist-card"><h4>안내 영상 <small>누르면 재생</small></h4><div class="vlist" id="videoList"></div></div>
+      <div class="card vlist-card" id="gdVideoCard"><h4>안내 영상 <small>누르면 재생</small></h4><div class="vlist" id="videoList"></div></div>
     </section>
 
     <!-- 홈 · 서비스 구성 -->
@@ -104,13 +104,14 @@
 
     <!-- 홈 · 공지·업데이트 -->
     <section class="view" data-view="news">
-      <div class="vh"><h2>공지 · 업데이트</h2><p>새 기능과 자료 갱신 소식입니다.</p></div>
-      <div class="card"><ul class="timeline big" id="newsList"></ul></div>
+      <div class="card nw-card" id="gdNewsCard"><h4>공지 · 업데이트 <small id="nwCount"></small></h4>
+        <div class="nw-tabs" id="nwTabs"><button class="on" data-k="all">전체</button><button data-k="기능">기능</button><button data-k="개선">개선</button><button data-k="자료">자료</button><button data-k="공지">공지</button></div>
+        <ul class="nw-list" id="newsList"></ul><div class="nw-more" id="nwMore"></div></div>
     </section>
 
     <!-- 홈 · 문의·지원 -->
     <section class="view" data-view="contact">
-      <div class="vh"><h2>문의 · 지원</h2><p>달성On 운영·자료 등록·오류 신고는 정보통신과로 연락 주세요.</p></div>
+      <div class="vh vh-sm" id="gdContact"><h3>문의 · 지원</h3><p>달성On 운영·자료 등록·오류 신고는 정보통신과로 연락 주세요.</p></div>
       <div class="contact-grid">
         <div class="card"><h4>운영 부서</h4><b class="big">달성군 정보통신과</b><p class="hint">데이터기반행정 · 공공데이터 담당<br>☎ 053-668-2454 · ✉ 98turtle@korea.kr</p></div>
         <div class="card"><h4>자료 등록 요청</h4><p class="hint">부서 지침·서식·FAQ를 달성On에 올리고 싶으면 파일과 열람 범위(전 직원/부서)를 알려주세요. 등록 후 전 직원 답변에 즉시 반영됩니다.</p></div>

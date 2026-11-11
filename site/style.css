@@ -2511,3 +2511,30 @@ body[data-theme=dark] .sh-stat .s1{background:#1b2740;color:#cfe0ff}body[data-th
 .sh-stat span{padding:7px 8px;font-size:12px}
 .sh-item.st-미반영{border-left:3px solid #adb5bd}.sh-state.s-미반영{color:#5c6470;font-weight:700}
 body[data-theme=dark] .sh-stat .s4{background:#22262e;color:#c3c9d2}
+/* 이용 안내 정리 — 바로가기 · 공지 접기 */
+.gd-jump{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 14px}
+.gd-jump button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 1px 2px rgba(20,30,60,.05)}
+.gd-jump button:hover{border-color:rgba(29,95,214,.45);color:#1d4fb0}
+[data-view="news"] .nw-card,[data-view="guide"] .card{scroll-margin-top:12px}
+#gdContact{scroll-margin-top:12px;margin-top:6px}.vh-sm h3{font-size:17px;margin:0 0 4px}
+.nw-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 8px}
+.nw-tabs button{border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12.5px;font-weight:600;background:var(--panel);cursor:pointer}
+.nw-tabs button.on{background:#1d5fd6;color:#fff;border-color:#1d5fd6}
+.nw-list{list-style:none;margin:0;padding:0}
+.nw-list li{display:grid;grid-template-columns:44px 40px 1fr 18px;align-items:center;gap:8px;padding:9px 6px;border-bottom:1px dashed var(--line);font-size:13.5px;cursor:pointer;border-radius:8px}
+.nw-list li:hover{background:rgba(29,95,214,.04)}
+.nw-list li:last-child{border-bottom:0}
+.nw-list .d{color:var(--mut);font-size:12px;font-variant-numeric:tabular-nums}
+.nw-list .t{font-size:11px;font-weight:700;border-radius:999px;padding:2px 0;text-align:center;background:#eaf1ff;color:#1d5fd6}
+.nw-list .t.data{background:#e6f6ec;color:#0b6b3a}.nw-list .t.notice{background:#fff0f0;color:#e03131}.nw-list .t.fix{background:#fff4e0;color:#b45309}
+.nw-list li.new .s::after{content:'NEW';margin-left:6px;font-size:9.5px;font-weight:800;color:#fff;background:#e03131;border-radius:4px;padding:1px 4px;vertical-align:2px}
+.nw-list .ar{color:var(--mut);font-size:12px;transition:transform .15s}
+.nw-list li.open .ar{transform:rotate(180deg)}
+.nw-list .body{display:none;grid-column:3/5;font-size:12.5px;color:var(--mut);line-height:1.7;padding:4px 0 2px}
+.nw-list li.open .body{display:block}
+.nw-more{text-align:center;padding-top:8px}
+.nw-more button{border:1px solid var(--line);border-radius:999px;padding:6px 18px;font-weight:700;background:var(--panel);cursor:pointer}
+.nw-more button small{color:var(--mut);font-weight:500;margin-left:4px}
+#boardList .t.fix{background:#fff4e0;color:#b45309}
+.nw-list{max-height:400px;overflow:auto;padding-right:4px}   /* 지난 소식을 더 펼쳐도 상자 안에서만 스크롤 */
+.nw-card .nw-tabs{margin-bottom:4px}
