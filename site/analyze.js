@@ -16,18 +16,25 @@ function loadXlsx(){ return window.XLSX?Promise.resolve():new Promise((ok,no)=>{
 const num=x=>{ if(typeof x==='number') return x; const t=String(x??'').replace(/[,\s원건명%]/g,''); return t!==''&&!isNaN(+t)?+t:null; };
 function typeOf(vals){ const ne=vals.filter(x=>x!==''&&x!=null); if(!ne.length) return 'empty'; const n=ne.filter(x=>num(x)!==null).length; if(n/ne.length>0.9) return 'num'; const d=ne.filter(x=>x instanceof Date||/^\d{4}[-./]\d{1,2}([-./]\d{1,2})?/.test(String(x))).length; if(d/ne.length>0.8) return 'date'; return 'text'; }
 
+/* 열 이름 줄 찾기 — 1행이 아니어도 된다(위에 제목·작성일·빈 줄이 있는 서식). 위쪽 15줄 중 칸이 충분히 차 있고 대부분 글자인 첫 줄 */
+function findHeader(arr){ const ne=x=>String(x??'').trim()!==''; const W=Math.max(1,...arr.slice(0,40).map(r=>r.filter(ne).length));
+  const isTxt=x=>!(x instanceof Date)&&isNaN(+String(x).replace(/[,\s]/g,''))&&!/^\d{4}[-./]\d/.test(String(x));
+  let fb=-1; for(let i=0;i<Math.min(15,arr.length);i++){ const c=(arr[i]||[]).filter(ne); if(c.length<Math.max(2,Math.ceil(W*0.6))) continue; if(fb<0) fb=i; if(c.filter(isTxt).length/c.length>=0.7) return i; }
+  return fb<0?0:fb; }
+/* 앞뒤로 통째로 빈 열은 버린다(B열부터 시작하는 표 등) */
+function dropEmptyCols(head,rows){ const n=Math.max(head.length,...rows.map(r=>r.length)); const keep=[]; for(let j=0;j<n;j++){ if(String(head[j]??'').trim()||rows.some(r=>String(r[j]??'').trim())) keep.push(j); } return [keep.map(j=>head[j]??''),rows.map(r=>keep.map(j=>r[j]??''))]; }
 async function readFile(f){
   await loadXlsx();
   const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true});
   const ws=wb.Sheets[wb.SheetNames[0]]; const arr=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true});
-  let h=arr.findIndex(r=>r.filter(x=>String(x).trim()).length>=Math.max(2,Math.ceil((arr[0]||[]).length*0.5))); if(h<0) h=0;
-  A.cols=arr[h].map((c,i)=>String(c||'열'+(i+1)).trim());
-  A.rows=arr.slice(h+1).filter(r=>r.some(x=>String(x).trim())).map(r=>Object.fromEntries(A.cols.map((c,i)=>[c,r[i]instanceof Date?r[i].toISOString().slice(0,10):r[i]])));
+  const h=findHeader(arr); const [hd,body]=dropEmptyCols(arr[h]||[],arr.slice(h+1)); A.headRow=h+1;
+  A.cols=hd.map((c,i)=>String(c||'열'+(i+1)).trim());
+  A.rows=body.filter(r=>r.some(x=>String(x).trim())).map(r=>Object.fromEntries(A.cols.map((c,i)=>[c,r[i]instanceof Date?r[i].toISOString().slice(0,10):r[i]])));
   A.types=Object.fromEntries(A.cols.map(c=>[c,typeOf(A.rows.map(r=>r[c]))])); A.name=f.name;
 }
 function summary(){
   const T={num:'숫자',text:'글자',date:'날짜',empty:'빈 열'};
-  $('#anSum').innerHTML=`<div class="an-meta"><b>${esc(A.name)}</b> · ${A.rows.length.toLocaleString()}행 · ${A.cols.length}열 <span class="an-safe">이 PC 안에서 읽음</span></div>
+  $('#anSum').innerHTML=`<div class="an-meta"><b>${esc(A.name)}</b> · ${A.rows.length.toLocaleString()}행 · ${A.cols.length}열${A.headRow>1?` · 열 이름 ${A.headRow}행`:''} <span class="an-safe">이 PC 안에서 읽음</span></div>
   <div class="an-cols">${A.cols.map(c=>{ const vals=A.rows.map(r=>r[c]); const blank=vals.filter(x=>x===''||x==null).length; const t=A.types[c]; let extra='';
     if(t==='num'){ const ns=vals.map(num).filter(x=>x!==null); extra=`합 ${ns.reduce((a,b)=>a+b,0).toLocaleString()} · 평균 ${(ns.reduce((a,b)=>a+b,0)/ns.length||0).toLocaleString(undefined,{maximumFractionDigits:1})}`; }
     else { const u=new Set(vals.filter(x=>x!=='')).size; extra=`종류 ${u.toLocaleString()}개`; }

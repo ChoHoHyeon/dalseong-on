@@ -20,7 +20,7 @@ const TYPES={
 const HINT=[
   ['rrn',/주민|resident|rrn/i], ['phone',/전화|연락처|휴대|핸드폰|폰|tel|phone|mobile/i], ['email',/메일|email|e-mail/i],
   ['acct',/계좌|account/i], ['addr',/주소|거주지|소재지|address/i], ['car',/차량|차번|car/i],
-  ['birth',/생년|생일|birth/i], ['name',/성명|이름|민원인|신청인|대표자|담당자|name/i]
+  ['birth',/생년|생일|birth/i], ['name',/성\s*명|이름|민원인|신청인|대표자|담당자|참가자|참석자|교육생|수강생|보호자|작성자|신고인|수령인|대상자|수급자|세대주|name/i]
 ];
 const RE={
   rrn:/(\d{6})\s?-?\s?([1-8])\d{6}/g,
@@ -59,19 +59,29 @@ function detect(ci){
   const n=vals.length;
   if(hint){ return {type:hint,hit:hint==='name'?r.name||n:(r[hint]??n),why:'열 이름'}; }
   for(const k of ['rrn','phone','email','car']) if(r[k]/n>=.6) return {type:k,hit:r[k],why:'값 형태'};
+  if(r.name/n>=.8&&new Set(vals).size/n>=.5&&!/(읍|면|동|리|과|구분|종류|상태|여부)/.test(h)) return {type:'name',hit:r.name,why:'값 형태(이름)'};   /* 열 이름이 낯설어도 값이 대부분 2~4자 한글 이름이면 */
   const any=r.rrn+r.phone+r.email+r.car; if(any) return {type:'text',hit:any,why:'글 속에서 발견'};
   return {type:'none',hit:0};
 }
 
 /* ── 파일 읽기 ── */
+/* 열 이름 줄 찾기 — 1행이 아니어도 된다(위에 제목·작성일·빈 줄이 있는 서식). 위쪽 15줄 중 칸이 충분히 차 있고 대부분 글자인 첫 줄 */
+function findHeader(arr){ const ne=x=>String(x??'').trim()!==''; const W=Math.max(1,...arr.slice(0,40).map(r=>r.filter(ne).length));
+  const isTxt=x=>!(x instanceof Date)&&isNaN(+String(x).replace(/[,\s]/g,''))&&!/^\d{4}[-./]\d/.test(String(x));
+  let fb=-1; for(let i=0;i<Math.min(15,arr.length);i++){ const c=(arr[i]||[]).filter(ne); if(c.length<Math.max(2,Math.ceil(W*0.6))) continue; if(fb<0) fb=i; if(c.filter(isTxt).length/c.length>=0.7) return i; }
+  return fb<0?0:fb; }
+/* 앞뒤로 통째로 빈 열은 버린다(B열부터 시작하는 표 등) */
+function dropEmptyCols(head,rows){ const n=Math.max(head.length,...rows.map(r=>r.length)); const keep=[]; for(let j=0;j<n;j++){ if(String(head[j]??'').trim()||rows.some(r=>String(r[j]??'').trim())) keep.push(j); } return [keep.map(j=>head[j]??''),rows.map(r=>keep.map(j=>r[j]??''))]; }
+
 function loadXlsx(){ return window.XLSX?Promise.resolve():new Promise((ok,no)=>{ const s=document.createElement('script'); s.src='vendor/xlsx.full.min.js'; s.onload=ok; s.onerror=()=>no(new Error('엑셀 모듈을 불러오지 못했습니다')); document.head.appendChild(s); }); }
 async function readFile(f){
   await loadXlsx();
   const csv=/\.csv$/i.test(f.name);
   const wb=XLSX.read(await f.arrayBuffer(),csv?{type:'array',raw:true}:{type:'array',cellDates:true,dateNF:'yyyy-mm-dd'});
   const ws=wb.Sheets[wb.SheetNames[0]]; const arr=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false,dateNF:'yyyy-mm-dd'});
-  if(arr.length<2) throw new Error('표 내용이 없습니다 (첫 줄은 열 이름이어야 합니다)');
-  M.cols=arr[0].map((c,i)=>String(c||`열${i+1}`).trim()); M.rows=arr.slice(1).filter(r=>r.some(v=>v!==''));
+  const h=findHeader(arr); const [hd,body]=dropEmptyCols(arr[h]||[],arr.slice(h+1)); M.headRow=h+1;
+  if(!body.length) throw new Error('표 내용이 없습니다');
+  M.cols=hd.map((c,i)=>String(c||`열${i+1}`).trim()); M.rows=body.filter(r=>r.some(v=>v!==''));
   M.name=f.name.replace(/\.[^.]+$/,''); M.ext=/\.csv$/i.test(f.name)?'csv':'xlsx';
   M.plan=M.cols.map((_,i)=>{ const d=detect(i); return {...d,act:d.type==='none'?'keep':'mask'}; });
   M.out=null;
@@ -94,18 +104,18 @@ function renderPlan(){
 /* 찾은 열 칩: 누를 때마다 가리기 → 열 삭제 → 그대로. 「＋ 다른 열도」로 나머지 열도 칩으로 펼친다 */
 const ACT={mask:['가림','🛡'],drop:['열 삭제','🗑'],keep:['그대로','·']};
 function renderCols(){ const show=M.cols.map((c,i)=>i).filter(i=>M.plan[i].type!=='none'||M.showAll||M.plan[i].act!=='keep');
-  $('#mkCols').innerHTML=show.map(i=>{ const p=M.plan[i], t=p.type==='none'?['직접 지정','➕']:TYPES[p.type]; return `<button type="button" class="mk-col ${p.act}" data-i="${i}" title="${p.type==='name'?'공개·배포용이면 이름 열은 「열 삭제」가 더 안전합니다 · ':''}누를 때마다 가림 → 열 삭제 → 그대로"><i>${t[1]}</i><b>${esc(M.cols[i])}</b><em>${ACT[p.act][0]}</em></button>`; }).join('')
+  $('#mkCols').innerHTML=show.map(i=>{ const p=M.plan[i], t=p.type==='none'?['직접 지정','➕']:TYPES[p.type]; return `<button type="button" class="mk-col ${p.act}" data-i="${i}" title="${p.type==='name'?'공개·배포용이면 이름 열은 「열 삭제」가 더 안전합니다 · ':''}누를 때마다 가림 → 열 삭제 → 그대로"><i>${t[1]}</i><b>${esc(M.cols[i])}</b><em>${ACT[p.act][0]}${p.act==='mask'&&M.colCnt&&M.colCnt[i]?' '+M.colCnt[i].toLocaleString():''}</em></button>`; }).join('')
     +(M.cols.length>show.length||M.showAll?`<button type="button" class="mk-more" id="mkMore">${M.showAll?'− 접기':'＋ 다른 열도 가리기'}</button>`:'');
   $('#mkCols').querySelectorAll('.mk-col').forEach(b=>b.onclick=()=>{ const p=M.plan[b.dataset.i]; p.act={mask:'drop',drop:'keep',keep:'mask'}[p.act]; if(p.act==='mask'&&p.type==='none') p.type=M.rows.map(r=>r[b.dataset.i]).filter(Boolean).slice(0,50).every(isName)?'name':'text'; apply(true); });
   const mo=$('#mkMore'); if(mo) mo.onclick=()=>{ M.showAll=!M.showAll; renderCols(); }; }
 function apply(quiet){
   const keep=M.cols.map((_,i)=>M.plan[i].act!=='drop');
   const cnt={}; let cells=0;
-  const rows=M.rows.map(r=>r.map((v,i)=>{ const p=M.plan[i]; if(p.act!=='mask'||p.type==='none'||v===''||v==null) return v; const nv=FN[p.type](v); if(String(nv)!==String(v)){ cells++; cnt[p.type]=(cnt[p.type]||0)+1; } return nv; }).filter((_,i)=>keep[i]));
+  M.colCnt={}; const rows=M.rows.map(r=>r.map((v,i)=>{ const p=M.plan[i]; if(p.act!=='mask'||p.type==='none'||v===''||v==null) return v; const nv=FN[p.type](v); if(String(nv)!==String(v)){ cells++; cnt[p.type]=(cnt[p.type]||0)+1; M.colCnt[i]=(M.colCnt[i]||0)+1; } return nv; }).filter((_,i)=>keep[i]));
   const cols=M.cols.filter((_,i)=>keep[i]);
   const dropped=M.cols.filter((_,i)=>!keep[i]);
   M.out={cols,rows,cnt,cells,dropped};
-  $('#mkStat').innerHTML=Object.entries(cnt).map(([k,n])=>`<span class="mk-chip">${TYPES[k][1]} ${TYPES[k][0]} <b>${n.toLocaleString()}</b></span>`).join('')+(dropped.length?`<span class="mk-chip">🗑 삭제한 열 <b>${dropped.length}</b></span>`:'')+(cells||dropped.length?'':'<span class="mk-chip">가릴 값이 없었습니다</span>');
+  $('#mkStat').innerHTML=cells||dropped.length?'':'<span class="mk-chip">가릴 값이 없었습니다</span>';   /* 가린 개수는 위 열 칩에 함께 표시 */
   $('#mkPrev').innerHTML=`<table class="mk-tbl sm"><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.slice(0,6).map(r=>`<tr>${r.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   renderCols(); $('#mkOut').hidden=false; $('#mkStep').hidden=true; $('#mkTxtOut').hidden=true; if(quiet) return; $('#mkOut').scrollIntoView({behavior:'smooth',block:'start'});
   window.dsSave&&dsSave('mask',`${M.name} 개인정보 가림`,`${M.name} · ${rows.length}행\n가린 칸 ${cells}개\n`+Object.entries(cnt).map(([k,n])=>`${TYPES[k][0]} ${n}`).join(', ')+(dropped.length?`\n삭제한 열: ${dropped.join(', ')}`:''));
@@ -157,7 +167,7 @@ function textRun(){
 const TABLE=/\.(xlsx|xls|csv)$/i;
 async function take(fs){ const L=$('#mkFileList'); const done=[];
   for(const f of fs){
-    if(TABLE.test(f.name)){ L.textContent=`「${f.name}」 읽는 중…`; try{ await readFile(f); M.showAll=false; $('#mkOut').hidden=true; done.push(`📊 ${f.name} (${M.rows.length.toLocaleString()}행 · 표는 열마다 판단)`); }catch(e){ done.push(`⚠ ${f.name} — ${e.message}`); } continue; }
+    if(TABLE.test(f.name)){ L.textContent=`「${f.name}」 읽는 중…`; try{ await readFile(f); M.showAll=false; $('#mkOut').hidden=true; done.push(`📊 ${f.name} (${M.rows.length.toLocaleString()}행${M.headRow>1?` · 열 이름은 ${M.headRow}행`:''} · 표는 열마다 판단)`); }catch(e){ done.push(`⚠ ${f.name} — ${e.message}`); } continue; }
     try{ L.textContent=`「${f.name}」 읽는 중…`; if(typeof window.pressRead!=='function') throw new Error('읽기 기능을 불러오지 못했습니다'); const r=await window.pressRead(f); if(!r.text) throw new Error('글자를 찾지 못했습니다');
       const t=r.text.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim(); const src=$('#mkSrc'); src.value=src.value.trim()?src.value.trim()+'\n\n'+t:t; done.push(`📄 ${f.name} (${t.length.toLocaleString()}자)`); }
     catch(e){ done.push(`⚠ ${f.name} — ${e.message}`); } }
