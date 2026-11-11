@@ -2399,3 +2399,4 @@ body[data-adro="1"] [data-view="model"] input,body[data-adro="1"] [data-view="mo
 .view>.maker:hover{opacity:.9}
 .vh h2 .maker{margin-left:10px;font-size:12px;font-weight:500;color:var(--mut);opacity:.6;vertical-align:middle;letter-spacing:0}
 .vh h2 .maker::before{content:"🛠 ";font-size:11px}
+.vh h2 .maker::before{content:none}
