@@ -126,7 +126,7 @@ function download(){
   const aoa=[o.cols,...o.rows]; const fn=`${M.name}_가림`;
   if(M.ext==='csv'){
     const csv=aoa.map(r=>r.map(v=>{ const s=String(v??''); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }).join(',')).join('\r\n');
-    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv'})); a.download=fn+'.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv'})); a.download=fn+'.csv'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
   }else{
     const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),'가림');
     const log=[['열 이름','판단','처리'],...M.cols.map((c,i)=>[c,TYPES[M.plan[i].type][0],{mask:'가리기',keep:'그대로',drop:'열 삭제'}[M.plan[i].act]])];
@@ -177,10 +177,10 @@ function init(){
   if($('#mkGo')._on) return; $('#mkGo')._on=1;
   $('#mkFile').onchange=e=>{ const fs=[...e.target.files]; e.target.value=''; if(fs.length) take(fs); };
   $('#mkFind').onclick=()=>{ if(v()) return textRun(); if(M.rows.length) return apply(); $('#mkMsg').textContent='가릴 글을 붙여넣거나 파일을 올려 주세요.'; $('#mkSrc').focus(); };
-  $('#mkSample').onclick=async()=>{ const b=await (await fetch('assets/sample_personal.csv')).blob(); $('#mkSrc').value=''; await take([new File([b],'예시_민원접수대장(가상).csv')]); window.toast&&toast('가상 예시 파일을 불러왔습니다 — 판단 결과를 확인하고 [가리기]를 누르세요'); };
+  $('#mkSample').onclick=async()=>{ const b=await (await fetch('assets/sample_personal.csv')).blob(); $('#mkSrc').value=''; await take([new File([b],'예시_민원접수대장(가상).csv')]); $('#mkMsg').textContent='샘플 파일을 올렸습니다 — 「개인정보 찾기」를 누르세요.'; };
   $('#mkReset').onclick=()=>{ $('#mkSrc').value=''; M.rows=[]; M.cols=[]; M.out=null; M.txt=null; ['mkStep','mkOut','mkTxtOut'].forEach(id=>$('#'+id).hidden=true); $('#mkMsg').textContent=''; $('#mkFileList').textContent='엑셀·CSV 표 또는 한글(hwpx)·워드·PDF·텍스트 문서 · 이 상자에 끌어다 놓아도 됩니다'; };
   $('#mkTxtCopy').onclick=()=>{ if(!M.txt) return; navigator.clipboard.writeText(M.txt.text).then(()=>window.toast&&toast('가린 글을 복사했습니다')); };
-  $('#mkTxtDown').onclick=()=>{ if(!M.txt) return; const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+M.txt.text],{type:'text/plain'})); a.download='개인정보_가림.txt'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); };
+  $('#mkTxtDown').onclick=()=>{ if(!M.txt) return; const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+M.txt.text],{type:'text/plain'})); a.download='개인정보_가림.txt'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); };
   $('#mkGo').onclick=apply; $('#mkDown').onclick=download; $('#mkAn').onclick=toAnalyze;
 }
 window.MASK={init,_t:{mName,mRrn,mPhone,mEmail,mAcct,mAddr,mCar,mBirth,mText,maskText}};
