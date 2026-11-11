@@ -3,7 +3,17 @@
  *       본문(section0.xml)만 답변 내용으로 다시 써서 zip(hwpx)으로 묶는다.  */
 window.DalseongHwpx = (function(){
   let TPL=null;
-  async function load(){ if(!TPL){ TPL = await (await fetch('hwpx_tpl.json')).json(); } return TPL; }
+  /* 2026.11.11. 한글 최신판이 「손상·변조」로 막던 원인 정리 (시험 파일로 하나씩 확인)
+     ① 문단 줄 배치 정보(linesegarray)가 실제 글자 수와 안 맞음(□ 문단 등) → 전부 빼고 한글이 열 때 계산
+     ② 문단마다 붙은 xmlns:hp 꼬리표, 겹치는 문단 번호(id=0) 정리
+     ③ 제목 단락의 머리말 2개가 없는 로고 그림을 가리킴 → 머리말 제거
+     ④ 파일 묶음은 한글이 저장한 진짜 파일(press_tpl.hwpx)을 틀로 사용(보도자료와 같은 방식) */
+  const NSHP=' xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph"';
+  const clean=x=>x.split(NSHP).join('').replace(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/g,'');
+  async function load(){ if(!TPL){ TPL = await (await fetch('hwpx_tpl.json')).json();
+      for(const k in TPL.para){ let v=clean(TPL.para[k]); if(k!=='title') v=v.replace(/<hp:p id="0"/g,'<hp:p id="2147483648"'); else v=v.replace(/<hp:ctrl><hp:header id="4"[\s\S]*?<\/hp:header><\/hp:ctrl>/g,''); TPL.para[k]=v; }
+      TPL.head='<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>'+TPL.head.slice(TPL.head.indexOf('<hs:sec'));
+    } return TPL; }
   const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   const P = (k,t) => TPL.para[k].replace('@@TEXT@@', esc(t));
   const b64 = s => { const b=atob(s), u=new Uint8Array(b.length); for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i); return u; };
@@ -141,7 +151,7 @@ window.DalseongHwpx = (function(){
         const tr=rows.map((r,i)=>'<hp:tr>'+r.map((v,j)=>{ const hd=i===0; const num=!hd&&j>0&&/^[-+]?[\d,.]+%?$/.test(String(v).trim());
           return `<hp:tc name="" header="${hd?1:0}" hasMargin="0" protect="0" editable="0" dirty="0" borderFillIDRef="${hd?BF.h:BF.n}"><hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0"><hp:p id="2147483648" paraPrIDRef="${hd?PC.c:num?PC.r:j?PC.c:PC.l}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="${hd?C.b:C.n}"><hp:t>${esc(v)}</hp:t></hp:run></hp:p></hp:subList><hp:cellAddr colAddr="${j}" rowAddr="${i}"/><hp:cellSpan colSpan="1" rowSpan="1"/><hp:cellSz width="${cw[j]}" height="${RH}"/><hp:cellMargin left="283" right="283" top="141" bottom="141"/></hp:tc>`; }).join('')+'</hp:tr>').join('');
         return `<hp:p ${NS} id="2147483648" paraPrIDRef="${PC.c}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="${C.n}"><hp:tbl id="${uid++}" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="CELL" repeatHeader="1" rowCnt="${rows.length}" colCnt="${nc}" cellSpacing="0" borderFillIDRef="${BF.n}" noAdjust="0"><hp:sz width="${cw.reduce((a,b)=>a+b,0)}" widthRelTo="ABSOLUTE" height="${RH*rows.length}" heightRelTo="ABSOLUTE" protect="0"/><hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/><hp:outMargin left="0" right="0" top="0" bottom="0"/><hp:inMargin left="141" right="141" top="141" bottom="141"/>${tr}</hp:tbl><hp:t/></hp:run></hp:p>`; };
-      const bins=[]; const pic=I=>{ const n=bins.length+1, id='anImg'+n; bins.push({id,href:`BinData/${id}.png`,data:I.data});
+      const bins=[]; const pic=I=>{ const n=bins.length+1, id='chart'+n; bins.push({id,href:`BinData/${id}.png`,data:I.data});
         const OW=I.w*75, OH=I.h*75, CW=Math.min(TW,OW), CH=Math.round(OH*CW/OW), sx=(CW/OW).toFixed(6), sy=(CH/OH).toFixed(6);
         return `<hp:p ${NS} id="2147483648" paraPrIDRef="${PC.c}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="${C.n}"><hp:pic id="${uid++}" zOrder="${n}" numberingType="PICTURE" textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" href="" groupLevel="0" instid="${uid++}" reverse="0"><hp:offset x="0" y="0"/><hp:orgSz width="${OW}" height="${OH}"/><hp:curSz width="${CW}" height="${CH}"/><hp:flip horizontal="0" vertical="0"/><hp:rotationInfo angle="0" centerX="${CW>>1}" centerY="${CH>>1}" rotateimage="1"/><hp:renderingInfo><hc:transMatrix e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/><hc:scaMatrix e1="${sx}" e2="0" e3="0" e4="0" e5="${sy}" e6="0"/><hc:rotMatrix e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/></hp:renderingInfo><hp:imgRect><hc:pt0 x="0" y="0"/><hc:pt1 x="${OW}" y="0"/><hc:pt2 x="${OW}" y="${OH}"/><hc:pt3 x="0" y="${OH}"/></hp:imgRect><hp:imgClip left="0" right="${OW}" top="0" bottom="${OH}"/><hp:inMargin left="0" right="0" top="0" bottom="0"/><hp:imgDim dimwidth="${OW}" dimheight="${OH}"/><hc:img binaryItemIDRef="${id}" bright="0" contrast="0" effect="REAL_PIC" alpha="0"/><hp:effects/><hp:sz width="${CW}" widthRelTo="ABSOLUTE" height="${CH}" heightRelTo="ABSOLUTE" protect="0"/><hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/><hp:outMargin left="0" right="0" top="0" bottom="0"/></hp:pic><hp:t/></hp:run></hp:p>`; };
       const L=[P('title',opts.title),P('sub',opts.sub||''),P('date',opts.date||'')];
@@ -179,23 +189,29 @@ window.DalseongHwpx = (function(){
     }
 
     const body = opts.__law || paras.map(p=>P(p.k,p.t||'')).join('');
-    const section = (opts.__head||TPL.head) + body + TPL.tail;
+    const section = (opts.__head||TPL.head) + clean(body) + TPL.tail;   // 본문만 정리(맨 앞 hs:sec 의 이름공간 선언은 유지)
 
-    const zip = new JSZip();  // 폴더 항목 없이 파일만 (한글은 zip 내 디렉터리 항목이 있으면 손상 문서로 판단할 수 있음)
-    zip.file('mimetype', b64(TPL.files['mimetype']), {compression:'STORE', createFolders:false});
-    for(const [k,v] of Object.entries(TPL.files)){
-      if(k==='mimetype') continue;
-      let data=(k==='Contents/header.xml'&&opts.__hdr)?new TextEncoder().encode(opts.__hdr):b64(v);
-      if(k==='Contents/content.hpf'){
-        let s=new TextDecoder().decode(data).replace(/<opf:title>.*?<\/opf:title>/,'<opf:title>'+esc(opts.title)+'</opf:title>');
-        if(opts.__bins?.length) s=s.replace('</opf:manifest>',opts.__bins.map(b=>`<opf:item id="${b.id}" href="${b.href}" media-type="image/png" isEmbeded="1"/>`).join('')+'</opf:manifest>');
-        data=new TextEncoder().encode(s);
+    /* 한글이 저장한 진짜 파일(press_tpl.hwpx)의 묶음을 그대로 쓰고 머리(서식)·본문·목록만 바꾼다 */
+    await loadPress();
+    const hdrX = opts.__hdr || new TextDecoder().decode(b64(TPL.files['Contents/header.xml']));
+    const zip = new JSZip();
+    const names = PTPL.order || Object.keys(PZIP.files);
+    for(const k of names){
+      const f = PZIP.file(k); if(!f) continue;
+      if(k==='mimetype'){ zip.file(k, await f.async('uint8array'), {compression:'STORE', createFolders:false}); continue; }
+      let data;
+      if(k==='Contents/section0.xml') data = new TextEncoder().encode(section);
+      else if(k==='Contents/header.xml') data = new TextEncoder().encode(hdrX);
+      else if(k==='Contents/content.hpf'){
+        let x=(await f.async('string')).replace(/<opf:title>[\s\S]*?<\/opf:title>/,'<opf:title>'+esc(opts.title||'')+'</opf:title>');
+        if(opts.__bins?.length) x=x.replace('<opf:item id="section0"',opts.__bins.map(b=>`<opf:item id="${b.id}" href="${b.href}" media-type="image/png" isEmbeded="1"/>`).join('')+'<opf:item id="section0"');
+        data = new TextEncoder().encode(x);
       }
-      zip.file(k,data,{compression:'DEFLATE',createFolders:false});
+      else if(k==='Preview/PrvText.txt') data = new TextEncoder().encode(opts.title+'\n'+String(opts.answer||'').slice(0,800));
+      else data = await f.async('uint8array');
+      zip.file(k, data, {compression:'DEFLATE', createFolders:false});
+      if(k==='Contents/header.xml') (opts.__bins||[]).forEach(b=>zip.file(b.href,b.data,{compression:'DEFLATE',createFolders:false}));
     }
-    (opts.__bins||[]).forEach(b=>zip.file(b.href,b.data,{compression:'STORE',createFolders:false}));
-    zip.file('Contents/section0.xml', new TextEncoder().encode(section), {compression:'DEFLATE',createFolders:false});
-    zip.file('Preview/PrvText.txt', new TextEncoder().encode(opts.title+'\n'+String(opts.answer||'').slice(0,800)), {compression:'DEFLATE',createFolders:false});
     const blob = await zip.generateAsync({type:'blob', mimeType:'application/hwp+zip', platform:'DOS'});
     return blob;
   }

@@ -420,7 +420,7 @@ function init(){
   $('#anFile').onchange=async e=>{ const fs=[...e.target.files]; if(fs.length) await load(fs); e.target.value=''; };
   $('#anGo').onclick=run; $('#anQ').onkeydown=e=>{ if(e.key==='Enter') run(); };
   $('#anSample').onclick=async()=>{ const get=async(u,n)=>new File([await (await fetch(u)).blob()],n);
-    const fs=await Promise.all([get('assets/sample_minwon_2025.xlsx','예시_2025년 읍면별 민원 접수·처리 현황.xlsx'),get('assets/sample_minwon_plan.hwpx','예시_2026년 민원서비스 개선 추진계획.hwpx')]);
+    const fs=await Promise.all([get('assets/sample_minwon_2026.xlsx','예시_2026년 읍면별 민원 접수·처리 현황(1~10월).xlsx'),get('assets/sample_minwon_plan.hwpx','예시_2026년 하반기 민원서비스 개선 추진계획.hwpx')]);
     await load(fs,'샘플 파일 2개(엑셀 자료 + 한글 계획서)를 올렸습니다 — 「분석하기」를 누르세요.'); };
   $('#anReset').onclick=()=>{ if(A.busy) return; Object.assign(A,{rows:[],cols:[],rep:null,ctx:'',files:[],name:''}); $('#anSum').innerHTML=''; $('#anRead').hidden=true; $('#anRead').innerHTML=''; $('#anRight .an-ex').hidden=false; $('#anRightLg').textContent='이런 결과가 나와요'; $('#anAsk').hidden=true; $('#anOut').hidden=true; $('#anQ').value=''; $('#anMsg').textContent=''; $('#anFileList').textContent='파일을 올리거나 이 상자에 끌어다 놓으세요 (여러 개 가능)'; };
   $('#anHwpx').onclick=saveHwpx;

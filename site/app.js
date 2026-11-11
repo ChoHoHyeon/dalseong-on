@@ -1160,6 +1160,6 @@ function loadTrip(){
 })();
 /* 메뉴별 만든 사람 — 화면 제목 옆에 작고 흐리게 */
 (function(){
-  const MK={rule:'김원규',minutes:'김원규',meal:'김광한',trip:'김광한',family:'김광한',press:'김경민',banner:'김경민',card:'김경민',movie:'김경민',mask:'김규태',analyze:'김규태',share:'김규태'};
+  const MK={rule:'김규태',minutes:'김규태',meal:'김광한',trip:'김광한',family:'김광한',press:'김경민',banner:'김경민',card:'김경민',movie:'김경민',mask:'김원규',analyze:'김원규',share:'김원규'};
   Object.entries(MK).forEach(([v,n])=>{ const sec=document.querySelector(`.view[data-view="${v}"]`); const h=sec&&sec.querySelector('.vh h2'); if(!h||h.querySelector('.maker')) return; const d=document.createElement('small'); d.className='maker'; d.textContent=`제작자 : 정보통신과 ${n} 주무관`; h.appendChild(d); });
 })();
