@@ -53,9 +53,14 @@ function quotaLocal(){ try{ const o=JSON.parse(localStorage.getItem('dsMvQuota')
 function quotaUse(){ try{ const d=new Date().toISOString().slice(0,10); localStorage.setItem('dsMvQuota',JSON.stringify({d,n:quotaLocal()+1})); }catch(e){} }
 
 /* ── 진행 표시 (미리보기 칸 위) ── */
-const STEPS=['대본 쓰기','장면 그림 4장','움직이는 영상 4개','자막·편집 합치기'];
+/* 진행 표시 — 실제 영상 제작 공정 이름으로 (기획~마스터링). 앞의 4단계(기획·시놉시스·대본·콘티)는 AI 대본 호출 한 번에 함께 이루어지므로 기다리는 동안 차례로 넘어간다 */
+const STEPS=[['기획','목적·대상·핵심 메시지 정리'],['시놉시스','30초 이야기 흐름 구성'],['대본','훅·장면별 자막 문구 쓰기'],['콘티','장면별 화면·카메라 움직임 설계'],
+  ['장면 원화','같은 화풍·같은 인물로 4컷 그리기'],['애니메이션','그림을 움직이는 영상으로'],['자막·편집','자막 입히고 장면 잇기'],['마스터링','군 CI 엔딩 · mp4 출력']];
 function prog(step,detail,t0){ const P=$('#mvProg'); if(step<0){ P.hidden=true; clearInterval(V._pt); return; } P.hidden=false;
-  const f=()=>{ const sec=t0?Math.round((Date.now()-t0)/1000):0; P.innerHTML=`<div class="spin"></div><b>🎬 AI가 영상을 만드는 중… ${sec}초</b><ol>${STEPS.map((s,i)=>`<li class="${i<step?'ok':i===step?'now':''}">${i<step?'✔':i===step?'●':'○'} ${s}${i===step&&detail?` <em>${detail}</em>`:''}</li>`).join('')}</ol><small>보통 2~4분 걸립니다\n그동안 다른 메뉴를 쓰셔도 됩니다</small>`; };
+  if(step===0){ V._ps0=Date.now(); } V._step=step;
+  const f=()=>{ const now=Date.now(), sec=t0?Math.round((now-t0)/1000):0;
+    let st=V._step; if(st<=3&&V._ps0) st=Math.min(3,Math.floor((now-V._ps0)/4500));   // 대본 기다리는 동안 기획→시놉시스→대본→콘티
+    P.innerHTML=`<div class="spin"></div><b>🎬 AI 제작팀이 영상을 만드는 중 <span class="mv-sec">${sec}초</span></b><ol class="mv-steps">${STEPS.map(([s,d],i)=>`<li class="${i<st?'ok':i===st?'now':''}"><span class="no">${i<st?'✔':String(i+1).padStart(2,'0')}</span><span class="nm"><span>${s}${i===st&&detail?` <em>${detail}</em>`:''}</span>${i===st?`<small>${d}</small>`:''}</span></li>`).join('')}</ol><small class="mv-tip">보통 2~4분 걸립니다\n그동안 다른 메뉴를 쓰셔도 됩니다</small>`; };
   f(); clearInterval(V._pt); V._pt=setInterval(f,1000); }
 
 /* ── ① 대본 ── */
@@ -189,7 +194,7 @@ async function make(){
     else if(online){ try{ const r=await fetch('/api/video',{method:'POST',headers:{'content-type':'application/json','x-access-code':code(),'x-admin-code':adc()},body:JSON.stringify({action:'start'})}); const j=await r.json();
         if(r.ok&&j.ticket){ ticket=j.ticket; if(!admin) quotaUse(); } else if(j.error==='mine') note+=`오늘 AI 영상 ${j.limit}편을 다 써서 그림에 움직임을 넣어 만들었습니다. `; else if(j.error==='limit') note+='오늘 달성On 전체 AI 영상 한도가 차서 그림에 움직임을 넣어 만들었습니다. '; else if(j.error==='nokey') note+='움직이는 영상 기능이 아직 연결되지 않아 그림에 움직임을 넣어 만들었습니다. '; else note+='움직이는 영상을 접수하지 못해 그림에 움직임을 넣어 만들었습니다. '; }catch(e){ note+='움직이는 영상을 접수하지 못했습니다. '; } }
     // ②→③ 장면마다 그림이 나오는 즉시 그 장면 영상을 맡긴다 (4장면 동시 진행 — 기다리는 시간 단축)
-    let ni=0, nc=0, failI=0, failC=0; const st=()=>prog(ni<4?1:2,ni<4?`${ni}/4`:`${nc}/4`,V._t0); st();
+    let ni=0, nc=0, failI=0, failC=0; const st=()=>prog(ni<4?4:5,ni<4?`${ni}/4`:`${nc}/4`,V._t0); st();
     V.imgs=[null,null,null,null]; V.clips=[null,null,null,null];
     await Promise.all(V.data.scenes.map(async (s,i)=>{
       let u=null; if(online){ try{ u=await cardJob(imgPrompt(V.data,s)); }catch(e){ failI++; } } ni++; st();
@@ -199,14 +204,14 @@ async function make(){
     if(failI) note+='일부 장면 그림을 만들지 못해 기본 사진으로 대신했습니다. ';
     if(ticket&&failC) note+=`움직이는 영상 ${failC}개를 만들지 못해 그 장면은 그림에 움직임을 넣었습니다. `;
     // ④ 합치기
-    prog(3,'',V._t0); await compose(); prog(-1);
+    prog(6,'',V._t0); await compose(); prog(-1);
     $('#mvMsg').textContent=(note||'완성됐습니다 — ')+'오른쪽에서 자막을 고치고 다시 합치거나 영상으로 저장하세요.';
     window.dsSave&&dsSave('movie',V.data.title||'홍보영상',[`[훅] ${V.data.hook.head} ${V.data.hook.sub||''}`,...V.data.scenes.map((x,i)=>`[장면${i+1}] ${x.big?x.big+' · ':''}${x.head} — ${x.sub||''}`),`[마무리] ${V.data.end.head} ${V.data.end.sub||''}`].join('\n'));
     if(S.stats) S.stats.gen++, window.dsHit&&dsHit('gen'); quotaShow();
   }catch(e){ prog(-1); $('#mvMsg').textContent='⚠ '+e.message; if(!V.data) $('#mvOut').hidden=true; }
   finally{ V.busy=false; $('#mvGo').disabled=false; $('#mvRemix').disabled=false; }
 }
-async function remix(){ if(!V.data||V.busy) return; V.busy=true; $('#mvRemix').disabled=true; V._t0=Date.now(); try{ prog(3,'',V._t0); await compose(); $('#mvMsg').textContent='고친 자막으로 다시 합쳤습니다.'; }catch(e){ $('#mvMsg').textContent='⚠ '+e.message; } finally{ prog(-1); V.busy=false; $('#mvRemix').disabled=false; } }
+async function remix(){ if(!V.data||V.busy) return; V.busy=true; $('#mvRemix').disabled=true; V._t0=Date.now(); try{ prog(6,'',V._t0); await compose(); $('#mvMsg').textContent='고친 자막으로 다시 합쳤습니다.'; }catch(e){ $('#mvMsg').textContent='⚠ '+e.message; } finally{ prog(-1); V.busy=false; $('#mvRemix').disabled=false; } }
 
 function init(){
   if($('#mvGo')._on) return; $('#mvGo')._on=1;

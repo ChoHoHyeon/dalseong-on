@@ -602,48 +602,48 @@
 
     <!-- 데이터 분석하기 (analyze.js · 숫자는 브라우저가 원본에서 직접 계산 · 모델에는 열 이름과 샘플 5행만) -->
     <section class="view" data-view="analyze">
-      <div class="vh"><h2>데이터 분석하기</h2><p>엑셀·CSV 파일을 올리면 AI가 볼 거리를 골라 표와 차트, 보고서에 넣을 해석 문장까지 만들어 줍니다.<br>보고 싶은 것을 한 줄로 물어도 되고, 숫자는 이 PC 브라우저가 원본에서 직접 계산합니다.</p></div>
+      <div class="vh"><h2>데이터 분석하기</h2><p>엑셀·CSV·한글·워드·PDF를 올리면 AI가 볼 거리 3가지를 골라 분석하고, 표·차트가 들어간 분석 결과 보고서를 써 줍니다.<br>숫자는 이 PC 브라우저가 원본에서 직접 계산하고, 보고서는 한글(hwpx) 파일로 내려받습니다.</p></div>
       <div class="card flowcard">
         <h4>이렇게 씁니다 <small>3단계면 끝납니다</small></h4>
         <ol class="flow3">
-          <li><span class="fnum">1</span><span class="fico" aria-hidden="true">📋</span><span class="ftx"><b>파일 올리기</b><small>엑셀·CSV 그대로 · 열 이름을 자동으로 읽어요</small></span></li>
+          <li><span class="fnum">1</span><span class="fico" aria-hidden="true">📋</span><span class="ftx"><b>파일 올리기</b><small>엑셀·CSV·한글·워드·PDF · 표를 자동으로 찾아요</small></span></li>
           <li class="farr" aria-hidden="true">→</li>
-          <li><span class="fnum">2</span><span class="fico" aria-hidden="true">📊</span><span class="ftx"><b>「분석하기」 누르기</b><small>AI가 볼 거리를 골라 바로 결과 · 한 줄로 물어도 돼요</small></span></li>
+          <li><span class="fnum">2</span><span class="fico" aria-hidden="true">📊</span><span class="ftx"><b>「분석하기」 누르기</b><small>AI가 분석 3가지 선정 · 표·차트·해석까지</small></span></li>
           <li class="farr" aria-hidden="true">→</li>
-          <li><span class="fnum">3</span><span class="fico" aria-hidden="true">📋</span><span class="ftx"><b>표·차트·해석 가져가기</b><small>복사해서 보고서에 바로 붙여넣기</small></span></li>
+          <li><span class="fnum">3</span><span class="fico" aria-hidden="true">📄</span><span class="ftx"><b>보고서 내려받기</b><small>표·차트가 들어간 한글(hwpx) 보고서</small></span></li>
         </ol>
       </div>
       <div class="card pcard">
-        <h4>데이터 분석하기 <small>xlsx · xls · csv (첫 번째 시트)</small></h4>
+        <h4>데이터 분석하기 <small>xlsx · csv · hwpx · docx · pdf · txt</small></h4>
         <div class="pcols">
         <fieldset class="pbox req-box">
           <legend>필수 입력</legend>
-          <div class="pfile"><label class="filebtn">📎 파일 추가<input type="file" id="anFile" accept=".xlsx,.xls,.csv"></label><span class="hint" id="anFileList">엑셀·CSV 파일을 올리거나 이 상자에 끌어다 놓으세요</span></div>
+          <div class="pfile"><label class="filebtn">📎 파일 추가<input type="file" id="anFile" multiple accept=".xlsx,.xls,.csv,.hwpx,.docx,.pdf,.txt,.md"></label><span class="hint" id="anFileList">파일을 올리거나 이 상자에 끌어다 놓으세요 (여러 개 가능)</span></div>
           <div id="anSum"></div>
           <div id="anAsk" hidden>
-            <label class="pfull"><span class="cap">보고 싶은 것 <small class="hint">비우면 AI가 골라서 보여 줍니다</small></span><input id="anQ" placeholder="예) 읍면별 접수건수 합계 / 월별 추이 / 민원종류별 평균 처리일수"></label>
+            <label class="pfull"><span class="cap">특히 보고 싶은 것 <small class="hint">비우면 AI가 알아서 3가지를 고릅니다</small></span><input id="anQ" placeholder="예) 읍면별 접수건수 합계 / 월별 추이 / 민원종류별 평균 처리일수"></label>
             <div class="an-chips" id="anChips"></div>
           </div>
         </fieldset>
         <fieldset class="pbox opt-box">
           <legend>이런 결과가 나와요</legend>
           <div class="an-ex">
-            <div class="ae-q">💬 읍면별 민원 접수건수 합계</div>
-            <div class="ae-chart"><div class="ae-bar"><span class="ae-l">화원읍</span><span class="ae-t"><i style="width:92%"></i></span><span class="ae-v">276</span></div><div class="ae-bar"><span class="ae-l">다사읍</span><span class="ae-t"><i style="width:84%"></i></span><span class="ae-v">252</span></div><div class="ae-bar"><span class="ae-l">논공읍</span><span class="ae-t"><i style="width:61%"></i></span><span class="ae-v">183</span></div><div class="ae-bar"><span class="ae-l">유가읍</span><span class="ae-t"><i style="width:55%"></i></span><span class="ae-v">165</span></div><div class="ae-bar"><span class="ae-l">현풍읍</span><span class="ae-t"><i style="width:47%"></i></span><span class="ae-v">141</span></div><div class="ae-bar"><span class="ae-l">옥포읍</span><span class="ae-t"><i style="width:38%"></i></span><span class="ae-v">114</span></div></div>
-            <p class="an-ex-ins"><b>해석</b> 화원읍 접수건수가 가장 많고, 상위 2개 읍(화원·다사)이 전체의 절반 이상(57%)을 차지합니다.</p>
+            <div class="ae-doc">
+              <b class="ae-dt">읍면별 민원 접수현황 분석 결과</b>
+              <span class="ae-sec">Ⅰ 분석 개요</span><span class="ae-sec">Ⅱ 분석 결과 <small>표·차트 3개</small></span>
+            </div>
+            <div class="ae-chart"><div class="ae-bar"><span class="ae-l">화원읍</span><span class="ae-t"><i style="width:92%"></i></span><span class="ae-v">276</span></div><div class="ae-bar"><span class="ae-l">다사읍</span><span class="ae-t"><i style="width:84%"></i></span><span class="ae-v">252</span></div><div class="ae-bar"><span class="ae-l">논공읍</span><span class="ae-t"><i style="width:61%"></i></span><span class="ae-v">183</span></div><div class="ae-bar"><span class="ae-l">유가읍</span><span class="ae-t"><i style="width:55%"></i></span><span class="ae-v">165</span></div></div>
+            <p class="an-ex-ins"><b>○</b> 화원읍이 276건으로 가장 많고, 상위 2개 읍이 전체의 57%를 차지함</p>
+            <div class="ae-doc"><span class="ae-sec">Ⅲ 시사점 및 향후 조치</span><span class="ae-hw">📄 한글(hwpx) 보고서</span></div>
           </div>
         </fieldset>
         </div>
         <div class="pact"><button id="anGo" class="p">📊 분석하기</button><button type="button" id="anSample">📎 샘플 파일 업로드하기</button><button id="anReset">비우기</button><span class="hint" id="anMsg"></span></div>
       </div>
       <div class="card pout" id="anOut" hidden>
-        <h4>분석 결과 <small>숫자는 브라우저가 원본에서 직접 계산</small></h4>
-        <div class="an-wrap">
-          <div><div class="an-stage"><canvas id="anChart"></canvas></div>
-            <div class="pact" style="margin-top:8px"><button id="anPng" class="p">🖼 차트 PNG</button><label class="an-type">차트<select id="anType" class="psel"><option value="bar">막대</option><option value="line">선</option><option value="pie">원</option></select></label></div></div>
-          <div><div class="an-ins"><b>해석</b><p id="anInsight"></p><button id="anCopyS">문장 복사</button></div>
-            <div id="anTable" class="an-tblwrap"></div><div class="pact" style="margin-top:6px"><button id="anCopyT">표 복사 (엑셀·한글용)</button></div></div>
-        </div>
+        <h4>분석 결과 보고서 <small id="anTotal"></small></h4>
+        <div class="an-save"><button type="button" id="anHwpx" class="p">📄 한글 파일로 내려받기 <small>hwpx · 표·차트 포함</small></button><button type="button" id="anCopyR">📋 보고서 내용 복사</button><span class="hint">숫자는 원본에서 직접 계산 · 문장은 AI 초안이니 검토 후 사용</span></div>
+        <div id="anDoc" class="an-doc"></div>
       </div>
     </section>
 

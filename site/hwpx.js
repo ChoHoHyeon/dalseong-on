@@ -118,6 +118,37 @@ window.DalseongHwpx = (function(){
       L.splice(0,1,secP); const headNoLogo=TPL.head;
       opts.__law=L.join(''); opts.__head=headNoLogo; opts.answer=(opts.lines||[]).join('\n');
     }
+    if(opts.blocks){
+      /* 분석 보고서 등: 문단 + 표(hp:tbl) + 그림(hp:pic, 차트 PNG) 을 섞어 쓰는 서식
+         blocks: [{k:'sec'|'sq'|'cir'|'dash'|'dot'|'note'|'arrow'|'blank', t}] | {tbl:{head:[...], rows:[[...]], widths?:[비율]}} | {img:{data:Uint8Array(PNG), w:px, h:px}} */
+      const hdr0=new TextDecoder().decode(b64(TPL.files['Contents/header.xml']));
+      const ids=k=>Math.max(...[...hdr0.matchAll(new RegExp('<hh:'+k+' id="(\\d+)"','g'))].map(m=>+m[1]))+1;
+      const cBase=(hdr0.match(/<hh:charPr id="25"[\s\S]*?<\/hh:charPr>/)||[])[0];
+      const pBase=(hdr0.match(/<hh:paraPr id="0"[\s\S]*?<\/hh:paraPr>/)||[])[0];
+      const c0=ids('charPr'), p0=ids('paraPr'), f0=ids('borderFill');
+      const mkC=(id,bold)=>cBase.replace(/id="25"/,`id="${id}"`).replace(/height="\d+"/,'height="1100"').replace(/<hh:bold\/>/g,'').replace('<hh:underline',bold?'<hh:bold/><hh:underline':'<hh:underline');
+      const mkP=(id,al)=>pBase.replace(/id="0"/,`id="${id}"`).replace(/horizontal="[A-Z]+"/,`horizontal="${al}"`).replace(/<hh:lineSpacing type="PERCENT" value="\d+"/g,'<hh:lineSpacing type="PERCENT" value="130"');
+      const line=w=>`<hh:leftBorder type="SOLID" width="${w}" color="#000000"/><hh:rightBorder type="SOLID" width="${w}" color="#000000"/><hh:topBorder type="SOLID" width="${w}" color="#000000"/><hh:bottomBorder type="SOLID" width="${w}" color="#000000"/>`;
+      const mkF=(id,fill)=>`<hh:borderFill id="${id}" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0"><hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>${line('0.12 mm')}<hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>${fill?`<hc:fillBrush><hc:winBrush faceColor="${fill}" hatchColor="#999999" alpha="0"/></hc:fillBrush>`:''}</hh:borderFill>`;
+      const C={n:c0,b:c0+1}, PC={c:p0,l:p0+1,r:p0+2}, BF={n:f0,h:f0+1};
+      opts.__hdr=hdr0.replace(/<hh:charProperties itemCnt="(\d+)">/,(m,n)=>`<hh:charProperties itemCnt="${+n+2}">`).replace('</hh:charProperties>',mkC(C.n,0)+mkC(C.b,1)+'</hh:charProperties>')
+        .replace(/<hh:paraProperties itemCnt="(\d+)">/,(m,n)=>`<hh:paraProperties itemCnt="${+n+3}">`).replace('</hh:paraProperties>',mkP(PC.c,'CENTER')+mkP(PC.l,'LEFT')+mkP(PC.r,'RIGHT')+'</hh:paraProperties>')
+        .replace(/<hh:borderFills itemCnt="(\d+)">/,(m,n)=>`<hh:borderFills itemCnt="${+n+2}">`).replace('</hh:borderFills>',mkF(BF.n,'')+mkF(BF.h,'#D9D9D9')+'</hh:borderFills>');
+      const NS='xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph"';
+      let uid=1900000000; const TW=46000;
+      const tbl=T=>{ const rows=[T.head,...T.rows]; const nc=T.head.length; const wr=T.widths&&T.widths.length===nc?T.widths:T.head.map((h,j)=>j?1:1.6); const ws=wr.reduce((a,b)=>a+b,0);
+        const cw=wr.map(w=>Math.round(TW*w/ws)); const RH=1900;
+        const tr=rows.map((r,i)=>'<hp:tr>'+r.map((v,j)=>{ const hd=i===0; const num=!hd&&j>0&&/^[-+]?[\d,.]+%?$/.test(String(v).trim());
+          return `<hp:tc name="" header="${hd?1:0}" hasMargin="0" protect="0" editable="0" dirty="0" borderFillIDRef="${hd?BF.h:BF.n}"><hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0"><hp:p id="2147483648" paraPrIDRef="${hd?PC.c:num?PC.r:j?PC.c:PC.l}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="${hd?C.b:C.n}"><hp:t>${esc(v)}</hp:t></hp:run></hp:p></hp:subList><hp:cellAddr colAddr="${j}" rowAddr="${i}"/><hp:cellSpan colSpan="1" rowSpan="1"/><hp:cellSz width="${cw[j]}" height="${RH}"/><hp:cellMargin left="283" right="283" top="141" bottom="141"/></hp:tc>`; }).join('')+'</hp:tr>').join('');
+        return `<hp:p ${NS} id="2147483648" paraPrIDRef="${PC.c}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="${C.n}"><hp:tbl id="${uid++}" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="CELL" repeatHeader="1" rowCnt="${rows.length}" colCnt="${nc}" cellSpacing="0" borderFillIDRef="${BF.n}" noAdjust="0"><hp:sz width="${cw.reduce((a,b)=>a+b,0)}" widthRelTo="ABSOLUTE" height="${RH*rows.length}" heightRelTo="ABSOLUTE" protect="0"/><hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/><hp:outMargin left="0" right="0" top="0" bottom="0"/><hp:inMargin left="141" right="141" top="141" bottom="141"/>${tr}</hp:tbl><hp:t/></hp:run></hp:p>`; };
+      const bins=[]; const pic=I=>{ const n=bins.length+1, id='anImg'+n; bins.push({id,href:`BinData/${id}.png`,data:I.data});
+        const OW=I.w*75, OH=I.h*75, CW=Math.min(TW,OW), CH=Math.round(OH*CW/OW), sx=(CW/OW).toFixed(6), sy=(CH/OH).toFixed(6);
+        return `<hp:p ${NS} id="2147483648" paraPrIDRef="${PC.c}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="${C.n}"><hp:pic id="${uid++}" zOrder="${n}" numberingType="PICTURE" textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" href="" groupLevel="0" instid="${uid++}" reverse="0"><hp:offset x="0" y="0"/><hp:orgSz width="${OW}" height="${OH}"/><hp:curSz width="${CW}" height="${CH}"/><hp:flip horizontal="0" vertical="0"/><hp:rotationInfo angle="0" centerX="${CW>>1}" centerY="${CH>>1}" rotateimage="1"/><hp:renderingInfo><hc:transMatrix e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/><hc:scaMatrix e1="${sx}" e2="0" e3="0" e4="0" e5="${sy}" e6="0"/><hc:rotMatrix e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/></hp:renderingInfo><hp:imgRect><hc:pt0 x="0" y="0"/><hc:pt1 x="${OW}" y="0"/><hc:pt2 x="${OW}" y="${OH}"/><hc:pt3 x="0" y="${OH}"/></hp:imgRect><hp:imgClip left="0" right="${OW}" top="0" bottom="${OH}"/><hp:inMargin left="0" right="0" top="0" bottom="0"/><hp:imgDim dimwidth="${OW}" dimheight="${OH}"/><hc:img binaryItemIDRef="${id}" bright="0" contrast="0" effect="REAL_PIC" alpha="0"/><hp:effects/><hp:sz width="${CW}" widthRelTo="ABSOLUTE" height="${CH}" heightRelTo="ABSOLUTE" protect="0"/><hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/><hp:outMargin left="0" right="0" top="0" bottom="0"/></hp:pic><hp:t/></hp:run></hp:p>`; };
+      const L=[P('title',opts.title),P('sub',opts.sub||''),P('date',opts.date||'')];
+      opts.blocks.forEach(b=>{ if(!b) return; if(b.tbl) L.push(tbl(b.tbl)); else if(b.img) L.push(pic(b.img)); else if(TPL.para[b.k]) L.push(P(b.k,b.t||'')); });
+      opts.__law=L.join(''); opts.__bins=bins;
+      if(opts.answer==null) opts.answer=opts.blocks.filter(b=>b&&b.t).map(b=>b.t).join('\n');
+    }
     if(!opts.__law){
     paras.push({k:'title',t:opts.title}); paras.push({k:'sub',t:opts.sub||''}); paras.push({k:'date',t:opts.date||''});
     if(kind==='free'){
@@ -157,10 +188,12 @@ window.DalseongHwpx = (function(){
       let data=(k==='Contents/header.xml'&&opts.__hdr)?new TextEncoder().encode(opts.__hdr):b64(v);
       if(k==='Contents/content.hpf'){
         let s=new TextDecoder().decode(data).replace(/<opf:title>.*?<\/opf:title>/,'<opf:title>'+esc(opts.title)+'</opf:title>');
+        if(opts.__bins?.length) s=s.replace('</opf:manifest>',opts.__bins.map(b=>`<opf:item id="${b.id}" href="${b.href}" media-type="image/png" isEmbeded="1"/>`).join('')+'</opf:manifest>');
         data=new TextEncoder().encode(s);
       }
       zip.file(k,data,{compression:'DEFLATE',createFolders:false});
     }
+    (opts.__bins||[]).forEach(b=>zip.file(b.href,b.data,{compression:'STORE',createFolders:false}));
     zip.file('Contents/section0.xml', new TextEncoder().encode(section), {compression:'DEFLATE',createFolders:false});
     zip.file('Preview/PrvText.txt', new TextEncoder().encode(opts.title+'\n'+String(opts.answer||'').slice(0,800)), {compression:'DEFLATE',createFolders:false});
     const blob = await zip.generateAsync({type:'blob', mimeType:'application/hwp+zip', platform:'DOS'});
