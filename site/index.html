@@ -76,6 +76,22 @@
         <div><i>2</i><b>파일 올리거나 몇 줄 적기</b><small>녹음·PDF·엑셀을 올리거나 요지만 · 「예시로 채우기」로 먼저 체험</small></div>
         <div><i>3</i><b>결과 확인하고 가져가기</b><small>복사 · 한글 파일 · PNG · 엑셀 — 마지막 확인은 담당자가</small></div>
       </div>
+      <div class="card gd-ai"><h4>AI를 쓰는 곳 · 안 쓰는 곳 <small>어떤 AI가 무슨 일을 하는지</small></h4>
+        <div class="gd-ai-models"><span class="m llm">🧠 글 AI(LLM) <b>Claude Sonnet 4.5</b> · Anthropic</span><span class="m img">🎨 이미지 AI <b>GPT Image</b> · OpenAI</span><span class="m vid">🎞 영상 AI <b>Wan 2.2</b> · fal.ai</span><span class="m loc">🎙 음성인식 <b>Whisper</b> · 이 PC 브라우저 안</span></div>
+        <div class="gd-ai-wrap"><table class="gd-ai-tbl"><thead><tr><th>메뉴</th><th>AI가 하는 일</th><th>AI 없이 (규칙 · PC 안)</th></tr></thead><tbody>
+          <tr><td>AI에게 물어보기</td><td><i class="llm">글 AI</i> 찾은 조례 조문을 읽고 근거 번호를 붙여 답변</td><td>조문 검색(색인)</td></tr>
+          <tr><td>조례·지침 초안</td><td><i class="llm">글 AI</i> 찾을 법령을 정하고, 상위법·타 지자체 조례를 읽고 조문 작성</td><td>국가법령정보 Open API 조회</td></tr>
+          <tr><td>회의록</td><td><i class="llm">글 AI</i> 안건·결정·조치사항 정리</td><td class="ok">녹음 → 글 변환(Whisper)은 PC 안에서</td></tr>
+          <tr><td>보도자료</td><td><i class="llm">글 AI</i> 제목·부제·본문을 보도자료 문체로</td><td>한글(hwpx) 서식 출력</td></tr>
+          <tr><td>카드뉴스 · 현수막</td><td><i class="llm">글 AI</i> 문구·구성·디자인 결정 · <i class="img">이미지 AI</i> 그림·배경</td><td>시안 편집 · 저장</td></tr>
+          <tr><td>홍보영상</td><td><i class="llm">글 AI</i> 기획·대본·콘티 · <i class="img">이미지 AI</i> 장면 원화 · <i class="vid">영상 AI</i> 움직이는 영상</td><td>자막·편집·mp4 출력(브라우저)</td></tr>
+          <tr><td>경조사 카드</td><td><i class="img">이미지 AI</i> 사진으로 카드 디자인 (선택)</td><td>틀·문구 배치</td></tr>
+          <tr><td>데이터 분석</td><td><i class="llm">글 AI</i> 분석 방법 선정 · 보고서 문장</td><td class="ok">숫자 계산은 브라우저가 원본에서 직접</td></tr>
+          <tr><td>급량비 · 출장비</td><td class="no">AI 사용 안 함 — 돈 계산은 틀리면 안 되므로</td><td class="ok">지급 기준 규칙 판정, PDF는 PC 안</td></tr>
+          <tr><td>개인정보 가리기</td><td class="no">AI 사용 안 함</td><td class="ok">규칙으로 찾아 가림, 파일 전송 없음</td></tr>
+        </tbody></table></div>
+        <p class="hint" style="margin-top:8px">※ AI에는 필요한 글만 보냅니다(질문·요지·집계 결과 등). API 키는 서버에만 있고, AI 모델은 기관 서버 LLM이나 범정부 AI 공통기반으로 바꿀 수 있는 구조입니다.</p>
+      </div>
       <div class="card" id="gdFaqCard"><h4>자주 묻는 질문 <small>누르면 펼쳐져요</small></h4><div class="gd-faq">
           <details><summary>내 자료가 밖으로 나가나요?</summary><p><b>급량비·출장비</b>는 이 PC 안에서만 처리돼요. <b>회의록·데이터 분석</b>은 녹음·엑셀 원본은 PC에 두고 필요한 글만 AI로 보내고, <b>보도자료·카드뉴스 등 글쓰기 메뉴</b>는 입력한 글이 AI로 가요. 비공개·개인정보는 넣지 마세요.</p></details>
           
