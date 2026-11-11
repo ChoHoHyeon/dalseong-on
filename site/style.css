@@ -2387,3 +2387,15 @@ body[data-adro="1"] [data-view="model"] input,body[data-adro="1"] [data-view="mo
 .mk-col.keep{opacity:.8} .mk-col.keep em{background:#e9edf3;color:var(--mut)}
 .mk-col:hover{transform:translateY(-1px);border-color:#a9bfe6}
 .mk-more{padding:7px 12px;border-radius:999px;border:1px dashed #a9bfe6;background:transparent;color:#1d4fd8;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+/* 데이터 분석 — 새 구성 */
+.an-ex{display:flex;flex-direction:column;gap:10px}
+.an-ex .ae-chart{display:flex;flex-direction:column;gap:7px}
+.an-ex-ins{font-size:12.5px;line-height:1.6;margin:0;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.an-ex-ins b{color:#1d4fd8;margin-right:6px}
+[data-view="analyze"] #anAsk{margin-top:10px}
+[data-view="analyze"] #anSum .an-cols{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+/* 만든 사람 표시 — 눈에 띄지 않게 */
+.view>.maker{margin:18px 4px 2px auto;text-align:right;font-size:11px;color:var(--mut);opacity:.55;letter-spacing:-.1px}
+.view>.maker:hover{opacity:.9}
+.vh h2 .maker{margin-left:10px;font-size:12px;font-weight:500;color:var(--mut);opacity:.6;vertical-align:middle;letter-spacing:0}
+.vh h2 .maker::before{content:"🛠 ";font-size:11px}

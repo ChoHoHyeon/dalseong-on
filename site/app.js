@@ -196,9 +196,9 @@ const HOME_MENU=[
   {mode:'staff',view:'family', icon:'💐', label:'경조사 카드\n만들기', ready:1},
   // ── 알리기 · 홍보물 만들기
   {mode:'staff',view:'press',  icon:'📰', label:'보도자료\n작성하기', cls:'sep', ready:1},
-  {mode:'staff',view:'banner', icon:'🎏', label:'홍보 현수막\n제작하기', ready:1},
+  {mode:'staff',view:'banner', icon:'🎏', label:'홍보 현수막\n만들기', ready:1},
   // (제외) 인포그래픽 제작하기 — 메뉴 삭제
-  {mode:'staff',view:'card',   icon:'📱', label:'카드뉴스\n제작하기', ready:1},
+  {mode:'staff',view:'card',   icon:'📱', label:'카드뉴스\n만들기', ready:1},
   {mode:'staff',view:'movie',  icon:'🎬', label:'홍보영상\n만들기', ready:1},
   // (제외) 안내방송 만들기 — 메뉴 삭제
   // ── 찾아보기 · 나눔
@@ -1157,4 +1157,9 @@ function loadTrip(){
     const dt=new DataTransfer(); (t.inp.multiple?ok:ok.slice(0,1)).forEach(f=>dt.items.add(f)); t.inp.files=dt.files; t.inp.dispatchEvent(new Event('change',{bubbles:true})); });
   window.addEventListener('dragover',e=>{ if([...(e.dataTransfer?.types||[])].includes('Files')) e.preventDefault(); });   /* 엉뚱한 곳에 놓아도 브라우저가 파일을 열어 버리지 않게 */
   window.addEventListener('drop',e=>{ if(!e.defaultPrevented&&e.dataTransfer?.files?.length) e.preventDefault(); });
+})();
+/* 메뉴별 만든 사람 — 화면 제목 옆에 작고 흐리게 */
+(function(){
+  const MK={rule:'김원규',minutes:'김원규',meal:'김광한',trip:'김광한',family:'김광한',press:'김경민',banner:'김경민',card:'김경민',movie:'김경민',mask:'김규태',analyze:'김규태',share:'김규태'};
+  Object.entries(MK).forEach(([v,n])=>{ const sec=document.querySelector(`.view[data-view="${v}"]`); const h=sec&&sec.querySelector('.vh h2'); if(!h||h.querySelector('.maker')) return; const d=document.createElement('small'); d.className='maker'; d.textContent=`${n} 주무관`; d.title=`만든 사람 · 정보통신과 ${n} 주무관`; h.appendChild(d); });
 })();
