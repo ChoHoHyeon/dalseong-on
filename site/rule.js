@@ -176,7 +176,7 @@ function render(o,mode){
         ${T?`<div class="rp-sec">신구조문대비표</div>${T}<div class="pact" style="margin-top:8px"><button id="ruCopyT">대비표 표로 복사</button></div>`:''}
       </div></details>`;
   const ct=$('#ruCopyT'); if(ct) ct.onclick=()=>copyTable(o);
-  $('#ruleOut').hidden=false; window.dsSave&&dsSave('rule',o.title,lawText(o,mode)); $('#ruleOut').scrollIntoView({behavior:'smooth',block:'start'});
+  $('#ruleOut').hidden=false; window.dsSave&&dsSave('rule',o.title,lawText(o,mode)); setTimeout(()=>hwpx(true),300); $('#ruleOut').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function lawText(o,mode){ return [o.title,'',...lawLines(o,mode),'','부      칙',o.buchik].join('\n'); }
 function plainText(o){ const L=[o.title,'','1. 이유',o.reason]; if(o.main.length){L.push('','2. 주요 내용',...o.main);} if(o.body.length){L.push('','조문',...o.body);} if(o.table.length){L.push('','신구조문대비표'); o.table.forEach(r=>L.push(`[${r.art}]`,'현행:',...r.old,'개정안:',...r.neu,''));} L.push('부칙',o.buchik); if(o.check.length) L.push('','※ 확인 요청',...o.check.map(c=>'- '+c)); return L.join('\n'); }
@@ -368,13 +368,14 @@ async function make(){
   finally{ U.busy=false; $('#ruGo').disabled=false; }
 }
 
-async function hwpx(){
+async function hwpx(silent){
   if(!U.out) return; const o=U.out;
   try{
     const blob=await DalseongHwpx.build({kind:'law', title:o.title, lines:[...lawLines(o,U.mode),'','부      칙',...o.buchik.split('\n')]});
     const nm=`${o.title.replace(/[\\/:*?"<>|]/g,'').slice(0,40)}_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.hwpx`;
+    if(silent===true){ window.dsArt&&dsArt('rule',o.title,[{name:nm,blob}]); return; }
     DalseongHwpx.download(blob,nm); if(window.S&&S.stats) S.stats.hwpx++; toast?.('한글 파일 생성: '+nm);
-  }catch(e){ toast?.('한글 파일 생성 실패: '+e.message); }
+  }catch(e){ if(silent!==true) toast?.('한글 파일 생성 실패: '+e.message); }
 }
 
 /* 고치기: 달성군 조례 찾기 → 고르면 현행 조문 불러오기 */

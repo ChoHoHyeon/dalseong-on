@@ -213,7 +213,9 @@ const MINOR=[
 ];
 const ON_VIEWS=['on','doc'];   // 이 화면들에서는 달성On 전용 메뉴
 const ALIAS={qa:'on',flow:'guide',news:'guide',contact:'guide',update:'stats',model:'stats',bugs:'stats'};
-const COMPOSITE={guide:['guide','news','contact'],stats:['stats','update','model','bugs']};
+const COMPOSITE={guide:['guide','news','contact'],stats:['admtabs','stats','bugs','update','model']};
+/* 관리자 화면 — 탭으로 한 번에 한 부분만 */
+function admTab(t){ S.admTab=t=t||S.admTab||'stats'; ['stats','bugs','update','model'].forEach(v=>{ const el=document.querySelector(`.view[data-view="${v}"]`); if(el) el.style.display=v===t?'':'none'; }); $$('#admTabs button').forEach(b=>{ b.classList.toggle('on',b.dataset.t===t); b.onclick=()=>admTab(b.dataset.t); }); const ac=document.querySelector('.ad-code'); if(ac) ac.hidden=!!adCode(); }
 function renderTabs(){}
 function loadRecent(){ try{ return JSON.parse(localStorage.getItem('dOnRecent')||'[]'); }catch(e){ return []; } }
 function pushRecent(q){ const r=loadRecent().filter(x=>x!==q); r.unshift(q); localStorage.setItem('dOnRecent',JSON.stringify(r.slice(0,12))); }
@@ -261,7 +263,7 @@ document.addEventListener('click',e=>{ const b=e.target.closest('[data-chain]');
     toast('보도자료 내용을 채워 두었어요 — 버튼만 누르세요'); },250); });
 function bootDone(){ const b=document.getElementById('boot'); if(!b||b._d) return; b._d=1; b.classList.add('out'); setTimeout(()=>b.remove(),450); }
 const AD_VIEWS=['stats','update','model','bugs'];
-function go(v){ if(AD_VIEWS.includes(v)&&!S.adminOk&&!S.adminRO) return adminGate(); setTimeout(bootDone,60); const target=ALIAS[v]; const top=target||v; if(HOME_MENU.some(n=>n.view===top&&n.ready&&top!=='on')&&!HIT_SEEN[top]){ HIT_SEEN[top]=1; dsHit('use',top); } S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ if($('#guideChips')) $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); renderGuideFeat(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='rule'&&window.RULEDRAFT) RULEDRAFT.init(); if(top==='minutes'&&window.MINUTES) MINUTES.init(); if(top==='banner'&&window.BANNER) BANNER.init(); if(top==='card'&&window.CARDNEWS) CARDNEWS.init(); if(top==='movie'&&window.MOVIE) MOVIE.init(); if(top==='share'&&window.SHARE) SHARE.init(); if(top==='analyze'&&window.ANALYZE) ANALYZE.init(); if(top==='mask'&&window.MASK) MASK.init(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='trip') loadTrip(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(['on','data','lib','stats','doc'].includes(top)){ if(top==='on'&&!S.idx) idxNote(true); ensureIndex().then(()=>idxNote(false)).catch(()=>idxNote(false,true)); } if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
+function go(v){ if(AD_VIEWS.includes(v)&&!S.adminOk&&!S.adminRO) return adminGate(); setTimeout(bootDone,60); const target=ALIAS[v]; const top=target||v; if(HOME_MENU.some(n=>n.view===top&&n.ready&&top!=='on')&&!HIT_SEEN[top]){ HIT_SEEN[top]=1; dsHit('use',top); } S.view=top; document.body.dataset.view=top; const show=COMPOSITE[top]||[top]; $$('.view').forEach(s=>s.classList.toggle('on',show.includes(s.dataset.view))); $('#main').classList.toggle('composite',!!COMPOSITE[top]); renderNav(); if(top==='data') renderData(); if(top==='home') renderHome(); if(top==='guide'){ if($('#guideChips')) $('#guideChips').innerHTML=chipsHtml(CHIPS.staff,8); renderNews(); renderVideoList(); renderGuideFeat(); } show.forEach(mountGuideBtn); if(top==='stats'){ renderStats(); updPill(); loadBugs(); admTab(); } if(top==='doc') renderPaper(); if(top==='press') initPress(); if(top==='rule'&&window.RULEDRAFT) RULEDRAFT.init(); if(top==='minutes'&&window.MINUTES) MINUTES.init(); if(top==='banner'&&window.BANNER) BANNER.init(); if(top==='card'&&window.CARDNEWS) CARDNEWS.init(); if(top==='movie'&&window.MOVIE) MOVIE.init(); if(top==='share'&&window.SHARE) SHARE.init(); if(top==='analyze'&&window.ANALYZE) ANALYZE.init(); if(top==='mask'&&window.MASK) MASK.init(); if(top==='meal'&&window.MEAL) MEAL.init(); if(top==='trip') loadTrip(); if(top==='family'&&window.FAMILY) FAMILY.init(); if(['on','data','lib','stats','doc'].includes(top)){ if(top==='on'&&!S.idx) idxNote(true); ensureIndex().then(()=>idxNote(false)).catch(()=>idxNote(false,true)); } if(top==='on'){ $('#qaChips').innerHTML=chipsHtml(CHIPS.staff,3); setTimeout(()=>$('#q').focus(),50); } const el=target?document.querySelector(`.view[data-view="${v}"]`):null; if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),30); else $('#main').scrollTop=0; }
 
 /* ── 홈 대시보드 ── */
 document.addEventListener('click',e=>{ if(e.target.id==='rcClose'||e.target.id==='rcModal'){ $('#rcModal').hidden=true; return; } const g=e.target.closest('[data-go]'); if(!g) return; if(g.tagName==='A') e.preventDefault(); const [m,v]=g.dataset.go.split(':'); setMode(m); go(v); });
@@ -452,19 +454,38 @@ const MNAME={minutes:'회의록',press:'보도자료',card:'카드뉴스',meal:'
 /* 최근 작업 — 이 브라우저(localStorage)에만 저장. 서버로 보내지 않는다 */
 const RC_KEY='dsOn.recent';
 const rcGet=()=>{ try{ return JSON.parse(localStorage.getItem(RC_KEY)||'[]'); }catch(e){ return []; } };
-window.dsSave=(view,title,text)=>{ try{ const L=rcGet().filter(x=>!(x.view===view&&x.title===title)); L.unshift({id:Date.now().toString(36),view,title:String(title||'').slice(0,60),text:String(text||'').slice(0,8000),at:Date.now()}); localStorage.setItem(RC_KEY,JSON.stringify(L.slice(0,8))); }catch(e){} };
-const ICON={minutes:'🎙',press:'📰',card:'📱',banner:'🎏',movie:'🎬',analyze:'📊',mask:'🛡️',rule:'⚖️'};
+window.dsSave=(view,title,text)=>{ try{ const L=rcGet().filter(x=>!(x.view===view&&x.title===title)); L.unshift({id:Date.now().toString(36),view,title:String(title||'').slice(0,60),text:String(text||'').slice(0,8000),at:Date.now()}); localStorage.setItem(RC_KEY,JSON.stringify(L.slice(0,8))); setTimeout(artPrune,500); }catch(e){} };
+const ICON={minutes:'🎙',press:'📰',card:'📱',banner:'🎏',movie:'🎬',analyze:'📊',mask:'🛡️',rule:'⚖️',family:'💐'};
+/* ── 내 최근 작업 — 결과 파일(영상·카드 이미지·시안·보고서)도 이 PC 브라우저 안(IndexedDB)에 함께 보관 ──
+   · 서버로 보내지 않는다. 최근 작업 8건과 같이 움직이고, 목록에서 빠지면 파일도 지운다.
+   · dsArt(view,title,[{name,blob}]) — 같은 view·title의 최근 작업에 붙인다(다시 만들면 덮어씀) */
+const ART_DB='dsOn.art';
+function artDb(){ return new Promise((ok,no)=>{ try{ const r=indexedDB.open(ART_DB,1); r.onupgradeneeded=()=>r.result.createObjectStore('a'); r.onsuccess=()=>ok(r.result); r.onerror=()=>no(r.error); }catch(e){ no(e); } }); }
+async function artTx(mode,fn){ const db=await artDb(); return new Promise((ok,no)=>{ const tx=db.transaction('a',mode), st=tx.objectStore('a'); const r=fn(st); tx.oncomplete=()=>ok(r&&r.result); tx.onerror=()=>no(tx.error); }); }
+const artGet=id=>artTx('readonly',st=>st.get(id)).catch(()=>null);
+async function artPrune(){ try{ const keep=new Set(rcGet().map(x=>x.id)); const keys=await artTx('readonly',st=>st.getAllKeys()); for(const k of keys||[]) if(!keep.has(k)) await artTx('readwrite',st=>st.delete(k)); }catch(e){} }
+window.dsArt=async(view,title,files)=>{ try{ if(!files||!files.length) return; const t=String(title||'').slice(0,60); const L=rcGet(); const x=L.find(y=>y.view===view&&y.title===t); if(!x) return;
+    await artTx('readwrite',st=>st.put(files.filter(f=>f&&f.blob).map(f=>({name:f.name,type:f.blob.type,blob:f.blob})),x.id));
+    x.art=files.length; localStorage.setItem(RC_KEY,JSON.stringify(L)); artPrune(); }catch(e){ console.warn('dsArt',e); } };
+const canvasBlob=c=>new Promise(ok=>c.toBlob(ok,'image/png'));
+window.dsCanvasBlob=canvasBlob;
+async function rcArtShow(x){ const box=$('#rcArt'); box.innerHTML=''; box.hidden=true; if(!x.art) return;
+  const files=await artGet(x.id); if(!files||!files.length){ box.hidden=false; box.innerHTML='<p class="hint">결과 파일이 이 PC에서 지워졌습니다 (브라우저 기록 삭제 등)</p>'; return; }
+  box.hidden=false; const urls=files.map(f=>URL.createObjectURL(f.blob));
+  box.innerHTML=`<div class="rc-art">${files.map((f,i)=>/^video/.test(f.type)?`<video src="${urls[i]}" controls playsinline></video>`:/^image/.test(f.type)?`<a href="${urls[i]}" target="_blank" rel="noopener" title="새 창에서 크게 보기"><img src="${urls[i]}" alt="${esc(f.name)}"></a>`:`<a class="rc-file" href="${urls[i]}" download="${esc(f.name)}" title="${esc(f.name)}"><i>📄</i><b>${/\.hwpx$/i.test(f.name)?'한글 파일':'파일'}</b><small>${esc(f.name)}</small></a>`).join('')}</div>
+    <div class="rc-dl">${files.map((f,i)=>`<a href="${urls[i]}" download="${esc(f.name)}">⬇ ${esc(f.name.length>28?f.name.slice(0,26)+'…':f.name)}</a>`).join('')}</div>`; }
 const ago=t=>{ const m=Math.round((Date.now()-t)/6e4); return m<1?'방금':m<60?m+'분 전':m<1440?Math.round(m/60)+'시간 전':Math.round(m/1440)+'일 전'; };
 function rcOpen(x){
-  $('#rcTitle').textContent=x.title; $('#rcMeta').textContent=`${MNAME[x.view]||''} · ${new Date(x.at).toLocaleString('ko-KR')}`; $('#rcText').textContent=x.text; $('#rcModal').hidden=false;
+  $('#rcTitle').textContent=x.title; $('#rcMeta').textContent=`${MNAME[x.view]||''} · ${new Date(x.at).toLocaleString('ko-KR')}`; $('#rcText').textContent=x.text; $('#rcModal').hidden=false; rcArtShow(x);
   $('#rcCopy').hidden=false; $('#rcGo').hidden=false; $('#rcDel').hidden=false;
   $('#rcCopy').onclick=()=>{ navigator.clipboard.writeText(x.text); toast('복사했습니다'); };
   $('#rcGo').onclick=()=>{ $('#rcModal').hidden=true; setMode('staff'); go(x.view); };
-  $('#rcDel').onclick=()=>{ try{ localStorage.setItem(RC_KEY,JSON.stringify(rcGet().filter(y=>y.id!==x.id))); }catch(e){} $('#rcModal').hidden=true; if(S.view==='home') renderNow(); };
+  $('#rcDel').onclick=()=>{ try{ localStorage.setItem(RC_KEY,JSON.stringify(rcGet().filter(y=>y.id!==x.id))); }catch(e){} artPrune(); $('#rcModal').hidden=true; if(S.view==='home') renderNow(); };
 }
 function rcList(){
+  $('#rcArt').hidden=true; $('#rcArt').innerHTML='';
   const L=rcGet(); $('#rcTitle').textContent='🗂 내 최근 작업'; $('#rcMeta').textContent=`이 PC에만 저장 · 최근 ${L.length}건`;
-  $('#rcText').innerHTML=L.map(x=>`<button class="rc-li" data-rc="${x.id}"><i>${ICON[x.view]||'📝'}</i><b>${esc(x.title)}</b><small>${MNAME[x.view]||''} · ${ago(x.at)}</small></button>`).join('');
+  $('#rcText').innerHTML=L.map(x=>`<button class="rc-li" data-rc="${x.id}"><i>${ICON[x.view]||'📝'}</i><b>${esc(x.title)}${x.art?' <em class="rc-has">결과 파일</em>':''}</b><small>${MNAME[x.view]||''} · ${ago(x.at)}</small></button>`).join('');
   $('#rcCopy').hidden=$('#rcGo').hidden=$('#rcDel').hidden=true; $('#rcModal').hidden=false;
   $$('#rcText .rc-li').forEach(b=>b.onclick=()=>{ const x=rcGet().find(y=>y.id===b.dataset.rc); if(x) rcOpen(x); });
 }
@@ -886,7 +907,7 @@ function pressRender(o){
   $('#pressView').innerHTML = pressPaper(o);
   $('#pressOut').hidden=false; window.PRESS_LAST=o;
   const w=$('#pressView'); ppFit(w); if(!_ppRO&&window.ResizeObserver){ _ppRO=new ResizeObserver(()=>ppFit($('#pressView'))); _ppRO.observe(w); }
-  window.dsSave&&dsSave('press',o.title,[o.title,...o.subs.map(x=>'▸ '+x),'',...o.body].join('\n'));
+  window.dsSave&&dsSave('press',o.title,[o.title,...o.subs.map(x=>'▸ '+x),'',...o.body].join('\n')); setTimeout(()=>pressHwpx(true),300);
   $('#pressOut').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function pressPreview(){
@@ -958,7 +979,7 @@ async function makePress(){
   finally{ PS.busy=false; $('#pfGo').disabled=false; }
 }
 
-async function pressHwpx(){
+async function pressHwpx(silent){
   if(!PS.out) return;
   const H=pressHead();
   try{
@@ -966,8 +987,9 @@ async function pressHwpx(){
       date:H.date, head:H, subs:PS.out.subs, paras:PS.out.body,
       question:'', answer:PS.out.body.join('\n\n'), cites:[], includeCites:false});
     const nm=`달성군_보도자료_${($('#pfName').value||'초안').replace(/[\\/:*?"<>|]/g,'')}_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.hwpx`;
+    if(silent===true){ window.dsArt&&dsArt('press',PS.out.title,[{name:nm,blob}]); return; }   // 내 최근 작업에 한글 파일도 보관
     DalseongHwpx.download(blob,nm); S.stats.hwpx++; toast('한글 파일 생성: '+nm);
-  }catch(e){ toast('한글 파일 생성 실패: '+e.message); }
+  }catch(e){ if(silent!==true) toast('한글 파일 생성 실패: '+e.message); }
 }
 
 /* ── 자료함 ── */
@@ -1109,6 +1131,7 @@ async function loadBugs(){
     const {list=[]}=await r.json();
     if(!list.length){ wrap.innerHTML='<p class="hint">아직 접수된 내용이 없습니다.</p>'; meta.textContent='0건'; return; }
     meta.textContent=list.length+'건 · 최근 '+bugWhen(list[0].at);
+    { const n=list.filter(b=>(b.st||(['접수','검토','반영','미반영'].includes(b.where)?b.where:'접수'))==='접수').length; const bd=$('#admBadge'); if(bd){ bd.hidden=!n; bd.textContent=n; } }
     wrap.innerHTML=list.map(b=>
       '<div class="bugitem">'+
         '<div class="bh">'+

@@ -121,7 +121,7 @@ function render(o){
     ${talk?`<div class="mt-part"><span>회 의 록</span><small>발언 순서대로 기록 · 발언자는 참석자 번호로 표기</small></div>${talkTable(talk.lines)}`:''}
     <div class="mt-foot"><span>작성 : ${esc(H.dept)}</span><span>${esc(fmtWhen(new Date().toISOString().slice(0,10),''))}</span></div>
   </div>`;
-  $('#minutesOut').hidden=false; window.dsSave&&dsSave('minutes',o.title,o.title+'\n\n'+o.body.join('\n')); $('#minutesOut').scrollIntoView({behavior:'smooth',block:'start'});
+  $('#minutesOut').hidden=false; window.dsSave&&dsSave('minutes',o.title,o.title+'\n\n'+o.body.join('\n')); setTimeout(()=>hwpx(true),300); $('#minutesOut').scrollIntoView({behavior:'smooth',block:'start'});
 }
 async function callModel(user){
   // 공통 호출(llm.js): 30초 서버 제한에 끊기면 이어 쓰기
@@ -143,13 +143,14 @@ async function make(){
   }catch(err){ $('#mtMsg').textContent='⚠ '+err.message; }
   finally{ M.busy=false; $('#mtGo').disabled=false; }
 }
-async function hwpx(){
+async function hwpx(silent){
   if(!M.out) return;
   try{
     const blob=await DalseongHwpx.build({kind:'free', title:M.out.title, sub:`달성군 [${v('mtDept')||'행정국 정보통신과'}]`, date:fmtWhen(v('mtDate'),''), answer:M.out.body.map(l=>{ const s=l.trim(); let m; if((m=s.match(/^\[안건\s*(\d*)\]\s*(.*)$/))) return `□ 안건 ${m[1]}. ${m[2]}`; if(/^→/.test(s)) return '  - '+s.replace(/^→\s*/,''); if(/^[^#○□\-:：\s][^:：]{0,24}[:：]\s/.test(s)) return '○ '+s; return l; }).join('\n')});
     const nm=`${M.out.title.replace(/[\\/:*?"<>|]/g,'').slice(0,40)}_${(v('mtDate')||new Date().toISOString().slice(0,10)).replace(/-/g,'')}.hwpx`;
+    if(silent===true){ window.dsArt&&dsArt('minutes',M.out.title,[{name:nm,blob}]); return; }
     DalseongHwpx.download(blob,nm); if(window.S&&S.stats) S.stats.hwpx++; toast?.('한글 파일 생성: '+nm);
-  }catch(e){ toast?.('한글 파일 생성 실패: '+e.message); }
+  }catch(e){ if(silent!==true) toast?.('한글 파일 생성 실패: '+e.message); }
 }
 function mrail(n){ document.querySelectorAll('#mtRail li').forEach(li=>{ const k=+li.dataset.s; li.className=k<n?'done':(k===n?'on':''); }); }
 function init(){

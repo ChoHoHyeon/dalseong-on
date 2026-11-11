@@ -126,7 +126,7 @@ function paintLogo(ctx,ly,imgs,light){ if(!imgs.length){ ly.bb=null; return; }
   ly.bb=[ly.cx-tw/2-pad,ly.cy-lh/2-pad,tw+pad*2,lh+pad*2]; }
 let _imgs=[], _bgImg=null;
 /* 그리기 준비(글꼴·그림 불러오기) 후 paint() — 끄는 동안에는 paint()만 바로 다시 부른다 */
-async function draw(){
+async function draw(){ clearTimeout(B._art); B._art=setTimeout(()=>{ try{ if(window.dsArt&&B.alts&&B.alts.length) dsCanvasBlob($('#bnCanvas')).then(b=>dsArt('banner',v('bnName'),[{name:`현수막시안_${v('bnName').replace(/[\\/:*?"<>|]/g,'').slice(0,20)}.png`,blob:b}])); }catch(e){} },2500);
   const [W,H]=canvasWH(); if(!B.L||B.L.W!==W||B.L.H!==H) layout();
   await fontReady(); _imgs=await logoImgs();
   const bg=v('bnBg'); _bgImg = bg==='photo' ? (B.img||(B.img=await loadImg('assets/hero.jpg'))) : bg==='custom' ? B.custom : bg==='ai' ? B.ai : null;

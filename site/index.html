@@ -76,12 +76,11 @@
         <div><i>2</i><b>파일 올리거나 몇 줄 적기</b><small>녹음·PDF·엑셀을 올리거나 요지만 · 「예시로 채우기」로 먼저 체험</small></div>
         <div><i>3</i><b>결과 확인하고 가져가기</b><small>복사 · 한글 파일 · PNG · 엑셀 — 마지막 확인은 담당자가</small></div>
       </div>
-      <nav class="gd-jump" aria-label="이용 안내 바로가기"><button data-j="gdNewsCard">📢 공지·업데이트</button><button data-j="gdVideoCard">▶️ 안내 영상</button><button data-j="gdFaqCard">❓ 자주 묻는 질문</button><button data-j="gdContact">☎ 문의·지원</button></nav>
       <div class="card" id="gdFaqCard"><h4>자주 묻는 질문 <small>누르면 펼쳐져요</small></h4><div class="gd-faq">
           <details><summary>내 자료가 밖으로 나가나요?</summary><p><b>급량비·출장비</b>는 이 PC 안에서만 처리돼요. <b>회의록·데이터 분석</b>은 녹음·엑셀 원본은 PC에 두고 필요한 글만 AI로 보내고, <b>보도자료·카드뉴스 등 글쓰기 메뉴</b>는 입력한 글이 AI로 가요. 비공개·개인정보는 넣지 마세요.</p></details>
           
           <details><summary>결과를 그대로 써도 되나요?</summary><p>초안입니다. 날짜·수치·이름·인용문은 꼭 확인한 뒤 쓰세요. 비어 있는 값은 <b>○○</b>로 표시됩니다.</p></details>
-          <details><summary>만든 결과가 사라졌어요</summary><p>홈의 <b>내 최근 작업</b>에 최근 결과 8건이 이 PC에 남아 있어요. 누르면 다시 보고 복사할 수 있습니다.</p></details>
+          <details><summary>만든 결과가 사라졌어요</summary><p>홈의 <b>내 최근 작업</b>에 최근 결과 8건이 이 PC에 남아 있어요. 글은 다시 보고 복사할 수 있고, <b>영상·카드뉴스·현수막 시안·분석 보고서</b>는 결과 파일도 다시 보고 내려받을 수 있습니다 (이 PC 브라우저에만 보관).</p></details>
           <details><summary>PDF를 못 읽는다고 나와요</summary><p>스캔본(그림)은 글자를 읽을 수 없어요. 새올·인사랑 화면에서 「인쇄 → PDF로 저장」한 파일을 올려 주세요.</p></details>
           <details><summary>한글 파일 서식이 달라요</summary><p>달성군 보고서·보도자료 서식을 따릅니다. 다른 서식이 필요하면 질문·요청 소통하기에 남겨 주세요.</p></details>
           <details><summary>이런 기능도 있으면 좋겠어요</summary><p>왼쪽 <b>질문·요청 소통하기</b>에 남겨 주시면 검토해서 반영하고 공지로 알려 드립니다.</p></details>
@@ -962,14 +961,23 @@
     </section>
 
     <!-- 관리자 · 이용통계 -->
+    <section class="view" data-view="admtabs">
+      <div class="vh"><h2>관리자</h2><p>이용 현황을 보고, 직원 글을 처리하고, 자료·모델을 관리합니다.</p></div>
+      <div class="adm-tabs" id="admTabs" role="tablist">
+        <button data-t="stats" class="on"><i>📈</i>이용 통계</button>
+        <button data-t="bugs"><i>📮</i>오류·요청 처리 <em id="admBadge" hidden></em></button>
+        <button data-t="update"><i>📚</i>자료 갱신</button>
+        <button data-t="model"><i>⚙️</i>모델 설정</button>
+      </div>
+    </section>
     <section class="view" data-view="stats">
       <div class="vh"><h2>이용 통계</h2><p>전 직원이 메뉴를 열고 초안을 만든 횟수를 집계합니다. 누가 썼는지는 저장하지 않고 날짜·메뉴·종류의 숫자만 남깁니다.</p></div>
       <div class="kpis four" id="adKpis"></div>
       <div class="ad-grid">
         <div class="card"><h4>이번 주 메뉴별 이용 <small>월요일부터</small></h4><div id="adTop"></div></div>
-        <div class="card"><h4>이 브라우저(관리자 PC) <small>이번 접속</small></h4>
-          <div class="kpis"><div class="kpi"><small>질의</small><b id="kQ">0</b></div><div class="kpi"><small>근거 인용 답변</small><b id="kCite">0</b></div><div class="kpi"><small>초안</small><b id="kGen">0</b></div><div class="kpi"><small>한글 파일</small><b id="kHwpx">0</b></div></div>
-          <h4 style="margin-top:14px">자주 찾은 자료</h4><ol class="toplist" id="topDocs"><li class="muted">아직 질의가 없습니다</li></ol></div>
+        <div class="card"><h4 hidden>이 브라우저(관리자 PC) <small>이번 접속</small></h4>
+          <div class="kpis" hidden><div class="kpi"><small>질의</small><b id="kQ">0</b></div><div class="kpi"><small>근거 인용 답변</small><b id="kCite">0</b></div><div class="kpi"><small>초안</small><b id="kGen">0</b></div><div class="kpi"><small>한글 파일</small><b id="kHwpx">0</b></div></div>
+          <h4>자주 찾은 자료 <small>AI에게 물어보기 근거</small></h4><ol class="toplist" id="topDocs"><li class="muted">아직 질의가 없습니다</li></ol></div>
       </div>
     </section>
 
@@ -981,11 +989,11 @@
 
     <!-- 관리자 · 모델 설정 -->
     <section class="view" data-view="model">
-      <div class="vh"><h2>답변 모델 설정</h2><p>시범 운영 중에는 브라우저에서 모델 API를 직접 호출합니다(키는 메모리에만 보관). 실제 구축 시 업무망 서버의 모델 또는 행안부 온AI API로 교체하며 화면·자료는 그대로 유지됩니다.</p></div>
+      <div class="vh"><h2>답변 모델 설정</h2><p>실제 구축 시 업무망 서버의 모델 또는 범정부 AI 공통기반(온AI) API로 바꿔도 화면·자료는 그대로 유지됩니다.</p></div>
       <div class="card narrow">
-        <p class="hint">기본은 <b>서버 프록시</b>입니다 — API 키는 Netlify 환경변수(ANTHROPIC_API_KEY)에만 있고 화면·코드에 없습니다. 아래 키 칸은 서버 설정 전 임시 시험용입니다.</p>
+        <p class="hint">AI 호출은 모두 <b>서버 중계</b>로 합니다 — API 키는 서버 환경변수에만 있고 화면·코드·브라우저에는 없습니다.</p>
         <label>접속 코드 <small>서버에 ACCESS_CODE를 설정한 경우 · 이 브라우저에 저장</small><input id="accessCode" type="password" placeholder="설정했으면 입력" autocomplete="off"></label>
-        <label>(임시) Anthropic API 키 직접 입력 <small>브라우저 메모리에만 · 새로고침 시 사라짐</small><input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
+        <label hidden>(임시) API 키<input id="apiKey" type="password" autocomplete="off"></label>
         <label>모델<input id="model" value="claude-sonnet-4-5" list="models"><datalist id="models"><option value="claude-sonnet-4-5"><option value="claude-haiku-4-5"><option value="claude-opus-4-1"></datalist></label>
         <label class="chk"><input type="checkbox" id="offline"> 오프라인 모드(검색 결과만으로 답변 구성)</label>
         <p class="hint">현재 상태: <b id="adminModel">–</b></p>
@@ -994,12 +1002,12 @@
 
     <!-- 관리자 · 오류 신고함 -->
     <section class="view" data-view="bugs">
-      <div class="vh"><h2>오류 신고 · 질문·요청 소통하기 관리</h2><p>직원이 우측 상단 <b>🐞</b> 단추로 보낸 신고와 질문·요청 소통하기에 올린 제안·사례·한마디가 여기에 쌓입니다. 처리한 건은 정보통신과에서 확인 후 안내합니다.</p></div>
+      <div class="vh"><h2>오류·요청 처리</h2><p>직원이 우측 상단 <b>🐞</b> 단추로 보낸 신고와 질문·요청 소통하기에 올린 제안·사례·한마디가 여기에 쌓입니다. 처리한 건은 정보통신과에서 확인 후 안내합니다.</p></div>
       <div class="row end bugtop">
         <span class="hint" id="bugMeta">불러오는 중…</span>
         <button class="ghost" id="bugReload">↻ 새로고침</button>
       </div>
-      <div class="ad-code"><label>관리자 코드 <input id="adCode" type="password" placeholder="Netlify ADMIN_CODE 값"></label><span class="hint">입력하면 질문·요청 소통하기 글의 상태(접수 → 검토 중 → 반영됨)를 바꾸고 지울 수 있습니다. 이 PC에만 기억합니다.</span></div>
+      <div class="ad-code"><label>관리자 코드 <input id="adCode" type="password" placeholder="관리자 코드"></label><span class="hint">입력하면 글 상태(접수 → 검토 중 → 반영/미반영)를 바꾸고 지울 수 있습니다. 이 PC에만 기억합니다.</span></div>
       <div class="buglist" id="bugList"></div>
     </section>
   </main>
@@ -1067,7 +1075,7 @@
 <script src="analyze.js"></script>
 <script src="cal.js"></script>
 <script src="app.js"></script>
-<div class="rc-modal" id="rcModal" hidden><div class="rc-box"><div class="rc-hd"><b id="rcTitle"></b><small id="rcMeta"></small><button id="rcClose" aria-label="닫기">✕</button></div><pre id="rcText"></pre><div class="pact"><button id="rcCopy" class="p">복사</button><button id="rcGo">이 메뉴로 가기</button><button id="rcDel">목록에서 지우기</button></div></div></div>
+<div class="rc-modal" id="rcModal" hidden><div class="rc-box"><div class="rc-hd"><b id="rcTitle"></b><small id="rcMeta"></small><button id="rcClose" aria-label="닫기">✕</button></div><div id="rcArt" hidden></div><pre id="rcText"></pre><div class="pact"><button id="rcCopy" class="p">복사</button><button id="rcGo">이 메뉴로 가기</button><button id="rcDel">목록에서 지우기</button></div></div></div>
 <div class="cal-pop" id="calPop" hidden><div class="cal-box"><b id="calPopTitle"></b>
 <input id="calIn" maxlength="40" placeholder="일정 (예: 정보화교육 수요조사 마감)"><div class="cal-r"><input id="calDate" type="date"><input id="calTime" type="time"></div>
 <textarea id="calMemo" rows="2" maxlength="200" placeholder="메모 (선택)"></textarea><div class="cal-colors" id="calColors"></div>

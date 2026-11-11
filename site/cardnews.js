@@ -183,6 +183,7 @@ async function renderAll(){
   for(let i=0;i<d.slides.length;i++){ const c=document.createElement('canvas'); c.className='cn-thumb'+(i===C.cur?' on':''); c.title=`${i+1}번째 카드`; c.onclick=()=>{ C.cur=i; renderAll(); }; wrapEl.appendChild(c); await drawSlide(c,d.slides[i],i,d.slides.length); }
   await drawSlide($('#cnMain'),d.slides[C.cur],C.cur,d.slides.length);
   const s=d.slides[C.cur]; const fe=document.activeElement; if(fe!==$('#cnEditHead')) $('#cnEditHead').value=s.head; if(fe!==$('#cnEditBody')) $('#cnEditBody').value=(s.body||[]).join('\n'); if(fe!==$('#cnEditBig')) $('#cnEditBig').value=s.big||''; { const nb=s.kind!=='body', bi=$('#cnEditBig'); bi.disabled=nb; bi.placeholder=nb?'표지·마무리 카드에는 없습니다':''; if(nb) bi.value=''; }   /* 칸을 숨기지 않고 잠근다 — 카드마다 편집 칸 높이가 같아야 미리보기 자리가 흔들리지 않는다 */   /* 입력 중인 칸은 덮어쓰지 않는다 */ $('#cnCurNo').textContent=`${C.cur+1} / ${d.slides.length}`; { const first=C.cur===0; ['cnTop','cnFoot'].forEach(id=>{ $('#'+id).disabled=!first; }); ['cnLock1','cnLock2'].forEach(id=>$('#'+id).textContent=''); }
+  clearTimeout(C._art); C._art=setTimeout(snapArt,2000);
   $('#cnSvOne').textContent=`지금 보고 있는 ${C.cur+1}번째 카드 · 이미지 파일`; $('#cnSvAll').textContent=`카드 ${d.slides.length}장 모두 한 번에 · 이미지 파일`;
   $('#cnDots').innerHTML=d.slides.map((_,k)=>`<i class="${k===C.cur?'on':''}" data-k="${k}"></i>`).join(''); $('#cnArrL').hidden=C.cur===0; $('#cnArrR').hidden=C.cur===d.slides.length-1;
   $('#cnCaption').value=`${d.caption||''}\n\n${(d.tags||[]).join(' ')}`;
@@ -227,6 +228,9 @@ Keep the upper half simple with generous empty space for headline text. IMPORTAN
   }catch(e){ C.aiBusy=false; C.aiFailed=true; if(C.data===d&&v('cnArt')==='ai') renderAll(); cnLoad('⚠️ AI 그림을 만들지 못했습니다 — '+String(e.message||'').slice(0,60)+' · 기본 그림으로 바꿔 두었습니다'); }
   finally{ C.aiBusy=false; if(btn) btn.disabled=false; }
 }
+async function snapArt(){ try{ const d=C.data; if(!d||!window.dsArt) return; const files=[];
+  for(let i=0;i<d.slides.length;i++){ const c=document.createElement('canvas'); await drawSlide(c,d.slides[i],i,d.slides.length); files.push({name:`카드뉴스_${String(i+1).padStart(2,'0')}.png`,blob:await dsCanvasBlob(c)}); }
+  dsArt('card',d.slides[0]?.head||'카드뉴스',files); }catch(e){} }
 function dl(canvas,name){ const a=document.createElement('a'); a.download=name; a.href=canvas.toDataURL('image/png'); a.click(); }
 function init(){
   if($('#cnGo')._on) return; $('#cnGo')._on=1;

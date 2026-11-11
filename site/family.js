@@ -485,6 +485,9 @@ async function refresh(){
   if(!pv.querySelector('img')) pv.innerHTML='<div class="hint" style="padding:30px;text-align:center">카드를 그리는 중…</div>';
   try{ F.img=await renderPng(card, card.W>=1400?1:2); pv.innerHTML=`<img src="${F.img}" alt="카드 미리보기" title="누르면 크게 봅니다">`; }
   catch(e){ pv.innerHTML=`<div class="hint" style="padding:30px;text-align:center">미리보기 실패: ${esc(e.message)}</div>`; F.img=''; }
+  /* 내 최근 작업에 카드 이미지 보관 — 고칠 때마다 3초 뒤 최신본으로 덮어씀(이 PC 브라우저에만) */
+  clearTimeout(F._art); if(F.img) F._art=setTimeout(async()=>{ try{ if(!window.dsSave||!window.dsArt||!F.img) return; const dd=F.data||{}; const t=`${{wed:'결혼',obit:'부고',thanks:'감사인사'}[dd.kind]||'경조사'} 카드${dd.name?' — '+dd.name:''}`;
+    dsSave('family',t,($('#famBody')?.value||'').trim()||t); const b=await (await fetch(F.img)).blob(); dsArt('family',t,[{name:`${t.replace(/[\\/:*?"<>|]/g,'')}.png`,blob:b}]); }catch(e){} },3000);
 }
 function showPost(on){ const w=$('#famTextWrap'); if(w) w.hidden=!on; }
 function download(){ if(!F.img){ toastF('먼저 틀을 고르고 내용을 적어 주세요'); return; } const a=document.createElement('a'); const d=F.data||{}; a.download=`${d.kind==='wed'?'결혼':d.kind==='obit'?'부고':'감사인사'}_${(d.name||'카드')}.png`; a.href=F.img; a.click(); }

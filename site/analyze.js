@@ -349,7 +349,7 @@ async function run(){
     A.rep.text=R; if(R.title) A.rep.title=String(R.title).slice(0,40); if(R.purpose) A.rep.purpose=R.purpose;
     render();
     $('#anMsg').textContent='완료 — 「한글 파일로 내려받기」로 보고서를 저장하세요.';
-    window.dsSave&&dsSave('analyze',A.rep.title,plainText()); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
+    window.dsSave&&dsSave('analyze',A.rep.title,plainText()); setTimeout(()=>saveHwpx(true),300); if(window.S&&S.stats) S.stats.gen++,window.dsHit&&dsHit('gen');
   }catch(e){ $('#anMsg').textContent='⚠ '+e.message; }
   finally{ A.busy=false; $('#anGo').disabled=false; }
 }
@@ -392,8 +392,8 @@ function render(){
   $('#anTotal').textContent=`분석 ${R.res.length}가지 · 표·차트 ${R.res.length}개`;
   $('#anHwpx').disabled=!T; $('#anCopyR').disabled=!T;
 }
-async function saveHwpx(){
-  const R=A.rep; if(!R?.text||!window.DalseongHwpx) return; const T=R.text; const b=$('#anHwpx'); b.disabled=true;
+async function saveHwpx(silent){
+  const R=A.rep; if(!R?.text||!window.DalseongHwpx) return; const T=R.text; const b=$('#anHwpx'); if(silent!==true) b.disabled=true;
   try{
     const imgs=await Promise.all([...$('#anDoc').querySelectorAll('canvas')].map(c=>new Promise(ok=>c.toBlob(async bl=>ok({data:new Uint8Array(await bl.arrayBuffer()),w:c.width,h:c.height}),'image/png'))));
     const B=[];
@@ -405,10 +405,12 @@ async function saveHwpx(){
     B.push({k:'sec',t:`${ROMAN[2]}. 시사점 및 향후 조치`},{k:'sq',t:'시사점'},...(T.implications||[]).map(t=>({k:'cir',t})),{k:'sq',t:'향후 조치'},...(T.actions||[]).map(t=>({k:'cir',t})),{k:'cir',t:'끝.'});
     B.push({k:'blank'},{k:'note',t:'본 보고서의 숫자는 원본 자료를 브라우저에서 직접 계산한 값이며, 문장은 달성On(AI)이 작성한 초안으로 담당자 검토 후 사용합니다.'});
     const blob=await DalseongHwpx.build({kind:'free',title:R.title,sub:'',date:dateStr(R.date),blocks:B,answer:plainText()});
-    DalseongHwpx.download(blob,`${R.title.replace(/[\\/:*?"<>|]/g,'')}.hwpx`);
+    const nm=`${R.title.replace(/[\\/:*?"<>|]/g,'')}.hwpx`;
+    if(silent===true){ window.dsArt&&dsArt('analyze',R.title,[{name:nm,blob},...imgs.map((m,i)=>({name:`차트${i+1}_${R.res[i].p.title.replace(/[\\/:*?"<>|]/g,'')}.png`,blob:new Blob([m.data],{type:'image/png'})}))]); return; }
+    DalseongHwpx.download(blob,nm);
     window.toast&&toast('한글 파일을 내려받았습니다');
-  }catch(e){ $('#anMsg').textContent='⚠ 한글 파일 만들기 실패: '+e.message; }
-  finally{ b.disabled=false; }
+  }catch(e){ if(silent!==true) $('#anMsg').textContent='⚠ 한글 파일 만들기 실패: '+e.message; }
+  finally{ if(silent!==true) b.disabled=false; }
 }
 async function load(list,msg){
   $('#anMsg').textContent='파일 읽는 중…';

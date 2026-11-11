@@ -206,12 +206,12 @@ async function make(){
     // ④ 합치기
     prog(6,'',V._t0); await compose(); prog(-1);
     $('#mvMsg').textContent=(note||'완성됐습니다 — ')+'오른쪽에서 자막을 고치고 다시 합치거나 영상으로 저장하세요.';
-    window.dsSave&&dsSave('movie',V.data.title||'홍보영상',[`[훅] ${V.data.hook.head} ${V.data.hook.sub||''}`,...V.data.scenes.map((x,i)=>`[장면${i+1}] ${x.big?x.big+' · ':''}${x.head} — ${x.sub||''}`),`[마무리] ${V.data.end.head} ${V.data.end.sub||''}`].join('\n'));
+    window.dsSave&&dsSave('movie',V.data.title||'홍보영상',[`[훅] ${V.data.hook.head} ${V.data.hook.sub||''}`,...V.data.scenes.map((x,i)=>`[장면${i+1}] ${x.big?x.big+' · ':''}${x.head} — ${x.sub||''}`),`[마무리] ${V.data.end.head} ${V.data.end.sub||''}`].join('\n')); window.dsArt&&dsArt('movie',V.data.title||'홍보영상',[{name:`홍보영상_${(V.data.title||'영상').replace(/[\\/:*?"<>|]/g,'').slice(0,30)}.${V.ext||'mp4'}`,blob:V.blob}]);
     if(S.stats) S.stats.gen++, window.dsHit&&dsHit('gen'); quotaShow();
   }catch(e){ prog(-1); $('#mvMsg').textContent='⚠ '+e.message; if(!V.data) $('#mvOut').hidden=true; }
   finally{ V.busy=false; $('#mvGo').disabled=false; $('#mvRemix').disabled=false; }
 }
-async function remix(){ if(!V.data||V.busy) return; V.busy=true; $('#mvRemix').disabled=true; V._t0=Date.now(); try{ prog(6,'',V._t0); await compose(); $('#mvMsg').textContent='고친 자막으로 다시 합쳤습니다.'; }catch(e){ $('#mvMsg').textContent='⚠ '+e.message; } finally{ prog(-1); V.busy=false; $('#mvRemix').disabled=false; } }
+async function remix(){ if(!V.data||V.busy) return; V.busy=true; $('#mvRemix').disabled=true; V._t0=Date.now(); try{ prog(6,'',V._t0); await compose(); window.dsArt&&dsArt('movie',V.data.title||'홍보영상',[{name:`홍보영상_${(V.data.title||'영상').replace(/[\\/:*?"<>|]/g,'').slice(0,30)}.${V.ext||'mp4'}`,blob:V.blob}]); $('#mvMsg').textContent='고친 자막으로 다시 합쳤습니다.'; }catch(e){ $('#mvMsg').textContent='⚠ '+e.message; } finally{ prog(-1); V.busy=false; $('#mvRemix').disabled=false; } }
 
 function init(){
   if($('#mvGo')._on) return; $('#mvGo')._on=1;
