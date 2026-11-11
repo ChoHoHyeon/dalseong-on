@@ -917,21 +917,42 @@
 
     <!-- 질문·요청 소통하기 -->
     <section class="view" data-view="share">
-      <div class="vh"><h2>질문·요청 소통하기</h2><p>"이런 거 만들어 주세요"부터 궁금한 점, 내가 써 본 이야기까지 편하게 남겨 주세요.<br>올라온 요청은 검토해서 달성On에 반영하고 공지로 알려 드립니다.</p></div>
+      <div class="vh"><h2>질문·요청 소통하기</h2><p>"이런 거 만들어 주세요"부터 궁금한 점, 내가 써 본 이야기까지 편하게 남겨 주세요.<br>올라온 글은 검토해서 달성On에 반영하고, 반영되면 공지사항으로 알려 드립니다.</p></div>
+      <div class="card flowcard">
+        <h4>이렇게 씁니다 <small>3단계면 끝납니다</small></h4>
+        <ol class="flow3">
+          <li><span class="fnum">1</span><span class="fico" aria-hidden="true">✍️</span><span class="ftx"><b>글 남기기</b><small>유형 고르고 제목 한 줄이면 충분</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">2</span><span class="fico" aria-hidden="true">🔍</span><span class="ftx"><b>검토</b><small>📨 접수 → 🔍 검토 중 → ✅ 반영됨</small></span></li>
+          <li class="farr" aria-hidden="true">→</li>
+          <li><span class="fnum">3</span><span class="fico" aria-hidden="true">📢</span><span class="ftx"><b>공지로 알림</b><small>반영된 기능은 공지사항에 올려요</small></span></li>
+        </ol>
+      </div>
       <div class="sh-wrap">
         <div class="card pcard sh-form">
-          <h4>남기기 <small>부서명만 적어 주세요 · 이름·연락처 불필요</small></h4>
-          <label class="pfull">유형<select id="shKind" class="psel"><option value="idea">💡 만들어 주세요 — 이런 기능이 있으면 좋겠어요</option><option value="ask">❓ 질문·문의 — 이건 어떻게 써요?</option><option value="usecase">🙌 이렇게 썼어요 — 써 보니 이렇게 편했어요</option><option value="improve">🔧 개선 의견 — 이건 이렇게 고쳐 주세요</option><option value="voice">💬 한마디 — 짧은 의견·응원</option></select></label>
-          <label class="pfull" style="margin-top:8px">제목 <b class="req">*</b><input id="shTitle" maxlength="80"></label>
-          <label class="pfull" style="margin-top:8px">내용 <small class="hint">선택 · 상황과 바라는 모습을 편하게</small><textarea id="shBody" rows="5" maxlength="900" placeholder="어떤 업무에서, 무엇이 불편했고, 어떻게 되면 좋을지"></textarea></label>
-          <label class="pfull" style="margin-top:8px">부서 <small class="hint">선택</small><input id="shWho" maxlength="30" placeholder="예) 정보통신과"></label>
-          <div class="pact" style="margin-top:10px"><button id="shSend" class="p">📮 남기기</button><span class="hint" id="shMsg"></span></div>
-          <p class="hint" style="margin-top:8px">※ 개인정보·비공개 자료는 올리지 마세요. 접수 → 검토 중 → 반영됨 순서로 표시되고, 반영된 기능은 공지사항에도 올립니다.<br>※ 화면이 이상하거나 오류가 나면 어느 화면에서든 우측 상단 <b>🐞</b>을 누르세요 — 여기 「🐞 오류·불편」에 함께 쌓입니다.</p>
+          <h4>남기기 <small>이름·연락처 불필요 · 부서명만 선택</small></h4>
+          <input type="hidden" id="shKind" value="idea">
+          <span class="cap">유형</span>
+          <div class="sh-kinds" id="shKinds" role="radiogroup" aria-label="글 유형">
+            <button type="button" data-v="idea" class="on"><i>💡</i><b>만들어 주세요</b><small>이런 기능이 있으면</small></button>
+            <button type="button" data-v="ask"><i>❓</i><b>질문·문의</b><small>이건 어떻게 써요?</small></button>
+            <button type="button" data-v="improve"><i>🔧</i><b>개선 의견</b><small>이렇게 고쳐 주세요</small></button>
+            <button type="button" data-v="usecase"><i>🙌</i><b>이렇게 썼어요</b><small>써 보니 편했던 점</small></button>
+            <button type="button" data-v="voice"><i>💬</i><b>한마디</b><small>짧은 의견·응원</small></button>
+          </div>
+          <label class="pfull"><span class="cap">제목 <b class="req">*</b></span><input id="shTitle" maxlength="80"></label>
+          <label class="pfull"><span class="cap">내용 <small class="hint">선택 · 상황과 바라는 모습을 편하게</small></span><textarea id="shBody" rows="4" maxlength="900" placeholder="어떤 업무에서, 무엇이 불편했고, 어떻게 되면 좋을지"></textarea></label>
+          <label class="pfull"><span class="cap">부서 <small class="hint">선택</small></span><input id="shWho" maxlength="30" placeholder="예) 정보통신과"></label>
+          <div class="pact"><button id="shSend" class="p">📮 남기기</button><span class="hint" id="shMsg"></span></div>
+          <p class="sh-note">🔒 개인정보·비공개 자료는 올리지 마세요 (주민번호·휴대전화번호는 자동 차단)<br>🐞 화면 오류는 어느 화면에서든 우측 상단 <b>🐞</b> — 여기 「오류·불편」에 함께 쌓입니다</p>
         </div>
         <div class="card sh-board">
           <h4>올라온 글 <small id="shCount"></small></h4>
-          <div class="sh-tabs" id="shTabs"><button class="on" data-k="all">전체</button><button data-k="idea">💡 만들어 주세요</button><button data-k="ask">❓ 질문·문의</button><button data-k="usecase">🙌 이렇게 썼어요</button><button data-k="improve">🔧 개선 의견</button><button data-k="voice">💬 한마디</button><button data-k="bug">🐞 오류·불편</button></div>
+          <div class="sh-stat" id="shStat"></div>
+          <div class="sh-tools"><input id="shQ" type="search" placeholder="🔍 글 찾기 (제목·내용·부서)"><select id="shSort" class="psel"><option value="new">최신순</option><option value="like">공감순</option></select></div>
+          <div class="sh-tabs" id="shTabs"><button class="on" data-k="all">전체</button><button data-k="idea">💡 만들어 주세요</button><button data-k="ask">❓ 질문·문의</button><button data-k="improve">🔧 개선 의견</button><button data-k="usecase">🙌 이렇게 썼어요</button><button data-k="voice">💬 한마디</button><button data-k="bug">🐞 오류·불편</button></div>
           <ul class="sh-list" id="shList"></ul>
+          <div class="sh-pager" id="shPager"></div>
         </div>
       </div>
     </section>
