@@ -2556,3 +2556,6 @@ body[data-theme=dark] .sh-stat .s4{background:#22262e;color:#c3c9d2}
 .adm-tabs button i{font-style:normal}
 .adm-tabs button.on{background:linear-gradient(135deg,#1d5fd6,#3c6fe0);color:#fff;border-color:transparent;box-shadow:0 3px 0 #133f96,0 6px 14px rgba(29,95,214,.22)}
 .adm-tabs em{font-style:normal;font-size:11px;font-weight:800;background:#e03131;color:#fff;border-radius:999px;padding:1px 7px}
+/* 달력 — 그날 만든 결과 표시 */
+.cd .rcw{display:inline-block;margin-top:2px;font-size:10.5px;font-weight:700;color:#0b6b3a;background:#e6f6ec;border-radius:999px;padding:0 6px;cursor:pointer;width:max-content}
+.cd .rcw:hover{background:#c9eed6}

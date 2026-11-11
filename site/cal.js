@@ -34,6 +34,7 @@ const ymd=(y,m,d)=>`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'
 const todayStr=()=>{ const t=new Date(); return ymd(t.getFullYear(),t.getMonth(),t.getDate()); };
 
 function render(){ try{ window.dispatchEvent(new Event('dscal')); }catch(e){}
+  const RC={}; try{ (window.dsRcGet?dsRcGet():[]).forEach(x=>{ const d=new Date(x.at); const k=ymd(d.getFullYear(),d.getMonth(),d.getDate()); RC[k]=(RC[k]||0)+1; }); }catch(e){}   // 그날 만든 결과(내 최근 작업) 수
   const L=load(), y=C.y, m=C.m, first=new Date(y,m,1).getDay(), last=new Date(y,m+1,0).getDate(), td=todayStr();
   $('#calTitle').textContent=`${y}년 ${m+1}월`;
   let h='';
@@ -42,12 +43,14 @@ function render(){ try{ window.dispatchEvent(new Event('dscal')); }catch(e){}
     const k=ymd(y,m,d), ev=L.filter(e=>e.d===k).sort((a,b)=>(a.t||'99').localeCompare(b.t||'99')), dow=(first+d-1)%7;
     const cls=['cd',k===td?'today':'',dow===0||HOL[k]?'sun':'',dow===6?'sat':'',ev.length?'has':''].join(' ');
     h+=`<div class="${cls}" data-d="${k}" tabindex="0"><span class="n">${d}</span>${HOL[k]?`<span class="hol">${HOL[k]}</span>`:''}
-      ${ev.slice(0,2).map(e=>`<span class="ev" data-id="${e.id}" style="--c:${e.c||DEF}">${e.t?`<em>${e.t}</em>`:''}${esc(e.title)}</span>`).join('')}${ev.length>2?`<span class="more">+${ev.length-2}</span>`:''}</div>`;
+      ${ev.slice(0,2).map(e=>`<span class="ev" data-id="${e.id}" style="--c:${e.c||DEF}">${e.t?`<em>${e.t}</em>`:''}${esc(e.title)}</span>`).join('')}${ev.length>2?`<span class="more">+${ev.length-2}</span>`:''}${RC[k]?`<span class="rcw" title="이날 만든 결과 ${RC[k]}건 — 눌러서 보기">🗂 ${RC[k]}</span>`:''}</div>`;
   }
   $('#calGrid').innerHTML=h;
   $('#calGrid').querySelectorAll('.cd[data-d]').forEach(el=>{
     el.onpointerdown=()=>plop(el.classList.contains('today')?1.25:1);
-    el.onclick=e=>{ const ev=e.target.closest('.ev'); if(ev) openEdit(ev.dataset.id); else openDay(el.dataset.d); };
+    el.onclick=e=>{ const ev=e.target.closest('.ev'); if(ev) return openEdit(ev.dataset.id);
+      if(e.target.closest('.rcw')||(el.dataset.d<todayStr()&&RC[el.dataset.d])){ if(window.dsRcDay&&dsRcDay(el.dataset.d)) return; }   // 지난 날짜·결과 표시를 누르면 그날 만든 결과
+      openDay(el.dataset.d); };
     el.onkeydown=e=>{ if(e.key==='Enter') openDay(el.dataset.d); };
   });
 }
@@ -64,6 +67,7 @@ function commit(){
   const nd=new Date(o.d+'T00:00:00'); C.y=nd.getFullYear(); C.m=nd.getMonth(); render(); toast?.(i>=0?'일정을 고쳤어요':'일정을 넣었어요');
 }
 function del(){ if(!C.edit) return; save(load().filter(x=>x.id!==C.edit)); hide(); render(); toast?.('일정을 지웠어요'); }
+window.addEventListener('dsrc',()=>{ try{ render(); }catch(e){} });
 function init(){
   if(!$('#calGrid')||!$('#calColors')) return; const t=new Date(); if(!C.y){ C.y=t.getFullYear(); C.m=t.getMonth(); }
   if(!$('#calGrid')._on){ $('#calGrid')._on=1;
