@@ -1080,8 +1080,8 @@ $('.brand').onclick=()=>{ setMode('home'); go('home'); };
 })();
 
 /* ── 관리자 · 오류 신고함 ── */
-const BUGKIND={'오류':'오류','결과이상':'결과 이상','불편':'불편','건의':'건의',idea:'💡 만들어 주세요',ask:'❓ 질문·문의',improve:'🔧 개선 의견',usecase:'🙌 이렇게 썼어요',voice:'💬 한마디'};
-const NANUM={idea:1,ask:1,improve:1,usecase:1,voice:1,'오류':1,'결과이상':1,'불편':1,'건의':1};
+const BUGKIND={'오류':'오류','결과이상':'결과 이상','불편':'불편','건의':'건의',idea:'💡 만들어 주세요',ask:'❓ 질문·문의',improve:'🔧 개선 의견',usecase:'🙌 이렇게 썼어요',made:'🛠️ 저도 만들었어요',voice:'💬 기타 한마디'};
+const NANUM={idea:1,ask:1,improve:1,usecase:1,made:1,voice:1,'오류':1,'결과이상':1,'불편':1,'건의':1};
 const adCode=()=>{ try{ return localStorage.getItem('dsOn.adCode')||''; }catch(e){ return ''; } };
 function bugWhen(iso){
   const d=new Date(iso), p=x=>String(x).padStart(2,'0');
@@ -1101,7 +1101,7 @@ async function loadBugs(){
       '<div class="bugitem">'+
         '<div class="bh">'+
           '<span class="kd k'+(b.kind||'')+'">'+(BUGKIND[b.kind]||'기타')+'</span>'+
-          '<b>'+esc(['idea','ask','improve','usecase','voice'].includes(b.kind)?'질문·요청':(b.where&&!['접수','검토','반영'].includes(b.where)?b.where+' 화면':'화면 미지정'))+'</b>'+
+          '<b>'+esc(['idea','ask','improve','usecase','made','voice'].includes(b.kind)?'질문·요청':(b.where&&!['접수','검토','반영'].includes(b.where)?b.where+' 화면':'화면 미지정'))+'</b>'+
           '<span class="at">'+bugWhen(b.at)+'</span>'+
         '</div>'+
         '<p class="bt">'+esc(b.text).replace(/\n/g,'<br>')+'</p>'+

@@ -8,7 +8,7 @@
 "use strict";
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const KIND={idea:['💡 만들어 주세요','#1d5fd6','#eaf1ff'],ask:['❓ 질문·문의','#0e7490','#e6f7fb'],improve:['🔧 개선 의견','#b45309','#fff4e0'],usecase:['🙌 이렇게 썼어요','#0b8a5c','#e6f6ec'],voice:['💬 한마디','#7048e8','#f1ecff'],bug:['🐞 오류·불편','#e03131','#fff0f0']};
+const KIND={idea:['💡 만들어 주세요','#1d5fd6','#eaf1ff'],ask:['❓ 질문·문의','#0e7490','#e6f7fb'],improve:['🔧 개선 의견','#b45309','#fff4e0'],usecase:['🙌 이렇게 썼어요','#0b8a5c','#e6f6ec'],made:['🛠️ 저도 만들었어요','#c2255c','#fff0f6'],voice:['💬 기타 한마디','#7048e8','#f1ecff'],bug:['🐞 오류·불편','#e03131','#fff0f0']};
 const BUGK={'오류':1,'결과이상':1,'불편':1,'건의':1};   // 🐞 단추로 보낸 신고도 함께 보여 준다
 const kindOf=x=>BUGK[x.kind]?'bug':x.kind;
 const stOf=x=>x.st||(['접수','검토','반영'].includes(x.where)?x.where:'접수');
@@ -64,7 +64,7 @@ function init(){
   $('#shQ').oninput=()=>{ ST.q=$('#shQ').value; ST.page=1; render(); };
   $('#shSort').onchange=()=>{ ST.sort=$('#shSort').value; ST.page=1; render(); };
   $('#shKinds').querySelectorAll('button').forEach(b=>b.onclick=()=>{ $('#shKind').value=b.dataset.v; $('#shKinds').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); $('#shKind').onchange(); });
-  $('#shKind').onchange=()=>{ const ph={idea:'예) 공문 받으면 요약해서 할 일만 뽑아 주는 기능',ask:'예) 회의록 녹음은 몇 분까지 올릴 수 있나요?',improve:'예) 급량비 계산 결과를 바로 복사할 수 있게',usecase:'예) 보도자료 초안을 10분 만에 뽑아서 과장님 검토까지 당일 끝냄',voice:'예) 회의록 기능 덕분에 오늘 일찍 퇴근했어요 🙂'}; $('#shTitle').placeholder=ph[$('#shKind').value]; }; $('#shKind').onchange();
+  $('#shKind').onchange=()=>{ const ph={idea:'예) 공문 받으면 요약해서 할 일만 뽑아 주는 기능',ask:'예) 회의록 녹음은 몇 분까지 올릴 수 있나요?',improve:'예) 급량비 계산 결과를 바로 복사할 수 있게',usecase:'예) 보도자료 초안을 10분 만에 뽑아서 과장님 검토까지 당일 끝냄',made:'예) 엑셀 출장비 자동 계산표 만들어 봤어요 (사용법은 내용에)',voice:'예) 회의록 기능 덕분에 오늘 일찍 퇴근했어요 🙂'}; $('#shTitle').placeholder=ph[$('#shKind').value]; }; $('#shKind').onchange();
   load();
 }
 window.SHARE={init};

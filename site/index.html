@@ -938,7 +938,8 @@
             <button type="button" data-v="ask"><i>❓</i><b>질문·문의</b><small>이건 어떻게 써요?</small></button>
             <button type="button" data-v="improve"><i>🔧</i><b>개선 의견</b><small>이렇게 고쳐 주세요</small></button>
             <button type="button" data-v="usecase"><i>🙌</i><b>이렇게 썼어요</b><small>써 보니 편했던 점</small></button>
-            <button type="button" data-v="voice"><i>💬</i><b>한마디</b><small>짧은 의견·응원</small></button>
+            <button type="button" data-v="made"><i>🛠️</i><b>저도 만들었어요</b><small>내가 만든 도구·프롬프트</small></button>
+            <button type="button" data-v="voice"><i>💬</i><b>기타 한마디</b><small>짧은 의견·응원</small></button>
           </div>
           <label class="pfull"><span class="cap">제목 <b class="req">*</b></span><input id="shTitle" maxlength="80"></label>
           <label class="pfull"><span class="cap">내용 <small class="hint">선택 · 상황과 바라는 모습을 편하게</small></span><textarea id="shBody" rows="4" maxlength="900" placeholder="어떤 업무에서, 무엇이 불편했고, 어떻게 되면 좋을지"></textarea></label>
@@ -950,7 +951,7 @@
           <h4>올라온 글 <small id="shCount"></small></h4>
           <div class="sh-stat" id="shStat"></div>
           <div class="sh-tools"><input id="shQ" type="search" placeholder="🔍 글 찾기 (제목·내용·부서)"><select id="shSort" class="psel"><option value="new">최신순</option><option value="like">공감순</option></select></div>
-          <div class="sh-tabs" id="shTabs"><button class="on" data-k="all">전체</button><button data-k="idea">💡 만들어 주세요</button><button data-k="ask">❓ 질문·문의</button><button data-k="improve">🔧 개선 의견</button><button data-k="usecase">🙌 이렇게 썼어요</button><button data-k="voice">💬 한마디</button><button data-k="bug">🐞 오류·불편</button></div>
+          <div class="sh-tabs" id="shTabs"><button class="on" data-k="all">전체</button><button data-k="idea">💡 만들어 주세요</button><button data-k="ask">❓ 질문·문의</button><button data-k="improve">🔧 개선 의견</button><button data-k="usecase">🙌 이렇게 썼어요</button><button data-k="made">🛠️ 저도 만들었어요</button><button data-k="voice">💬 기타 한마디</button><button data-k="bug">🐞 오류·불편</button></div>
           <ul class="sh-list" id="shList"></ul>
           <div class="sh-pager" id="shPager"></div>
         </div>
