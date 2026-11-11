@@ -2506,3 +2506,8 @@ body[data-theme=dark] .an-priv{background:#12301f;color:#9ef0c8}
 .sh-pager button small{color:var(--mut);font-weight:500;margin-left:4px}
 body[data-theme=dark] .sh-stat .s1{background:#1b2740;color:#cfe0ff}body[data-theme=dark] .sh-stat .s2{background:#3a2a10;color:#ffd08a}body[data-theme=dark] .sh-stat .s3{background:#12301f;color:#9ef0c8}
 @media (max-width:900px){.sh-list{flex:none;max-height:520px}}
+.flow4>li{gap:8px;padding-left:12px;padding-right:10px}.flow4 .fico{font-size:20px}
+.sh-stat .s4{background:#f1f3f5;color:#5c6470}
+.sh-stat span{padding:7px 8px;font-size:12px}
+.sh-item.st-미반영{border-left:3px solid #adb5bd}.sh-state.s-미반영{color:#5c6470;font-weight:700}
+body[data-theme=dark] .sh-stat .s4{background:#22262e;color:#c3c9d2}

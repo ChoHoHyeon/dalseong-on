@@ -71,7 +71,7 @@ export default async (req) => {
     const list = (await store.get(KEY, { type: "json" })) || [];
     const i = list.findIndex(x => x.id === b.id); if (i < 0) return json({ error: "없는 글입니다" }, 404);
     if (req.method === "DELETE") list.splice(i, 1);
-    else { const w = ["접수", "검토", "반영"].includes(b.where) ? b.where : null; if (!w) return json({ error: "상태값" }, 400); list[i].st = w; if (["접수","검토","반영"].includes(list[i].where)) list[i].where = w; list[i].done = new Date().toISOString(); }
+    else { const w = ["접수", "검토", "반영", "미반영"].includes(b.where) ? b.where : null; if (!w) return json({ error: "상태값" }, 400); list[i].st = w; if (["접수","검토","반영","미반영"].includes(list[i].where)) list[i].where = w; list[i].done = new Date().toISOString(); }
     await store.setJSON(KEY, list);
     return json({ ok: true });
   }

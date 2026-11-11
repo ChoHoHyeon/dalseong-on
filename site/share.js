@@ -11,7 +11,7 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;',
 const KIND={idea:['💡 만들어 주세요','#1d5fd6','#eaf1ff'],ask:['❓ 질문·문의','#0e7490','#e6f7fb'],improve:['🔧 개선 의견','#b45309','#fff4e0'],usecase:['🙌 이렇게 썼어요','#0b8a5c','#e6f6ec'],made:['🛠️ 저도 만들었어요','#c2255c','#fff0f6'],voice:['💬 기타 한마디','#7048e8','#f1ecff'],bug:['🐞 오류·불편','#e03131','#fff0f0']};
 const BUGK={'오류':1,'결과이상':1,'불편':1,'건의':1};   // 🐞 단추로 보낸 신고도 함께 보여 준다
 const kindOf=x=>BUGK[x.kind]?'bug':x.kind;
-const stOf=x=>x.st||(['접수','검토','반영'].includes(x.where)?x.where:'접수');
+const stOf=x=>x.st||(['접수','검토','반영','미반영'].includes(x.where)?x.where:'접수');
 const LS='dsOn.share.like'; let LIKES={}; try{ LIKES=JSON.parse(localStorage.getItem(LS)||'{}'); }catch(e){}
 const ST={list:[],filter:'all',busy:false,q:'',sort:'new',page:1,open:{}};
 const PER=6;   // 한 번에 보여 줄 글 수 — 쌓여도 화면이 끝없이 길어지지 않게 (「더 보기」로 이어 보기)
@@ -25,7 +25,7 @@ async function load(){
 function render(){
   const all=ST.list;
   const cnt=k=>all.filter(x=>stOf(x)===k).length;
-  $('#shStat').innerHTML=`<span class="s1"><i>📨</i>접수 <b>${cnt('접수')}</b></span><span class="s2"><i>🔍</i>검토 중 <b>${cnt('검토')}</b></span><span class="s3"><i>✅</i>반영됨 <b>${cnt('반영')}</b></span>`;
+  $('#shStat').innerHTML=`<span class="s1"><i>📨</i>접수 <b>${cnt('접수')}</b></span><span class="s2"><i>🔍</i>검토 중 <b>${cnt('검토')}</b></span><span class="s3"><i>✅</i>반영됨 <b>${cnt('반영')}</b></span><span class="s4"><i>⏸</i>미반영 <b>${cnt('미반영')}</b></span>`;
   const q=ST.q.trim().toLowerCase();
   let rows=all.filter(x=>(ST.filter==='all'||kindOf(x)===ST.filter)&&(!q||`${x.text||''} ${x.who||''}`.toLowerCase().includes(q)));
   rows=[...rows].sort((a,b)=>ST.sort==='like'?((b.likes||0)-(a.likes||0))||(b.at-a.at):(b.at-a.at));
@@ -33,10 +33,10 @@ function render(){
   $('#shTabs').querySelectorAll('button').forEach(b=>{ const k=b.dataset.k; const n=k==='all'?all.length:all.filter(x=>kindOf(x)===k).length; b.dataset.n=n; });
   if(!rows.length){ $('#shList').innerHTML=`<li class="sh-empty">${q?'찾는 글이 없습니다.':'아직 올라온 글이 없습니다. 첫 제안을 남겨 주세요 🙂'}</li>`; $('#shPager').innerHTML=''; return; }
   const show=rows.slice(0,ST.page*PER);
-  $('#shList').innerHTML=show.map(x=>{ const t=(x.text||'').split('\n')[0]; const body=(x.text||'').slice(t.length+1).trim(); const [kn,kc,kb]=KIND[kindOf(x)]; const bugWhere=BUGK[x.kind]&&x.where&&!['접수','검토','반영'].includes(x.where)?` <small class="sh-where">· ${esc(x.where)} 화면</small>`:''; const liked=!!LIKES[x.id]; const n=x.likes||0; const st=stOf(x); const long=body.length>90; const op=!!ST.open[x.id];
+  $('#shList').innerHTML=show.map(x=>{ const t=(x.text||'').split('\n')[0]; const body=(x.text||'').slice(t.length+1).trim(); const [kn,kc,kb]=KIND[kindOf(x)]; const bugWhere=BUGK[x.kind]&&x.where&&!['접수','검토','반영','미반영'].includes(x.where)?` <small class="sh-where">· ${esc(x.where)} 화면</small>`:''; const liked=!!LIKES[x.id]; const n=x.likes||0; const st=stOf(x); const long=body.length>90; const op=!!ST.open[x.id];
     return `<li class="sh-item st-${st}"><div class="sh-top"><span class="sh-kind" style="color:${kc};background:${kb}">${kn}</span><b>${esc(t)}</b>${bugWhere}<span class="sh-meta">${esc(x.who||'익명')} · ${new Date(x.at).toLocaleDateString('ko-KR')}</span></div>
       ${body?`<p class="sh-body${long&&!op?' clamp':''}">${esc(body)}</p>${long?`<button class="sh-more" data-id="${x.id}">${op?'접기 ▲':'더 읽기 ▼'}</button>`:''}`:''}
-      <div class="sh-act"><button class="sh-like${liked?' on':''}" data-id="${x.id}">👍 공감 ${n}</button><span class="sh-state s-${st}">${st==='반영'?'✅ 반영됨':st==='검토'?'🔍 검토 중':'📨 접수'}</span></div></li>`; }).join('');
+      <div class="sh-act"><button class="sh-like${liked?' on':''}" data-id="${x.id}">👍 공감 ${n}</button><span class="sh-state s-${st}">${st==='반영'?'✅ 반영됨':st==='미반영'?'⏸ 미반영':st==='검토'?'🔍 검토 중':'📨 접수'}</span></div></li>`; }).join('');
   const left=rows.length-show.length;
   $('#shPager').innerHTML=left>0?`<button id="shMoreP">더 보기 <small>${left}건 남음</small></button>`:(rows.length>PER?'<span class="hint">마지막 글입니다</span>':'');
   if($('#shMoreP')) $('#shMoreP').onclick=()=>{ ST.page++; render(); };

@@ -1101,12 +1101,12 @@ async function loadBugs(){
       '<div class="bugitem">'+
         '<div class="bh">'+
           '<span class="kd k'+(b.kind||'')+'">'+(BUGKIND[b.kind]||'기타')+'</span>'+
-          '<b>'+esc(['idea','ask','improve','usecase','made','voice'].includes(b.kind)?'질문·요청':(b.where&&!['접수','검토','반영'].includes(b.where)?b.where+' 화면':'화면 미지정'))+'</b>'+
+          '<b>'+esc(['idea','ask','improve','usecase','made','voice'].includes(b.kind)?'질문·요청':(b.where&&!['접수','검토','반영','미반영'].includes(b.where)?b.where+' 화면':'화면 미지정'))+'</b>'+
           '<span class="at">'+bugWhen(b.at)+'</span>'+
         '</div>'+
         '<p class="bt">'+esc(b.text).replace(/\n/g,'<br>')+'</p>'+
         (b.who?'<p class="bw">보낸 사람 · '+esc(b.who)+'</p>':'')+
-        (NANUM[b.kind]?'<div class="bst" data-id="'+b.id+'">'+['접수','검토','반영'].map(w=>'<button data-w="'+w+'" class="'+((b.st||(['접수','검토','반영'].includes(b.where)?b.where:'접수'))===w?'on':'')+'">'+({접수:'📨 접수',검토:'🔍 검토 중',반영:'✅ 반영됨'})[w]+'</button>').join('')+'<button data-del class="del">지우기</button></div>':'')+
+        (NANUM[b.kind]?'<div class="bst" data-id="'+b.id+'">'+['접수','검토','반영','미반영'].map(w=>'<button data-w="'+w+'" class="'+((b.st||(['접수','검토','반영','미반영'].includes(b.where)?b.where:'접수'))===w?'on':'')+'">'+({접수:'📨 접수',검토:'🔍 검토 중',반영:'✅ 반영됨',미반영:'⏸ 미반영'})[w]+'</button>').join('')+'<button data-del class="del">지우기</button></div>':'')+
       '</div>').join('');
     wrap.querySelectorAll('.bst').forEach(box=>box.onclick=async e=>{ const btn=e.target.closest('button'); if(!btn) return; const code=adCode(); if(!code){ toast('위 칸에 관리자 코드를 먼저 넣어 주세요'); $('#adCode').focus(); return; }
       if(btn.dataset.del!==undefined&&!confirm('이 글을 지울까요? 되돌릴 수 없습니다.')) return;
