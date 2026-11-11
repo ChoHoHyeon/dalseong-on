@@ -619,14 +619,16 @@
         <fieldset class="pbox req-box">
           <legend>필수 입력</legend>
           <div class="pfile"><label class="filebtn">📎 파일 추가<input type="file" id="anFile" multiple accept=".xlsx,.xls,.csv,.hwpx,.docx,.pdf,.txt,.md"></label><span class="hint" id="anFileList">파일을 올리거나 이 상자에 끌어다 놓으세요 (여러 개 가능)</span></div>
+          <p class="an-priv">🔒 원본 행은 PC 밖으로 나가지 않습니다 — AI에는 열 이름·샘플 5행·집계 결과만, 개인정보는 자동으로 가린 뒤 보냅니다. 이름·연락처가 많은 파일은 먼저 「개인정보 가리기」를 거치세요.</p>
           <div id="anSum"></div>
           <div id="anAsk" hidden>
             <label class="pfull"><span class="cap">특히 보고 싶은 것 <small class="hint">비우면 AI가 알아서 3가지를 고릅니다</small></span><input id="anQ" placeholder="예) 읍면별 접수건수 합계 / 월별 추이 / 민원종류별 평균 처리일수"></label>
             <div class="an-chips" id="anChips"></div>
           </div>
         </fieldset>
-        <fieldset class="pbox opt-box">
-          <legend>이런 결과가 나와요</legend>
+        <fieldset class="pbox opt-box" id="anRight">
+          <legend id="anRightLg">이런 결과가 나와요</legend>
+          <div id="anRead" hidden></div>
           <div class="an-ex">
             <div class="ae-doc">
               <b class="ae-dt">읍면별 민원 접수현황 분석 결과</b>
